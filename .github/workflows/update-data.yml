@@ -366,6 +366,8 @@ jobs:
                         print("\n📊 JSON olusturuluyor...")
                         
                         details = []
+                        USD_RATE = 34.50  # TL/USD kuru
+                        
                         for line in all_data:
                             try:
                                 product_id = line['product_id'][0] if line.get('product_id') else 0
@@ -374,6 +376,21 @@ jobs:
                                 
                                 cat_id = product_categ_map.get(product_id)
                                 cat_info = category_hierarchy.get(cat_id, {})
+                                
+                                # Para birimi kontrolu
+                                price_subtotal = float(line.get('price_subtotal', 0))
+                                currency = line.get('currency_id')
+                                currency_code = currency[1] if isinstance(currency, list) and len(currency) > 1 else 'TRY'
+                                
+                                # USD'ye cevir
+                                if 'USD' in currency_code.upper():
+                                    usd_amount = price_subtotal
+                                elif 'TRY' in currency_code.upper() or 'TL' in currency_code.upper():
+                                    usd_amount = price_subtotal / USD_RATE
+                                elif 'EUR' in currency_code.upper():
+                                    usd_amount = price_subtotal * 1.10  # EUR -> USD (yaklasik)
+                                else:
+                                    usd_amount = price_subtotal / USD_RATE  # Varsayilan: TRY
                                 
                                 details.append({
                                     'date': line.get('date', ''),
@@ -390,9 +407,11 @@ jobs:
                                     'store': line['analytic_account_id'][1] if line.get('analytic_account_id') else 'Genel',
                                     'city': partner_city_map.get(partner_id, 'Bilinmeyen'),
                                     'quantity': line.get('quantity', 0),
-                                    'usd_amount': line.get('price_subtotal', 0)
+                                    'usd_amount': round(usd_amount, 2),
+                                    'currency': currency_code
                                 })
-                            except:
+                            except Exception as e:
+                                print(f"   Satir isleme hatasi: {str(e)[:100]}")
                                 continue
                         
                         output = {
