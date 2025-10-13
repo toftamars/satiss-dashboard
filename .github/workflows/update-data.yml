@@ -273,7 +273,7 @@ jobs:
                                 db, uid_xmlrpc, password,
                                 'product.product', 'search_read',
                                 [[('id', 'in', batch_ids)]],
-                                {'fields': ['id', 'categ_id', 'product_brand_id', 'x_studio_brand']}
+                                {'fields': ['id', 'categ_id', 'product_brand_id']}
                             )
                             products.extend(batch_products)
                         
@@ -308,10 +308,10 @@ jobs:
                             prod_id = prod['id']
                             if prod.get('categ_id'):
                                 product_categ_map[prod_id] = prod['categ_id'][0]
-                            if prod.get('product_brand_id'):
+                            if prod.get('product_brand_id') and isinstance(prod.get('product_brand_id'), list):
                                 product_brand_map[prod_id] = prod['product_brand_id'][1]
-                            elif prod.get('x_studio_brand'):
-                                product_brand_map[prod_id] = prod['x_studio_brand']
+                            else:
+                                product_brand_map[prod_id] = 'Bilinmeyen'
                         
                         print(f"✅ {len(category_hierarchy)} kategori cekildi!")
                         
