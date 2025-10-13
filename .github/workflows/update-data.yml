@@ -5,6 +5,9 @@ on:
     - cron: '0 1 * * *'  # Her gece saat 04:00 (Turkiye saati)
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   update-data:
     runs-on: ubuntu-latest
