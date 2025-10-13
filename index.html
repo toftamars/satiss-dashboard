@@ -385,6 +385,24 @@
                         <option value="">Tumu</option>
                     </select>
                 </div>
+                <div class="filter-group">
+                    <label>Yil</label>
+                    <select id="filterYear">
+                        <option value="">Tumu</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Ay</label>
+                    <select id="filterMonth">
+                        <option value="">Tumu</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Gun</label>
+                    <select id="filterDay">
+                        <option value="">Tumu</option>
+                    </select>
+                </div>
             </div>
             <div class="filter-buttons">
                 <button class="btn-apply" onclick="applyFilters()">Filtrele</button>
@@ -466,6 +484,9 @@
             const salesPersons = new Set();
             const stores = new Set();
             const cities = new Set();
+            const years = new Set();
+            const months = new Set();
+            const days = new Set();
             
             allData.forEach(item => {
                 if (item.brand) brands.add(item.brand);
@@ -478,6 +499,16 @@
                 if (item.sales_person) salesPersons.add(item.sales_person);
                 if (item.store) stores.add(item.store);
                 if (item.city) cities.add(item.city);
+                
+                // Tarih bilgilerini ayir
+                if (item.date) {
+                    const dateParts = item.date.split('-');
+                    if (dateParts.length >= 3) {
+                        years.add(dateParts[0]); // YYYY
+                        months.add(dateParts[1]); // MM
+                        days.add(dateParts[2]); // DD
+                    }
+                }
             });
             
             populateSelect('filterBrand', Array.from(brands).sort());
@@ -490,6 +521,9 @@
             populateSelect('filterSalesPerson', Array.from(salesPersons).sort());
             populateSelect('filterStore', Array.from(stores).sort());
             populateSelect('filterCity', Array.from(cities).sort());
+            populateSelect('filterYear', Array.from(years).sort().reverse()); // En yeni once
+            populateSelect('filterMonth', Array.from(months).sort());
+            populateSelect('filterDay', Array.from(days).sort());
         }
 
         function populateSelect(id, values) {
@@ -516,6 +550,9 @@
             const salesPerson = document.getElementById('filterSalesPerson').value;
             const store = document.getElementById('filterStore').value;
             const city = document.getElementById('filterCity').value;
+            const year = document.getElementById('filterYear').value;
+            const month = document.getElementById('filterMonth').value;
+            const day = document.getElementById('filterDay').value;
             
             filteredData = allData.filter(item => {
                 if (brand && item.brand !== brand) return false;
@@ -528,6 +565,15 @@
                 if (salesPerson && item.sales_person !== salesPerson) return false;
                 if (store && item.store !== store) return false;
                 if (city && item.city !== city) return false;
+                
+                // Tarih filtreleri
+                if (item.date) {
+                    const dateParts = item.date.split('-');
+                    if (year && dateParts[0] !== year) return false;
+                    if (month && dateParts[1] !== month) return false;
+                    if (day && dateParts[2] !== day) return false;
+                }
+                
                 return true;
             });
             
@@ -546,6 +592,9 @@
             document.getElementById('filterSalesPerson').value = '';
             document.getElementById('filterStore').value = '';
             document.getElementById('filterCity').value = '';
+            document.getElementById('filterYear').value = '';
+            document.getElementById('filterMonth').value = '';
+            document.getElementById('filterDay').value = '';
             document.getElementById('smartSearch').value = '';
             
             filteredData = [...allData];
