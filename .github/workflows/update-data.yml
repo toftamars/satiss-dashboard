@@ -173,7 +173,8 @@ jobs:
                         
                         # Veri cek (batch)
                         print("\n📦 Veriler cekiliyor...")
-                        fields = ['move_id', 'date', 'product_id', 'quantity', 'price_usd_subtotal', 'partner_id', 'analytic_account_id']
+                        # x_studio_usd_tutar veya balance deneyelim
+                        fields = ['move_id', 'date', 'product_id', 'quantity', 'price_subtotal', 'balance', 'partner_id', 'analytic_account_id']
                         
                         all_data = []
                         batch_size = 5000  # Daha kucuk batch (10000'den 5000'e)
@@ -366,6 +367,7 @@ jobs:
                         print("\n📊 JSON olusturuluyor...")
                         
                         details = []
+                        USD_RATE = 41.70  # Ornek verinizdeki kur
                         
                         for line in all_data:
                             try:
@@ -376,8 +378,18 @@ jobs:
                                 cat_id = product_categ_map.get(product_id)
                                 cat_info = category_hierarchy.get(cat_id, {})
                                 
-                                # SADECE USD tutar (dogrudan Odoo'dan)
-                                usd_amount = float(line.get('price_usd_subtotal', 0))
+                                # USD tutar hesaplama
+                                # balance negatifse (gelir), pozitif yap
+                                balance = float(line.get('balance', 0))
+                                price_subtotal = float(line.get('price_subtotal', 0))
+                                
+                                # balance genellikle USD cinsinden gelir
+                                # Eger balance negatifse (satis), pozitif yap
+                                if balance != 0:
+                                    usd_amount = abs(balance)
+                                else:
+                                    # Fallback: price_subtotal / kur
+                                    usd_amount = price_subtotal / USD_RATE
                                 
                                 details.append({
                                     'date': line.get('date', ''),
