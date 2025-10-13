@@ -174,7 +174,7 @@ jobs:
                         # Veri cek (batch)
                         print("\n📦 Veriler cekiliyor...")
                         # x_studio_usd_tutar veya balance deneyelim
-                        fields = ['move_id', 'date', 'product_id', 'quantity', 'price_subtotal', 'balance', 'partner_id', 'analytic_account_id']
+                        fields = ['move_id', 'date', 'product_id', 'quantity', 'price_subtotal', 'balance', 'partner_id', 'analytic_account_id', 'display_type']
                         
                         all_data = []
                         batch_size = 5000  # Daha kucuk batch (10000'den 5000'e)
@@ -381,9 +381,16 @@ jobs:
                         
                         details = []
                         USD_RATE = 41.70  # Ornek verinizdeki kur
+                        skipped_display_type = 0
                         
                         for line in all_data:
                             try:
+                                # SADECE GERCEK URUN SATIRLARI (baslik/not degil)
+                                display_type = line.get('display_type')
+                                if display_type and display_type != False:
+                                    skipped_display_type += 1
+                                    continue
+                                
                                 product_id = line['product_id'][0] if line.get('product_id') else 0
                                 partner_id = line['partner_id'][0] if line.get('partner_id') else 0
                                 move_id = line['move_id'][0] if line.get('move_id') else 0
@@ -424,6 +431,11 @@ jobs:
                             except Exception as e:
                                 print(f"   Satir isleme hatasi: {str(e)[:100]}")
                                 continue
+                        
+                        print(f"\n📊 Isleme ozeti:")
+                        print(f"   Toplam cekilen: {len(all_data)}")
+                        print(f"   Atlanan (display_type): {skipped_display_type}")
+                        print(f"   JSON'a eklenen: {len(details)}")
                         
                         output = {
                             'last_update': datetime.now().strftime('%d.%m.%Y %H:%M:%S'),
