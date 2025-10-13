@@ -173,10 +173,11 @@ jobs:
                         fields = ['move_id', 'date', 'product_id', 'quantity', 'price_subtotal', 'currency_id', 'partner_id', 'analytic_account_id']
                         
                         all_data = []
-                        batch_size = 10000
+                        batch_size = 5000  # Daha kucuk batch (10000'den 5000'e)
                         offset = 0
-                        max_errors = 5
+                        max_errors = 10  # Daha fazla hata toleransi
                         error_count = 0
+                        consecutive_errors = 0  # Ardasik hata sayaci
                         
                         while True:
                             batch_num = offset // batch_size + 1
@@ -191,21 +192,42 @@ jobs:
                                 )
                                 
                                 if not batch_data:
+                                    print(f"   ✅ Veri bitti (bos batch)")
                                     break
                                 
                                 all_data.extend(batch_data)
-                                error_count = 0  # Reset error count on success
+                                consecutive_errors = 0  # Reset consecutive errors
+                                print(f"   ✅ {len(batch_data)} kayit eklendi (Toplam: {len(all_data)})")
                                 
                                 if len(batch_data) < batch_size:
+                                    print(f"   ✅ Son batch!")
                                     break
                                 
                                 offset += batch_size
                                 
                             except Exception as e:
                                 error_count += 1
-                                print(f"   ⚠️ Batch {batch_num} hatasi: {str(e)[:100]}")
-                                print(f"   ⏭️ Batch atlaniyor... (Hata: {error_count}/{max_errors})")
+                                consecutive_errors += 1
+                                error_msg = str(e)
                                 
+                                # Hata tipini belirle
+                                if 'not well-formed' in error_msg or 'invalid token' in error_msg:
+                                    print(f"   ⚠️ Batch {batch_num}: XML parse hatasi (bozuk karakter)")
+                                elif 'MemoryError' in error_msg or 'memory' in error_msg.lower():
+                                    print(f"   ⚠️ Batch {batch_num}: Hafiza hatasi")
+                                elif 'timeout' in error_msg.lower():
+                                    print(f"   ⚠️ Batch {batch_num}: Timeout hatasi")
+                                else:
+                                    print(f"   ⚠️ Batch {batch_num}: {error_msg[:150]}")
+                                
+                                print(f"   ⏭️ Batch atlaniyor... (Toplam hata: {error_count}, Ardasik: {consecutive_errors})")
+                                
+                                # Çok fazla ardışık hata varsa dur
+                                if consecutive_errors >= 3:
+                                    print(f"   ❌ 3 ardasik hata! Durduruluyor...")
+                                    break
+                                
+                                # Toplam hata limiti
                                 if error_count >= max_errors:
                                     print(f"   ❌ Cok fazla hata ({max_errors}), durduruluyor...")
                                     break
