@@ -175,25 +175,44 @@ jobs:
                         all_data = []
                         batch_size = 10000
                         offset = 0
+                        max_errors = 5
+                        error_count = 0
                         
                         while True:
-                            print(f"   Batch {offset // batch_size + 1}: {offset} - {offset + batch_size}")
-                            batch_data = models.execute_kw(
-                                db, uid_xmlrpc, password,
-                                'account.move.line', 'search_read',
-                                [domain],
-                                {'fields': fields, 'limit': batch_size, 'offset': offset}
-                            )
+                            batch_num = offset // batch_size + 1
+                            print(f"   Batch {batch_num}: {offset} - {offset + batch_size}")
                             
-                            if not batch_data:
-                                break
-                            
-                            all_data.extend(batch_data)
-                            
-                            if len(batch_data) < batch_size:
-                                break
-                            
-                            offset += batch_size
+                            try:
+                                batch_data = models.execute_kw(
+                                    db, uid_xmlrpc, password,
+                                    'account.move.line', 'search_read',
+                                    [domain],
+                                    {'fields': fields, 'limit': batch_size, 'offset': offset}
+                                )
+                                
+                                if not batch_data:
+                                    break
+                                
+                                all_data.extend(batch_data)
+                                error_count = 0  # Reset error count on success
+                                
+                                if len(batch_data) < batch_size:
+                                    break
+                                
+                                offset += batch_size
+                                
+                            except Exception as e:
+                                error_count += 1
+                                print(f"   ⚠️ Batch {batch_num} hatasi: {str(e)[:100]}")
+                                print(f"   ⏭️ Batch atlaniyor... (Hata: {error_count}/{max_errors})")
+                                
+                                if error_count >= max_errors:
+                                    print(f"   ❌ Cok fazla hata ({max_errors}), durduruluyor...")
+                                    break
+                                
+                                # Skip problematic batch and continue
+                                offset += batch_size
+                                continue
                         
                         print(f"\n✅ {len(all_data)} kayit cekildi!")
                         

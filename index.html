@@ -350,6 +350,18 @@
                     </select>
                 </div>
                 <div class="filter-group">
+                    <label>Kategori 4</label>
+                    <select id="filterCategory4">
+                        <option value="">Tumu</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Kategori 5</label>
+                    <select id="filterCategory5">
+                        <option value="">Tumu</option>
+                    </select>
+                </div>
+                <div class="filter-group">
                     <label>Musteri Etiketi</label>
                     <select id="filterTag">
                         <option value="">Tumu</option>
@@ -448,6 +460,8 @@
             const cat1 = new Set();
             const cat2 = new Set();
             const cat3 = new Set();
+            const cat4 = new Set();
+            const cat5 = new Set();
             const tags = new Set();
             const salesPersons = new Set();
             const stores = new Set();
@@ -458,6 +472,8 @@
                 if (item.category_1) cat1.add(item.category_1);
                 if (item.category_2) cat2.add(item.category_2);
                 if (item.category_3) cat3.add(item.category_3);
+                if (item.category_4) cat4.add(item.category_4);
+                if (item.category_5) cat5.add(item.category_5);
                 if (item.tags) item.tags.split(',').forEach(tag => tags.add(tag.trim()));
                 if (item.sales_person) salesPersons.add(item.sales_person);
                 if (item.store) stores.add(item.store);
@@ -468,6 +484,8 @@
             populateSelect('filterCategory1', Array.from(cat1).sort());
             populateSelect('filterCategory2', Array.from(cat2).sort());
             populateSelect('filterCategory3', Array.from(cat3).sort());
+            populateSelect('filterCategory4', Array.from(cat4).sort());
+            populateSelect('filterCategory5', Array.from(cat5).sort());
             populateSelect('filterTag', Array.from(tags).sort());
             populateSelect('filterSalesPerson', Array.from(salesPersons).sort());
             populateSelect('filterStore', Array.from(stores).sort());
@@ -492,6 +510,8 @@
             const cat1 = document.getElementById('filterCategory1').value;
             const cat2 = document.getElementById('filterCategory2').value;
             const cat3 = document.getElementById('filterCategory3').value;
+            const cat4 = document.getElementById('filterCategory4').value;
+            const cat5 = document.getElementById('filterCategory5').value;
             const tag = document.getElementById('filterTag').value;
             const salesPerson = document.getElementById('filterSalesPerson').value;
             const store = document.getElementById('filterStore').value;
@@ -502,6 +522,8 @@
                 if (cat1 && item.category_1 !== cat1) return false;
                 if (cat2 && item.category_2 !== cat2) return false;
                 if (cat3 && item.category_3 !== cat3) return false;
+                if (cat4 && item.category_4 !== cat4) return false;
+                if (cat5 && item.category_5 !== cat5) return false;
                 if (tag && (!item.tags || !item.tags.includes(tag))) return false;
                 if (salesPerson && item.sales_person !== salesPerson) return false;
                 if (store && item.store !== store) return false;
@@ -518,6 +540,8 @@
             document.getElementById('filterCategory1').value = '';
             document.getElementById('filterCategory2').value = '';
             document.getElementById('filterCategory3').value = '';
+            document.getElementById('filterCategory4').value = '';
+            document.getElementById('filterCategory5').value = '';
             document.getElementById('filterTag').value = '';
             document.getElementById('filterSalesPerson').value = '';
             document.getElementById('filterStore').value = '';
@@ -585,6 +609,8 @@
             html += '<th>Kategori 1</th>';
             html += '<th>Kategori 2</th>';
             html += '<th>Kategori 3</th>';
+            html += '<th>Kategori 4</th>';
+            html += '<th>Kategori 5</th>';
             html += '<th>Etiketler</th>';
             html += '<th>Satis Tem.</th>';
             html += '<th>Magaza</th>';
@@ -601,6 +627,8 @@
                 html += `<td>${item.category_1 || '-'}</td>`;
                 html += `<td>${item.category_2 || '-'}</td>`;
                 html += `<td>${item.category_3 || '-'}</td>`;
+                html += `<td>${item.category_4 || '-'}</td>`;
+                html += `<td>${item.category_5 || '-'}</td>`;
                 html += `<td>${item.tags || '-'}</td>`;
                 html += `<td>${item.sales_person || '-'}</td>`;
                 html += `<td>${item.store || '-'}</td>`;
