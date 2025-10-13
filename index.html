@@ -411,6 +411,13 @@
         </div>
 
         <div class="content">
+            <!-- Debug Panel -->
+            <div id="debugPanel" style="background: #fff3cd; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: none;">
+                <h4 style="margin: 0 0 10px 0; color: #856404;">🔍 Debug Bilgileri</h4>
+                <div id="debugInfo" style="font-family: monospace; font-size: 0.9em; color: #856404;"></div>
+                <button onclick="document.getElementById('debugPanel').style.display='none'" style="margin-top: 10px; padding: 5px 10px; background: #856404; color: white; border: none; border-radius: 5px; cursor: pointer;">Kapat</button>
+            </div>
+            
             <div class="summary-cards">
                 <div class="summary-card">
                     <h3>Toplam Satis (USD)</h3>
@@ -554,21 +561,54 @@
             const month = document.getElementById('filterMonth').value;
             const day = document.getElementById('filterDay').value;
             
+            console.log('Filtreler:', {brand, cat1, cat2, cat3, cat4, cat5, tag, salesPerson, store, city, year, month, day});
+            
+            // Debug: Ilk 3 kaydi goster
+            if (allData.length > 0) {
+                console.log('Ornek veri (ilk kayit):', allData[0]);
+                console.log('Veri tipleri:', {
+                    date: typeof allData[0].date,
+                    store: typeof allData[0].store,
+                    quantity: typeof allData[0].quantity,
+                    usd_amount: typeof allData[0].usd_amount
+                });
+            }
+            
             filteredData = allData.filter(item => {
+                // Marka filtresi
                 if (brand && item.brand !== brand) return false;
+                
+                // Kategori filtreleri
                 if (cat1 && item.category_1 !== cat1) return false;
                 if (cat2 && item.category_2 !== cat2) return false;
                 if (cat3 && item.category_3 !== cat3) return false;
                 if (cat4 && item.category_4 !== cat4) return false;
                 if (cat5 && item.category_5 !== cat5) return false;
+                
+                // Etiket filtresi
                 if (tag && (!item.tags || !item.tags.includes(tag))) return false;
+                
+                // Satis temsilcisi filtresi
                 if (salesPerson && item.sales_person !== salesPerson) return false;
-                if (store && item.store !== store) return false;
+                
+                // Magaza filtresi - KISMI ESLEME (case-insensitive)
+                if (store) {
+                    const itemStore = (item.store || '').toLowerCase();
+                    const filterStore = store.toLowerCase();
+                    // "Akasya" filtresi "[1101404] Perakende - Akasya" ile eslesir
+                    if (!itemStore.includes(filterStore)) return false;
+                }
+                
+                // Sehir filtresi
                 if (city && item.city !== city) return false;
                 
-                // Tarih filtreleri
-                if (item.date) {
+                // Tarih filtreleri - DAHA GUVENLI
+                if (year || month || day) {
+                    if (!item.date) return false;
+                    
                     const dateParts = item.date.split('-');
+                    if (dateParts.length < 3) return false;
+                    
                     if (year && dateParts[0] !== year) return false;
                     if (month && dateParts[1] !== month) return false;
                     if (day && dateParts[2] !== day) return false;
@@ -576,6 +616,28 @@
                 
                 return true;
             });
+            
+            console.log(`Filtreleme sonucu: ${filteredData.length} kayit`);
+            
+            // Debug panel goster
+            const debugPanel = document.getElementById('debugPanel');
+            const debugInfo = document.getElementById('debugInfo');
+            if (filteredData.length > 0) {
+                let debugText = `<strong>Toplam Kayit:</strong> ${allData.length}<br>`;
+                debugText += `<strong>Filtrelenmis Kayit:</strong> ${filteredData.length}<br><br>`;
+                debugText += `<strong>Aktif Filtreler:</strong><br>`;
+                if (store) debugText += `- Magaza: "${store}"<br>`;
+                if (year) debugText += `- Yil: "${year}"<br>`;
+                if (month) debugText += `- Ay: "${month}"<br>`;
+                if (day) debugText += `- Gun: "${day}"<br>`;
+                debugText += `<br><strong>Ornek Filtrelenmis Kayit:</strong><br>`;
+                debugText += `- Tarih: ${filteredData[0].date}<br>`;
+                debugText += `- Magaza: ${filteredData[0].store}<br>`;
+                debugText += `- USD: ${filteredData[0].usd_amount}<br>`;
+                debugText += `- Miktar: ${filteredData[0].quantity}<br>`;
+                debugInfo.innerHTML = debugText;
+                debugPanel.style.display = 'block';
+            }
             
             updateSummary();
             renderTable();
@@ -632,10 +694,14 @@
         }
 
         function updateSummary() {
+            console.log('updateSummary - Filtrelenmis veri sayisi:', filteredData.length);
+            
             const totalUSD = filteredData.reduce((sum, item) => sum + (parseFloat(item.usd_amount) || 0), 0);
             const totalQty = filteredData.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
             const uniquePartners = new Set(filteredData.map(item => item.partner)).size;
             const uniqueProducts = new Set(filteredData.map(item => item.product)).size;
+            
+            console.log('Ozet:', {totalUSD, totalQty, uniquePartners, uniqueProducts});
             
             document.getElementById('summaryUSD').textContent = '$' + totalUSD.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('summaryQuantity').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
