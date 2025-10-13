@@ -203,6 +203,19 @@ jobs:
                                 consecutive_errors = 0  # Reset consecutive errors
                                 print(f"   ✅ {len(batch_data)} kayit eklendi (Toplam: {len(all_data)})")
                                 
+                                # DEBUG: Ilk kaydin TUM alanlarini goster
+                                if len(all_data) == len(batch_data):
+                                    print(f"\n🔍 DEBUG: Ilk kaydin alanlari:")
+                                    if batch_data and len(batch_data) > 0:
+                                        first_record = batch_data[0]
+                                        for key in sorted(first_record.keys()):
+                                            value = first_record[key]
+                                            if isinstance(value, (int, float, str, bool)):
+                                                print(f"   {key}: {value}")
+                                            elif isinstance(value, list) and len(value) > 0:
+                                                print(f"   {key}: {value[0] if len(value) == 1 else value[:2]}")
+                                    print()
+                                
                                 if len(batch_data) < batch_size:
                                     print(f"   ✅ Son batch!")
                                     break
