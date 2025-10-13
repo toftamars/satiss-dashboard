@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satis Analizi Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .info-box {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .info-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .info-card h3 {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-card p {
+            font-size: 1.5em;
+            color: #212529;
+            font-weight: 600;
+        }
+
+        .search-section {
+            padding: 30px;
+            background: white;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 15px 20px;
+            font-size: 1.1em;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-box input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-box button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .search-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .filters-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+
+        .filter-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1em;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .filter-group select:focus {
+            border-color: #667eea;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .filter-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-apply {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-reset {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-apply:hover {
+            background: #218838;
+        }
+
+        .btn-reset:hover {
+            background: #5a6268;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .summary-card h3 {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .summary-card p {
+            font-size: 2em;
+            font-weight: 700;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .data-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .data-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .data-table th:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .data-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+            color: #6c757d;
+        }
+
+        .error {
+            text-align: center;
+            padding: 50px;
+            color: #dc3545;
+            font-size: 1.2em;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Satis Analizi Dashboard</h1>
+            <p>Odoo ERP - Gercek Zamanli Veri Analizi</p>
+        </div>
+
+        <div class="info-box">
+            <div class="info-card">
+                <h3>📊 Veri Durumu</h3>
+                <p id="dataStatus">Yukleniyor...</p>
+            </div>
+            <div class="info-card">
+                <h3>Son Guncelleme</h3>
+                <p id="lastUpdate">-</p>
+            </div>
+            <div class="info-card">
+                <h3>Toplam Kayit</h3>
+                <p id="totalRecords">-</p>
+            </div>
+            <div class="info-card">
+                <h3>Toplam USD Tutar</h3>
+                <p id="totalUSD">-</p>
+            </div>
+        </div>
+
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" id="smartSearch" placeholder="Ornek: Akasya magaza son 1 ay Fender satislari">
+                <button onclick="applySmartSearch()">🔍 Ara</button>
+            </div>
+        </div>
+
+        <div class="filters-section">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label>Marka</label>
+                    <select id="filterBrand">
+                        <option value="">Tumu</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Kategori 1</label>
+                    <select id="filterCategory1">
+                        <option value="">Tumu</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Kategori 2</label>
+                    <select id="filterCategory2">
+                        <option value="">Tumu</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Kategori 3</label>
+                    <select id="filterCategory3">
+                        <option value="">Tumu</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Musteri Etiketi</label>
+                    <select id="filterTag">
+                        <option value="">Tumu</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Satis Temsilcisi</label>
+                    <select id="filterSalesPerson">
+                        <option value="">Tumu</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Magaza</label>
+                    <select id="filterStore">
+                        <option value="">Tumu</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Sehir</label>
+                    <select id="filterCity">
+                        <option value="">Tumu</option>
+                    </select>
+                </div>
+            </div>
+            <div class="filter-buttons">
+                <button class="btn-apply" onclick="applyFilters()">Filtrele</button>
+                <button class="btn-reset" onclick="resetFilters()">Sifirla</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <h3>Toplam Satis (USD)</h3>
+                    <p id="summaryUSD">$0</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Toplam Urun Miktari</h3>
+                    <p id="summaryQuantity">0</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Toplam Musteri</h3>
+                    <p id="summaryPartners">0</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Toplam Urun</h3>
+                    <p id="summaryProducts">0</p>
+                </div>
+            </div>
+
+            <div id="tableContainer">
+                <div class="loading">📊 Veriler yukleniyor...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allData = [];
+        let filteredData = [];
+
+        async function loadData() {
+            try {
+                const response = await fetch('data.json');
+                if (!response.ok) throw new Error('Veri yuklenemedi');
+                
+                const data = await response.json();
+                
+                // Update info cards
+                document.getElementById('dataStatus').innerHTML = '<span class="status-badge status-success">Aktif</span>';
+                document.getElementById('lastUpdate').textContent = data.last_update || '-';
+                document.getElementById('totalRecords').textContent = (data.total_records || 0).toLocaleString('tr-TR');
+                
+                // Calculate total USD
+                let totalUSD = 0;
+                if (data.details && Array.isArray(data.details)) {
+                    totalUSD = data.details.reduce((sum, item) => sum + (parseFloat(item.usd_amount) || 0), 0);
+                }
+                document.getElementById('totalUSD').textContent = '$' + totalUSD.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                
+                allData = data.details || [];
+                filteredData = [...allData];
+                
+                populateFilters();
+                updateSummary();
+                renderTable();
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('dataStatus').innerHTML = '<span class="status-badge status-error">Hata</span>';
+                document.getElementById('tableContainer').innerHTML = '<div class="error">❌ Veri yuklenirken hata olustu!</div>';
+            }
+        }
+
+        function populateFilters() {
+            const brands = new Set();
+            const cat1 = new Set();
+            const cat2 = new Set();
+            const cat3 = new Set();
+            const tags = new Set();
+            const salesPersons = new Set();
+            const stores = new Set();
+            const cities = new Set();
+            
+            allData.forEach(item => {
+                if (item.brand) brands.add(item.brand);
+                if (item.category_1) cat1.add(item.category_1);
+                if (item.category_2) cat2.add(item.category_2);
+                if (item.category_3) cat3.add(item.category_3);
+                if (item.tags) item.tags.split(',').forEach(tag => tags.add(tag.trim()));
+                if (item.sales_person) salesPersons.add(item.sales_person);
+                if (item.store) stores.add(item.store);
+                if (item.city) cities.add(item.city);
+            });
+            
+            populateSelect('filterBrand', Array.from(brands).sort());
+            populateSelect('filterCategory1', Array.from(cat1).sort());
+            populateSelect('filterCategory2', Array.from(cat2).sort());
+            populateSelect('filterCategory3', Array.from(cat3).sort());
+            populateSelect('filterTag', Array.from(tags).sort());
+            populateSelect('filterSalesPerson', Array.from(salesPersons).sort());
+            populateSelect('filterStore', Array.from(stores).sort());
+            populateSelect('filterCity', Array.from(cities).sort());
+        }
+
+        function populateSelect(id, values) {
+            const select = document.getElementById(id);
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">Tumu</option>';
+            values.forEach(value => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                select.appendChild(option);
+            });
+            select.value = currentValue;
+        }
+
+        function applyFilters() {
+            const brand = document.getElementById('filterBrand').value;
+            const cat1 = document.getElementById('filterCategory1').value;
+            const cat2 = document.getElementById('filterCategory2').value;
+            const cat3 = document.getElementById('filterCategory3').value;
+            const tag = document.getElementById('filterTag').value;
+            const salesPerson = document.getElementById('filterSalesPerson').value;
+            const store = document.getElementById('filterStore').value;
+            const city = document.getElementById('filterCity').value;
+            
+            filteredData = allData.filter(item => {
+                if (brand && item.brand !== brand) return false;
+                if (cat1 && item.category_1 !== cat1) return false;
+                if (cat2 && item.category_2 !== cat2) return false;
+                if (cat3 && item.category_3 !== cat3) return false;
+                if (tag && (!item.tags || !item.tags.includes(tag))) return false;
+                if (salesPerson && item.sales_person !== salesPerson) return false;
+                if (store && item.store !== store) return false;
+                if (city && item.city !== city) return false;
+                return true;
+            });
+            
+            updateSummary();
+            renderTable();
+        }
+
+        function resetFilters() {
+            document.getElementById('filterBrand').value = '';
+            document.getElementById('filterCategory1').value = '';
+            document.getElementById('filterCategory2').value = '';
+            document.getElementById('filterCategory3').value = '';
+            document.getElementById('filterTag').value = '';
+            document.getElementById('filterSalesPerson').value = '';
+            document.getElementById('filterStore').value = '';
+            document.getElementById('filterCity').value = '';
+            document.getElementById('smartSearch').value = '';
+            
+            filteredData = [...allData];
+            updateSummary();
+            renderTable();
+        }
+
+        function applySmartSearch() {
+            const query = document.getElementById('smartSearch').value.toLowerCase();
+            if (!query) {
+                resetFilters();
+                return;
+            }
+            
+            // Simple keyword matching
+            filteredData = allData.filter(item => {
+                const searchText = [
+                    item.partner,
+                    item.product,
+                    item.brand,
+                    item.category_1,
+                    item.category_2,
+                    item.category_3,
+                    item.sales_person,
+                    item.store,
+                    item.city,
+                    item.tags
+                ].join(' ').toLowerCase();
+                
+                return searchText.includes(query);
+            });
+            
+            updateSummary();
+            renderTable();
+        }
+
+        function updateSummary() {
+            const totalUSD = filteredData.reduce((sum, item) => sum + (parseFloat(item.usd_amount) || 0), 0);
+            const totalQty = filteredData.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
+            const uniquePartners = new Set(filteredData.map(item => item.partner)).size;
+            const uniqueProducts = new Set(filteredData.map(item => item.product)).size;
+            
+            document.getElementById('summaryUSD').textContent = '$' + totalUSD.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('summaryQuantity').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('summaryPartners').textContent = uniquePartners.toLocaleString('tr-TR');
+            document.getElementById('summaryProducts').textContent = uniqueProducts.toLocaleString('tr-TR');
+        }
+
+        function renderTable() {
+            const container = document.getElementById('tableContainer');
+            
+            if (filteredData.length === 0) {
+                container.innerHTML = '<div class="loading">⚠️ Filtreye uygun veri bulunamadi.</div>';
+                return;
+            }
+            
+            let html = '<table class="data-table"><thead><tr>';
+            html += '<th>Is Ortagi</th>';
+            html += '<th>Urun</th>';
+            html += '<th>Marka</th>';
+            html += '<th>Kategori 1</th>';
+            html += '<th>Kategori 2</th>';
+            html += '<th>Kategori 3</th>';
+            html += '<th>Etiketler</th>';
+            html += '<th>Satis Tem.</th>';
+            html += '<th>Magaza</th>';
+            html += '<th>Sehir</th>';
+            html += '<th>Miktar</th>';
+            html += '<th>USD Tutar</th>';
+            html += '</tr></thead><tbody>';
+            
+            filteredData.slice(0, 1000).forEach(item => {
+                html += '<tr>';
+                html += `<td>${item.partner || '-'}</td>`;
+                html += `<td>${item.product || '-'}</td>`;
+                html += `<td>${item.brand || '-'}</td>`;
+                html += `<td>${item.category_1 || '-'}</td>`;
+                html += `<td>${item.category_2 || '-'}</td>`;
+                html += `<td>${item.category_3 || '-'}</td>`;
+                html += `<td>${item.tags || '-'}</td>`;
+                html += `<td>${item.sales_person || '-'}</td>`;
+                html += `<td>${item.store || '-'}</td>`;
+                html += `<td>${item.city || '-'}</td>`;
+                html += `<td>${parseFloat(item.quantity || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>`;
+                html += `<td>$${parseFloat(item.usd_amount || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>`;
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            
+            if (filteredData.length > 1000) {
+                html += `<p style="text-align: center; margin-top: 20px; color: #6c757d;">İlk 1000 kayit gosteriliyor (Toplam: ${filteredData.length.toLocaleString('tr-TR')})</p>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        // Load data on page load
+        loadData();
+    </script>
+</body>
+</html>
+

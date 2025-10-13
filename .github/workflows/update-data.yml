@@ -1,0 +1,419 @@
+name: Odoo Veri Guncelleme
+
+on:
+  schedule:
+    - cron: '0 1 * * *'  # Her gece saat 04:00 (Turkiye saati)
+  workflow_dispatch:
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Python kurulumu
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Gerekli kutuphaneleri kur
+      run: |
+        pip install requests
+    
+    - name: Odoo'dan veri cek
+      env:
+        ODOO_URL: ${{ secrets.ODOO_URL }}
+        ODOO_USERNAME: ${{ secrets.ODOO_USERNAME }}
+        ODOO_API_KEY: ${{ secrets.ODOO_API_KEY }}
+      run: |
+        python3 << 'EOF'
+        import os
+        import requests
+        import json
+        from datetime import datetime
+        import warnings
+        import xmlrpc.client
+        import ssl
+        
+        warnings.filterwarnings('ignore')
+        ssl._create_default_https_context = ssl._create_unverified_context
+        
+        print("=" * 60)
+        print("🚀 Odoo ERP - Veri Cekme Basladi")
+        print("=" * 60)
+        
+        url = os.environ['ODOO_URL']
+        if not url.startswith('http'):
+            url = f"https://{url}"
+        
+        username = os.environ['ODOO_USERNAME']
+        password = os.environ['ODOO_API_KEY']
+        db = "erp.zuhalmuzik.com"
+        
+        print(f"🔌 URL: {url}")
+        print(f"👤 Username: {username}")
+        
+        try:
+            session = requests.Session()
+            auth_url = f"{url}/web/session/authenticate"
+            
+            auth_payload = {
+                "jsonrpc": "2.0",
+                "method": "call",
+                "params": {
+                    "db": db,
+                    "login": username,
+                    "password": password
+                },
+                "id": 1
+            }
+            
+            print("\n🔐 Kimlik dogrulama yapiliyor...")
+            response = session.post(auth_url, json=auth_payload, headers={"Content-Type": "application/json"}, verify=False, timeout=30)
+            
+            if response.status_code != 200:
+                print(f"❌ HTTP Hatasi: {response.status_code}")
+                exit(1)
+            
+            result = response.json()
+            
+            if 'error' in result:
+                print(f"❌ Odoo Hatasi: {result['error']}")
+                exit(1)
+            
+            if 'result' in result:
+                session_info = result['result']
+                
+                if session_info and isinstance(session_info, dict):
+                    uid = session_info.get('uid')
+                    
+                    if uid:
+                        print(f"✅ Baglanti basarili! (UID: {uid})")
+                        
+                        # XML-RPC baglantisi
+                        print("\n🔄 XML-RPC baglantisi kuruluyor...")
+                        common = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/common')
+                        models = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/object')
+                        uid_xmlrpc = common.authenticate(db, username, password, {})
+                        
+                        if not uid_xmlrpc:
+                            print("❌ XML-RPC authentication basarisiz!")
+                            exit(1)
+                        
+                        print(f"✅ XML-RPC baglantisi basarili!")
+                        
+                        # Filtre cek
+                        print("\n🔍 Akasya Test filtresi araniyor...")
+                        try:
+                            filters = models.execute_kw(
+                                db, uid_xmlrpc, password,
+                                'ir.filters', 'search_read',
+                                [[('user_id', '=', uid_xmlrpc), ('model_id', '=', 'account.invoice.report')]],
+                                {'fields': ['name', 'domain']}
+                            )
+                            
+                            if not filters:
+                                filters = models.execute_kw(
+                                    db, uid_xmlrpc, password,
+                                    'ir.filters', 'search_read',
+                                    [[('user_id', '=', uid_xmlrpc), ('model_id', '=', 'account.move.line')]],
+                                    {'fields': ['name', 'domain']}
+                                )
+                            
+                            akasya_filter = None
+                            for f in filters:
+                                if 'akasya' in f['name'].lower():
+                                    akasya_filter = f
+                                    print(f"✅ Filtre bulundu: {f['name']}")
+                                    break
+                            
+                            if akasya_filter:
+                                import ast
+                                domain = ast.literal_eval(akasya_filter['domain']) if akasya_filter['domain'] else []
+                                converted_domain = []
+                                for item in domain:
+                                    if isinstance(item, tuple) and len(item) >= 3:
+                                        field, operator, value = item[0], item[1], item[2]
+                                        if field == 'state':
+                                            field = 'move_id.state'
+                                        elif field == 'move_type':
+                                            field = 'move_id.move_type'
+                                        elif field == 'product_categ_id':
+                                            field = 'product_id.categ_id'
+                                        converted_domain.append((field, operator, value))
+                                    else:
+                                        converted_domain.append(item)
+                                converted_domain.append(('display_type', '=', False))
+                                domain = converted_domain
+                            else:
+                                print("⚠️ Filtre bulunamadi, varsayilan kullaniliyor...")
+                                domain = [
+                                    ('move_id.state', '=', 'posted'),
+                                    ('move_id.move_type', '=', 'out_invoice'),
+                                    ('display_type', '=', False)
+                                ]
+                        except Exception as e:
+                            print(f"⚠️ Filtre cekme hatasi: {e}")
+                            domain = [
+                                ('move_id.state', '=', 'posted'),
+                                ('move_id.move_type', '=', 'out_invoice'),
+                                ('display_type', '=', False)
+                            ]
+                        
+                        # Kayit sayisi
+                        count = models.execute_kw(db, uid_xmlrpc, password, 'account.move.line', 'search_count', [domain])
+                        print(f"📊 Toplam kayit: {count:,}")
+                        
+                        # Veri cek (batch)
+                        print("\n📦 Veriler cekiliyor...")
+                        fields = ['move_id', 'date', 'product_id', 'quantity', 'price_subtotal', 'currency_id', 'partner_id', 'analytic_account_id']
+                        
+                        all_data = []
+                        batch_size = 10000
+                        offset = 0
+                        
+                        while True:
+                            print(f"   Batch {offset // batch_size + 1}: {offset} - {offset + batch_size}")
+                            batch_data = models.execute_kw(
+                                db, uid_xmlrpc, password,
+                                'account.move.line', 'search_read',
+                                [domain],
+                                {'fields': fields, 'limit': batch_size, 'offset': offset}
+                            )
+                            
+                            if not batch_data:
+                                break
+                            
+                            all_data.extend(batch_data)
+                            
+                            if len(batch_data) < batch_size:
+                                break
+                            
+                            offset += batch_size
+                        
+                        print(f"\n✅ {len(all_data)} kayit cekildi!")
+                        
+                        # Satis temsilcilerini cek
+                        print("\n👤 Satis temsilcileri cekiliyor...")
+                        move_ids = list(set([line['move_id'][0] for line in all_data if line.get('move_id')]))
+                        invoice_user_map = {}
+                        
+                        for i in range(0, len(move_ids), 5000):
+                            batch_ids = move_ids[i:i+5000]
+                            batch_moves = models.execute_kw(
+                                db, uid_xmlrpc, password,
+                                'account.move', 'search_read',
+                                [[('id', 'in', batch_ids)]],
+                                {'fields': ['id', 'invoice_user_id', 'user_id']}
+                            )
+                            for move in batch_moves:
+                                move_id = move['id']
+                                if move.get('invoice_user_id'):
+                                    invoice_user_map[move_id] = move['invoice_user_id'][1]
+                                elif move.get('user_id'):
+                                    invoice_user_map[move_id] = move['user_id'][1]
+                                else:
+                                    invoice_user_map[move_id] = 'Sistem'
+                        
+                        print(f"✅ {len(invoice_user_map)} satis temsilcisi eslesti!")
+                        
+                        # Urunleri cek
+                        print("\n📦 Urunler cekiliyor...")
+                        product_ids = list(set([line['product_id'][0] for line in all_data if line.get('product_id')]))
+                        products = []
+                        
+                        for i in range(0, len(product_ids), 5000):
+                            batch_ids = product_ids[i:i+5000]
+                            batch_products = models.execute_kw(
+                                db, uid_xmlrpc, password,
+                                'product.product', 'search_read',
+                                [[('id', 'in', batch_ids)]],
+                                {'fields': ['id', 'categ_id', 'product_brand_id', 'x_studio_brand']}
+                            )
+                            products.extend(batch_products)
+                        
+                        print(f"✅ {len(products)} urun cekildi!")
+                        
+                        # Kategorileri cek
+                        print("\n📂 Kategoriler cekiliyor...")
+                        categ_ids = list(set([prod['categ_id'][0] for prod in products if prod.get('categ_id')]))
+                        categories = models.execute_kw(
+                            db, uid_xmlrpc, password,
+                            'product.category', 'search_read',
+                            [[('id', 'in', categ_ids)]],
+                            {'fields': ['id', 'name', 'complete_name']}
+                        )
+                        
+                        category_hierarchy = {}
+                        for cat in categories:
+                            cat_name = cat.get('complete_name') or cat.get('name')
+                            cat_levels = cat_name.split(' / ')
+                            category_hierarchy[cat['id']] = {
+                                'name': cat_name,
+                                'level1': cat_levels[0] if len(cat_levels) > 0 else '',
+                                'level2': cat_levels[1] if len(cat_levels) > 1 else '',
+                                'level3': cat_levels[2] if len(cat_levels) > 2 else '',
+                                'level4': cat_levels[3] if len(cat_levels) > 3 else '',
+                                'level5': cat_levels[4] if len(cat_levels) > 4 else ''
+                            }
+                        
+                        product_categ_map = {}
+                        product_brand_map = {}
+                        for prod in products:
+                            prod_id = prod['id']
+                            if prod.get('categ_id'):
+                                product_categ_map[prod_id] = prod['categ_id'][0]
+                            if prod.get('product_brand_id'):
+                                product_brand_map[prod_id] = prod['product_brand_id'][1]
+                            elif prod.get('x_studio_brand'):
+                                product_brand_map[prod_id] = prod['x_studio_brand']
+                        
+                        print(f"✅ {len(category_hierarchy)} kategori cekildi!")
+                        
+                        # Partnerleri cek
+                        print("\n🤝 Partnerler cekiliyor...")
+                        partner_ids = list(set([line['partner_id'][0] for line in all_data if line.get('partner_id')]))
+                        partners = []
+                        
+                        for i in range(0, len(partner_ids), 5000):
+                            batch_ids = partner_ids[i:i+5000]
+                            batch_partners = models.execute_kw(
+                                db, uid_xmlrpc, password,
+                                'res.partner', 'search_read',
+                                [[('id', 'in', batch_ids)]],
+                                {'fields': ['id', 'name', 'city', 'state_id', 'tag_ids']}
+                            )
+                            partners.extend(batch_partners)
+                        
+                        partner_city_map = {}
+                        partner_tags_map = {}
+                        
+                        for partner in partners:
+                            partner_id = partner['id']
+                            if partner.get('state_id'):
+                                partner_city_map[partner_id] = partner['state_id'][1]
+                            elif partner.get('city'):
+                                partner_city_map[partner_id] = partner['city']
+                            else:
+                                partner_city_map[partner_id] = 'Bilinmeyen'
+                            
+                            partner_tags_map[partner_id] = []
+                        
+                        # Etiketleri cek
+                        all_tag_ids = []
+                        for p in partners:
+                            if p.get('tag_ids'):
+                                all_tag_ids.extend(p['tag_ids'])
+                        
+                        tag_names_map = {}
+                        if all_tag_ids:
+                            unique_tag_ids = list(set(all_tag_ids))
+                            tags_data = models.execute_kw(
+                                db, uid_xmlrpc, password,
+                                'res.partner.category', 'search_read',
+                                [[('id', 'in', unique_tag_ids)]],
+                                {'fields': ['id', 'name']}
+                            )
+                            for tag in tags_data:
+                                tag_names_map[tag['id']] = tag['name']
+                        
+                        for p in partners:
+                            partner_id = p['id']
+                            if p.get('tag_ids'):
+                                tag_names = [tag_names_map.get(tid, f'Tag_{tid}') for tid in p['tag_ids'] if tid in tag_names_map]
+                                partner_tags_map[partner_id] = ', '.join(tag_names)
+                        
+                        print(f"✅ {len(partners)} partner cekildi!")
+                        
+                        # JSON olustur
+                        print("\n📊 JSON olusturuluyor...")
+                        
+                        details = []
+                        for line in all_data:
+                            try:
+                                product_id = line['product_id'][0] if line.get('product_id') else 0
+                                partner_id = line['partner_id'][0] if line.get('partner_id') else 0
+                                move_id = line['move_id'][0] if line.get('move_id') else 0
+                                
+                                cat_id = product_categ_map.get(product_id)
+                                cat_info = category_hierarchy.get(cat_id, {})
+                                
+                                details.append({
+                                    'date': line.get('date', ''),
+                                    'partner': line['partner_id'][1] if line.get('partner_id') else '',
+                                    'product': line['product_id'][1] if line.get('product_id') else '',
+                                    'brand': product_brand_map.get(product_id, 'Bilinmeyen'),
+                                    'category_1': cat_info.get('level1', ''),
+                                    'category_2': cat_info.get('level2', ''),
+                                    'category_3': cat_info.get('level3', ''),
+                                    'category_4': cat_info.get('level4', ''),
+                                    'category_5': cat_info.get('level5', ''),
+                                    'tags': partner_tags_map.get(partner_id, ''),
+                                    'sales_person': invoice_user_map.get(move_id, 'Sistem'),
+                                    'store': line['analytic_account_id'][1] if line.get('analytic_account_id') else 'Genel',
+                                    'city': partner_city_map.get(partner_id, 'Bilinmeyen'),
+                                    'quantity': line.get('quantity', 0),
+                                    'usd_amount': line.get('price_subtotal', 0)
+                                })
+                            except:
+                                continue
+                        
+                        output = {
+                            'last_update': datetime.now().strftime('%d.%m.%Y %H:%M:%S'),
+                            'total_records': len(details),
+                            'details': details
+                        }
+                        
+                        with open('data.json', 'w', encoding='utf-8') as f:
+                            json.dump(output, f, ensure_ascii=False, indent=2)
+                        
+                        print(f"\n✅ data.json olusturuldu! ({len(details)} kayit)")
+                        print("=" * 60)
+                        print("🎉 ISLEM TAMAMLANDI!")
+                        print("=" * 60)
+                    else:
+                        print("❌ UID bulunamadi!")
+                        exit(1)
+                else:
+                    print("❌ Gecersiz session!")
+                    exit(1)
+            else:
+                print("❌ Beklenmeyen yanit!")
+                exit(1)
+                
+        except Exception as e:
+            print(f"❌ Hata: {e}")
+            import traceback
+            traceback.print_exc()
+            exit(1)
+        
+        EOF
+    
+    - name: Degisiklikleri commit et ve yukle
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        
+        if [[ -f "data.json" ]]; then
+          echo "✅ data.json bulundu"
+          
+          git fetch origin
+          git pull --rebase origin main || git pull origin main || git reset --hard origin/main
+          
+          git add data.json
+          
+          if [[ -n $(git status -s) ]]; then
+            git commit -m "Veriler guncellendi - $(date +'%Y-%m-%d %H:%M')"
+            git push
+            echo "✅ GitHub'a yuklendi!"
+          else
+            echo "ℹ️ Degisiklik yok"
+          fi
+        else
+          echo "⚠️ data.json bulunamadi"
+        fi
+
