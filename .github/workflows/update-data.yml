@@ -326,7 +326,7 @@ jobs:
                                 db, uid_xmlrpc, password,
                                 'res.partner', 'search_read',
                                 [[('id', 'in', batch_ids)]],
-                                {'fields': ['id', 'name', 'city', 'state_id', 'tag_ids']}
+                                {'fields': ['id', 'name', 'city', 'state_id', 'category_id']}
                             )
                             partners.extend(batch_partners)
                         
@@ -341,32 +341,21 @@ jobs:
                                 partner_city_map[partner_id] = partner['city']
                             else:
                                 partner_city_map[partner_id] = 'Bilinmeyen'
-                            
-                            partner_tags_map[partner_id] = []
                         
-                        # Etiketleri cek
-                        all_tag_ids = []
-                        for p in partners:
-                            if p.get('tag_ids'):
-                                all_tag_ids.extend(p['tag_ids'])
-                        
-                        tag_names_map = {}
-                        if all_tag_ids:
-                            unique_tag_ids = list(set(all_tag_ids))
-                            tags_data = models.execute_kw(
-                                db, uid_xmlrpc, password,
-                                'res.partner.category', 'search_read',
-                                [[('id', 'in', unique_tag_ids)]],
-                                {'fields': ['id', 'name']}
-                            )
-                            for tag in tags_data:
-                                tag_names_map[tag['id']] = tag['name']
-                        
+                        # Etiketleri cek (category_id)
                         for p in partners:
                             partner_id = p['id']
-                            if p.get('tag_ids'):
-                                tag_names = [tag_names_map.get(tid, f'Tag_{tid}') for tid in p['tag_ids'] if tid in tag_names_map]
-                                partner_tags_map[partner_id] = ', '.join(tag_names)
+                            category_ids = p.get('category_id', [])
+                            
+                            if category_ids and isinstance(category_ids, list) and len(category_ids) > 0:
+                                # category_id liste halinde gelir: [[id1, name1], [id2, name2], ...]
+                                if isinstance(category_ids[0], list):
+                                    tag_names = [cat[1] for cat in category_ids if len(cat) > 1]
+                                    partner_tags_map[partner_id] = ', '.join(tag_names)
+                                else:
+                                    partner_tags_map[partner_id] = ''
+                            else:
+                                partner_tags_map[partner_id] = ''
                         
                         print(f"✅ {len(partners)} partner cekildi!")
                         
