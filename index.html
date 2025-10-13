@@ -623,18 +623,47 @@
             const debugPanel = document.getElementById('debugPanel');
             const debugInfo = document.getElementById('debugInfo');
             if (filteredData.length > 0) {
-                let debugText = `<strong>Toplam Kayit:</strong> ${allData.length}<br>`;
-                debugText += `<strong>Filtrelenmis Kayit:</strong> ${filteredData.length}<br><br>`;
+                // Toplam USD ve Miktar hesapla
+                const totalUSD = filteredData.reduce((sum, item) => sum + (parseFloat(item.usd_amount) || 0), 0);
+                const totalQty = filteredData.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
+                
+                // Benzersiz magazalari say
+                const uniqueStores = new Set(filteredData.map(item => item.store)).size;
+                
+                // Tarih dagilimi
+                const dateDistribution = {};
+                filteredData.forEach(item => {
+                    const date = item.date || 'Bilinmeyen';
+                    dateDistribution[date] = (dateDistribution[date] || 0) + 1;
+                });
+                const topDates = Object.entries(dateDistribution).sort((a, b) => b[1] - a[1]).slice(0, 5);
+                
+                let debugText = `<strong>Toplam Kayit:</strong> ${allData.length.toLocaleString('tr-TR')}<br>`;
+                debugText += `<strong>Filtrelenmis Kayit:</strong> ${filteredData.length.toLocaleString('tr-TR')}<br>`;
+                debugText += `<strong>Toplam USD:</strong> $${totalUSD.toLocaleString('tr-TR', {minimumFractionDigits: 2})}<br>`;
+                debugText += `<strong>Toplam Miktar:</strong> ${totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2})}<br>`;
+                debugText += `<strong>Benzersiz Magaza:</strong> ${uniqueStores}<br><br>`;
+                
                 debugText += `<strong>Aktif Filtreler:</strong><br>`;
                 if (store) debugText += `- Magaza: "${store}"<br>`;
                 if (year) debugText += `- Yil: "${year}"<br>`;
                 if (month) debugText += `- Ay: "${month}"<br>`;
                 if (day) debugText += `- Gun: "${day}"<br>`;
-                debugText += `<br><strong>Ornek Filtrelenmis Kayit:</strong><br>`;
-                debugText += `- Tarih: ${filteredData[0].date}<br>`;
-                debugText += `- Magaza: ${filteredData[0].store}<br>`;
-                debugText += `- USD: ${filteredData[0].usd_amount}<br>`;
-                debugText += `- Miktar: ${filteredData[0].quantity}<br>`;
+                if (brand) debugText += `- Marka: "${brand}"<br>`;
+                if (cat1) debugText += `- Kategori 1: "${cat1}"<br>`;
+                
+                debugText += `<br><strong>En Cok Kayit Olan 5 Gun:</strong><br>`;
+                topDates.forEach(([date, count]) => {
+                    debugText += `- ${date}: ${count} kayit<br>`;
+                });
+                
+                debugText += `<br><strong>Ornek Kayitlar (ilk 3):</strong><br>`;
+                for (let i = 0; i < Math.min(3, filteredData.length); i++) {
+                    debugText += `<br>${i+1}. Tarih: ${filteredData[i].date} | Magaza: ${filteredData[i].store}<br>`;
+                    debugText += `   USD: $${parseFloat(filteredData[i].usd_amount).toFixed(2)} | Miktar: ${filteredData[i].quantity}<br>`;
+                    debugText += `   Musteri: ${filteredData[i].partner}<br>`;
+                }
+                
                 debugInfo.innerHTML = debugText;
                 debugPanel.style.display = 'block';
             }
