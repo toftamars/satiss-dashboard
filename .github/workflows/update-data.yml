@@ -173,8 +173,16 @@ jobs:
                         
                         # Veri cek (batch)
                         print("\n📦 Veriler cekiliyor...")
-                        # x_studio_usd_tutar veya balance deneyelim
-                        fields = ['move_id', 'date', 'product_id', 'quantity', 'price_subtotal', 'balance', 'partner_id', 'analytic_account_id', 'display_type']
+                        # USD alanlari da dahil et
+                        fields = [
+                            'move_id', 'date', 'product_id', 'quantity', 
+                            'price_subtotal', 'balance', 'partner_id', 
+                            'analytic_account_id', 'display_type',
+                            # USD alanlari (varsa cekilecek, yoksa None donecek)
+                            'x_studio_usd_tutar', 'x_studio_usd_kur',
+                            'x_usd_amount', 'x_usd_rate',
+                            'currency_id', 'amount_currency'
+                        ]
                         
                         all_data = []
                         batch_size = 5000  # Daha kucuk batch (10000'den 5000'e)
@@ -254,6 +262,19 @@ jobs:
                                 continue
                         
                         print(f"\n✅ {len(all_data)} kayit cekildi!")
+                        
+                        # DEBUG: Ilk kaydin TUM alanlarini goster
+                        if len(all_data) > 0:
+                            print("\n🔍 DEBUG: Ilk kaydin alanlari:")
+                            first_record = all_data[0]
+                            for key in sorted(first_record.keys()):
+                                value = first_record[key]
+                                if isinstance(value, (int, float, str, bool)) or value is None or value is False:
+                                    print(f"   {key}: {value}")
+                                elif isinstance(value, list) and len(value) == 2:
+                                    print(f"   {key}: [{value[0]}, '{value[1][:50]}...']" if len(str(value[1])) > 50 else f"   {key}: {value}")
+                                else:
+                                    print(f"   {key}: {type(value).__name__}")
                         
                         # Satis temsilcilerini cek
                         print("\n👤 Satis temsilcileri cekiliyor...")
