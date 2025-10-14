@@ -284,19 +284,46 @@ jobs:
                         
                         print(f"\n✅ {len(all_data)} kayit cekildi!")
                         
-                        # DEBUG: Ilk 3 kaydin para birimi bilgilerini goster
+                        # USD tutarlari account.invoice.report'tan cek
+                        print("\n💰 USD tutarlari account.invoice.report'tan cekiliyor...")
+                        line_ids = [line['id'] for line in all_data if line.get('id')]
+                        usd_map = {}
+                        
+                        try:
+                            # account.invoice.report'tan price_usd_subtotal cek
+                            for i in range(0, len(line_ids), 5000):
+                                batch_ids = line_ids[i:i+5000]
+                                batch_usd = models.execute_kw(
+                                    db, uid_xmlrpc, password,
+                                    'account.invoice.report', 'search_read',
+                                    [[('id', 'in', batch_ids)]],
+                                    {'fields': ['id', 'price_usd_subtotal']}
+                                )
+                                for record in batch_usd:
+                                    usd_map[record['id']] = record.get('price_usd_subtotal', 0)
+                            
+                            print(f"✅ {len(usd_map)} kayit icin USD tutar eslesti!")
+                        except Exception as e:
+                            print(f"⚠️ account.invoice.report'tan USD cekme hatasi: {str(e)[:200]}")
+                            print("   currency_id kontrolu ile devam edilecek...")
+                            usd_map = {}
+                        
+                        # DEBUG: Ilk 3 kaydin USD bilgilerini goster
                         if len(all_data) > 0:
-                            print("\n🔍 DEBUG: Ilk 3 kaydin para birimi bilgileri:")
+                            print("\n🔍 DEBUG: Ilk 3 kaydin USD bilgileri:")
                             for i, record in enumerate(all_data[:3]):
-                                print(f"\n   Kayit {i+1}:")
+                                line_id = record.get('id', 0)
+                                print(f"\n   Kayit {i+1} (ID: {line_id}):")
                                 print(f"      Tarih: {record.get('date')}")
                                 print(f"      Urun: {record.get('product_id', [0, 'N/A'])[1][:40] if record.get('product_id') else 'N/A'}")
                                 print(f"      Miktar: {record.get('quantity', 0)}")
-                                print(f"      Para Birimi: {record.get('currency_id', [0, 'N/A'])[1] if record.get('currency_id') else 'N/A'}")
-                                print(f"      amount_currency: {record.get('amount_currency', 0)}")
                                 print(f"      price_subtotal (TL): {record.get('price_subtotal', 0)}")
-                                print(f"      gl_currency_rate: {record.get('gl_currency_rate', 0)}")
-                                print(f"      balance: {record.get('balance', 0)}")
+                                if line_id in usd_map:
+                                    print(f"      USD (invoice.report): {usd_map[line_id]} ✅")
+                                else:
+                                    print(f"      USD (invoice.report): BULUNAMADI ❌")
+                                    print(f"      Para Birimi: {record.get('currency_id', [0, 'N/A'])[1] if record.get('currency_id') else 'N/A'}")
+                                    print(f"      amount_currency: {record.get('amount_currency', 0)}")
                         
                         # Satis temsilcilerini cek
                         print("\n👤 Satis temsilcileri cekiliyor...")
@@ -432,11 +459,13 @@ jobs:
                         skipped_no_usd = 0
                         
                         # USD hesaplama stratejisini belirle
+                        has_usd_map = len(usd_map) > 0
                         has_currency = 'currency_id' in working_fields and 'amount_currency' in working_fields
                         has_gl_rate = 'gl_currency_rate' in working_fields
                         has_balance = 'balance' in working_fields
                         
-                        print(f"💰 USD hesaplama:")
+                        print(f"💰 USD hesaplama stratejisi:")
+                        print(f"   account.invoice.report (price_usd_subtotal): {'✅' if has_usd_map else '❌'}")
                         print(f"   currency_id + amount_currency: {'✅' if has_currency else '❌'}")
                         print(f"   gl_currency_rate: {'✅' if has_gl_rate else '❌'}")
                         print(f"   balance: {'✅' if has_balance else '❌'}")
@@ -456,10 +485,15 @@ jobs:
                                 cat_id = product_categ_map.get(product_id)
                                 cat_info = category_hierarchy.get(cat_id, {})
                                 
-                                # USD tutar hesaplama - DOGRU YONTEM
+                                # USD tutar hesaplama - ONCE account.invoice.report'tan dene
                                 usd_amount = 0
+                                line_id = line.get('id', 0)
                                 
-                                if has_currency:
+                                if has_usd_map and line_id in usd_map:
+                                    # account.invoice.report'tan direkt al (EN DOGRU!)
+                                    usd_amount = abs(float(usd_map.get(line_id, 0)))
+                                
+                                elif has_currency:
                                     # Para birimi kontrolu yap
                                     currency_id = line.get('currency_id')
                                     amount_currency = float(line.get('amount_currency', 0))
