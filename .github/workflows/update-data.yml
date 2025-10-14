@@ -284,16 +284,19 @@ jobs:
                         
                         print(f"\n✅ {len(all_data)} kayit cekildi!")
                         
-                        # DEBUG: Ilk kaydin TUM alanlarini goster
+                        # DEBUG: Ilk 3 kaydin para birimi bilgilerini goster
                         if len(all_data) > 0:
-                            print("\n🔍 DEBUG: Ilk kaydin TUM alanlari:")
-                            first_record = all_data[0]
-                            for key in sorted(first_record.keys()):
-                                value = first_record[key]
-                                if isinstance(value, list) and len(value) == 2:
-                                    print(f"   {key}: [{value[0]}, '{str(value[1])[:30]}...']" if len(str(value[1])) > 30 else f"   {key}: {value}")
-                                else:
-                                    print(f"   {key}: {value}")
+                            print("\n🔍 DEBUG: Ilk 3 kaydin para birimi bilgileri:")
+                            for i, record in enumerate(all_data[:3]):
+                                print(f"\n   Kayit {i+1}:")
+                                print(f"      Tarih: {record.get('date')}")
+                                print(f"      Urun: {record.get('product_id', [0, 'N/A'])[1][:40] if record.get('product_id') else 'N/A'}")
+                                print(f"      Miktar: {record.get('quantity', 0)}")
+                                print(f"      Para Birimi: {record.get('currency_id', [0, 'N/A'])[1] if record.get('currency_id') else 'N/A'}")
+                                print(f"      amount_currency: {record.get('amount_currency', 0)}")
+                                print(f"      price_subtotal (TL): {record.get('price_subtotal', 0)}")
+                                print(f"      gl_currency_rate: {record.get('gl_currency_rate', 0)}")
+                                print(f"      balance: {record.get('balance', 0)}")
                         
                         # Satis temsilcilerini cek
                         print("\n👤 Satis temsilcileri cekiliyor...")
@@ -428,18 +431,15 @@ jobs:
                         skipped_display_type = 0
                         skipped_no_usd = 0
                         
-                        # USD alan adini belirle
-                        usd_field = None
-                        if 'price_usd_subtotal' in working_fields:
-                            usd_field = 'price_usd_subtotal'
-                        elif 'x_studio_usd_tutar' in working_fields:
-                            usd_field = 'x_studio_usd_tutar'
-                        elif 'amount_currency' in working_fields:
-                            usd_field = 'amount_currency'
-                        elif 'balance' in working_fields:
-                            usd_field = 'balance'
+                        # USD hesaplama stratejisini belirle
+                        has_currency = 'currency_id' in working_fields and 'amount_currency' in working_fields
+                        has_gl_rate = 'gl_currency_rate' in working_fields
+                        has_balance = 'balance' in working_fields
                         
-                        print(f"💰 USD alan: {usd_field if usd_field else 'BULUNAMADI - price_subtotal / 41.70 kullanilacak'}")
+                        print(f"💰 USD hesaplama:")
+                        print(f"   currency_id + amount_currency: {'✅' if has_currency else '❌'}")
+                        print(f"   gl_currency_rate: {'✅' if has_gl_rate else '❌'}")
+                        print(f"   balance: {'✅' if has_balance else '❌'}")
                         
                         for line in all_data:
                             try:
@@ -456,13 +456,45 @@ jobs:
                                 cat_id = product_categ_map.get(product_id)
                                 cat_info = category_hierarchy.get(cat_id, {})
                                 
-                                # USD tutar hesaplama
-                                if usd_field:
-                                    usd_amount = float(line.get(usd_field, 0))
-                                    if usd_field == 'balance':
-                                        usd_amount = abs(usd_amount)  # balance negatif olabilir
+                                # USD tutar hesaplama - DOGRU YONTEM
+                                usd_amount = 0
+                                
+                                if has_currency:
+                                    # Para birimi kontrolu yap
+                                    currency_id = line.get('currency_id')
+                                    amount_currency = float(line.get('amount_currency', 0))
+                                    
+                                    if currency_id and isinstance(currency_id, list) and len(currency_id) >= 2:
+                                        currency_code = currency_id[1]  # 'USD', 'TRY', 'EUR' vs.
+                                        
+                                        if currency_code == 'USD':
+                                            # Zaten USD
+                                            usd_amount = abs(amount_currency)
+                                        elif currency_code == 'TRY':
+                                            # TRY -> USD donusumu
+                                            if has_gl_rate:
+                                                rate = float(line.get('gl_currency_rate', 0))
+                                                if rate > 0:
+                                                    usd_amount = abs(amount_currency) / rate
+                                            else:
+                                                # Fallback: price_subtotal / sabit kur
+                                                price_subtotal = float(line.get('price_subtotal', 0))
+                                                usd_amount = price_subtotal / 41.70
+                                        else:
+                                            # Diger para birimleri (EUR vs.) - simdilik atla
+                                            skipped_no_usd += 1
+                                            continue
+                                    else:
+                                        # currency_id yok, price_subtotal kullan
+                                        price_subtotal = float(line.get('price_subtotal', 0))
+                                        usd_amount = price_subtotal / 41.70
+                                
+                                elif has_balance:
+                                    # Balance kullan (son care)
+                                    usd_amount = abs(float(line.get('balance', 0)))
+                                
                                 else:
-                                    # Fallback: TL / sabit kur
+                                    # Hicbiri yok, price_subtotal / sabit kur
                                     price_subtotal = float(line.get('price_subtotal', 0))
                                     usd_amount = price_subtotal / 41.70
                                 
