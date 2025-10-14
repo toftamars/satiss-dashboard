@@ -173,13 +173,37 @@ jobs:
                         
                         # Veri cek (batch)
                         print("\n📦 Veriler cekiliyor...")
-                        # USD alanlari: price_usd_subtotal ve usd_rate
-                        fields = [
-                            'move_id', 'date', 'product_id', 'quantity', 
-                            'price_subtotal', 'partner_id', 
-                            'analytic_account_id', 'display_type',
-                            'price_usd_subtotal', 'usd_rate'
+                        
+                        # ONCE: Hangi alanlarin mevcut oldugunu test et
+                        print("\n🔍 Mevcut alanlari test ediyoruz...")
+                        test_fields_list = [
+                            ['move_id', 'date', 'product_id', 'quantity', 'price_subtotal', 'partner_id', 'analytic_account_id', 'display_type'],
+                            ['price_usd_subtotal'],
+                            ['usd_rate'],
+                            ['x_studio_usd_tutar'],
+                            ['x_studio_usd_kur'],
+                            ['currency_id', 'amount_currency'],
+                            ['balance']
                         ]
+                        
+                        working_fields = ['move_id', 'date', 'product_id', 'quantity', 'price_subtotal', 'partner_id', 'analytic_account_id', 'display_type']
+                        
+                        for test_fields in test_fields_list[1:]:  # Temel alanlari atla
+                            try:
+                                test_result = models.execute_kw(
+                                    db, uid_xmlrpc, password,
+                                    'account.move.line', 'search_read',
+                                    [domain],
+                                    {'fields': working_fields + test_fields, 'limit': 1}
+                                )
+                                if test_result:
+                                    working_fields.extend(test_fields)
+                                    print(f"   ✅ {test_fields} alanlari mevcut!")
+                            except Exception as e:
+                                print(f"   ❌ {test_fields} alanlari mevcut degil: {str(e)[:100]}")
+                        
+                        print(f"\n✅ Kullanilacak alanlar: {working_fields}")
+                        fields = working_fields
                         
                         all_data = []
                         batch_size = 5000  # Daha kucuk batch (10000'den 5000'e)
@@ -260,17 +284,16 @@ jobs:
                         
                         print(f"\n✅ {len(all_data)} kayit cekildi!")
                         
-                        # DEBUG: Ilk 3 kaydin USD bilgilerini goster
+                        # DEBUG: Ilk kaydin TUM alanlarini goster
                         if len(all_data) > 0:
-                            print("\n🔍 DEBUG: Ilk 3 kaydin USD bilgileri:")
-                            for i, record in enumerate(all_data[:3]):
-                                print(f"\n   Kayit {i+1}:")
-                                print(f"      Tarih: {record.get('date')}")
-                                print(f"      Urun: {record.get('product_id', [0, 'N/A'])[1] if record.get('product_id') else 'N/A'}")
-                                print(f"      Miktar: {record.get('quantity', 0)}")
-                                print(f"      TL Tutar (price_subtotal): {record.get('price_subtotal', 0)}")
-                                print(f"      USD Tutar (price_usd_subtotal): {record.get('price_usd_subtotal', 0)}")
-                                print(f"      USD Kur (usd_rate): {record.get('usd_rate', 0)}")
+                            print("\n🔍 DEBUG: Ilk kaydin TUM alanlari:")
+                            first_record = all_data[0]
+                            for key in sorted(first_record.keys()):
+                                value = first_record[key]
+                                if isinstance(value, list) and len(value) == 2:
+                                    print(f"   {key}: [{value[0]}, '{str(value[1])[:30]}...']" if len(str(value[1])) > 30 else f"   {key}: {value}")
+                                else:
+                                    print(f"   {key}: {value}")
                         
                         # Satis temsilcilerini cek
                         print("\n👤 Satis temsilcileri cekiliyor...")
@@ -405,6 +428,19 @@ jobs:
                         skipped_display_type = 0
                         skipped_no_usd = 0
                         
+                        # USD alan adini belirle
+                        usd_field = None
+                        if 'price_usd_subtotal' in working_fields:
+                            usd_field = 'price_usd_subtotal'
+                        elif 'x_studio_usd_tutar' in working_fields:
+                            usd_field = 'x_studio_usd_tutar'
+                        elif 'amount_currency' in working_fields:
+                            usd_field = 'amount_currency'
+                        elif 'balance' in working_fields:
+                            usd_field = 'balance'
+                        
+                        print(f"💰 USD alan: {usd_field if usd_field else 'BULUNAMADI - price_subtotal / 41.70 kullanilacak'}")
+                        
                         for line in all_data:
                             try:
                                 # SADECE GERCEK URUN SATIRLARI (baslik/not degil)
@@ -420,8 +456,15 @@ jobs:
                                 cat_id = product_categ_map.get(product_id)
                                 cat_info = category_hierarchy.get(cat_id, {})
                                 
-                                # USD tutar - DIREKT ODOO'DAN AL
-                                usd_amount = float(line.get('price_usd_subtotal', 0))
+                                # USD tutar hesaplama
+                                if usd_field:
+                                    usd_amount = float(line.get(usd_field, 0))
+                                    if usd_field == 'balance':
+                                        usd_amount = abs(usd_amount)  # balance negatif olabilir
+                                else:
+                                    # Fallback: TL / sabit kur
+                                    price_subtotal = float(line.get('price_subtotal', 0))
+                                    usd_amount = price_subtotal / 41.70
                                 
                                 # Eger USD tutar yoksa atla
                                 if usd_amount == 0:
