@@ -173,15 +173,12 @@ jobs:
                         
                         # Veri cek (batch)
                         print("\n📦 Veriler cekiliyor...")
-                        # USD alanlari da dahil et
+                        # USD alanlari: price_usd_subtotal ve usd_rate
                         fields = [
                             'move_id', 'date', 'product_id', 'quantity', 
-                            'price_subtotal', 'balance', 'partner_id', 
+                            'price_subtotal', 'partner_id', 
                             'analytic_account_id', 'display_type',
-                            # USD alanlari (varsa cekilecek, yoksa None donecek)
-                            'x_studio_usd_tutar', 'x_studio_usd_kur',
-                            'x_usd_amount', 'x_usd_rate',
-                            'currency_id', 'amount_currency'
+                            'price_usd_subtotal', 'usd_rate'
                         ]
                         
                         all_data = []
@@ -263,18 +260,17 @@ jobs:
                         
                         print(f"\n✅ {len(all_data)} kayit cekildi!")
                         
-                        # DEBUG: Ilk kaydin TUM alanlarini goster
+                        # DEBUG: Ilk 3 kaydin USD bilgilerini goster
                         if len(all_data) > 0:
-                            print("\n🔍 DEBUG: Ilk kaydin alanlari:")
-                            first_record = all_data[0]
-                            for key in sorted(first_record.keys()):
-                                value = first_record[key]
-                                if isinstance(value, (int, float, str, bool)) or value is None or value is False:
-                                    print(f"   {key}: {value}")
-                                elif isinstance(value, list) and len(value) == 2:
-                                    print(f"   {key}: [{value[0]}, '{value[1][:50]}...']" if len(str(value[1])) > 50 else f"   {key}: {value}")
-                                else:
-                                    print(f"   {key}: {type(value).__name__}")
+                            print("\n🔍 DEBUG: Ilk 3 kaydin USD bilgileri:")
+                            for i, record in enumerate(all_data[:3]):
+                                print(f"\n   Kayit {i+1}:")
+                                print(f"      Tarih: {record.get('date')}")
+                                print(f"      Urun: {record.get('product_id', [0, 'N/A'])[1] if record.get('product_id') else 'N/A'}")
+                                print(f"      Miktar: {record.get('quantity', 0)}")
+                                print(f"      TL Tutar (price_subtotal): {record.get('price_subtotal', 0)}")
+                                print(f"      USD Tutar (price_usd_subtotal): {record.get('price_usd_subtotal', 0)}")
+                                print(f"      USD Kur (usd_rate): {record.get('usd_rate', 0)}")
                         
                         # Satis temsilcilerini cek
                         print("\n👤 Satis temsilcileri cekiliyor...")
@@ -406,8 +402,8 @@ jobs:
                         print("\n📊 JSON olusturuluyor...")
                         
                         details = []
-                        USD_RATE = 41.70  # Ornek verinizdeki kur
                         skipped_display_type = 0
+                        skipped_no_usd = 0
                         
                         for line in all_data:
                             try:
@@ -424,18 +420,13 @@ jobs:
                                 cat_id = product_categ_map.get(product_id)
                                 cat_info = category_hierarchy.get(cat_id, {})
                                 
-                                # USD tutar hesaplama
-                                # balance negatifse (gelir), pozitif yap
-                                balance = float(line.get('balance', 0))
-                                price_subtotal = float(line.get('price_subtotal', 0))
+                                # USD tutar - DIREKT ODOO'DAN AL
+                                usd_amount = float(line.get('price_usd_subtotal', 0))
                                 
-                                # balance genellikle USD cinsinden gelir
-                                # Eger balance negatifse (satis), pozitif yap
-                                if balance != 0:
-                                    usd_amount = abs(balance)
-                                else:
-                                    # Fallback: price_subtotal / kur
-                                    usd_amount = price_subtotal / USD_RATE
+                                # Eger USD tutar yoksa atla
+                                if usd_amount == 0:
+                                    skipped_no_usd += 1
+                                    continue
                                 
                                 details.append({
                                     'date': line.get('date', ''),
@@ -461,6 +452,7 @@ jobs:
                         print(f"\n📊 Isleme ozeti:")
                         print(f"   Toplam cekilen: {len(all_data)}")
                         print(f"   Atlanan (display_type): {skipped_display_type}")
+                        print(f"   Atlanan (USD=0): {skipped_no_usd}")
                         print(f"   JSON'a eklenen: {len(details)}")
                         
                         output = {
