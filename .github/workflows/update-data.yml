@@ -310,6 +310,11 @@ jobs:
                         for cat in categories:
                             cat_name = cat.get('complete_name') or cat.get('name')
                             cat_levels = cat_name.split(' / ')
+                            
+                            # "All" root kategorisini atla
+                            if cat_levels[0].lower() == 'all' and len(cat_levels) > 1:
+                                cat_levels = cat_levels[1:]  # İlk "All"ı atla
+                            
                             category_hierarchy[cat['id']] = {
                                 'name': cat_name,
                                 'level1': cat_levels[0] if len(cat_levels) > 0 else '',
