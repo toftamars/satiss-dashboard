@@ -1909,6 +1909,16 @@
                             <h3>📊 Ortalama Sepet</h3>
                             <p id="cityAvgBasket">$0</p>
                         </div>
+                        <div class="summary-card" style="background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%); color: white;">
+                            <h3>👤 En Çok Satış Yapan Temsilci</h3>
+                            <p id="cityTopSalesperson" style="color: white;">-</p>
+                            <small id="cityTopSalespersonAmount" style="opacity: 0.9; font-size: 0.9em;">$0</small>
+                        </div>
+                        <div class="summary-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                            <h3>🏪 En Çok Satış Yapan Mağaza</h3>
+                            <p id="cityTopStore" style="color: white;">-</p>
+                            <small id="cityTopStoreAmount" style="opacity: 0.9; font-size: 0.9em;">$0</small>
+                        </div>
                     </div>
                     
                     <!-- Charts Grid -->
@@ -6872,11 +6882,39 @@
             const uniqueDates = new Set(cityData.map(item => item.date)).size;
             const avgBasket = totalSales / Math.max(uniqueDates, 1);
             
+            // En çok satış yapan temsilci
+            const salespersonData = {};
+            cityData.forEach(item => {
+                const salesperson = item.sales_person || 'Bilinmiyor';
+                if (!salespersonData[salesperson]) salespersonData[salesperson] = 0;
+                salespersonData[salesperson] += parseFloat(item.usd_amount || 0);
+            });
+            const topSalesperson = Object.entries(salespersonData).sort((a, b) => b[1] - a[1])[0];
+            
+            // En çok satış yapan mağaza
+            const storeData = {};
+            cityData.forEach(item => {
+                const store = item.store || 'Bilinmiyor';
+                if (!storeData[store]) storeData[store] = 0;
+                storeData[store] += parseFloat(item.usd_amount || 0);
+            });
+            const topStore = Object.entries(storeData).sort((a, b) => b[1] - a[1])[0];
+            
             // UI güncelle
             document.getElementById('cityTotalSales').textContent = '$' + totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('cityTotalQty').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('cityCustomerCount').textContent = uniqueCustomers;
             document.getElementById('cityAvgBasket').textContent = '$' + avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            
+            // Temsilci ve mağaza
+            if (topSalesperson) {
+                document.getElementById('cityTopSalesperson').textContent = topSalesperson[0];
+                document.getElementById('cityTopSalespersonAmount').textContent = '$' + topSalesperson[1].toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            }
+            if (topStore) {
+                document.getElementById('cityTopStore').textContent = topStore[0];
+                document.getElementById('cityTopStoreAmount').textContent = '$' + topStore[1].toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            }
             
             // Container'ı göster
             document.getElementById('cityAnalysisContainer').style.display = 'block';
