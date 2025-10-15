@@ -159,6 +159,45 @@
             display: none; /* Gizle, checkbox kullanacağız */
         }
         
+        .filter-search-box {
+            position: relative;
+            margin-bottom: 8px;
+        }
+        
+        .filter-search-input {
+            width: 100%;
+            padding: 8px 30px 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.9em;
+            box-sizing: border-box;
+        }
+        
+        .filter-search-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .filter-search-clear {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 1.2em;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: none;
+        }
+        
+        .filter-search-clear:hover {
+            color: #333;
+        }
+        
         .checkbox-container {
             max-height: 200px;
             overflow-y: auto;
@@ -175,6 +214,10 @@
             cursor: pointer;
             border-radius: 5px;
             transition: background 0.2s;
+        }
+        
+        .checkbox-item.hidden {
+            display: none;
         }
         
         .checkbox-item:hover {
@@ -708,46 +751,79 @@
             <div class="filters-grid">
                 <div class="filter-group">
                     <label>Marka <span class="selected-count" id="countBrand"></span></label>
+                    <div class="filter-search-box">
+                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterBrand', this.value)">
+                    </div>
                     <div class="checkbox-container" id="filterBrand"></div>
                 </div>
                 <div class="filter-group">
                     <label>Kategori 1 <span class="selected-count" id="countCategory1"></span></label>
+                    <div class="filter-search-box">
+                        <input type="text" class="filter-search-input" placeholder="🔍 Ara (örn: davul)..." oninput="filterCheckboxes('filterCategory1', this.value)">
+                    </div>
                     <div class="checkbox-container" id="filterCategory1"></div>
                 </div>
                 <div class="filter-group">
                     <label>Kategori 2 <span class="selected-count" id="countCategory2"></span></label>
+                    <div class="filter-search-box">
+                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterCategory2', this.value)">
+                    </div>
                     <div class="checkbox-container" id="filterCategory2"></div>
                 </div>
                 <div class="filter-group">
                     <label>Kategori 3 <span class="selected-count" id="countCategory3"></span></label>
+                    <div class="filter-search-box">
+                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterCategory3', this.value)">
+                    </div>
                     <div class="checkbox-container" id="filterCategory3"></div>
                 </div>
                 <div class="filter-group">
                     <label>Kategori 4 <span class="selected-count" id="countCategory4"></span></label>
+                    <div class="filter-search-box">
+                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterCategory4', this.value)">
+                    </div>
                     <div class="checkbox-container" id="filterCategory4"></div>
                 </div>
                 <div class="filter-group">
                     <label>Satis Temsilcisi <span class="selected-count" id="countSalesPerson"></span></label>
+                    <div class="filter-search-box">
+                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterSalesPerson', this.value)">
+                    </div>
                     <div class="checkbox-container" id="filterSalesPerson"></div>
                 </div>
                 <div class="filter-group">
                     <label>Magaza <span class="selected-count" id="countStore"></span></label>
+                    <div class="filter-search-box">
+                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterStore', this.value)">
+                    </div>
                     <div class="checkbox-container" id="filterStore"></div>
                 </div>
                 <div class="filter-group">
                     <label>Sehir <span class="selected-count" id="countCity"></span></label>
+                    <div class="filter-search-box">
+                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterCity', this.value)">
+                    </div>
                     <div class="checkbox-container" id="filterCity"></div>
                 </div>
                 <div class="filter-group">
                     <label>Yil <span class="selected-count" id="countYear"></span></label>
+                    <div class="filter-search-box">
+                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterYear', this.value)">
+                    </div>
                     <div class="checkbox-container" id="filterYear"></div>
                 </div>
                 <div class="filter-group">
                     <label>Ay <span class="selected-count" id="countMonth"></span></label>
+                    <div class="filter-search-box">
+                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterMonth', this.value)">
+                    </div>
                     <div class="checkbox-container" id="filterMonth"></div>
                 </div>
                 <div class="filter-group">
                     <label>Gun <span class="selected-count" id="countDay"></span></label>
+                    <div class="filter-search-box">
+                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterDay', this.value)">
+                    </div>
                     <div class="checkbox-container" id="filterDay"></div>
                 </div>
             </div>
@@ -1175,6 +1251,28 @@
             
             return Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
         }
+        
+        // Checkbox'ları filtrele (arama kutusu için)
+        function filterCheckboxes(containerId, searchText) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            const searchLower = searchText.toLowerCase().trim();
+            const items = container.querySelectorAll('.checkbox-item');
+            
+            items.forEach(item => {
+                const label = item.querySelector('label');
+                if (!label) return;
+                
+                const text = label.textContent.toLowerCase();
+                
+                if (searchLower === '' || text.includes(searchLower)) {
+                    item.classList.remove('hidden');
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+        }
 
         function applyFilters() {
             const brands = getSelectedValues('filterBrand');
@@ -1269,12 +1367,12 @@
                 debugText += `<strong>Benzersiz Magaza:</strong> ${uniqueStores}<br><br>`;
                 
                 debugText += `<strong>Aktif Filtreler:</strong><br>`;
-                if (store) debugText += `- Magaza: "${store}"<br>`;
-                if (year) debugText += `- Yil: "${year}"<br>`;
-                if (month) debugText += `- Ay: "${month}"<br>`;
-                if (day) debugText += `- Gun: "${day}"<br>`;
-                if (brand) debugText += `- Marka: "${brand}"<br>`;
-                if (cat1) debugText += `- Kategori 1: "${cat1}"<br>`;
+                if (stores.length > 0) debugText += `- Magaza: ${stores.join(', ')}<br>`;
+                if (years.length > 0) debugText += `- Yil: ${years.join(', ')}<br>`;
+                if (months.length > 0) debugText += `- Ay: ${months.join(', ')}<br>`;
+                if (days.length > 0) debugText += `- Gun: ${days.join(', ')}<br>`;
+                if (brands.length > 0) debugText += `- Marka: ${brands.join(', ')}<br>`;
+                if (cat1s.length > 0) debugText += `- Kategori 1: ${cat1s.join(', ')}<br>`;
                 
                 debugText += `<br><strong>En Cok Kayit Olan 5 Gun:</strong><br>`;
                 topDates.forEach(([date, count]) => {
@@ -1764,6 +1862,12 @@
             }
         }
 
+        // Chart.js instances
+        let topCategoryChart = null;
+        let topBrandChart = null;
+        let topProductChart = null;
+        let topSalesPersonChart = null;
+        
         function renderTable() {
             const container = document.getElementById('tableContainer');
             
@@ -1772,45 +1876,242 @@
                 return;
             }
             
-            let html = '<div class="table-wrapper"><table class="data-table"><thead><tr>';
-            html += '<th>Is Ortagi</th>';
-            html += '<th>Urun</th>';
-            html += '<th>Marka</th>';
-            html += '<th>Kategori 1</th>';
-            html += '<th>Kategori 2</th>';
-            html += '<th>Kategori 3</th>';
-            html += '<th>Kategori 4</th>';
-            html += '<th>Satis Tem.</th>';
-            html += '<th>Magaza</th>';
-            html += '<th>Sehir</th>';
-            html += '<th>Miktar</th>';
-            html += '<th>USD Tutar</th>';
-            html += '</tr></thead><tbody>';
+            // Veriyi analiz et
+            const categoryData = {};
+            const brandData = {};
+            const productData = {};
+            const salesPersonData = {};
             
-            filteredData.slice(0, 1000).forEach(item => {
-                html += '<tr>';
-                html += `<td title="${item.partner || '-'}">${item.partner || '-'}</td>`;
-                html += `<td title="${item.product || '-'}">${item.product || '-'}</td>`;
-                html += `<td title="${item.brand || '-'}">${item.brand || '-'}</td>`;
-                html += `<td title="${item.category_1 || '-'}">${item.category_1 || '-'}</td>`;
-                html += `<td title="${item.category_2 || '-'}">${item.category_2 || '-'}</td>`;
-                html += `<td title="${item.category_3 || '-'}">${item.category_3 || '-'}</td>`;
-                html += `<td title="${item.category_4 || '-'}">${item.category_4 || '-'}</td>`;
-                html += `<td title="${item.sales_person || '-'}">${item.sales_person || '-'}</td>`;
-                html += `<td title="${item.store || '-'}">${item.store || '-'}</td>`;
-                html += `<td title="${item.city || '-'}">${item.city || '-'}</td>`;
-                html += `<td class="numeric">${parseFloat(item.quantity || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>`;
-                html += `<td class="numeric">$${parseFloat(item.usd_amount || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>`;
-                html += '</tr>';
+            filteredData.forEach(item => {
+                // Kategori
+                const cat = item.category_1 || 'Bilinmiyor';
+                if (!categoryData[cat]) categoryData[cat] = 0;
+                categoryData[cat] += parseFloat(item.usd_amount || 0);
+                
+                // Marka
+                const brand = item.brand || 'Bilinmiyor';
+                if (!brandData[brand]) brandData[brand] = 0;
+                brandData[brand] += parseFloat(item.usd_amount || 0);
+                
+                // Ürün
+                const product = item.product || 'Bilinmiyor';
+                if (!productData[product]) productData[product] = 0;
+                productData[product] += parseFloat(item.usd_amount || 0);
+                
+                // Satış Temsilcisi
+                const person = item.sales_person || 'Bilinmiyor';
+                if (!salesPersonData[person]) salesPersonData[person] = 0;
+                salesPersonData[person] += parseFloat(item.usd_amount || 0);
             });
             
-            html += '</tbody></table></div>';
+            // Top 10'ları al
+            const topCategories = Object.entries(categoryData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const topBrands = Object.entries(brandData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const topProducts = Object.entries(productData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const topSalesPersons = Object.entries(salesPersonData).sort((a, b) => b[1] - a[1]).slice(0, 10);
             
-            if (filteredData.length > 1000) {
-                html += `<p style="text-align: center; margin-top: 20px; color: #6c757d;">İlk 1000 kayit gosteriliyor (Toplam: ${filteredData.length.toLocaleString('tr-TR')})</p>`;
-            }
+            // HTML oluştur
+            let html = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 30px; margin-top: 30px;">
+                    <div class="chart-container">
+                        <h3 style="text-align: center; margin-bottom: 20px;">🏆 En Başarılı Kategoriler</h3>
+                        <canvas id="topCategoryChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3 style="text-align: center; margin-bottom: 20px;">🏷️ En Çok Satan Markalar</h3>
+                        <canvas id="topBrandChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3 style="text-align: center; margin-bottom: 20px;">⭐ En Çok Satan Ürünler</h3>
+                        <canvas id="topProductChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3 style="text-align: center; margin-bottom: 20px;">👤 En Başarılı Satış Temsilcileri</h3>
+                        <canvas id="topSalesPersonChart"></canvas>
+                    </div>
+                </div>
+            `;
             
             container.innerHTML = html;
+            
+            // Grafikleri render et
+            setTimeout(() => {
+                renderTopCategoryChart(topCategories);
+                renderTopBrandChart(topBrands);
+                renderTopProductChart(topProducts);
+                renderTopSalesPersonChart(topSalesPersons);
+            }, 100);
+        }
+        
+        function renderTopCategoryChart(data) {
+            const ctx = document.getElementById('topCategoryChart');
+            if (!ctx) return;
+            
+            if (topCategoryChart) {
+                topCategoryChart.destroy();
+            }
+            
+            topCategoryChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d[0]),
+                    datasets: [{
+                        label: 'Satış ($)',
+                        data: data.map(d => d[1]),
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: false}
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderTopBrandChart(data) {
+            const ctx = document.getElementById('topBrandChart');
+            if (!ctx) return;
+            
+            if (topBrandChart) {
+                topBrandChart.destroy();
+            }
+            
+            topBrandChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d[0]),
+                    datasets: [{
+                        label: 'Satış ($)',
+                        data: data.map(d => d[1]),
+                        backgroundColor: 'rgba(56, 239, 125, 0.8)',
+                        borderColor: 'rgba(56, 239, 125, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: false}
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderTopProductChart(data) {
+            const ctx = document.getElementById('topProductChart');
+            if (!ctx) return;
+            
+            if (topProductChart) {
+                topProductChart.destroy();
+            }
+            
+            topProductChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d[0].substring(0, 30) + (d[0].length > 30 ? '...' : '')),
+                    datasets: [{
+                        label: 'Satış ($)',
+                        data: data.map(d => d[1]),
+                        backgroundColor: 'rgba(245, 87, 108, 0.8)',
+                        borderColor: 'rgba(245, 87, 108, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: false},
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    return data[context[0].dataIndex][0];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderTopSalesPersonChart(data) {
+            const ctx = document.getElementById('topSalesPersonChart');
+            if (!ctx) return;
+            
+            if (topSalesPersonChart) {
+                topSalesPersonChart.destroy();
+            }
+            
+            topSalesPersonChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d[0]),
+                    datasets: [{
+                        label: 'Satış ($)',
+                        data: data.map(d => d[1]),
+                        backgroundColor: 'rgba(240, 147, 251, 0.8)',
+                        borderColor: 'rgba(240, 147, 251, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: false}
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         // ==================== TAB SYSTEM ====================
