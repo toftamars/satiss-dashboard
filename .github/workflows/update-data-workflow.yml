@@ -13,7 +13,8 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.PAT_TOKEN }}
+        persist-credentials: true
     
     - name: Python kurulumu
       uses: actions/setup-python@v4
@@ -962,9 +963,11 @@ jobs:
         EOF
     
     - name: Değişiklikleri commit et ve yükle
+      env:
+        PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
       run: |
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
         
         # Değişiklikleri kontrol et
         if [[ -f "data.json" ]]; then
@@ -999,13 +1002,16 @@ jobs:
           if [[ -n $(git status -s) ]]; then
             git commit -m "Veriler güncellendi - $(date +'%Y-%m-%d %H:%M')"
             
+            # Push URL'ini PAT ile güncelle
+            git remote set-url origin https://x-access-token:${PAT_TOKEN}@github.com/toftamars/satiss-dashboard.git
+            
             # Push dene, başarısız olursa force push
-            if git push; then
+            if git push origin main; then
               echo "✅ Değişiklikler GitHub'a yüklendi!"
             else
               echo "⚠️ Normal push başarısız, pull yapıp tekrar deneniyor..."
               git pull --rebase origin main
-              git push
+              git push origin main
               echo "✅ Değişiklikler GitHub'a yüklendi (rebase sonrası)!"
             fi
           else
