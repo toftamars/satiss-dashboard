@@ -3559,6 +3559,61 @@
             alert(`✅ ${filteredData.length} kayıt Excel'e aktarıldı!\nDosya: ${filename}`);
         }
         
+        // ==================== TAB SWITCHING ====================
+        function switchTab(tabName) {
+            console.log('🔄 switchTab çağrıldı:', tabName);
+            
+            // Tüm tab içeriklerini gizle
+            const allTabContents = document.querySelectorAll('.tab-content');
+            allTabContents.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Tüm tab butonlarını pasif yap
+            const allTabs = document.querySelectorAll('.tab');
+            allTabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Seçilen tab'ı aktif et
+            const selectedTab = document.getElementById(tabName + 'Tab');
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+            }
+            
+            // İlgili tab butonunu aktif et
+            const tabButtons = {
+                'sales': 0,
+                'targets': 1,
+                'customers': 2,
+                'salesperson': 3,
+                'city': 4,
+                'stock': 5,
+                'time': 6,
+                'product': 7
+            };
+            if (tabButtons[tabName] !== undefined) {
+                allTabs[tabButtons[tabName]].classList.add('active');
+            }
+            
+            // Şehir sekmesine geçildiğinde şehir listesini doldur
+            if (tabName === 'city') {
+                console.log('🌍 Şehir analizi sekmesi açılıyor...');
+                console.log('📊 allData durumu:', allData ? `${allData.length} kayıt` : 'Henüz yüklenmedi');
+                if (allData && allData.length > 0) {
+                    populateCitySelect();
+                } else {
+                    console.warn('⚠️ Veriler henüz yüklenmedi, şehir listesi doldurulamıyor');
+                    setTimeout(() => {
+                        if (allData && allData.length > 0) {
+                            console.log('🔄 Veri yüklendi, şehir listesi yeniden dolduruluyor...');
+                            populateCitySelect();
+                        }
+                    }, 2000);
+                }
+            }
+        }
+        
         // ==================== VOICE SEARCH ====================
         let recognition = null;
         let isListening = false;
