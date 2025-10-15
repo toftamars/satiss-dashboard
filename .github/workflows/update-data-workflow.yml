@@ -462,7 +462,7 @@ jobs:
                                             db, uid_xmlrpc, password,
                                             'product.product', 'search_read',
                                             [[('id', 'in', batch_ids)]],
-                                            {'fields': ['id', 'categ_id', 'product_brand_id', 'x_studio_brand', 'product_tmpl_id']}
+                                            {'fields': ['id', 'categ_id', 'product_brand_id', 'product_tmpl_id']}
                                         )
                                         products.extend(batch_products)
                                     print(f"✅ Toplam {len(products)} ürün çekildi!")
@@ -515,12 +515,10 @@ jobs:
                                         else:
                                             product_categ_map[prod_id] = 'Diğer'
                                         
-                                        # Marka (birden fazla alan deniyoruz)
+                                        # Marka
                                         brand = None
                                         if prod.get('product_brand_id') and isinstance(prod.get('product_brand_id'), list):
                                             brand = prod['product_brand_id'][1]
-                                        elif prod.get('x_studio_brand'):
-                                            brand = prod['x_studio_brand']
                                         
                                         product_brand_map[prod_id] = brand if brand else 'Bilinmeyen'
                                     
@@ -550,7 +548,7 @@ jobs:
                                             db, uid_xmlrpc, password,
                                             'res.partner', 'search_read',
                                             [[('id', 'in', batch_ids)]],
-                                            {'fields': ['id', 'name', 'city', 'state_id', 'tag_ids']}
+                                            {'fields': ['id', 'name', 'city', 'state_id']}
                                         )
                                         partners.extend(batch_partners)
                                     print(f"✅ Toplam {len(partners)} partner çekildi!")
@@ -592,47 +590,10 @@ jobs:
                                             
                                             partner_city_map[partner_id] = found_city if found_city else 'Bilinmeyen'
                                     
-                                    # Partner etiketlerini çek (tag_ids -> res.partner.category)
-                                    partner_tags_map = {}
-                                    all_tag_ids = []
-                                    for p in partners:
-                                        tag_ids = p.get('tag_ids', [])
-                                        if tag_ids and isinstance(tag_ids, list):
-                                            all_tag_ids.extend(tag_ids)
-                                    
-                                    # Etiket isimlerini çek
-                                    tag_names_map = {}
-                                    if all_tag_ids and models:
-                                        unique_tag_ids = list(set(all_tag_ids))
-                                        print(f"🏷️ {len(unique_tag_ids)} etiket ismi çekiliyor...")
-                                        try:
-                                            tags_data = models.execute_kw(
-                                                db, uid_xmlrpc, password,
-                                                'res.partner.category', 'search_read',
-                                                [[('id', 'in', unique_tag_ids)]],
-                                                {'fields': ['id', 'name']}
-                                            )
-                                            for tag in tags_data:
-                                                tag_names_map[tag['id']] = tag.get('name', '')
-                                        except Exception as e:
-                                            print(f"⚠️ Etiket isimleri çekilemedi: {e}")
-                                    
-                                    # Partner'lara etiket isimlerini ata
-                                    for p in partners:
-                                        partner_id = p['id']
-                                        tag_ids = p.get('tag_ids', [])
-                                        if tag_ids and isinstance(tag_ids, list):
-                                            tag_names = [tag_names_map.get(tid, f'Tag_{tid}') for tid in tag_ids if tid in tag_names_map]
-                                            partner_tags_map[partner_id] = tag_names
-                                        else:
-                                            partner_tags_map[partner_id] = []
-                                    
                                     # İstatistik
                                     with_city = sum(1 for c in partner_city_map.values() if c != 'Bilinmeyen')
-                                    with_tags = sum(1 for tags in partner_tags_map.values() if len(tags) > 0)
                                     print(f"✅ {len(partner_city_map)} partner işlendi!")
                                     print(f"   📍 Şehir bilgisi olan: {with_city}")
-                                    print(f"   🏷️ Etiket olan: {with_tags}")
                                     print(f"   ❓ Bilinmeyen şehir: {len(partner_city_map) - with_city}")
                                     
                                 except Exception as e:
@@ -922,13 +883,61 @@ jobs:
                             # Detayları processed_data'ya ekle
                             processed_data['details'] = details
                             
-                            # JSON dosyası oluştur
-                            print("\n5️⃣ JSON dosyası oluşturuluyor...")
+                            # JSON dosyaları oluştur (YILLARA BÖLÜNMÜŞ + GZIP)
+                            print("\n5️⃣ JSON dosyaları oluşturuluyor (yıllara bölünmüş + sıkıştırılmış)...")
                             
-                            with open('data.json', 'w', encoding='utf-8') as f:
-                                json.dump(processed_data, f, ensure_ascii=False, indent=2)
+                            import gzip
+                            from collections import defaultdict
                             
-                            print("✅ data.json dosyası oluşturuldu!")
+                            # Verileri yıllara göre ayır
+                            data_by_year = defaultdict(list)
+                            for record in details:
+                                year = record['date'][:4] if record.get('date') else '2025'
+                                data_by_year[year].append(record)
+                            
+                            print(f"📊 Veriler {len(data_by_year)} yıla bölündü:")
+                            for year in sorted(data_by_year.keys()):
+                                print(f"   - {year}: {len(data_by_year[year])} kayıt")
+                            
+                            # Her yıl için ayrı sıkıştırılmış dosya oluştur
+                            created_files = []
+                            for year in sorted(data_by_year.keys()):
+                                year_data = {
+                                    'year': year,
+                                    'categories': processed_data['categories'],
+                                    'products': processed_data['products'],
+                                    'partners': processed_data['partners'],
+                                    'partner_details': processed_data['partner_details'],
+                                    'sales_persons': processed_data['sales_persons'],
+                                    'stores': processed_data['stores'],
+                                    'years': processed_data['years'],
+                                    'months': processed_data['months'],
+                                    'details': data_by_year[year]
+                                }
+                                
+                                filename = f'data-{year}.json.gz'
+                                with gzip.open(filename, 'wt', encoding='utf-8') as f:
+                                    json.dump(year_data, f, ensure_ascii=False)
+                                
+                                # Dosya boyutunu kontrol et
+                                import os
+                                file_size_mb = os.path.getsize(filename) / (1024 * 1024)
+                                print(f"   ✅ {filename}: {file_size_mb:.2f} MB")
+                                created_files.append(filename)
+                            
+                            # Metadata dosyası oluştur (hangi yıllar var?)
+                            metadata = {
+                                'years': sorted(data_by_year.keys()),
+                                'total_records': len(details),
+                                'files': created_files,
+                                'last_update': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                            }
+                            
+                            with open('data-metadata.json', 'w', encoding='utf-8') as f:
+                                json.dump(metadata, f, ensure_ascii=False, indent=2)
+                            
+                            print(f"✅ {len(created_files)} dosya oluşturuldu!")
+                            print(f"✅ data-metadata.json oluşturuldu!")
                             
                             print("\n" + "=" * 60)
                             print("🎉 TÜM VERİLER BAŞARIYLA ÇEKİLDİ VE İŞLENDİ!")
@@ -960,35 +969,24 @@ jobs:
         
         EOF
     
-    - name: Akıllı Dosya Boyutu Yönetimi
+    - name: Dosya Boyutlarını Kontrol Et
       run: |
-        if [[ -f "data.json" ]]; then
-          FILE_SIZE=$(stat -f%z data.json 2>/dev/null || stat -c%s data.json 2>/dev/null)
-          FILE_SIZE_MB=$((FILE_SIZE / 1024 / 1024))
-          
-          echo "📊 data.json boyutu: ${FILE_SIZE_MB} MB"
-          
-          # Kayıt sayısını kontrol et
-          RECORD_COUNT=$(python3 -c "import json; data=json.load(open('data.json')); print(len(data.get('details', [])))")
-          echo "📋 Toplam kayıt sayısı: ${RECORD_COUNT}"
-          
-          # Strateji belirleme
-          if [ $FILE_SIZE_MB -lt 80 ]; then
-            echo "✅ Dosya boyutu OK (${FILE_SIZE_MB} MB < 80 MB)"
-            echo "📌 Strateji: Tek dosya, sıkıştırma yok"
-          elif [ $FILE_SIZE_MB -lt 100 ]; then
-            echo "⚠️ Dosya boyutu kritik seviyede (${FILE_SIZE_MB} MB)"
-            echo "📌 Strateji: Tek dosya, sıkıştırma yok (henüz)"
-          elif [ $RECORD_COUNT -lt 500000 ]; then
-            echo "🔴 Dosya boyutu limit aşıyor (${FILE_SIZE_MB} MB > 100 MB)"
-            echo "📌 Strateji: GZIP sıkıştırma aktif edilecek"
-            echo "⚠️ Dashboard'da decompression gerekli!"
-          else
-            echo "🔴 Çok fazla kayıt (${RECORD_COUNT})"
-            echo "📌 Strateji: Yıllara bölme + sıkıştırma gerekli"
-            echo "⚠️ Pagination sistemi aktif edilmeli!"
+        echo "📊 Oluşturulan dosyalar:"
+        ls -lh data-*.json.gz data-metadata.json 2>/dev/null || echo "⚠️ Dosyalar bulunamadı"
+        
+        echo ""
+        echo "📊 Dosya boyutları:"
+        for file in data-*.json.gz; do
+          if [ -f "$file" ]; then
+            SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
+            SIZE_MB=$((SIZE / 1024 / 1024))
+            echo "   - $file: ${SIZE_MB} MB"
+            
+            if [ $SIZE_MB -gt 100 ]; then
+              echo "   ⚠️ UYARI: $file 100 MB'dan büyük!"
+            fi
           fi
-        fi
+        done
     
     - name: Değişiklikleri commit et ve yükle
       env:
@@ -997,36 +995,31 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         
-        # Değişiklikleri kontrol et
+        # Eski data.json varsa sil (artık kullanmıyoruz)
         if [[ -f "data.json" ]]; then
-          echo "✅ data.json dosyası bulundu"
-          
-          # data.json'u yedekle
-          echo "💾 data.json yedekleniyor..."
-          cp data.json data.json.backup
+          echo "🗑️ Eski data.json siliniyor..."
+          git rm -f data.json 2>/dev/null || rm -f data.json
+        fi
+        
+        # Yeni dosyaları kontrol et
+        if ls data-*.json.gz 1> /dev/null 2>&1; then
+          echo "✅ Yıllara bölünmüş dosyalar bulundu"
           
           # Önce remote değişiklikleri çek
           echo "🔄 Remote değişiklikler kontrol ediliyor..."
           git fetch origin
           
-          # Rebase dene, olmassa merge yap
+          # Pull yap
           if git pull --rebase origin main; then
             echo "✅ Rebase başarılı"
           elif git pull origin main; then
             echo "✅ Merge başarılı"
           else
-            echo "⚠️ Pull başarısız, yedekten geri yükleniyor..."
-            git reset --hard origin/main
-            mv data.json.backup data.json
+            echo "⚠️ Pull başarısız, devam ediliyor..."
           fi
           
-          # Yedek varsa geri yükle
-          if [[ -f "data.json.backup" ]]; then
-            mv data.json.backup data.json
-          fi
-          
-          # Add data.json
-          git add data.json
+          # Tüm data dosyalarını ekle
+          git add data-*.json.gz data-metadata.json
           
           if [[ -n $(git status -s) ]]; then
             git commit -m "Veriler güncellendi - $(date +'%Y-%m-%d %H:%M')"
