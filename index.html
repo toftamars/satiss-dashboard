@@ -1447,32 +1447,114 @@
             
             console.log(`✅ AI Agent Sonucu: ${filteredData.length} kayıt bulundu`);
             
-            // Kullanıcıya AI'nın ne anladığını göster
-            showAIInterpretation(aiAnalysis, filteredData.length);
+            // Gelişmiş soru tipleri için özel analiz
+            if (aiAnalysis.queryType !== 'basic') {
+                performAdvancedAnalysis(aiAnalysis, filteredData);
+            } else {
+                // Kullanıcıya AI'nın ne anladığını göster
+                showAIInterpretation(aiAnalysis, filteredData.length);
+            }
             
             updateSummary();
             renderTable();
         }
         
-        // 🧠 AI Analiz Motoru
+        // 🧠 AI Analiz Motoru - GELİŞMİŞ VERSİYON
         function analyzeQueryWithAI(query) {
             const lowerQuery = query.toLowerCase();
             const analysis = {
-                intent: 'search', // search, filter, analyze, compare
+                intent: 'search', // search, filter, analyze, compare, recommendation
+                queryType: 'basic', // basic, person_analysis, city_analysis, product_recommendation
                 entities: {
                     stores: [],
                     brands: [],
                     categories: [],
                     cities: [],
                     salesPersons: [],
+                    products: [],
                     dateRange: null,
                     years: [],
                     months: [],
                     keywords: []
                 },
+                question: {
+                    type: null, // "who_sold_what", "city_bought_what", "where_to_sell", "best_for"
+                    subject: null, // Kişi adı, şehir adı, ürün adı
+                    object: null, // Ürün, marka, kategori
+                    action: null // "sattı", "aldı", "satmalı", "konumlandırmalı"
+                },
                 confidence: 0,
-                interpretation: ''
+                interpretation: '',
+                needsGPT: false // Karmaşık soru mu?
             };
+            
+            // ==================== GELİŞMİŞ SORU TİPİ TESPİTİ ====================
+            
+            // 1. "X en çok hangi Y sattı/aldı?" pattern
+            const personSoldPattern = /(.+?)\s+(en\s+çok|en\s+fazla)?\s*hangi\s+(ürün|marka|kategori|model).*?(sattı|satmış|satıyor)/i;
+            const personSoldMatch = query.match(personSoldPattern);
+            
+            if (personSoldMatch) {
+                analysis.queryType = 'person_analysis';
+                analysis.question.type = 'who_sold_what';
+                analysis.question.subject = personSoldMatch[1].trim();
+                analysis.question.object = personSoldMatch[3]; // ürün, marka, kategori
+                analysis.question.action = 'sattı';
+                analysis.intent = 'analyze';
+                console.log('🎯 Tespit: Kişi analizi -', analysis.question.subject, 'hangi', analysis.question.object, 'sattı?');
+            }
+            
+            // 2. "X hangi Y aldı?" pattern (Şehir/Müşteri bazlı)
+            const cityBoughtPattern = /(.+?)\s+(en\s+çok|en\s+fazla)?\s*hangi\s+(marka|model|kategori|ürün).*?(aldı|almış|alıyor|satın\s+aldı)/i;
+            const cityBoughtMatch = query.match(cityBoughtPattern);
+            
+            if (cityBoughtMatch) {
+                analysis.queryType = 'city_analysis';
+                analysis.question.type = 'city_bought_what';
+                analysis.question.subject = cityBoughtMatch[1].trim();
+                analysis.question.object = cityBoughtMatch[3];
+                analysis.question.action = 'aldı';
+                analysis.intent = 'analyze';
+                console.log('🎯 Tespit: Şehir/Müşteri analizi -', analysis.question.subject, 'hangi', analysis.question.object, 'aldı?');
+            }
+            
+            // 3. "Hangi X'de Y daha çok satıyor/satar?" pattern (Öneri)
+            const whereToSellPattern = /hangi\s+(mağaza|şehir|yer).*?(satmalı|satmalıyım|satmak|konumlandır|daha\s+çok\s+sat)/i;
+            const whereToSellMatch = query.match(whereToSellPattern);
+            
+            if (whereToSellMatch) {
+                analysis.queryType = 'product_recommendation';
+                analysis.question.type = 'where_to_sell';
+                analysis.question.action = 'satmalı';
+                analysis.intent = 'recommendation';
+                analysis.needsGPT = true; // Öneri için GPT kullanılabilir
+                console.log('🎯 Tespit: Ürün konumlandırma önerisi');
+            }
+            
+            // 4. "X için en iyi Y nedir?" pattern
+            const bestForPattern = /(.+?)\s+için\s+en\s+iyi\s+(mağaza|şehir|yer|kategori)/i;
+            const bestForMatch = query.match(bestForPattern);
+            
+            if (bestForMatch) {
+                analysis.queryType = 'product_recommendation';
+                analysis.question.type = 'best_for';
+                analysis.question.subject = bestForMatch[1].trim();
+                analysis.question.object = bestForMatch[2];
+                analysis.intent = 'recommendation';
+                console.log('🎯 Tespit: En iyi yer önerisi -', analysis.question.subject, 'için');
+            }
+            
+            // 5. "Hangi X Y'de popüler/çok satıyor?" pattern
+            const popularWherePattern = /hangi\s+(ürün|marka|kategori).*?(şehir|mağaza|yer).*?(popüler|çok\s+sat|başarılı)/i;
+            const popularWhereMatch = query.match(popularWherePattern);
+            
+            if (popularWhereMatch) {
+                analysis.queryType = 'city_analysis';
+                analysis.question.type = 'what_popular_where';
+                analysis.question.object = popularWhereMatch[1];
+                analysis.intent = 'analyze';
+                console.log('🎯 Tespit: Popülerlik analizi');
+            }
             
             // 1. MAĞAZA TESPİTİ (Fuzzy matching ile)
             const allStores = [...new Set(allData.map(item => item.store).filter(Boolean))];
@@ -1607,13 +1689,44 @@
                 }
             });
             
-            // 6. SATIŞ TEMSİLCİSİ TESPİTİ
+            // 6. SATIŞ TEMSİLCİSİ TESPİTİ (Fuzzy matching ile)
             const allSalesPersons = [...new Set(allData.map(item => item.sales_person).filter(Boolean))];
             allSalesPersons.forEach(person => {
-                if (lowerQuery.includes(person.toLowerCase())) {
+                const personLower = person.toLowerCase();
+                // Tam eşleşme veya kısmi eşleşme (ad veya soyad)
+                const queryWords = lowerQuery.split(/\s+/);
+                const personWords = personLower.split(/\s+/);
+                
+                const matches = queryWords.some(qw => 
+                    personWords.some(pw => pw.includes(qw) || qw.includes(pw))
+                );
+                
+                if (matches || lowerQuery.includes(personLower)) {
                     analysis.entities.salesPersons.push(person);
                 }
             });
+            
+            // 6.5. ÜRÜN TESPİTİ (Yeni ürün önerileri için)
+            const allProducts = [...new Set(allData.map(item => item.product).filter(Boolean))];
+            
+            // Ürün anahtar kelimeleri
+            const productKeywords = {
+                'gitar': ['gitar', 'guitar', 'elektro gitar', 'akustik gitar'],
+                'piyano': ['piyano', 'piano', 'dijital piyano', 'akustik piyano'],
+                'davul': ['davul', 'drum', 'bateri', 'davul seti'],
+                'keman': ['keman', 'violin'],
+                'saz': ['saz', 'bağlama'],
+                'amfi': ['amfi', 'amplifier', 'amplifikatör']
+            };
+            
+            for (const [key, keywords] of Object.entries(productKeywords)) {
+                if (keywords.some(kw => lowerQuery.includes(kw))) {
+                    const matchingProducts = allProducts.filter(p => 
+                        p.toLowerCase().includes(key)
+                    );
+                    analysis.entities.products.push(...matchingProducts.slice(0, 5)); // İlk 5 ürün
+                }
+            }
             
             // 7. GENEL ANAHTAR KELİMELER
             const stopWords = ['ve', 'veya', 'ile', 'için', 'son', 'gün', 'gun', 'ay', 'yıl', 'yil', 
@@ -1836,6 +1949,183 @@
             if (analysis.entities.cities.length > 0) html += `🌍 Şehir: ${analysis.entities.cities.join(', ')}<br>`;
             if (analysis.entities.salesPersons.length > 0) html += `👤 Satış Tem.: ${analysis.entities.salesPersons.join(', ')}<br>`;
             if (analysis.entities.keywords.length > 0) html += `🔑 Anahtar Kelimeler: ${analysis.entities.keywords.join(', ')}<br>`;
+            
+            debugInfo.innerHTML = html;
+            debugPanel.style.display = 'block';
+        }
+        
+        // 🎯 GELİŞMİŞ ANALİZ (Kişi, Şehir, Öneri Sorguları)
+        function performAdvancedAnalysis(analysis, data) {
+            console.log('🎯 Gelişmiş analiz başlatılıyor:', analysis.queryType);
+            
+            const debugPanel = document.getElementById('debugPanel');
+            const debugInfo = document.getElementById('debugInfo');
+            
+            let html = `<div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 10px;">`;
+            html += `<h3 style="margin: 0 0 15px 0; color: white;">🤖 Gelişmiş AI Analizi</h3>`;
+            
+            if (analysis.queryType === 'person_analysis') {
+                // "Mustafa Kılıç en çok hangi ürünü sattı?"
+                const personName = analysis.question.subject;
+                const objectType = analysis.question.object; // ürün, marka, kategori
+                
+                // Kişinin verilerini filtrele
+                const personData = data.filter(item => 
+                    item.sales_person && item.sales_person.toLowerCase().includes(personName.toLowerCase())
+                );
+                
+                if (personData.length === 0) {
+                    html += `<p>⚠️ "${personName}" adlı satış temsilcisi bulunamadı.</p>`;
+                } else {
+                    // Analiz yap
+                    const results = {};
+                    personData.forEach(item => {
+                        let key;
+                        if (objectType === 'ürün') key = item.product;
+                        else if (objectType === 'marka') key = item.brand;
+                        else if (objectType === 'kategori') key = item.category_1;
+                        else if (objectType === 'model') key = item.product;
+                        
+                        if (key) {
+                            if (!results[key]) results[key] = {sales: 0, count: 0};
+                            results[key].sales += parseFloat(item.usd_amount || 0);
+                            results[key].count += 1;
+                        }
+                    });
+                    
+                    // Sırala
+                    const sorted = Object.entries(results).sort((a, b) => b[1].sales - a[1].sales);
+                    const top5 = sorted.slice(0, 5);
+                    
+                    html += `<p style="font-size: 1.1em; margin-bottom: 15px;">📊 <strong>${personName}</strong> analizi:</p>`;
+                    html += `<p>💰 Toplam Satış: <strong>$${personData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</strong></p>`;
+                    html += `<p>📦 Toplam İşlem: <strong>${personData.length}</strong></p>`;
+                    html += `<hr style="border: 1px solid rgba(255,255,255,0.3); margin: 15px 0;">`;
+                    html += `<p style="font-size: 1.05em; margin-bottom: 10px;">🏆 En Çok Sattığı ${objectType.charAt(0).toUpperCase() + objectType.slice(1)}ler:</p>`;
+                    
+                    top5.forEach((item, index) => {
+                        html += `<div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 5px; margin: 8px 0;">`;
+                        html += `<strong>${index + 1}. ${item[0]}</strong><br>`;
+                        html += `💰 Satış: $${item[1].sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} | 📦 Adet: ${item[1].count}`;
+                        html += `</div>`;
+                    });
+                    
+                    // Öneri
+                    html += `<hr style="border: 1px solid rgba(255,255,255,0.3); margin: 15px 0;">`;
+                    html += `<p style="font-size: 1em;">💡 <strong>Öneri:</strong> ${personName}, <strong>${top5[0][0]}</strong> konusunda uzman. Bu ${objectType}'e odaklanmalı ve stok takibi yapmalı.</p>`;
+                }
+                
+            } else if (analysis.queryType === 'city_analysis') {
+                // "İstanbul en çok hangi marka piyano aldı?"
+                const cityName = analysis.question.subject;
+                const objectType = analysis.question.object; // marka, model, kategori
+                
+                // Şehir verilerini filtrele
+                let cityData = data.filter(item => 
+                    item.city && item.city.toLowerCase().includes(cityName.toLowerCase())
+                );
+                
+                // Eğer partner adı ise
+                if (cityData.length === 0) {
+                    cityData = data.filter(item => 
+                        item.partner && item.partner.toLowerCase().includes(cityName.toLowerCase())
+                    );
+                }
+                
+                if (cityData.length === 0) {
+                    html += `<p>⚠️ "${cityName}" için veri bulunamadı.</p>`;
+                } else {
+                    // Analiz yap
+                    const results = {};
+                    cityData.forEach(item => {
+                        let key;
+                        if (objectType === 'marka') key = item.brand;
+                        else if (objectType === 'model') key = item.product;
+                        else if (objectType === 'kategori') key = item.category_1;
+                        else if (objectType === 'ürün') key = item.product;
+                        
+                        if (key) {
+                            if (!results[key]) results[key] = {sales: 0, count: 0};
+                            results[key].sales += parseFloat(item.usd_amount || 0);
+                            results[key].count += 1;
+                        }
+                    });
+                    
+                    // Sırala
+                    const sorted = Object.entries(results).sort((a, b) => b[1].sales - a[1].sales);
+                    const top5 = sorted.slice(0, 5);
+                    
+                    html += `<p style="font-size: 1.1em; margin-bottom: 15px;">📊 <strong>${cityName}</strong> analizi:</p>`;
+                    html += `<p>💰 Toplam Satış: <strong>$${cityData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</strong></p>`;
+                    html += `<p>📦 Toplam İşlem: <strong>${cityData.length}</strong></p>`;
+                    html += `<hr style="border: 1px solid rgba(255,255,255,0.3); margin: 15px 0;">`;
+                    html += `<p style="font-size: 1.05em; margin-bottom: 10px;">🏆 En Çok Tercih Edilen ${objectType.charAt(0).toUpperCase() + objectType.slice(1)}ler:</p>`;
+                    
+                    top5.forEach((item, index) => {
+                        html += `<div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 5px; margin: 8px 0;">`;
+                        html += `<strong>${index + 1}. ${item[0]}</strong><br>`;
+                        html += `💰 Satış: $${item[1].sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} | 📦 Adet: ${item[1].count}`;
+                        html += `</div>`;
+                    });
+                    
+                    // Öneri
+                    html += `<hr style="border: 1px solid rgba(255,255,255,0.3); margin: 15px 0;">`;
+                    html += `<p style="font-size: 1em;">💡 <strong>Öneri:</strong> ${cityName}'da <strong>${top5[0][0]}</strong> en popüler. Bu ${objectType} için stok artırılmalı.</p>`;
+                }
+                
+            } else if (analysis.queryType === 'product_recommendation') {
+                // "Hangi mağazada bu ürünü satmalıyım?"
+                html += `<p style="font-size: 1.1em; margin-bottom: 15px;">🎯 Ürün Konumlandırma Önerisi</p>`;
+                
+                // Kategori veya marka bazlı analiz
+                const categoryData = {};
+                const storeData = {};
+                
+                data.forEach(item => {
+                    const store = item.store || 'Bilinmiyor';
+                    const category = item.category_1 || 'Bilinmiyor';
+                    
+                    if (!storeData[store]) storeData[store] = {sales: 0, count: 0, categories: {}};
+                    storeData[store].sales += parseFloat(item.usd_amount || 0);
+                    storeData[store].count += 1;
+                    
+                    if (!storeData[store].categories[category]) storeData[store].categories[category] = 0;
+                    storeData[store].categories[category] += parseFloat(item.usd_amount || 0);
+                });
+                
+                // En başarılı mağazaları bul
+                const sortedStores = Object.entries(storeData).sort((a, b) => b[1].sales - a[1].sales);
+                const top3Stores = sortedStores.slice(0, 3);
+                
+                html += `<p>📊 Mağaza Performans Analizi:</p>`;
+                
+                top3Stores.forEach((store, index) => {
+                    const storeName = store[0];
+                    const storeStats = store[1];
+                    const topCategory = Object.entries(storeStats.categories).sort((a, b) => b[1] - a[1])[0];
+                    
+                    html += `<div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 5px; margin: 10px 0;">`;
+                    html += `<strong>${index + 1}. ${storeName}</strong><br>`;
+                    html += `💰 Toplam Satış: $${storeStats.sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}<br>`;
+                    html += `📦 İşlem Sayısı: ${storeStats.count}<br>`;
+                    html += `🏆 En Güçlü Kategori: ${topCategory[0]}`;
+                    html += `</div>`;
+                });
+                
+                // Öneri
+                html += `<hr style="border: 1px solid rgba(255,255,255,0.3); margin: 15px 0;">`;
+                html += `<p style="font-size: 1em;">💡 <strong>Öneri:</strong></p>`;
+                html += `<p>• <strong>${top3Stores[0][0]}</strong> en yüksek satış performansına sahip.</p>`;
+                html += `<p>• Yeni ürün için bu mağazayı tercih edin.</p>`;
+                html += `<p>• Özellikle <strong>${Object.entries(top3Stores[0][1].categories).sort((a, b) => b[1] - a[1])[0][0]}</strong> kategorisinde güçlü.</p>`;
+                
+                if (analysis.needsGPT) {
+                    html += `<hr style="border: 1px solid rgba(255,255,255,0.3); margin: 15px 0;">`;
+                    html += `<p style="font-size: 0.9em; opacity: 0.9;">🤖 <em>Daha detaylı analiz için GPT-4 kullanılabilir. (İsteğe bağlı)</em></p>`;
+                }
+            }
+            
+            html += `</div>`;
             
             debugInfo.innerHTML = html;
             debugPanel.style.display = 'block';
@@ -3613,6 +3903,180 @@
         document.getElementById('monthlyTarget').addEventListener('change', (e) => {
             localStorage.setItem('monthlyTarget', e.target.value);
         });
+        
+        // ==================== GPT BACKEND ENTEGRASYONU ====================
+        
+        // Maliyet takibi için localStorage
+        let queryCostTracker = {
+            totalQueries: parseInt(localStorage.getItem('gpt_total_queries') || '0'),
+            totalCost: parseFloat(localStorage.getItem('gpt_total_cost') || '0'),
+            monthlyQueries: parseInt(localStorage.getItem('gpt_monthly_queries') || '0'),
+            monthlyCost: parseFloat(localStorage.getItem('gpt_monthly_cost') || '0'),
+            lastResetDate: localStorage.getItem('gpt_last_reset') || new Date().toISOString().slice(0, 7)
+        };
+        
+        // Aylık sıfırlama kontrolü
+        function checkMonthlyReset() {
+            const currentMonth = new Date().toISOString().slice(0, 7);
+            if (queryCostTracker.lastResetDate !== currentMonth) {
+                queryCostTracker.monthlyQueries = 0;
+                queryCostTracker.monthlyCost = 0;
+                queryCostTracker.lastResetDate = currentMonth;
+                localStorage.setItem('gpt_monthly_queries', '0');
+                localStorage.setItem('gpt_monthly_cost', '0');
+                localStorage.setItem('gpt_last_reset', currentMonth);
+            }
+        }
+        
+        // Maliyet güncelleme
+        function updateQueryCost(model, inputTokens, outputTokens) {
+            checkMonthlyReset();
+            
+            let cost = 0;
+            if (model === 'gpt-3.5-turbo') {
+                cost = (inputTokens / 1000 * 0.0005) + (outputTokens / 1000 * 0.0015);
+            } else if (model === 'gpt-4-turbo') {
+                cost = (inputTokens / 1000 * 0.01) + (outputTokens / 1000 * 0.03);
+            } else if (model === 'gpt-4o-mini') {
+                cost = (inputTokens / 1000 * 0.00015) + (outputTokens / 1000 * 0.0006);
+            }
+            
+            queryCostTracker.totalQueries++;
+            queryCostTracker.totalCost += cost;
+            queryCostTracker.monthlyQueries++;
+            queryCostTracker.monthlyCost += cost;
+            
+            localStorage.setItem('gpt_total_queries', queryCostTracker.totalQueries.toString());
+            localStorage.setItem('gpt_total_cost', queryCostTracker.totalCost.toFixed(4));
+            localStorage.setItem('gpt_monthly_queries', queryCostTracker.monthlyQueries.toString());
+            localStorage.setItem('gpt_monthly_cost', queryCostTracker.monthlyCost.toFixed(4));
+            
+            console.log(`💰 GPT Maliyet: $${cost.toFixed(4)} | Aylık Toplam: $${queryCostTracker.monthlyCost.toFixed(2)} (${queryCostTracker.monthlyQueries} sorgu)`);
+            
+            return cost;
+        }
+        
+        // GPT API çağrısı (Backend'e gönderilecek)
+        async function callGPTAPI(query, context) {
+            // ÖNEMLİ: Bu fonksiyon şu anda placeholder. 
+            // Gerçek kullanım için backend API endpoint'i gerekli.
+            
+            console.log('🤖 GPT API çağrısı hazırlanıyor...');
+            console.log('📝 Sorgu:', query);
+            console.log('📊 Context boyutu:', JSON.stringify(context).length, 'karakter');
+            
+            // Backend endpoint (Vercel/Netlify Functions)
+            const BACKEND_URL = 'YOUR_BACKEND_URL_HERE'; // Buraya backend URL'i eklenecek
+            
+            try {
+                // Backend'e istek gönder
+                const response = await fetch(BACKEND_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        context: context,
+                        model: 'gpt-3.5-turbo' // veya 'gpt-4-turbo'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Backend error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Maliyet takibi
+                if (data.usage) {
+                    updateQueryCost(
+                        data.model || 'gpt-3.5-turbo',
+                        data.usage.prompt_tokens,
+                        data.usage.completion_tokens
+                    );
+                }
+                
+                return {
+                    success: true,
+                    answer: data.answer,
+                    model: data.model,
+                    cost: data.cost
+                };
+                
+            } catch (error) {
+                console.error('❌ GPT API Hatası:', error);
+                return {
+                    success: false,
+                    error: error.message
+                };
+            }
+        }
+        
+        // Maliyet istatistiklerini göster
+        function showCostStats() {
+            checkMonthlyReset();
+            
+            const statsHTML = `
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 10px; margin: 10px 0;">
+                    <h4 style="margin: 0 0 10px 0;">💰 GPT Maliyet İstatistikleri</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <strong>Bu Ay:</strong><br>
+                            ${queryCostTracker.monthlyQueries} sorgu<br>
+                            $${queryCostTracker.monthlyCost.toFixed(2)} (~${(queryCostTracker.monthlyCost * 30).toFixed(0)} TL)
+                        </div>
+                        <div>
+                            <strong>Toplam:</strong><br>
+                            ${queryCostTracker.totalQueries} sorgu<br>
+                            $${queryCostTracker.totalCost.toFixed(2)}
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 0.9em; opacity: 0.9;">
+                        📊 Ortalama: $${(queryCostTracker.monthlyCost / Math.max(queryCostTracker.monthlyQueries, 1)).toFixed(4)}/sorgu
+                    </div>
+                </div>
+            `;
+            
+            // Stats'ı debug panel'e ekle
+            const debugPanel = document.getElementById('debugPanel');
+            if (debugPanel && debugPanel.style.display === 'block') {
+                const debugInfo = document.getElementById('debugInfo');
+                debugInfo.innerHTML += statsHTML;
+            }
+        }
+        
+        // Konsol komutu: Maliyet istatistiklerini göster
+        window.showGPTStats = function() {
+            checkMonthlyReset();
+            console.log('💰 GPT Maliyet İstatistikleri:');
+            console.log('Bu Ay:', queryCostTracker.monthlyQueries, 'sorgu, $' + queryCostTracker.monthlyCost.toFixed(2));
+            console.log('Toplam:', queryCostTracker.totalQueries, 'sorgu, $' + queryCostTracker.totalCost.toFixed(2));
+            console.log('Ortalama:', '$' + (queryCostTracker.monthlyCost / Math.max(queryCostTracker.monthlyQueries, 1)).toFixed(4), 'per sorgu');
+        };
+        
+        // Konsol komutu: Maliyet sıfırla
+        window.resetGPTStats = function() {
+            if (confirm('Tüm GPT maliyet istatistiklerini sıfırlamak istediğinize emin misiniz?')) {
+                localStorage.removeItem('gpt_total_queries');
+                localStorage.removeItem('gpt_total_cost');
+                localStorage.removeItem('gpt_monthly_queries');
+                localStorage.removeItem('gpt_monthly_cost');
+                localStorage.removeItem('gpt_last_reset');
+                queryCostTracker = {
+                    totalQueries: 0,
+                    totalCost: 0,
+                    monthlyQueries: 0,
+                    monthlyCost: 0,
+                    lastResetDate: new Date().toISOString().slice(0, 7)
+                };
+                console.log('✅ GPT maliyet istatistikleri sıfırlandı.');
+            }
+        };
+        
+        console.log('✅ GPT Backend hazır! Kullanım:');
+        console.log('   showGPTStats() - Maliyet istatistiklerini göster');
+        console.log('   resetGPTStats() - Maliyet istatistiklerini sıfırla');
     </script>
 </body>
 </html>
