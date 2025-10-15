@@ -1181,6 +1181,12 @@
                         </div>
                     </div>
                     
+                    <!-- AI Analysis Panel -->
+                    <div id="productAIAnalysisPanel" style="margin: 40px 0; display: none;">
+                        <h3 style="margin-bottom: 20px;">🤖 AI Analiz, Yorum ve Öneriler</h3>
+                        <div id="productAIAnalysisContent"></div>
+                    </div>
+                    
                     <!-- Detailed Products Table -->
                     <div style="margin-top: 40px;">
                         <h3 style="margin-bottom: 20px;">📋 Detaylı Ürün Listesi</h3>
@@ -4061,19 +4067,24 @@
             renderProductSalesPersonChart(results);
             renderProductMonthlyChart(results);
             renderProductDetailTable(results);
+            
+            // AI Analiz ve Öneri
+            performProductAIAnalysis(results);
         }
         
         function renderProductStoreChart(data) {
             const storeData = {};
             data.forEach(item => {
                 const store = item.store || 'Bilinmiyor';
-                if (!storeData[store]) storeData[store] = 0;
-                storeData[store] += parseFloat(item.usd_amount || 0);
+                if (!storeData[store]) storeData[store] = {sales: 0, qty: 0};
+                storeData[store].sales += parseFloat(item.usd_amount || 0);
+                storeData[store].qty += parseFloat(item.quantity || 0);
             });
             
-            const sorted = Object.entries(storeData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const sorted = Object.entries(storeData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 10);
             const labels = sorted.map(item => item[0]);
-            const values = sorted.map(item => item[1]);
+            const salesValues = sorted.map(item => item[1].sales);
+            const qtyValues = sorted.map(item => item[1].qty);
             
             const ctx = document.getElementById('productStoreChart');
             if (!ctx) return;
@@ -4088,10 +4099,18 @@
                     labels: labels,
                     datasets: [{
                         label: 'Satış (USD)',
-                        data: values,
+                        data: salesValues,
                         backgroundColor: 'rgba(102, 126, 234, 0.6)',
                         borderColor: 'rgba(102, 126, 234, 1)',
-                        borderWidth: 2
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Miktar',
+                        data: qtyValues,
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 2,
+                        yAxisID: 'y'
                     }]
                 },
                 options: {
@@ -4099,11 +4118,16 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {display: false},
+                        legend: {display: true, position: 'top'},
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return '$' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                    const label = context.dataset.label || '';
+                                    if (label === 'Satış (USD)') {
+                                        return label + ': $' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                    } else {
+                                        return label + ': ' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                    }
                                 }
                             }
                         }
@@ -4113,7 +4137,7 @@
                             beginAtZero: true,
                             ticks: {
                                 callback: function(value) {
-                                    return '$' + value.toLocaleString('tr-TR');
+                                    return value.toLocaleString('tr-TR');
                                 }
                             }
                         }
@@ -4126,13 +4150,15 @@
             const cityData = {};
             data.forEach(item => {
                 const city = item.city || 'Bilinmiyor';
-                if (!cityData[city]) cityData[city] = 0;
-                cityData[city] += parseFloat(item.usd_amount || 0);
+                if (!cityData[city]) cityData[city] = {sales: 0, qty: 0};
+                cityData[city].sales += parseFloat(item.usd_amount || 0);
+                cityData[city].qty += parseFloat(item.quantity || 0);
             });
             
-            const sorted = Object.entries(cityData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const sorted = Object.entries(cityData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 10);
             const labels = sorted.map(item => item[0]);
-            const values = sorted.map(item => item[1]);
+            const salesValues = sorted.map(item => item[1].sales);
+            const qtyValues = sorted.map(item => item[1].qty);
             
             const ctx = document.getElementById('productCityChart');
             if (!ctx) return;
@@ -4147,10 +4173,18 @@
                     labels: labels,
                     datasets: [{
                         label: 'Satış (USD)',
-                        data: values,
+                        data: salesValues,
                         backgroundColor: 'rgba(56, 239, 125, 0.6)',
                         borderColor: 'rgba(56, 239, 125, 1)',
-                        borderWidth: 2
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Miktar',
+                        data: qtyValues,
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 2,
+                        yAxisID: 'y'
                     }]
                 },
                 options: {
@@ -4158,11 +4192,16 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {display: false},
+                        legend: {display: true, position: 'top'},
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return '$' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                    const label = context.dataset.label || '';
+                                    if (label === 'Satış (USD)') {
+                                        return label + ': $' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                    } else {
+                                        return label + ': ' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                    }
                                 }
                             }
                         }
@@ -4172,7 +4211,7 @@
                             beginAtZero: true,
                             ticks: {
                                 callback: function(value) {
-                                    return '$' + value.toLocaleString('tr-TR');
+                                    return value.toLocaleString('tr-TR');
                                 }
                             }
                         }
@@ -4185,13 +4224,15 @@
             const personData = {};
             data.forEach(item => {
                 const person = item.sales_person || 'Bilinmiyor';
-                if (!personData[person]) personData[person] = 0;
-                personData[person] += parseFloat(item.usd_amount || 0);
+                if (!personData[person]) personData[person] = {sales: 0, qty: 0};
+                personData[person].sales += parseFloat(item.usd_amount || 0);
+                personData[person].qty += parseFloat(item.quantity || 0);
             });
             
-            const sorted = Object.entries(personData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const sorted = Object.entries(personData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 10);
             const labels = sorted.map(item => item[0]);
-            const values = sorted.map(item => item[1]);
+            const salesValues = sorted.map(item => item[1].sales);
+            const qtyValues = sorted.map(item => item[1].qty);
             
             const ctx = document.getElementById('productSalesPersonChart');
             if (!ctx) return;
@@ -4206,10 +4247,18 @@
                     labels: labels,
                     datasets: [{
                         label: 'Satış (USD)',
-                        data: values,
+                        data: salesValues,
                         backgroundColor: 'rgba(245, 87, 108, 0.6)',
                         borderColor: 'rgba(245, 87, 108, 1)',
-                        borderWidth: 2
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Miktar',
+                        data: qtyValues,
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 2,
+                        yAxisID: 'y'
                     }]
                 },
                 options: {
@@ -4217,11 +4266,16 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {display: false},
+                        legend: {display: true, position: 'top'},
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return '$' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                    const label = context.dataset.label || '';
+                                    if (label === 'Satış (USD)') {
+                                        return label + ': $' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                    } else {
+                                        return label + ': ' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                    }
                                 }
                             }
                         }
@@ -4231,7 +4285,7 @@
                             beginAtZero: true,
                             ticks: {
                                 callback: function(value) {
-                                    return '$' + value.toLocaleString('tr-TR');
+                                    return value.toLocaleString('tr-TR');
                                 }
                             }
                         }
@@ -4432,6 +4486,240 @@
             `;
             
             document.getElementById('productDetailTable').innerHTML = html;
+        }
+        
+        // 🤖 ÜRÜN ANALİZİ AI DEĞERLENDİRME
+        function performProductAIAnalysis(data) {
+            console.log('🤖 Ürün analizi AI değerlendirmesi başlatılıyor...');
+            
+            // Veri analizi
+            const totalSales = data.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
+            const totalQty = data.reduce((sum, item) => sum + parseFloat(item.quantity || 0), 0);
+            const uniqueProducts = new Set(data.map(item => item.product)).size;
+            const avgPrice = totalSales / Math.max(totalQty, 1);
+            
+            // Mağaza analizi
+            const storeData = {};
+            data.forEach(item => {
+                const store = item.store || 'Bilinmiyor';
+                if (!storeData[store]) storeData[store] = {sales: 0, qty: 0};
+                storeData[store].sales += parseFloat(item.usd_amount || 0);
+                storeData[store].qty += parseFloat(item.quantity || 0);
+            });
+            const topStores = Object.entries(storeData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 3);
+            
+            // İl analizi
+            const cityData = {};
+            data.forEach(item => {
+                const city = item.city || 'Bilinmiyor';
+                if (!cityData[city]) cityData[city] = {sales: 0, qty: 0};
+                cityData[city].sales += parseFloat(item.usd_amount || 0);
+                cityData[city].qty += parseFloat(item.quantity || 0);
+            });
+            const topCities = Object.entries(cityData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 3);
+            
+            // Temsilci analizi
+            const personData = {};
+            data.forEach(item => {
+                const person = item.sales_person || 'Bilinmiyor';
+                if (!personData[person]) personData[person] = {sales: 0, qty: 0};
+                personData[person].sales += parseFloat(item.usd_amount || 0);
+                personData[person].qty += parseFloat(item.quantity || 0);
+            });
+            const topPersons = Object.entries(personData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 3);
+            
+            // Marka analizi
+            const brandData = {};
+            data.forEach(item => {
+                const brand = item.brand || 'Bilinmiyor';
+                if (!brandData[brand]) brandData[brand] = {sales: 0, qty: 0};
+                brandData[brand].sales += parseFloat(item.usd_amount || 0);
+                brandData[brand].qty += parseFloat(item.quantity || 0);
+            });
+            const topBrands = Object.entries(brandData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 3);
+            
+            // Kategori analizi
+            const categoryData = {};
+            data.forEach(item => {
+                const category = item.category_1 || 'Bilinmiyor';
+                if (!categoryData[category]) categoryData[category] = {sales: 0, qty: 0};
+                categoryData[category].sales += parseFloat(item.usd_amount || 0);
+                categoryData[category].qty += parseFloat(item.quantity || 0);
+            });
+            const topCategories = Object.entries(categoryData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 3);
+            
+            // AI İçgörüleri
+            const insights = {
+                positive: [],
+                negative: [],
+                neutral: [],
+                recommendations: []
+            };
+            
+            // Pozitif içgörüler
+            if (topStores.length > 0) {
+                const topStore = topStores[0];
+                const storeShare = (topStore[1].sales / totalSales * 100).toFixed(1);
+                insights.positive.push({
+                    title: `🏪 ${topStore[0]} Lider Mağaza`,
+                    description: `${topStore[0]} mağazası toplam satışın %${storeShare}'ini gerçekleştirdi ($${topStore[1].sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} / ${topStore[1].qty.toLocaleString('tr-TR', {minimumFractionDigits: 2})} adet). Bu mağaza bu ürün/marka için en güçlü performansı gösteriyor.`
+                });
+            }
+            
+            if (topCities.length > 0) {
+                const topCity = topCities[0];
+                const cityShare = (topCity[1].sales / totalSales * 100).toFixed(1);
+                insights.positive.push({
+                    title: `🌍 ${topCity[0]} Önde Gelen İl`,
+                    description: `${topCity[0]} ili toplam satışın %${cityShare}'ini oluşturuyor ($${topCity[1].sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} / ${topCity[1].qty.toLocaleString('tr-TR', {minimumFractionDigits: 2})} adet). Bu bölgede güçlü talep var.`
+                });
+            }
+            
+            if (topPersons.length > 0) {
+                const topPerson = topPersons[0];
+                const personShare = (topPerson[1].sales / totalSales * 100).toFixed(1);
+                insights.positive.push({
+                    title: `👤 ${topPerson[0]} Başarılı Temsilci`,
+                    description: `${topPerson[0]} toplam satışın %${personShare}'ini gerçekleştirdi ($${topPerson[1].sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} / ${topPerson[1].qty.toLocaleString('tr-TR', {minimumFractionDigits: 2})} adet). Bu temsilci bu ürün/marka konusunda uzman.`
+                });
+            }
+            
+            // Nötr içgörüler (Bilgilendirme)
+            insights.neutral.push({
+                title: `📊 Genel Performans`,
+                description: `Toplam ${uniqueProducts} farklı ürün, ${totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2})} adet satıldı. Ortalama ürün fiyatı $${avgPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2})}.`
+            });
+            
+            if (topBrands.length > 0) {
+                insights.neutral.push({
+                    title: `🏷️ Marka Dağılımı`,
+                    description: `En çok satan markalar: ${topBrands.map(b => b[0]).join(', ')}. Bu markalar toplam satışın büyük kısmını oluşturuyor.`
+                });
+            }
+            
+            if (topCategories.length > 0) {
+                insights.neutral.push({
+                    title: `📂 Kategori Dağılımı`,
+                    description: `En çok satan kategoriler: ${topCategories.map(c => c[0]).join(', ')}. Bu kategorilerde yoğunlaşma var.`
+                });
+            }
+            
+            // Negatif içgörüler (Fırsatlar)
+            if (topStores.length > 1) {
+                const secondStore = topStores[1];
+                const gap = ((topStores[0][1].sales - secondStore[1].sales) / secondStore[1].sales * 100).toFixed(1);
+                if (gap > 50) {
+                    insights.negative.push({
+                        title: `⚠️ Mağazalar Arası Dengesizlik`,
+                        description: `${topStores[0][0]} ile ${secondStore[0]} arasında %${gap} satış farkı var. Diğer mağazalarda potansiyel artış fırsatı mevcut.`
+                    });
+                }
+            }
+            
+            if (Object.keys(cityData).length > 5 && topCities[0][1].sales / totalSales > 0.5) {
+                insights.negative.push({
+                    title: `🌍 Coğrafi Yoğunlaşma`,
+                    description: `Satışların büyük kısmı ${topCities[0][0]} ilinde yoğunlaşmış. Diğer illerde pazar payı artırma fırsatı var.`
+                });
+            }
+            
+            // Öneriler
+            insights.recommendations.push({
+                icon: '🎯',
+                title: 'Stok Optimizasyonu',
+                description: `${topStores[0][0]} mağazasında bu ürün/marka için stok seviyesini artırın. Bu mağaza en yüksek satış performansını gösteriyor ve stok tükenmesi riski var.`
+            });
+            
+            insights.recommendations.push({
+                icon: '📍',
+                title: 'Coğrafi Genişleme',
+                description: `${topCities[0][0]} ilindeki başarıyı analiz edin ve benzer demografik özelliklere sahip diğer illerde (${topCities.slice(1, 3).map(c => c[0]).join(', ')}) pazarlama kampanyaları düzenleyin.`
+            });
+            
+            insights.recommendations.push({
+                icon: '👥',
+                title: 'Temsilci Eğitimi',
+                description: `${topPersons[0][0]}'in satış tekniklerini diğer temsilcilerle paylaşın. Bu temsilcinin başarı stratejilerini eğitim programına dahil edin.`
+            });
+            
+            if (avgPrice > 300) {
+                insights.recommendations.push({
+                    icon: '💳',
+                    title: 'Ödeme Kolaylığı',
+                    description: `Ortalama ürün fiyatı $${avgPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2})} gibi yüksek bir seviyede. Taksit seçenekleri ve finansman imkanları sunarak satışları artırabilirsiniz.`
+                });
+            }
+            
+            if (topStores.length >= 3) {
+                const thirdStore = topStores[2];
+                if (thirdStore[1].sales < topStores[0][1].sales * 0.3) {
+                    insights.recommendations.push({
+                        icon: '📢',
+                        title: 'Düşük Performanslı Mağazalar',
+                        description: `${thirdStore[0]} ve benzeri mağazalarda özel promosyonlar düzenleyin. Bu mağazalarda satış potansiyeli henüz tam olarak kullanılmamış.`
+                    });
+                }
+            }
+            
+            // HTML oluştur
+            let html = `
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px;">
+                    ${insights.positive.length > 0 ? `
+                    <div class="analysis-section">
+                        <h3 style="color: white; margin-top: 0;">✅ Güçlü Yönler</h3>
+                        ${insights.positive.map(item => `
+                            <div class="insight-item insight-positive" style="background: rgba(56, 239, 125, 0.2); padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #38ef7d;">
+                                <span class="insight-icon" style="font-size: 1.5em; margin-right: 10px;">✅</span>
+                                <strong style="font-size: 1.1em;">${item.title}</strong><br>
+                                <span style="opacity: 0.95; margin-top: 8px; display: block;">${item.description}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                    
+                    ${insights.negative.length > 0 ? `
+                    <div class="analysis-section" style="margin-top: 25px;">
+                        <h3 style="color: white;">⚠️ Dikkat Edilmesi Gerekenler</h3>
+                        ${insights.negative.map(item => `
+                            <div class="insight-item insight-negative" style="background: rgba(245, 87, 108, 0.2); padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #f5576c;">
+                                <span class="insight-icon" style="font-size: 1.5em; margin-right: 10px;">⚠️</span>
+                                <strong style="font-size: 1.1em;">${item.title}</strong><br>
+                                <span style="opacity: 0.95; margin-top: 8px; display: block;">${item.description}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                    
+                    ${insights.neutral.length > 0 ? `
+                    <div class="analysis-section" style="margin-top: 25px;">
+                        <h3 style="color: white;">💡 Genel Bilgiler</h3>
+                        ${insights.neutral.map(item => `
+                            <div class="insight-item insight-neutral" style="background: rgba(255, 215, 0, 0.2); padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #ffd700;">
+                                <span class="insight-icon" style="font-size: 1.5em; margin-right: 10px;">💡</span>
+                                <strong style="font-size: 1.1em;">${item.title}</strong><br>
+                                <span style="opacity: 0.95; margin-top: 8px; display: block;">${item.description}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                    
+                    <div class="analysis-section" style="margin-top: 25px;">
+                        <h3 style="color: white;">🎯 Aksiyon Önerileri</h3>
+                        ${insights.recommendations.map(item => `
+                            <div class="recommendation" style="background: rgba(255, 255, 255, 0.15); padding: 18px; border-radius: 10px; margin: 12px 0;">
+                                <span class="recommendation-icon" style="font-size: 1.8em; margin-right: 12px;">${item.icon}</span>
+                                <div style="display: inline-block; vertical-align: top; width: calc(100% - 50px);">
+                                    <strong style="font-size: 1.15em; display: block; margin-bottom: 8px;">${item.title}</strong>
+                                    <p style="margin: 0; opacity: 0.95; line-height: 1.6;">${item.description}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('productAIAnalysisContent').innerHTML = html;
+            document.getElementById('productAIAnalysisPanel').style.display = 'block';
         }
         
         // ==================== GPT BACKEND ENTEGRASYONU ====================
