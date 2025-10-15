@@ -165,15 +165,15 @@ jobs:
                         print("=" * 60)
                         
                         # XML-RPC İLE VERİ ÇEK
-                        print("\n1️⃣ Akasya Test filtresi ile fatura satırları çekiliyor (XML-RPC)...")
+                        print("\n1️⃣ ALL ZUHAL filtresi ile fatura satırları çekiliyor (XML-RPC)...")
                         
                         if models:
                             # XML-RPC ile çek
                             try:
                                 print("⏳ Veri çekiliyor (bu 2-3 dakika sürebilir)...")
                                 
-                                # AKASYA TEST FİLTRESİ - Kullanıcının kaydedilmiş filtresini çek
-                                print("🔍 'Akasya Test' filtresinin domain'i çekiliyor...")
+                                # ALL ZUHAL FİLTRESİ - Kullanıcının kaydedilmiş filtresini çek
+                                print("🔍 'ALL ZUHAL' filtresinin domain'i çekiliyor...")
                                 
                                 try:
                                     # Kullanıcının TÜM filtrelerini çek (HER İKİ MODELDEN)
@@ -224,46 +224,46 @@ jobs:
                                     for f in filters:
                                         print(f"   - '{f['name']}' (default: {f.get('is_default', False)}, user: {f.get('user_id', 'N/A')})")
                                     
-                                    # "Akasya Test" filtresini bul (tam eşleşme veya kısmi)
-                                    akasya_filter = None
+                                    # "ALL ZUHAL" filtresini bul (tam eşleşme veya kısmi)
+                                    target_filter = None
                                     
                                     # 1. Tam eşleşme
                                     for f in filters:
-                                        if f['name'].lower() == 'akasya test':
-                                            akasya_filter = f
+                                        if f['name'].lower() == 'all zuhal':
+                                            target_filter = f
                                             print(f"✅ Tam eşleşme bulundu: '{f['name']}'")
                                             break
                                     
-                                    # 2. Kısmi eşleşme (hem akasya hem test içeren)
-                                    if not akasya_filter:
+                                    # 2. Kısmi eşleşme (hem all hem zuhal içeren)
+                                    if not target_filter:
                                         for f in filters:
-                                            if 'akasya' in f['name'].lower() and 'test' in f['name'].lower():
-                                                akasya_filter = f
+                                            if 'all' in f['name'].lower() and 'zuhal' in f['name'].lower():
+                                                target_filter = f
                                                 print(f"✅ Kısmi eşleşme bulundu: '{f['name']}'")
                                                 break
                                     
-                                    # 3. Sadece "akasya" içeren
-                                    if not akasya_filter:
+                                    # 3. Sadece "zuhal" içeren
+                                    if not target_filter:
                                         for f in filters:
-                                            if 'akasya' in f['name'].lower():
-                                                akasya_filter = f
-                                                print(f"✅ 'Akasya' içeren filtre bulundu: '{f['name']}'")
+                                            if 'zuhal' in f['name'].lower():
+                                                target_filter = f
+                                                print(f"✅ 'Zuhal' içeren filtre bulundu: '{f['name']}'")
                                                 break
                                     
                                     # 4. Ön tanımlı filtre
-                                    if not akasya_filter:
+                                    if not target_filter:
                                         for f in filters:
                                             if f.get('is_default'):
-                                                akasya_filter = f
+                                                target_filter = f
                                                 print(f"✅ Ön tanımlı filtre kullanılıyor: '{f['name']}'")
                                                 break
                                     
                                     # 5. İlk filtre
-                                    if not akasya_filter and filters:
-                                        akasya_filter = filters[0]
-                                        print(f"⚠️ Hiçbir eşleşme yok, ilk filtre kullanılıyor: '{akasya_filter['name']}'")
+                                    if not target_filter and filters:
+                                        target_filter = filters[0]
+                                        print(f"⚠️ Hiçbir eşleşme yok, ilk filtre kullanılıyor: '{target_filter['name']}'")
                                     
-                                    filters = [akasya_filter] if akasya_filter else []
+                                    filters = [target_filter] if target_filter else []
                                     
                                     if filters and len(filters) > 0:
                                         filter_data = filters[0]
@@ -300,7 +300,7 @@ jobs:
                                         domain = converted_domain
                                         print(f"✅ Domain dönüştürüldü: {len(domain)} koşul")
                                     else:
-                                        print("⚠️ 'Akasya Test' filtresi bulunamadı! Temel filtre kullanılıyor...")
+                                        print("⚠️ 'ALL ZUHAL' filtresi bulunamadı! Temel filtre kullanılıyor...")
                                         domain = [
                                             ('state', 'not in', ('draft', 'cancel')),
                                             ('move_type', 'in', ('out_invoice', 'out_refund'))
@@ -959,6 +959,36 @@ jobs:
             exit(1)
         
         EOF
+    
+    - name: Akıllı Dosya Boyutu Yönetimi
+      run: |
+        if [[ -f "data.json" ]]; then
+          FILE_SIZE=$(stat -f%z data.json 2>/dev/null || stat -c%s data.json 2>/dev/null)
+          FILE_SIZE_MB=$((FILE_SIZE / 1024 / 1024))
+          
+          echo "📊 data.json boyutu: ${FILE_SIZE_MB} MB"
+          
+          # Kayıt sayısını kontrol et
+          RECORD_COUNT=$(python3 -c "import json; data=json.load(open('data.json')); print(len(data.get('details', [])))")
+          echo "📋 Toplam kayıt sayısı: ${RECORD_COUNT}"
+          
+          # Strateji belirleme
+          if [ $FILE_SIZE_MB -lt 80 ]; then
+            echo "✅ Dosya boyutu OK (${FILE_SIZE_MB} MB < 80 MB)"
+            echo "📌 Strateji: Tek dosya, sıkıştırma yok"
+          elif [ $FILE_SIZE_MB -lt 100 ]; then
+            echo "⚠️ Dosya boyutu kritik seviyede (${FILE_SIZE_MB} MB)"
+            echo "📌 Strateji: Tek dosya, sıkıştırma yok (henüz)"
+          elif [ $RECORD_COUNT -lt 500000 ]; then
+            echo "🔴 Dosya boyutu limit aşıyor (${FILE_SIZE_MB} MB > 100 MB)"
+            echo "📌 Strateji: GZIP sıkıştırma aktif edilecek"
+            echo "⚠️ Dashboard'da decompression gerekli!"
+          else
+            echo "🔴 Çok fazla kayıt (${RECORD_COUNT})"
+            echo "📌 Strateji: Yıllara bölme + sıkıştırma gerekli"
+            echo "⚠️ Pagination sistemi aktif edilmeli!"
+          fi
+        fi
     
     - name: Değişiklikleri commit et ve yükle
       env:
