@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Satis Analizi Dashboard - AI Powered</title>
+    <!-- Pako.js for GZIP Decompression (Fallback) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <!-- SheetJS for Excel Export -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <!-- Chart.js for Graphs -->
@@ -2048,13 +2050,36 @@
                 const response = await fetch(`data-${year}.json.gz`);
                 if (!response.ok) throw new Error(`${year} verisi bulunamadı`);
                 
-                // Blob olarak al
-                const blob = await response.blob();
+                // ArrayBuffer olarak al
+                const arrayBuffer = await response.arrayBuffer();
                 
-                // DecompressionStream ile aç
-                const ds = new DecompressionStream('gzip');
-                const decompressedStream = blob.stream().pipe(ds);
-                const decompressed = await new Response(decompressedStream).text();
+                // GZIP açma - Evrensel yöntem
+                let decompressed;
+                
+                // Yöntem 1: DecompressionStream (modern tarayıcılar)
+                if (typeof DecompressionStream !== 'undefined') {
+                    try {
+                        const blob = new Blob([arrayBuffer]);
+                        const ds = new DecompressionStream('gzip');
+                        const stream = blob.stream().pipeThrough(ds);
+                        decompressed = await new Response(stream).text();
+                    } catch (e) {
+                        console.warn('DecompressionStream başarısız, pako kullanılıyor:', e);
+                        // Fallback to pako
+                        const uint8Array = new Uint8Array(arrayBuffer);
+                        const decompressedArray = pako.inflate(uint8Array);
+                        decompressed = new TextDecoder().decode(decompressedArray);
+                    }
+                }
+                // Yöntem 2: Pako.js (tüm tarayıcılar için fallback)
+                else {
+                    if (typeof pako === 'undefined') {
+                        throw new Error('GZIP açma kütüphanesi yüklenmedi. Lütfen sayfayı yenileyin.');
+                    }
+                    const uint8Array = new Uint8Array(arrayBuffer);
+                    const decompressedArray = pako.inflate(uint8Array);
+                    decompressed = new TextDecoder().decode(decompressedArray);
+                }
                 
                 // JSON'a çevir
                 const yearData = JSON.parse(decompressed);
