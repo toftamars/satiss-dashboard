@@ -5608,6 +5608,705 @@
             document.getElementById('customerAIAnalysisContent').innerHTML = html;
         }
         
+        // ==================== CITY ANALYSIS TAB ====================
+        let cityBrandChartInstance = null;
+        let cityProductChartInstance = null;
+        let cityCategoryChartInstance = null;
+        let cityMonthlyChartInstance = null;
+        
+        function populateCitySelect() {
+            const cities = new Set();
+            allData.forEach(item => {
+                if (item.city) cities.add(item.city);
+            });
+            
+            const select = document.getElementById('citySelect');
+            select.innerHTML = '<option value="">-- Şehir Seçin --</option>';
+            
+            Array.from(cities).sort().forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                select.appendChild(option);
+            });
+            
+            console.log('🌍 Şehir dropdown dolduruldu:', cities.size, 'şehir');
+        }
+        
+        function analyzeCityPerformance() {
+            const selectedCity = document.getElementById('citySelect').value;
+            
+            if (!selectedCity) {
+                document.getElementById('cityAnalysisContainer').style.display = 'none';
+                return;
+            }
+            
+            console.log('🌍 Şehir analizi:', selectedCity);
+            
+            // Şehir verilerini filtrele
+            const cityData = allData.filter(item => item.city === selectedCity);
+            
+            if (cityData.length === 0) {
+                alert('Bu şehir için veri bulunamadı');
+                return;
+            }
+            
+            // Özet bilgileri hesapla
+            const totalSales = cityData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
+            const totalQty = cityData.reduce((sum, item) => sum + parseFloat(item.quantity || 0), 0);
+            const uniqueCustomers = new Set(cityData.map(item => item.partner)).size;
+            const uniqueDates = new Set(cityData.map(item => item.date)).size;
+            const avgBasket = totalSales / Math.max(uniqueDates, 1);
+            
+            // UI güncelle
+            document.getElementById('cityTotalSales').textContent = '$' + totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            document.getElementById('cityTotalQty').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            document.getElementById('cityCustomerCount').textContent = uniqueCustomers;
+            document.getElementById('cityAvgBasket').textContent = '$' + avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            
+            // Container'ı göster
+            document.getElementById('cityAnalysisContainer').style.display = 'block';
+            
+            // Grafikleri render et
+            renderCityBrandChart(cityData);
+            renderCityProductChart(cityData);
+            renderCityCategoryChart(cityData);
+            renderCityMonthlyChart(cityData);
+            
+            // AI analiz
+            performCityAIAnalysis(cityData, selectedCity, {totalSales, totalQty, uniqueCustomers, avgBasket});
+        }
+        
+        function renderCityBrandChart(data) {
+            const brandData = {};
+            data.forEach(item => {
+                const brand = item.brand || 'Bilinmiyor';
+                if (!brandData[brand]) brandData[brand] = {sales: 0, qty: 0};
+                brandData[brand].sales += parseFloat(item.usd_amount || 0);
+                brandData[brand].qty += parseFloat(item.quantity || 0);
+            });
+            
+            const sorted = Object.entries(brandData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 10);
+            const labels = sorted.map(item => item[0]);
+            const salesValues = sorted.map(item => item[1].sales);
+            const qtyValues = sorted.map(item => item[1].qty);
+            
+            const ctx = document.getElementById('cityBrandChart');
+            if (!ctx) return;
+            
+            if (cityBrandChartInstance) {
+                cityBrandChartInstance.destroy();
+            }
+            
+            cityBrandChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Satış (USD)',
+                        data: salesValues,
+                        backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Miktar',
+                        data: qtyValues,
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: true, position: 'top'}
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderCityProductChart(data) {
+            const productData = {};
+            data.forEach(item => {
+                const product = item.product || 'Bilinmiyor';
+                if (!productData[product]) productData[product] = {sales: 0, qty: 0};
+                productData[product].sales += parseFloat(item.usd_amount || 0);
+                productData[product].qty += parseFloat(item.quantity || 0);
+            });
+            
+            const sorted = Object.entries(productData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 10);
+            const labels = sorted.map(item => item[0].substring(0, 30) + (item[0].length > 30 ? '...' : ''));
+            const salesValues = sorted.map(item => item[1].sales);
+            const qtyValues = sorted.map(item => item[1].qty);
+            
+            const ctx = document.getElementById('cityProductChart');
+            if (!ctx) return;
+            
+            if (cityProductChartInstance) {
+                cityProductChartInstance.destroy();
+            }
+            
+            cityProductChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Satış (USD)',
+                        data: salesValues,
+                        backgroundColor: 'rgba(56, 239, 125, 0.6)',
+                        borderColor: 'rgba(56, 239, 125, 1)',
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Miktar',
+                        data: qtyValues,
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: true, position: 'top'}
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderCityCategoryChart(data) {
+            const categoryData = {};
+            data.forEach(item => {
+                const category = item.category_1 || 'Bilinmiyor';
+                if (!categoryData[category]) categoryData[category] = {sales: 0, qty: 0};
+                categoryData[category].sales += parseFloat(item.usd_amount || 0);
+                categoryData[category].qty += parseFloat(item.quantity || 0);
+            });
+            
+            const sorted = Object.entries(categoryData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 10);
+            const labels = sorted.map(item => item[0]);
+            const salesValues = sorted.map(item => item[1].sales);
+            const qtyValues = sorted.map(item => item[1].qty);
+            
+            const ctx = document.getElementById('cityCategoryChart');
+            if (!ctx) return;
+            
+            if (cityCategoryChartInstance) {
+                cityCategoryChartInstance.destroy();
+            }
+            
+            cityCategoryChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Satış (USD)',
+                        data: salesValues,
+                        backgroundColor: 'rgba(245, 87, 108, 0.6)',
+                        borderColor: 'rgba(245, 87, 108, 1)',
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Miktar',
+                        data: qtyValues,
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: true, position: 'top'}
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderCityMonthlyChart(data) {
+            const monthlyData = {};
+            data.forEach(item => {
+                const date = new Date(item.date);
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                if (!monthlyData[monthKey]) monthlyData[monthKey] = 0;
+                monthlyData[monthKey] += parseFloat(item.usd_amount || 0);
+            });
+            
+            const sorted = Object.entries(monthlyData).sort((a, b) => a[0].localeCompare(b[0]));
+            const labels = sorted.map(item => item[0]);
+            const values = sorted.map(item => item[1]);
+            
+            const ctx = document.getElementById('cityMonthlyChart');
+            if (!ctx) return;
+            
+            if (cityMonthlyChartInstance) {
+                cityMonthlyChartInstance.destroy();
+            }
+            
+            cityMonthlyChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Aylık Satış (USD)',
+                        data: values,
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: true}
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function performCityAIAnalysis(data, cityName, stats) {
+            console.log('🤖 Şehir AI analizi başlatılıyor...');
+            
+            // Marka analizi
+            const brandData = {};
+            data.forEach(item => {
+                const brand = item.brand || 'Bilinmiyor';
+                if (!brandData[brand]) brandData[brand] = 0;
+                brandData[brand] += parseFloat(item.usd_amount || 0);
+            });
+            const topBrands = Object.entries(brandData).sort((a, b) => b[1] - a[1]).slice(0, 3);
+            
+            // Kategori analizi
+            const categoryData = {};
+            data.forEach(item => {
+                const category = item.category_1 || 'Bilinmiyor';
+                if (!categoryData[category]) categoryData[category] = 0;
+                categoryData[category] += parseFloat(item.usd_amount || 0);
+            });
+            const topCategories = Object.entries(categoryData).sort((a, b) => b[1] - a[1]).slice(0, 3);
+            
+            const insights = {
+                positive: [],
+                negative: [],
+                neutral: [],
+                recommendations: []
+            };
+            
+            // Pozitif içgörüler
+            if (topBrands.length > 0) {
+                const topBrand = topBrands[0];
+                const brandShare = (topBrand[1] / stats.totalSales * 100).toFixed(1);
+                insights.positive.push({
+                    title: `🏷️ ${topBrand[0]} Lider Marka`,
+                    description: `${cityName} ilinde ${topBrand[0]} markası %${brandShare} pay ile lider ($${topBrand[1].toLocaleString('tr-TR', {minimumFractionDigits: 2})}).`
+                });
+            }
+            
+            if (topCategories.length > 0) {
+                const topCategory = topCategories[0];
+                const catShare = (topCategory[1] / stats.totalSales * 100).toFixed(1);
+                insights.positive.push({
+                    title: `📂 ${topCategory[0]} En Popüler Kategori`,
+                    description: `${cityName} ilinde ${topCategory[0]} kategorisi %${catShare} pay ile en çok tercih edilen ($${topCategory[1].toLocaleString('tr-TR', {minimumFractionDigits: 2})}).`
+                });
+            }
+            
+            // Nötr bilgiler
+            insights.neutral.push({
+                title: `📊 ${cityName} Genel Performans`,
+                description: `Toplam ${stats.uniqueCustomers} müşteri, $${stats.totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} satış gerçekleştirdi. Ortalama sepet değeri $${stats.avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2})}.`
+            });
+            
+            if (topBrands.length >= 3) {
+                insights.neutral.push({
+                    title: `🏷️ Top 3 Marka`,
+                    description: `${topBrands.map(b => b[0]).join(', ')} markaları ${cityName} ilinde en çok tercih ediliyor.`
+                });
+            }
+            
+            // Öneriler
+            insights.recommendations.push({
+                icon: '📦',
+                title: 'Stok Optimizasyonu',
+                description: `${cityName} ilindeki mağazalarda ${topBrands[0][0]} markası ve ${topCategories[0][0]} kategorisi ürünlerinin stok seviyesini artırın.`
+            });
+            
+            insights.recommendations.push({
+                icon: '📢',
+                title: 'Bölgesel Kampanya',
+                description: `${cityName} ili için ${topBrands[0][0]} markasında özel kampanya düzenleyin. Bu bölgede yüksek talep var.`
+            });
+            
+            insights.recommendations.push({
+                icon: '🎯',
+                title: 'Müşteri Segmentasyonu',
+                description: `${cityName} ilindeki ${stats.uniqueCustomers} müşteriye özel e-posta kampanyaları gönderin. Tercih ettikleri kategorilerdeki yeni ürünleri tanıtın.`
+            });
+            
+            // HTML oluştur
+            let html = `
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px;">
+                    ${insights.positive.length > 0 ? `
+                    <div class="analysis-section">
+                        <h3 style="color: white; margin-top: 0;">✅ ${cityName} Güçlü Yönler</h3>
+                        ${insights.positive.map(item => `
+                            <div class="insight-item insight-positive" style="background: rgba(56, 239, 125, 0.2); padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #38ef7d;">
+                                <span class="insight-icon" style="font-size: 1.5em; margin-right: 10px;">✅</span>
+                                <strong style="font-size: 1.1em;">${item.title}</strong><br>
+                                <span style="opacity: 0.95; margin-top: 8px; display: block;">${item.description}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                    
+                    ${insights.neutral.length > 0 ? `
+                    <div class="analysis-section" style="margin-top: 25px;">
+                        <h3 style="color: white;">💡 Genel Bilgiler</h3>
+                        ${insights.neutral.map(item => `
+                            <div class="insight-item insight-neutral" style="background: rgba(255, 215, 0, 0.2); padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #ffd700;">
+                                <span class="insight-icon" style="font-size: 1.5em; margin-right: 10px;">💡</span>
+                                <strong style="font-size: 1.1em;">${item.title}</strong><br>
+                                <span style="opacity: 0.95; margin-top: 8px; display: block;">${item.description}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                    
+                    <div class="analysis-section" style="margin-top: 25px;">
+                        <h3 style="color: white;">🎯 Aksiyon Önerileri</h3>
+                        ${insights.recommendations.map(item => `
+                            <div class="recommendation" style="background: rgba(255, 255, 255, 0.15); padding: 18px; border-radius: 10px; margin: 12px 0;">
+                                <span class="recommendation-icon" style="font-size: 1.8em; margin-right: 12px;">${item.icon}</span>
+                                <div style="display: inline-block; vertical-align: top; width: calc(100% - 50px);">
+                                    <strong style="font-size: 1.15em; display: block; margin-bottom: 8px;">${item.title}</strong>
+                                    <p style="margin: 0; opacity: 0.95; line-height: 1.6;">${item.description}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('cityAIAnalysisContent').innerHTML = html;
+        }
+        
+        // ==================== STOCK DISTRIBUTION TAB ====================
+        let stockList = [];  // {product_code: string, qty: number}
+        
+        function handleStockExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Boyut kontrolü (5 MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Dosya çok büyük! Maksimum 5 MB olmalıdır.');
+                return;
+            }
+            
+            // Tip kontrolü
+            const validTypes = [
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/vnd.ms-excel'
+            ];
+            if (!validTypes.includes(file.type)) {
+                alert('Sadece Excel dosyaları (.xlsx, .xls) yükleyebilirsiniz.');
+                return;
+            }
+            
+            console.log('📄 Excel dosyası okunuyor...');
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    const json = XLSX.utils.sheet_to_json(sheet);
+                    
+                    console.log('📊 Excel verisi:', json);
+                    
+                    // Veriyi işle
+                    stockList = [];
+                    json.forEach(row => {
+                        // Farklı kolon isimleri için esnek yaklaşım
+                        const productCode = row['Ürün Kodu'] || row['product_code'] || row['Product Code'] || row['Kod'] || row['Code'];
+                        const qty = row['Stok Miktarı'] || row['stock'] || row['Stock'] || row['Miktar'] || row['Quantity'] || row['qty'];
+                        
+                        if (productCode && qty) {
+                            stockList.push({
+                                product_code: String(productCode).trim(),
+                                qty: parseFloat(qty)
+                            });
+                        }
+                    });
+                    
+                    if (stockList.length === 0) {
+                        alert('Excel dosyasında geçerli veri bulunamadı! Kolon isimleri: "Ürün Kodu" ve "Stok Miktarı" olmalı.');
+                        return;
+                    }
+                    
+                    console.log('✅ Stok listesi yüklendi:', stockList.length, 'ürün');
+                    renderStockList();
+                    
+                } catch (error) {
+                    console.error('❌ Excel okuma hatası:', error);
+                    alert('Excel dosyası okunamadı! Lütfen dosya formatını kontrol edin.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function addManualStock() {
+            const productCode = document.getElementById('manualProductCode').value.trim();
+            const qty = parseFloat(document.getElementById('manualStockQty').value);
+            
+            if (!productCode) {
+                alert('Lütfen ürün kodu girin');
+                return;
+            }
+            
+            if (isNaN(qty) || qty <= 0) {
+                alert('Lütfen geçerli bir stok miktarı girin');
+                return;
+            }
+            
+            // Aynı ürün varsa güncelle
+            const existingIndex = stockList.findIndex(item => item.product_code === productCode);
+            if (existingIndex >= 0) {
+                stockList[existingIndex].qty = qty;
+            } else {
+                stockList.push({product_code: productCode, qty: qty});
+            }
+            
+            // Inputları temizle
+            document.getElementById('manualProductCode').value = '';
+            document.getElementById('manualStockQty').value = '';
+            
+            console.log('✅ Stok eklendi:', productCode, qty);
+            renderStockList();
+        }
+        
+        function renderStockList() {
+            if (stockList.length === 0) {
+                document.getElementById('stockListContainer').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('stockListContainer').style.display = 'block';
+            
+            let html = `
+                <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <tr>
+                            <th style="padding: 15px; text-align: left;">#</th>
+                            <th style="padding: 15px; text-align: left;">Ürün Kodu</th>
+                            <th style="padding: 15px; text-align: right;">Stok Miktarı</th>
+                            <th style="padding: 15px; text-align: center;">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            stockList.forEach((item, index) => {
+                html += `
+                    <tr style="border-bottom: 1px solid #eee; ${index % 2 === 0 ? 'background: #f8f9fa;' : ''}">
+                        <td style="padding: 12px;">${index + 1}</td>
+                        <td style="padding: 12px;"><strong>${item.product_code}</strong></td>
+                        <td style="padding: 12px; text-align: right;">${item.qty.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                        <td style="padding: 12px; text-align: center;">
+                            <button onclick="removeStock(${index})" style="background: #dc3545; color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer;">
+                                🗑️ Sil
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            document.getElementById('stockListTable').innerHTML = html;
+        }
+        
+        function removeStock(index) {
+            stockList.splice(index, 1);
+            renderStockList();
+        }
+        
+        function clearStockList() {
+            if (confirm('Tüm stok listesini temizlemek istediğinize emin misiniz?')) {
+                stockList = [];
+                renderStockList();
+                document.getElementById('stockDistributionResults').style.display = 'none';
+            }
+        }
+        
+        function analyzeStockDistribution() {
+            if (stockList.length === 0) {
+                alert('Önce stok listesi yükleyin veya manuel giriş yapın');
+                return;
+            }
+            
+            console.log('🤖 AI stok dağılım analizi başlatılıyor...');
+            
+            const recommendations = [];
+            
+            stockList.forEach(stockItem => {
+                // Bu ürün kodunu içeren satışları bul
+                const productSales = allData.filter(item => 
+                    item.product && item.product.toLowerCase().includes(stockItem.product_code.toLowerCase())
+                );
+                
+                if (productSales.length === 0) {
+                    recommendations.push({
+                        productCode: stockItem.product_code,
+                        totalStock: stockItem.qty,
+                        distribution: [],
+                        message: `⚠️ "${stockItem.product_code}" için geçmiş satış verisi bulunamadı. Eşit dağılım öneriliyor.`,
+                        noData: true
+                    });
+                    return;
+                }
+                
+                // Mağaza bazında satış analizi (son 3 ay)
+                const storePerformance = {};
+                productSales.forEach(item => {
+                    const store = item.store || 'Bilinmiyor';
+                    if (!storePerformance[store]) {
+                        storePerformance[store] = {qty: 0, sales: 0};
+                    }
+                    storePerformance[store].qty += parseFloat(item.quantity || 0);
+                    storePerformance[store].sales += parseFloat(item.usd_amount || 0);
+                });
+                
+                // Toplam satış
+                const totalSold = Object.values(storePerformance).reduce((sum, s) => sum + s.qty, 0);
+                
+                // Yüzde dağılım hesapla
+                const distribution = [];
+                Object.entries(storePerformance).forEach(([store, data]) => {
+                    const percentage = data.qty / totalSold;
+                    const recommendedQty = Math.round(stockItem.qty * percentage);
+                    distribution.push({
+                        store: store,
+                        historicalQty: data.qty,
+                        historicalSales: data.sales,
+                        percentage: (percentage * 100).toFixed(1),
+                        recommendedQty: recommendedQty
+                    });
+                });
+                
+                // Büyükten küçüğe sırala
+                distribution.sort((a, b) => b.recommendedQty - a.recommendedQty);
+                
+                recommendations.push({
+                    productCode: stockItem.product_code,
+                    totalStock: stockItem.qty,
+                    distribution: distribution,
+                    message: `✅ "${stockItem.product_code}" için ${distribution.length} mağazaya dağılım önerisi hazırlandı.`,
+                    noData: false
+                });
+            });
+            
+            // Sonuçları göster
+            renderStockDistributionResults(recommendations);
+        }
+        
+        function renderStockDistributionResults(recommendations) {
+            document.getElementById('stockDistributionResults').style.display = 'block';
+            
+            let html = '';
+            
+            recommendations.forEach((rec, index) => {
+                html += `
+                    <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 30px;">
+                        <h3 style="margin: 0 0 20px 0; color: #667eea;">
+                            ${index + 1}. ${rec.productCode} (Toplam Stok: ${rec.totalStock.toLocaleString('tr-TR', {minimumFractionDigits: 2})} adet)
+                        </h3>
+                        <p style="color: #6c757d; margin-bottom: 20px;">${rec.message}</p>
+                        
+                        ${rec.noData ? `
+                            <div style="background: #fff3cd; padding: 20px; border-radius: 10px; border-left: 4px solid #ffc107;">
+                                <strong>💡 Öneri:</strong> Geçmiş satış verisi olmadığı için mağazalara eşit dağıtım yapabilirsiniz.
+                            </div>
+                        ` : `
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead style="background: #f8f9fa;">
+                                    <tr>
+                                        <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Mağaza</th>
+                                        <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Geçmiş Satış</th>
+                                        <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Pay (%)</th>
+                                        <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Önerilen Stok</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rec.distribution.map((dist, i) => `
+                                        <tr style="border-bottom: 1px solid #eee; ${i % 2 === 0 ? 'background: #f8f9fa;' : ''}">
+                                            <td style="padding: 12px;"><strong>${dist.store}</strong></td>
+                                            <td style="padding: 12px; text-align: right;">${dist.historicalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2})} adet</td>
+                                            <td style="padding: 12px; text-align: right; color: #667eea; font-weight: bold;">${dist.percentage}%</td>
+                                            <td style="padding: 12px; text-align: right; color: #38ef7d; font-weight: bold; font-size: 1.1em;">${dist.recommendedQty} adet</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                            
+                            <div style="background: #d1ecf1; padding: 20px; border-radius: 10px; border-left: 4px solid #0c5460; margin-top: 20px;">
+                                <strong>🤖 AI Öneri:</strong> Bu dağılım, geçmiş satış performansına göre optimize edilmiştir. 
+                                En yüksek satış yapan mağazalara daha fazla stok ayrılmıştır.
+                            </div>
+                        `}
+                    </div>
+                `;
+            });
+            
+            document.getElementById('stockDistributionContent').innerHTML = html;
+            
+            // Sonuçlara scroll
+            document.getElementById('stockDistributionResults').scrollIntoView({behavior: 'smooth', block: 'start'});
+        }
+        
     </script>
 </body>
 </html>
