@@ -1263,13 +1263,16 @@
                     <div class="target-grid">
                         <div class="target-card">
                             <h3>Hedef Belirle</h3>
-                            <input type="number" id="yearlyTarget" class="target-input" placeholder="Yıllık hedef (USD)" onchange="calculateTargets()">
+                            <input type="number" id="yearlyTarget" class="target-input" placeholder="Yıllık hedef (USD)">
                             <label style="font-size: 0.9em; color: #6c757d;">Yıl seçin:</label>
-                            <select id="targetYear" class="target-input" onchange="calculateTargets()">
+                            <select id="targetYear" class="target-input" onchange="loadYearlyTarget()">
                                 <option value="2025">2025</option>
                                 <option value="2024">2024</option>
                                 <option value="2023">2023</option>
                             </select>
+                            <button onclick="saveYearlyTarget()" style="margin-top: 15px; padding: 12px 30px; background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1em;">
+                                💾 Kaydet
+                            </button>
                         </div>
                         
                         <div class="target-card">
@@ -1304,9 +1307,9 @@
                     <div class="target-grid">
                         <div class="target-card">
                             <h3>Hedef Belirle</h3>
-                            <input type="number" id="monthlyTarget" class="target-input" placeholder="Aylık hedef (USD)" onchange="calculateTargets()">
+                            <input type="number" id="monthlyTarget" class="target-input" placeholder="Aylık hedef (USD)">
                             <label style="font-size: 0.9em; color: #6c757d;">Ay seçin:</label>
-                            <select id="targetMonth" class="target-input" onchange="calculateTargets()">
+                            <select id="targetMonth" class="target-input" onchange="loadMonthlyTarget()">
                                 <option value="01">Ocak</option>
                                 <option value="02">Şubat</option>
                                 <option value="03">Mart</option>
@@ -1320,6 +1323,9 @@
                                 <option value="11">Kasım</option>
                                 <option value="12">Aralık</option>
                             </select>
+                            <button onclick="saveMonthlyTarget()" style="margin-top: 15px; padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1em;">
+                                💾 Kaydet
+                            </button>
                         </div>
                         
                         <div class="target-card">
@@ -3470,6 +3476,104 @@
         // ==================== TARGET TRACKING ====================
         let targetChart = null;
         
+        // ==================== HEDEF YÖNETİMİ ====================
+        
+        // Yıllık hedefleri kaydet
+        function saveYearlyTarget() {
+            const year = document.getElementById('targetYear').value;
+            const target = parseFloat(document.getElementById('yearlyTarget').value) || 0;
+            
+            if (target <= 0) {
+                alert('⚠️ Lütfen geçerli bir hedef girin!');
+                return;
+            }
+            
+            // Mevcut hedefleri al
+            let yearlyTargets = JSON.parse(localStorage.getItem('yearlyTargets') || '{}');
+            
+            // Yeni hedefi kaydet
+            yearlyTargets[year] = target;
+            localStorage.setItem('yearlyTargets', JSON.stringify(yearlyTargets));
+            
+            // Hesapla
+            calculateTargets();
+            
+            // Bildirim
+            alert(`✅ ${year} yılı hedefi kaydedildi: $${target.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
+        }
+        
+        // Yıllık hedefi yükle
+        function loadYearlyTarget() {
+            const year = document.getElementById('targetYear').value;
+            const yearlyTargets = JSON.parse(localStorage.getItem('yearlyTargets') || '{}');
+            
+            if (yearlyTargets[year]) {
+                document.getElementById('yearlyTarget').value = yearlyTargets[year];
+            } else {
+                document.getElementById('yearlyTarget').value = '';
+            }
+            
+            calculateTargets();
+        }
+        
+        // Aylık hedefleri kaydet
+        function saveMonthlyTarget() {
+            const year = document.getElementById('targetYear').value;
+            const month = document.getElementById('targetMonth').value;
+            const target = parseFloat(document.getElementById('monthlyTarget').value) || 0;
+            
+            if (target <= 0) {
+                alert('⚠️ Lütfen geçerli bir hedef girin!');
+                return;
+            }
+            
+            // Mevcut hedefleri al
+            let monthlyTargets = JSON.parse(localStorage.getItem('monthlyTargets') || '{}');
+            
+            // Yıl yoksa oluştur
+            if (!monthlyTargets[year]) {
+                monthlyTargets[year] = {};
+            }
+            
+            // Yeni hedefi kaydet
+            monthlyTargets[year][month] = target;
+            localStorage.setItem('monthlyTargets', JSON.stringify(monthlyTargets));
+            
+            // Hesapla
+            calculateTargets();
+            
+            // Ay adını bul
+            const monthNames = {
+                '01': 'Ocak', '02': 'Şubat', '03': 'Mart', '04': 'Nisan',
+                '05': 'Mayıs', '06': 'Haziran', '07': 'Temmuz', '08': 'Ağustos',
+                '09': 'Eylül', '10': 'Ekim', '11': 'Kasım', '12': 'Aralık'
+            };
+            
+            // Bildirim
+            alert(`✅ ${year} ${monthNames[month]} hedefi kaydedildi: $${target.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
+        }
+        
+        // Aylık hedefi yükle
+        function loadMonthlyTarget() {
+            const year = document.getElementById('targetYear').value;
+            const month = document.getElementById('targetMonth').value;
+            const monthlyTargets = JSON.parse(localStorage.getItem('monthlyTargets') || '{}');
+            
+            if (monthlyTargets[year] && monthlyTargets[year][month]) {
+                document.getElementById('monthlyTarget').value = monthlyTargets[year][month];
+            } else {
+                document.getElementById('monthlyTarget').value = '';
+            }
+            
+            calculateTargets();
+        }
+        
+        // Sayfa yüklendiğinde hedefleri yükle
+        window.addEventListener('load', () => {
+            loadYearlyTarget();
+            loadMonthlyTarget();
+        });
+        
         function calculateTargets() {
             const yearlyTarget = parseFloat(document.getElementById('yearlyTarget').value) || 0;
             const monthlyTarget = parseFloat(document.getElementById('monthlyTarget').value) || 0;
@@ -4796,22 +4900,6 @@
 
         // Load data on page load
         loadData();
-        
-        // Hedef değerlerini localStorage'dan yükle
-        window.addEventListener('load', () => {
-            const savedYearlyTarget = localStorage.getItem('yearlyTarget');
-            const savedMonthlyTarget = localStorage.getItem('monthlyTarget');
-            if (savedYearlyTarget) document.getElementById('yearlyTarget').value = savedYearlyTarget;
-            if (savedMonthlyTarget) document.getElementById('monthlyTarget').value = savedMonthlyTarget;
-        });
-        
-        // Hedef değerlerini localStorage'a kaydet
-        document.getElementById('yearlyTarget').addEventListener('change', (e) => {
-            localStorage.setItem('yearlyTarget', e.target.value);
-        });
-        document.getElementById('monthlyTarget').addEventListener('change', (e) => {
-            localStorage.setItem('monthlyTarget', e.target.value);
-        });
         
         // ==================== ÜRÜN ANALİZİ ====================
         
