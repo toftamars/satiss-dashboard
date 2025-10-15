@@ -7115,6 +7115,12 @@
                 return;
             }
             
+            // ZATEN DOLDURULDUYSA BİR DAHA DOLDURMA (kullanıcı seçimini korur)
+            if (targetStoresPopulated) {
+                console.log('✅ Mağaza dropdown zaten dolduruldu, tekrar doldurulmayacak');
+                return;
+            }
+            
             // Mağazaları topla
             const stores = new Set();
             allData.forEach(item => {
