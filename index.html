@@ -1266,6 +1266,10 @@
                         <div class="target-card">
                             <h3>Hedef Belirle</h3>
                             <input type="number" id="yearlyTarget" class="target-input" placeholder="Yıllık hedef (USD)">
+                            <label style="font-size: 0.9em; color: #6c757d;">Mağaza seçin:</label>
+                            <select id="targetYearStore" class="target-input" onchange="loadYearlyTarget()">
+                                <option value="TÜM MAĞAZALAR">🏢 Tüm Mağazalar</option>
+                            </select>
                             <label style="font-size: 0.9em; color: #6c757d;">Yıl seçin:</label>
                             <select id="targetYear" class="target-input" onchange="loadYearlyTarget()">
                                 <option value="2025">2025</option>
@@ -1310,6 +1314,10 @@
                         <div class="target-card">
                             <h3>Hedef Belirle</h3>
                             <input type="number" id="monthlyTarget" class="target-input" placeholder="Aylık hedef (USD)">
+                            <label style="font-size: 0.9em; color: #6c757d;">Mağaza seçin:</label>
+                            <select id="targetMonthStore" class="target-input" onchange="loadMonthlyTarget()">
+                                <option value="TÜM MAĞAZALAR">🏢 Tüm Mağazalar</option>
+                            </select>
                             <label style="font-size: 0.9em; color: #6c757d;">Ay seçin:</label>
                             <select id="targetMonth" class="target-input" onchange="loadMonthlyTarget()">
                                 <option value="01">Ocak</option>
@@ -3614,6 +3622,7 @@
         // Yıllık hedefleri kaydet
         function saveYearlyTarget() {
             const year = document.getElementById('targetYear').value;
+            const store = document.getElementById('targetYearStore').value;
             const target = parseFloat(document.getElementById('yearlyTarget').value) || 0;
             
             if (target <= 0) {
@@ -3624,24 +3633,31 @@
             // Mevcut hedefleri al
             let yearlyTargets = JSON.parse(localStorage.getItem('yearlyTargets') || '{}');
             
-            // Yeni hedefi kaydet
-            yearlyTargets[year] = target;
+            // Yıl yoksa oluştur
+            if (!yearlyTargets[year]) {
+                yearlyTargets[year] = {};
+            }
+            
+            // Mağaza bazında hedefi kaydet
+            yearlyTargets[year][store] = target;
             localStorage.setItem('yearlyTargets', JSON.stringify(yearlyTargets));
             
             // Hesapla
             calculateTargets();
             
             // Bildirim
-            alert(`✅ ${year} yılı hedefi kaydedildi: $${target.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
+            const storeText = store === 'TÜM MAĞAZALAR' ? 'Tüm Mağazalar' : store;
+            alert(`✅ ${year} yılı ${storeText} hedefi kaydedildi: $${target.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
         }
         
         // Yıllık hedefi yükle
         function loadYearlyTarget() {
             const year = document.getElementById('targetYear').value;
+            const store = document.getElementById('targetYearStore').value;
             const yearlyTargets = JSON.parse(localStorage.getItem('yearlyTargets') || '{}');
             
-            if (yearlyTargets[year]) {
-                document.getElementById('yearlyTarget').value = yearlyTargets[year];
+            if (yearlyTargets[year] && yearlyTargets[year][store]) {
+                document.getElementById('yearlyTarget').value = yearlyTargets[year][store];
             } else {
                 document.getElementById('yearlyTarget').value = '';
             }
@@ -3653,6 +3669,7 @@
         function saveMonthlyTarget() {
             const year = document.getElementById('targetYear').value;
             const month = document.getElementById('targetMonth').value;
+            const store = document.getElementById('targetMonthStore').value;
             const target = parseFloat(document.getElementById('monthlyTarget').value) || 0;
             
             if (target <= 0) {
@@ -3668,8 +3685,13 @@
                 monthlyTargets[year] = {};
             }
             
-            // Yeni hedefi kaydet
-            monthlyTargets[year][month] = target;
+            // Mağaza yoksa oluştur
+            if (!monthlyTargets[year][store]) {
+                monthlyTargets[year][store] = {};
+            }
+            
+            // Mağaza ve ay bazında hedefi kaydet
+            monthlyTargets[year][store][month] = target;
             localStorage.setItem('monthlyTargets', JSON.stringify(monthlyTargets));
             
             // Hesapla
@@ -3683,17 +3705,19 @@
             };
             
             // Bildirim
-            alert(`✅ ${year} ${monthNames[month]} hedefi kaydedildi: $${target.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
+            const storeText = store === 'TÜM MAĞAZALAR' ? 'Tüm Mağazalar' : store;
+            alert(`✅ ${year} ${monthNames[month]} ${storeText} hedefi kaydedildi: $${target.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
         }
         
         // Aylık hedefi yükle
         function loadMonthlyTarget() {
             const year = document.getElementById('targetYear').value;
             const month = document.getElementById('targetMonth').value;
+            const store = document.getElementById('targetMonthStore').value;
             const monthlyTargets = JSON.parse(localStorage.getItem('monthlyTargets') || '{}');
             
-            if (monthlyTargets[year] && monthlyTargets[year][month]) {
-                document.getElementById('monthlyTarget').value = monthlyTargets[year][month];
+            if (monthlyTargets[year] && monthlyTargets[year][store] && monthlyTargets[year][store][month]) {
+                document.getElementById('monthlyTarget').value = monthlyTargets[year][store][month];
             } else {
                 document.getElementById('monthlyTarget').value = '';
             }
@@ -3708,16 +3732,23 @@
         });
         
         function calculateTargets() {
+            // Mağazaları doldur (ilk kez çağrıldığında)
+            populateTargetStoreDropdowns();
+            
             const yearlyTarget = parseFloat(document.getElementById('yearlyTarget').value) || 0;
             const monthlyTarget = parseFloat(document.getElementById('monthlyTarget').value) || 0;
             const targetYear = document.getElementById('targetYear').value;
             const targetMonth = document.getElementById('targetMonth').value;
+            const yearStore = document.getElementById('targetYearStore').value;
+            const monthStore = document.getElementById('targetMonthStore').value;
             
             // Yıllık hesaplama
             if (yearlyTarget > 0) {
                 const yearlyData = allData.filter(item => {
                     if (!item.date) return false;
-                    return item.date.startsWith(targetYear);
+                    const dateMatch = item.date.startsWith(targetYear);
+                    const storeMatch = yearStore === 'TÜM MAĞAZALAR' || item.store === yearStore;
+                    return dateMatch && storeMatch;
                 });
                 
                 const yearlyAchieved = yearlyData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
@@ -3743,7 +3774,9 @@
                 const monthlyData = allData.filter(item => {
                     if (!item.date) return false;
                     const itemDate = item.date.split('-');
-                    return itemDate[0] === targetYear && itemDate[1] === targetMonth;
+                    const dateMatch = itemDate[0] === targetYear && itemDate[1] === targetMonth;
+                    const storeMatch = monthStore === 'TÜM MAĞAZALAR' || item.store === monthStore;
+                    return dateMatch && storeMatch;
                 });
                 
                 const monthlyAchieved = monthlyData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
@@ -6962,13 +6995,30 @@
         let cityMonthlyChartInstance = null;
         
         function populateCitySelect() {
+            // Veri yüklenmemişse uyarı ver
+            if (!allData || allData.length === 0) {
+                console.warn('⚠️ Şehir listesi doldurulamadı: Veri henüz yüklenmedi');
+                return;
+            }
+            
             const cities = new Set();
             allData.forEach(item => {
                 if (item.city) cities.add(item.city);
             });
             
             const select = document.getElementById('citySelect');
+            if (!select) {
+                console.error('❌ citySelect elementi bulunamadı');
+                return;
+            }
+            
             select.innerHTML = '<option value="">-- Şehir Seçin --</option>';
+            
+            if (cities.size === 0) {
+                console.warn('⚠️ Hiç şehir verisi bulunamadı');
+                select.innerHTML += '<option value="" disabled>Şehir verisi bulunamadı</option>';
+                return;
+            }
             
             Array.from(cities).sort().forEach(city => {
                 const option = document.createElement('option');
@@ -6977,7 +7027,53 @@
                 select.appendChild(option);
             });
             
-            console.log('🌍 Şehir dropdown dolduruldu:', cities.size, 'şehir');
+            console.log('✅ Şehir dropdown dolduruldu:', cities.size, 'şehir');
+        }
+        
+        function populateTargetStoreDropdowns() {
+            // Mağazaları topla
+            const stores = new Set();
+            allData.forEach(item => {
+                if (item.store) stores.add(item.store);
+            });
+            
+            const sortedStores = Array.from(stores).sort();
+            
+            // Yıllık hedef mağaza dropdown
+            const yearStoreSelect = document.getElementById('targetYearStore');
+            if (yearStoreSelect) {
+                const currentYearValue = yearStoreSelect.value; // Mevcut seçimi koru
+                yearStoreSelect.innerHTML = '<option value="TÜM MAĞAZALAR">🏢 Tüm Mağazalar</option>';
+                sortedStores.forEach(store => {
+                    const option = document.createElement('option');
+                    option.value = store;
+                    option.textContent = store;
+                    yearStoreSelect.appendChild(option);
+                });
+                // Mevcut seçimi geri yükle
+                if (currentYearValue && sortedStores.includes(currentYearValue)) {
+                    yearStoreSelect.value = currentYearValue;
+                }
+            }
+            
+            // Aylık hedef mağaza dropdown
+            const monthStoreSelect = document.getElementById('targetMonthStore');
+            if (monthStoreSelect) {
+                const currentMonthValue = monthStoreSelect.value; // Mevcut seçimi koru
+                monthStoreSelect.innerHTML = '<option value="TÜM MAĞAZALAR">🏢 Tüm Mağazalar</option>';
+                sortedStores.forEach(store => {
+                    const option = document.createElement('option');
+                    option.value = store;
+                    option.textContent = store;
+                    monthStoreSelect.appendChild(option);
+                });
+                // Mevcut seçimi geri yükle
+                if (currentMonthValue && sortedStores.includes(currentMonthValue)) {
+                    monthStoreSelect.value = currentMonthValue;
+                }
+            }
+            
+            console.log('🏪 Hedef takip mağaza dropdownları dolduruldu:', stores.size, 'mağaza');
         }
         
         function analyzeCityPerformance() {
