@@ -731,6 +731,7 @@
             <button class="tab" onclick="switchTab('targets')">🎯 Hedef Takip</button>
             <button class="tab" onclick="switchTab('customers')">👥 Müşteri Analizi</button>
             <button class="tab" onclick="switchTab('customer_search')">🔍 Müşteri Arama</button>
+            <button class="tab" onclick="switchTab('salesperson')">👨‍💼 Satış Temsilcisi</button>
             <button class="tab" onclick="switchTab('city')">🌍 Şehir Analizi</button>
             <button class="tab" onclick="switchTab('stock')">📦 Stok Dağılım</button>
             <button class="tab" onclick="switchTab('time')">⏰ Zaman Analizi</button>
@@ -1311,6 +1312,109 @@
             </div>
         </div>
         <!-- End Customer Search Tab -->
+
+        <!-- Salesperson Analysis Tab -->
+        <div id="salespersonTab" class="tab-content">
+            <div class="content">
+                <h2 style="margin-bottom: 30px;">👨‍💼 Satış Temsilcisi Performans Analizi</h2>
+                
+                <!-- Search Input -->
+                <div style="max-width: 800px; margin: 0 auto 40px;">
+                    <div style="position: relative;">
+                        <input type="text" id="salespersonSearchInput" placeholder="Satış temsilcisi adı yazın... (örn: Mustafa Kılıç)" 
+                               style="width: 100%; padding: 20px 60px 20px 20px; font-size: 1.1em; border: 2px solid #667eea; border-radius: 15px; outline: none;"
+                               onkeyup="if(event.key==='Enter') searchSalespersonProfile()">
+                        <button onclick="searchSalespersonProfile()" 
+                                style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-size: 1em;">
+                            🔍 Ara
+                        </button>
+                    </div>
+                    <p style="text-align: center; color: #6c757d; margin-top: 10px; font-size: 0.9em;">
+                        💡 İpucu: Temsilci adının bir kısmını yazmak yeterli
+                    </p>
+                </div>
+                
+                <!-- Results Container -->
+                <div id="salespersonProfileContainer" style="display: none;">
+                    <!-- Salesperson Profile Header -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; border-radius: 20px; margin-bottom: 30px;">
+                        <h2 style="margin: 0 0 20px 0; font-size: 2em;">👨‍💼 <span id="salespersonName">-</span></h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">💰 Toplam Satış</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonTotalSales">$0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">📦 Toplam Adet</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonTotalQty">0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">🛒 İşlem Sayısı</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonTransactionCount">0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">📊 Ortalama İşlem</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonAvgTransaction">$0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">👥 Farklı Müşteri</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonUniqueCustomers">0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">🎯 Farklı Ürün</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonUniqueProducts">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 30px; margin-bottom: 30px;">
+                        <div class="chart-container">
+                            <h3 style="text-align: center; margin-bottom: 20px;">🏷️ En Çok Sattığı Markalar (Top 10)</h3>
+                            <canvas id="salespersonBrandChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 style="text-align: center; margin-bottom: 20px;">📂 En Çok Sattığı Kategoriler</h3>
+                            <canvas id="salespersonCategoryChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 style="text-align: center; margin-bottom: 20px;">🏪 Çalıştığı Mağazalar</h3>
+                            <canvas id="salespersonStoreChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 style="text-align: center; margin-bottom: 20px;">📈 Aylık Performans Trendi</h3>
+                            <canvas id="salespersonMonthlyChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Top 20 Products -->
+                    <div style="margin-bottom: 40px;">
+                        <h3 style="margin-bottom: 20px;">🎯 En Çok Sattığı Ürünler (Top 20)</h3>
+                        <div id="salespersonTopProductsTable" style="overflow-x: auto;"></div>
+                    </div>
+                    
+                    <!-- Bottom 10 Products -->
+                    <div style="margin-bottom: 40px;">
+                        <h3 style="margin-bottom: 20px;">⚠️ En Az Sattığı Ürünler (Bottom 10)</h3>
+                        <div id="salespersonBottomProductsTable" style="overflow-x: auto;"></div>
+                    </div>
+                    
+                    <!-- AI Salesperson Analysis -->
+                    <div id="salespersonAIAnalysisPanel" style="margin: 40px 0;">
+                        <h3 style="margin-bottom: 20px;">🤖 AI Performans Analizi ve Öneriler</h3>
+                        <div id="salespersonAIAnalysisContent"></div>
+                    </div>
+                </div>
+                
+                <!-- No Results Message -->
+                <div id="salespersonSearchNoResults" style="display: none; text-align: center; padding: 60px; background: #f8f9fa; border-radius: 15px;">
+                    <div style="font-size: 4em; margin-bottom: 20px;">🔍</div>
+                    <h3 style="color: #6c757d; margin-bottom: 10px;">Satış Temsilcisi Bulunamadı</h3>
+                    <p style="color: #adb5bd;">Lütfen farklı bir isim deneyin</p>
+                </div>
+            </div>
+        </div>
+        <!-- End Salesperson Analysis Tab -->
 
         <!-- City Analysis Tab -->
         <div id="cityTab" class="tab-content">
@@ -3583,6 +3687,9 @@
             } else if (tabName === 'customer_search') {
                 // Müşteri arama sekmesi - şehir dropdown'unu doldur
                 populateCityDropdownForCustomerSearch();
+            } else if (tabName === 'salesperson') {
+                // Satış temsilcisi sekmesi
+                console.log('👨‍💼 Satış Temsilcisi sekmesi açıldı');
             } else if (tabName === 'city') {
                 // Şehir analizi sekmesi - şehir dropdown'unu doldur
                 populateCitySelect();
@@ -6305,6 +6412,608 @@
             
             // Sonuçlara scroll
             document.getElementById('stockDistributionResults').scrollIntoView({behavior: 'smooth', block: 'start'});
+        }
+        
+        // ==================== SALESPERSON ANALYSIS TAB ====================
+        let salespersonBrandChartInstance = null;
+        let salespersonCategoryChartInstance = null;
+        let salespersonStoreChartInstance = null;
+        let salespersonMonthlyChartInstance = null;
+        
+        function searchSalespersonProfile() {
+            const searchQuery = document.getElementById('salespersonSearchInput').value.trim().toLowerCase();
+            
+            if (!searchQuery) {
+                alert('Lütfen bir satış temsilcisi adı girin');
+                return;
+            }
+            
+            console.log('🔍 Satış temsilcisi aranıyor:', searchQuery);
+            
+            // Temsilci verilerini filtrele (fuzzy matching)
+            const salespersonData = allData.filter(item => 
+                item.sales_person && item.sales_person.toLowerCase().includes(searchQuery)
+            );
+            
+            if (salespersonData.length === 0) {
+                document.getElementById('salespersonProfileContainer').style.display = 'none';
+                document.getElementById('salespersonSearchNoResults').style.display = 'block';
+                return;
+            }
+            
+            // Sonuçları göster
+            document.getElementById('salespersonSearchNoResults').style.display = 'none';
+            document.getElementById('salespersonProfileContainer').style.display = 'block';
+            
+            // Temsilci bilgilerini hesapla
+            const salespersonName = salespersonData[0].sales_person;
+            
+            const totalSales = salespersonData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
+            const totalQty = salespersonData.reduce((sum, item) => sum + parseFloat(item.quantity || 0), 0);
+            const uniqueDates = new Set(salespersonData.map(item => item.date));
+            const transactionCount = uniqueDates.size;
+            const avgTransaction = totalSales / Math.max(transactionCount, 1);
+            const uniqueCustomers = new Set(salespersonData.map(item => item.partner)).size;
+            const uniqueProducts = new Set(salespersonData.map(item => item.product)).size;
+            
+            // UI güncelle
+            document.getElementById('salespersonName').textContent = salespersonName;
+            document.getElementById('salespersonTotalSales').textContent = '$' + totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            document.getElementById('salespersonTotalQty').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            document.getElementById('salespersonTransactionCount').textContent = transactionCount;
+            document.getElementById('salespersonAvgTransaction').textContent = '$' + avgTransaction.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            document.getElementById('salespersonUniqueCustomers').textContent = uniqueCustomers;
+            document.getElementById('salespersonUniqueProducts').textContent = uniqueProducts;
+            
+            // Grafikleri render et
+            renderSalespersonBrandChart(salespersonData);
+            renderSalespersonCategoryChart(salespersonData);
+            renderSalespersonStoreChart(salespersonData);
+            renderSalespersonMonthlyChart(salespersonData);
+            
+            // Top 20 ve Bottom 10 ürünler
+            renderSalespersonTopProducts(salespersonData);
+            renderSalespersonBottomProducts(salespersonData);
+            
+            // AI analiz
+            performSalespersonAIAnalysis(salespersonData, {
+                name: salespersonName,
+                totalSales,
+                totalQty,
+                transactionCount,
+                avgTransaction,
+                uniqueCustomers,
+                uniqueProducts
+            });
+        }
+        
+        function renderSalespersonBrandChart(data) {
+            const brandData = {};
+            data.forEach(item => {
+                const brand = item.brand || 'Bilinmiyor';
+                if (!brandData[brand]) brandData[brand] = {sales: 0, qty: 0};
+                brandData[brand].sales += parseFloat(item.usd_amount || 0);
+                brandData[brand].qty += parseFloat(item.quantity || 0);
+            });
+            
+            const sorted = Object.entries(brandData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 10);
+            const labels = sorted.map(item => item[0]);
+            const salesValues = sorted.map(item => item[1].sales);
+            const qtyValues = sorted.map(item => item[1].qty);
+            
+            const ctx = document.getElementById('salespersonBrandChart');
+            if (!ctx) return;
+            
+            if (salespersonBrandChartInstance) {
+                salespersonBrandChartInstance.destroy();
+            }
+            
+            salespersonBrandChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Satış (USD)',
+                        data: salesValues,
+                        backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Miktar',
+                        data: qtyValues,
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: true, position: 'top'}
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderSalespersonCategoryChart(data) {
+            const categoryData = {};
+            data.forEach(item => {
+                const category = item.category_1 || 'Bilinmiyor';
+                if (!categoryData[category]) categoryData[category] = {sales: 0, qty: 0};
+                categoryData[category].sales += parseFloat(item.usd_amount || 0);
+                categoryData[category].qty += parseFloat(item.quantity || 0);
+            });
+            
+            const sorted = Object.entries(categoryData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 10);
+            const labels = sorted.map(item => item[0]);
+            const salesValues = sorted.map(item => item[1].sales);
+            const qtyValues = sorted.map(item => item[1].qty);
+            
+            const ctx = document.getElementById('salespersonCategoryChart');
+            if (!ctx) return;
+            
+            if (salespersonCategoryChartInstance) {
+                salespersonCategoryChartInstance.destroy();
+            }
+            
+            salespersonCategoryChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Satış (USD)',
+                        data: salesValues,
+                        backgroundColor: 'rgba(56, 239, 125, 0.6)',
+                        borderColor: 'rgba(56, 239, 125, 1)',
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Miktar',
+                        data: qtyValues,
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: true, position: 'top'}
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderSalespersonStoreChart(data) {
+            const storeData = {};
+            data.forEach(item => {
+                const store = item.store || 'Bilinmiyor';
+                if (!storeData[store]) storeData[store] = {sales: 0, qty: 0};
+                storeData[store].sales += parseFloat(item.usd_amount || 0);
+                storeData[store].qty += parseFloat(item.quantity || 0);
+            });
+            
+            const sorted = Object.entries(storeData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 10);
+            const labels = sorted.map(item => item[0]);
+            const salesValues = sorted.map(item => item[1].sales);
+            const qtyValues = sorted.map(item => item[1].qty);
+            
+            const ctx = document.getElementById('salespersonStoreChart');
+            if (!ctx) return;
+            
+            if (salespersonStoreChartInstance) {
+                salespersonStoreChartInstance.destroy();
+            }
+            
+            salespersonStoreChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Satış (USD)',
+                        data: salesValues,
+                        backgroundColor: 'rgba(245, 87, 108, 0.6)',
+                        borderColor: 'rgba(245, 87, 108, 1)',
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Miktar',
+                        data: qtyValues,
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: true, position: 'top'}
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderSalespersonMonthlyChart(data) {
+            const monthlyData = {};
+            data.forEach(item => {
+                const date = new Date(item.date);
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                if (!monthlyData[monthKey]) monthlyData[monthKey] = 0;
+                monthlyData[monthKey] += parseFloat(item.usd_amount || 0);
+            });
+            
+            const sorted = Object.entries(monthlyData).sort((a, b) => a[0].localeCompare(b[0]));
+            const labels = sorted.map(item => item[0]);
+            const values = sorted.map(item => item[1]);
+            
+            const ctx = document.getElementById('salespersonMonthlyChart');
+            if (!ctx) return;
+            
+            if (salespersonMonthlyChartInstance) {
+                salespersonMonthlyChartInstance.destroy();
+            }
+            
+            salespersonMonthlyChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Aylık Satış (USD)',
+                        data: values,
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: true}
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderSalespersonTopProducts(data) {
+            // Ürün bazında grupla
+            const productData = {};
+            data.forEach(item => {
+                const product = item.product || 'Bilinmiyor';
+                if (!productData[product]) {
+                    productData[product] = {
+                        brand: item.brand || 'Bilinmiyor',
+                        category: item.category_1 || 'Bilinmiyor',
+                        sales: 0,
+                        qty: 0,
+                        count: 0
+                    };
+                }
+                productData[product].sales += parseFloat(item.usd_amount || 0);
+                productData[product].qty += parseFloat(item.quantity || 0);
+                productData[product].count += 1;
+            });
+            
+            // Top 20
+            const sorted = Object.entries(productData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 20);
+            
+            let html = `
+                <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <thead style="background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%); color: white;">
+                        <tr>
+                            <th style="padding: 15px; text-align: left;">#</th>
+                            <th style="padding: 15px; text-align: left;">Ürün</th>
+                            <th style="padding: 15px; text-align: left;">Marka</th>
+                            <th style="padding: 15px; text-align: left;">Kategori</th>
+                            <th style="padding: 15px; text-align: right;">Satış (USD)</th>
+                            <th style="padding: 15px; text-align: right;">Miktar</th>
+                            <th style="padding: 15px; text-align: right;">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            sorted.forEach((item, index) => {
+                const product = item[0];
+                const stats = item[1];
+                
+                html += `
+                    <tr style="border-bottom: 1px solid #eee; ${index % 2 === 0 ? 'background: #f8f9fa;' : ''}">
+                        <td style="padding: 12px;">${index + 1}</td>
+                        <td style="padding: 12px;"><strong>${product}</strong></td>
+                        <td style="padding: 12px;">${stats.brand}</td>
+                        <td style="padding: 12px;">${stats.category}</td>
+                        <td style="padding: 12px; text-align: right; color: #38ef7d; font-weight: bold;">$${stats.sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                        <td style="padding: 12px; text-align: right;">${stats.qty.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                        <td style="padding: 12px; text-align: right;">${stats.count}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            document.getElementById('salespersonTopProductsTable').innerHTML = html;
+        }
+        
+        function renderSalespersonBottomProducts(data) {
+            // Ürün bazında grupla
+            const productData = {};
+            data.forEach(item => {
+                const product = item.product || 'Bilinmiyor';
+                if (!productData[product]) {
+                    productData[product] = {
+                        brand: item.brand || 'Bilinmiyor',
+                        category: item.category_1 || 'Bilinmiyor',
+                        sales: 0,
+                        qty: 0,
+                        count: 0
+                    };
+                }
+                productData[product].sales += parseFloat(item.usd_amount || 0);
+                productData[product].qty += parseFloat(item.quantity || 0);
+                productData[product].count += 1;
+            });
+            
+            // Bottom 10 (en az satan)
+            const sorted = Object.entries(productData).sort((a, b) => a[1].sales - b[1].sales).slice(0, 10);
+            
+            let html = `
+                <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <thead style="background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%); color: white;">
+                        <tr>
+                            <th style="padding: 15px; text-align: left;">#</th>
+                            <th style="padding: 15px; text-align: left;">Ürün</th>
+                            <th style="padding: 15px; text-align: left;">Marka</th>
+                            <th style="padding: 15px; text-align: left;">Kategori</th>
+                            <th style="padding: 15px; text-align: right;">Satış (USD)</th>
+                            <th style="padding: 15px; text-align: right;">Miktar</th>
+                            <th style="padding: 15px; text-align: right;">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            sorted.forEach((item, index) => {
+                const product = item[0];
+                const stats = item[1];
+                
+                html += `
+                    <tr style="border-bottom: 1px solid #eee; ${index % 2 === 0 ? 'background: #fff3cd;' : 'background: #ffe5e5;'}">
+                        <td style="padding: 12px;">${index + 1}</td>
+                        <td style="padding: 12px;"><strong>${product}</strong></td>
+                        <td style="padding: 12px;">${stats.brand}</td>
+                        <td style="padding: 12px;">${stats.category}</td>
+                        <td style="padding: 12px; text-align: right; color: #f5576c; font-weight: bold;">$${stats.sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                        <td style="padding: 12px; text-align: right;">${stats.qty.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                        <td style="padding: 12px; text-align: right;">${stats.count}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            document.getElementById('salespersonBottomProductsTable').innerHTML = html;
+        }
+        
+        function performSalespersonAIAnalysis(data, profile) {
+            console.log('🤖 Satış temsilcisi AI analizi başlatılıyor...');
+            
+            // Marka analizi
+            const brandData = {};
+            data.forEach(item => {
+                const brand = item.brand || 'Bilinmiyor';
+                if (!brandData[brand]) brandData[brand] = 0;
+                brandData[brand] += parseFloat(item.usd_amount || 0);
+            });
+            const topBrands = Object.entries(brandData).sort((a, b) => b[1] - a[1]).slice(0, 3);
+            const bottomBrands = Object.entries(brandData).sort((a, b) => a[1] - b[1]).slice(0, 3);
+            
+            // Kategori analizi
+            const categoryData = {};
+            data.forEach(item => {
+                const category = item.category_1 || 'Bilinmiyor';
+                if (!categoryData[category]) categoryData[category] = 0;
+                categoryData[category] += parseFloat(item.usd_amount || 0);
+            });
+            const topCategories = Object.entries(categoryData).sort((a, b) => b[1] - a[1]).slice(0, 3);
+            const bottomCategories = Object.entries(categoryData).sort((a, b) => a[1] - b[1]).slice(0, 3);
+            
+            const insights = {
+                positive: [],
+                negative: [],
+                neutral: [],
+                recommendations: []
+            };
+            
+            // Pozitif içgörüler
+            if (profile.totalSales > 100000) {
+                insights.positive.push({
+                    title: '🏆 Yüksek Performans',
+                    description: `${profile.name} toplam $${profile.totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} satış gerçekleştirmiş. Bu, çok başarılı bir performans göstergesi.`
+                });
+            }
+            
+            if (topBrands.length > 0) {
+                const topBrand = topBrands[0];
+                const brandShare = (topBrand[1] / profile.totalSales * 100).toFixed(1);
+                insights.positive.push({
+                    title: `🏷️ ${topBrand[0]} Markasında Uzman`,
+                    description: `${topBrand[0]} markasında %${brandShare} pay ile güçlü ($${topBrand[1].toLocaleString('tr-TR', {minimumFractionDigits: 2})}). Bu markadaki ürünleri çok iyi biliyor.`
+                });
+            }
+            
+            if (topCategories.length > 0) {
+                const topCat = topCategories[0];
+                const catShare = (topCat[1] / profile.totalSales * 100).toFixed(1);
+                insights.positive.push({
+                    title: `📂 ${topCat[0]} Kategorisinde Başarılı`,
+                    description: `${topCat[0]} kategorisinde %${catShare} pay ile lider ($${topCat[1].toLocaleString('tr-TR', {minimumFractionDigits: 2})}). Bu kategorideki ürünleri etkili satıyor.`
+                });
+            }
+            
+            // Negatif içgörüler (Gelişim alanları)
+            if (bottomBrands.length > 0 && bottomBrands[0][1] < profile.totalSales * 0.05) {
+                insights.negative.push({
+                    title: `⚠️ ${bottomBrands[0][0]} Markasında Zayıf`,
+                    description: `${bottomBrands[0][0]} markasında sadece $${bottomBrands[0][1].toLocaleString('tr-TR', {minimumFractionDigits: 2})} satış var. Bu markada eğitim gerekebilir.`
+                });
+            }
+            
+            if (bottomCategories.length > 0 && bottomCategories[0][1] < profile.totalSales * 0.05) {
+                insights.negative.push({
+                    title: `⚠️ ${bottomCategories[0][0]} Kategorisinde Gelişim Alanı`,
+                    description: `${bottomCategories[0][0]} kategorisinde sadece $${bottomCategories[0][1].toLocaleString('tr-TR', {minimumFractionDigits: 2})} satış var. Bu kategoride potansiyel artış fırsatı.`
+                });
+            }
+            
+            if (profile.uniqueCustomers < 50) {
+                insights.negative.push({
+                    title: '👥 Müşteri Portföyü Dar',
+                    description: `Sadece ${profile.uniqueCustomers} farklı müşteri ile çalışılmış. Yeni müşteri kazanımına odaklanılmalı.`
+                });
+            }
+            
+            // Nötr bilgiler
+            insights.neutral.push({
+                title: '📊 Genel Performans',
+                description: `${profile.uniqueProducts} farklı ürün, ${profile.uniqueCustomers} farklı müşteriye satıldı. Ortalama işlem değeri $${profile.avgTransaction.toLocaleString('tr-TR', {minimumFractionDigits: 2})}.`
+            });
+            
+            if (topBrands.length >= 3) {
+                insights.neutral.push({
+                    title: '🏷️ Marka Çeşitliliği',
+                    description: `En çok satılan markalar: ${topBrands.map(b => b[0]).join(', ')}. Bu markalarda yoğunlaşma var.`
+                });
+            }
+            
+            // Öneriler
+            insights.recommendations.push({
+                icon: '📚',
+                title: 'Ürün Eğitimi',
+                description: `${bottomBrands[0][0]} ve ${bottomCategories[0][0]} konularında ürün eğitimi almalı. Bu alanlardaki bilgi eksikliği satışları etkiliyor olabilir.`
+            });
+            
+            insights.recommendations.push({
+                icon: '🎯',
+                title: 'Hedef Belirleme',
+                description: `${topBrands[0][0]} markasındaki başarıyı diğer markalara da taşımak için aylık hedefler belirleyin. Cross-selling fırsatlarını değerlendirin.`
+            });
+            
+            insights.recommendations.push({
+                icon: '👥',
+                title: 'Müşteri Geliştirme',
+                description: `Mevcut ${profile.uniqueCustomers} müşteriye ek olarak yeni müşteri kazanımı için aktif çalışma yapılmalı. Referans sistemi kullanılabilir.`
+            });
+            
+            if (profile.avgTransaction > 1000) {
+                insights.recommendations.push({
+                    icon: '💎',
+                    title: 'Premium Ürün Odağı',
+                    description: `Ortalama işlem değeri yüksek ($${profile.avgTransaction.toLocaleString('tr-TR', {minimumFractionDigits: 2})}). Premium ürünlerde uzmanlaşma fırsatı var.`
+                });
+            }
+            
+            // HTML oluştur
+            let html = `
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px;">
+                    ${insights.positive.length > 0 ? `
+                    <div class="analysis-section">
+                        <h3 style="color: white; margin-top: 0;">✅ Güçlü Yönler</h3>
+                        ${insights.positive.map(item => `
+                            <div class="insight-item insight-positive" style="background: rgba(56, 239, 125, 0.2); padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #38ef7d;">
+                                <span class="insight-icon" style="font-size: 1.5em; margin-right: 10px;">✅</span>
+                                <strong style="font-size: 1.1em;">${item.title}</strong><br>
+                                <span style="opacity: 0.95; margin-top: 8px; display: block;">${item.description}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                    
+                    ${insights.negative.length > 0 ? `
+                    <div class="analysis-section" style="margin-top: 25px;">
+                        <h3 style="color: white;">⚠️ Gelişim Alanları</h3>
+                        ${insights.negative.map(item => `
+                            <div class="insight-item insight-negative" style="background: rgba(245, 87, 108, 0.2); padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #f5576c;">
+                                <span class="insight-icon" style="font-size: 1.5em; margin-right: 10px;">⚠️</span>
+                                <strong style="font-size: 1.1em;">${item.title}</strong><br>
+                                <span style="opacity: 0.95; margin-top: 8px; display: block;">${item.description}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                    
+                    ${insights.neutral.length > 0 ? `
+                    <div class="analysis-section" style="margin-top: 25px;">
+                        <h3 style="color: white;">💡 Genel Bilgiler</h3>
+                        ${insights.neutral.map(item => `
+                            <div class="insight-item insight-neutral" style="background: rgba(255, 215, 0, 0.2); padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #ffd700;">
+                                <span class="insight-icon" style="font-size: 1.5em; margin-right: 10px;">💡</span>
+                                <strong style="font-size: 1.1em;">${item.title}</strong><br>
+                                <span style="opacity: 0.95; margin-top: 8px; display: block;">${item.description}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                    
+                    <div class="analysis-section" style="margin-top: 25px;">
+                        <h3 style="color: white;">🎯 Gelişim Önerileri</h3>
+                        ${insights.recommendations.map(item => `
+                            <div class="recommendation" style="background: rgba(255, 255, 255, 0.15); padding: 18px; border-radius: 10px; margin: 12px 0;">
+                                <span class="recommendation-icon" style="font-size: 1.8em; margin-right: 12px;">${item.icon}</span>
+                                <div style="display: inline-block; vertical-align: top; width: calc(100% - 50px);">
+                                    <strong style="font-size: 1.15em; display: block; margin-bottom: 8px;">${item.title}</strong>
+                                    <p style="margin: 0; opacity: 0.95; line-height: 1.6;">${item.description}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('salespersonAIAnalysisContent').innerHTML = html;
         }
         
     </script>
