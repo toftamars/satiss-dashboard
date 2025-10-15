@@ -3641,6 +3641,36 @@
             let yearlyTargets = JSON.parse(localStorage.getItem('yearlyTargets') || '{}');
             console.log('📂 Mevcut localStorage:', yearlyTargets);
             
+            // 🔧 ESKİ FORMAT TESPİTİ VE OTOMATİK TEMİZLİK
+            // Eski format: {2025: 5750000} -> sayı
+            // Yeni format: {2025: {"TÜM MAĞAZALAR": 5750000}} -> object
+            let needsMigration = false;
+            for (const [y, value] of Object.entries(yearlyTargets)) {
+                if (typeof value === 'number') {
+                    needsMigration = true;
+                    console.warn('⚠️ Eski localStorage formatı tespit edildi! Otomatik temizleniyor...');
+                    break;
+                }
+            }
+            
+            if (needsMigration) {
+                // Eski verileri yeni formata dönüştür
+                const migratedTargets = {};
+                for (const [y, value] of Object.entries(yearlyTargets)) {
+                    if (typeof value === 'number') {
+                        // Eski format: sayı -> yeni format: {TÜM MAĞAZALAR: sayı}
+                        migratedTargets[y] = {'TÜM MAĞAZALAR': value};
+                        console.log(`🔄 ${y} yılı formatı güncellendi:`, value, '→', migratedTargets[y]);
+                    } else {
+                        // Zaten yeni format
+                        migratedTargets[y] = value;
+                    }
+                }
+                yearlyTargets = migratedTargets;
+                localStorage.setItem('yearlyTargets', JSON.stringify(yearlyTargets));
+                console.log('✅ Eski format temizlendi ve yeni formata dönüştürüldü!');
+            }
+            
             // Yıl yoksa oluştur
             if (!yearlyTargets[year]) {
                 yearlyTargets[year] = {};
@@ -3687,6 +3717,8 @@
             const store = document.getElementById('targetMonthStore').value;
             const target = parseFloat(document.getElementById('monthlyTarget').value) || 0;
             
+            console.log('💾 saveMonthlyTarget çağrıldı:', {year, month, store, target});
+            
             if (target <= 0) {
                 alert('⚠️ Lütfen geçerli bir hedef girin!');
                 return;
@@ -3694,6 +3726,7 @@
             
             // Mevcut hedefleri al
             let monthlyTargets = JSON.parse(localStorage.getItem('monthlyTargets') || '{}');
+            console.log('📂 Mevcut aylık localStorage:', monthlyTargets);
             
             // Yıl yoksa oluştur
             if (!monthlyTargets[year]) {
@@ -3708,6 +3741,8 @@
             // Mağaza ve ay bazında hedefi kaydet
             monthlyTargets[year][store][month] = target;
             localStorage.setItem('monthlyTargets', JSON.stringify(monthlyTargets));
+            
+            console.log('✅ Aylık localStorage\'a kaydedildi:', monthlyTargets);
             
             // Hesapla
             calculateTargets();
