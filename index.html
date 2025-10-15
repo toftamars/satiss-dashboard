@@ -1448,6 +1448,12 @@
                         <h3 style="margin-bottom: 15px;">🛍️ Son Alışverişler (Son 20)</h3>
                         <div id="customerPurchaseHistoryMain" style="overflow-x: auto;"></div>
                     </div>
+                    
+                    <!-- AI Analysis Panel -->
+                    <div id="customerAIAnalysisPanelMain" style="margin: 40px 0; display: none;">
+                        <h3 style="margin-bottom: 20px;">🤖 AI Müşteri Analizi, Yorum ve Öneriler</h3>
+                        <div id="customerAIAnalysisContentMain"></div>
+                    </div>
                 </div>
                 
                 <h3 style="margin: 30px 0 20px 0;">🏆 Top 10 Müşteri</h3>
@@ -4820,6 +4826,16 @@
         let currentSortDirection = 'desc';
         let lastProductSearchData = null;
         
+        // Satış Temsilcisi tablosu sıralama için
+        let lastSalespersonTopProductsData = null;
+        let currentSalespersonSortColumn = 'sales';
+        let currentSalespersonSortDirection = 'desc';
+        
+        // Müşteri alışveriş geçmişi sıralama için
+        let lastCustomerPurchaseData = null;
+        let currentCustomerPurchaseSortColumn = 'date';
+        let currentCustomerPurchaseSortDirection = 'desc';
+        
         function searchProduct() {
             const searchTerm = document.getElementById('productSearchInput').value.trim();
             
@@ -5763,8 +5779,22 @@
             renderCustomerBrandChartMain(customerData);
             renderCustomerCategoryChartMain(customerData);
             
+            // Veriyi kaydet (sıralama için)
+            lastCustomerPurchaseData = customerData;
+            
             // Satın alma geçmişi tablosu
             renderCustomerPurchaseHistoryMain(customerData);
+            
+            // AI analiz
+            performCustomerAIAnalysisMain(customerData, {
+                name: customerName,
+                city: customerCity,
+                tags: customerTags,
+                totalSales,
+                totalQty,
+                transactionCount,
+                avgBasket
+            });
             
             // Sonuçlara scroll
             document.getElementById('customerProfileMainContainer').scrollIntoView({behavior: 'smooth', block: 'start'});
@@ -5874,20 +5904,98 @@
             });
         }
         
-        function renderCustomerPurchaseHistoryMain(data) {
-            // Son 20 işlemi göster
-            const sorted = [...data].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 20);
+        function renderCustomerPurchaseHistoryMain(data = null, sortColumn = null, sortDirection = null) {
+            // Eğer data null ise, mevcut veriyi kullan
+            if (data === null && lastCustomerPurchaseData) {
+                data = lastCustomerPurchaseData;
+            }
+            
+            if (!data || data.length === 0) {
+                document.getElementById('customerPurchaseHistoryMain').innerHTML = '<p style="text-align: center; padding: 20px;">Veri bulunamadı</p>';
+                return;
+            }
+            
+            // Sıralama parametrelerini güncelle
+            if (sortColumn !== null) {
+                if (currentCustomerPurchaseSortColumn === sortColumn) {
+                    currentCustomerPurchaseSortDirection = currentCustomerPurchaseSortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentCustomerPurchaseSortColumn = sortColumn;
+                    currentCustomerPurchaseSortDirection = sortColumn === 'date' ? 'desc' : 'asc';
+                }
+            }
+            
+            // Sıralama
+            let sorted = [...data];
+            
+            if (currentCustomerPurchaseSortColumn === 'date') {
+                sorted.sort((a, b) => {
+                    const dateA = new Date(a.date);
+                    const dateB = new Date(b.date);
+                    return currentCustomerPurchaseSortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+                });
+            } else if (currentCustomerPurchaseSortColumn === 'product') {
+                sorted.sort((a, b) => {
+                    return currentCustomerPurchaseSortDirection === 'asc'
+                        ? (a.product || '').localeCompare(b.product || '', 'tr')
+                        : (b.product || '').localeCompare(a.product || '', 'tr');
+                });
+            } else if (currentCustomerPurchaseSortColumn === 'brand') {
+                sorted.sort((a, b) => {
+                    return currentCustomerPurchaseSortDirection === 'asc'
+                        ? (a.brand || '').localeCompare(b.brand || '', 'tr')
+                        : (b.brand || '').localeCompare(a.brand || '', 'tr');
+                });
+            } else if (currentCustomerPurchaseSortColumn === 'quantity') {
+                sorted.sort((a, b) => {
+                    return currentCustomerPurchaseSortDirection === 'asc'
+                        ? parseFloat(a.quantity || 0) - parseFloat(b.quantity || 0)
+                        : parseFloat(b.quantity || 0) - parseFloat(a.quantity || 0);
+                });
+            } else if (currentCustomerPurchaseSortColumn === 'amount') {
+                sorted.sort((a, b) => {
+                    return currentCustomerPurchaseSortDirection === 'asc'
+                        ? parseFloat(a.usd_amount || 0) - parseFloat(b.usd_amount || 0)
+                        : parseFloat(b.usd_amount || 0) - parseFloat(a.usd_amount || 0);
+                });
+            } else if (currentCustomerPurchaseSortColumn === 'store') {
+                sorted.sort((a, b) => {
+                    return currentCustomerPurchaseSortDirection === 'asc'
+                        ? (a.store || '').localeCompare(b.store || '', 'tr')
+                        : (b.store || '').localeCompare(a.store || '', 'tr');
+                });
+            }
+            
+            // Son 20 işlem
+            sorted = sorted.slice(0, 20);
+            
+            const getSortIcon = (column) => {
+                if (currentCustomerPurchaseSortColumn !== column) return '⇅';
+                return currentCustomerPurchaseSortDirection === 'asc' ? '↑' : '↓';
+            };
             
             let html = `
                 <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
                     <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                         <tr>
-                            <th style="padding: 12px; text-align: left;">Tarih</th>
-                            <th style="padding: 12px; text-align: left;">Ürün</th>
-                            <th style="padding: 12px; text-align: left;">Marka</th>
-                            <th style="padding: 12px; text-align: right;">Adet</th>
-                            <th style="padding: 12px; text-align: right;">Tutar</th>
-                            <th style="padding: 12px; text-align: left;">Mağaza</th>
+                            <th style="padding: 12px; text-align: left; cursor: pointer;" onclick="renderCustomerPurchaseHistoryMain(null, 'date')">
+                                Tarih ${getSortIcon('date')}
+                            </th>
+                            <th style="padding: 12px; text-align: left; cursor: pointer;" onclick="renderCustomerPurchaseHistoryMain(null, 'product')">
+                                Ürün ${getSortIcon('product')}
+                            </th>
+                            <th style="padding: 12px; text-align: left; cursor: pointer;" onclick="renderCustomerPurchaseHistoryMain(null, 'brand')">
+                                Marka ${getSortIcon('brand')}
+                            </th>
+                            <th style="padding: 12px; text-align: right; cursor: pointer;" onclick="renderCustomerPurchaseHistoryMain(null, 'quantity')">
+                                Adet ${getSortIcon('quantity')}
+                            </th>
+                            <th style="padding: 12px; text-align: right; cursor: pointer;" onclick="renderCustomerPurchaseHistoryMain(null, 'amount')">
+                                Tutar ${getSortIcon('amount')}
+                            </th>
+                            <th style="padding: 12px; text-align: left; cursor: pointer;" onclick="renderCustomerPurchaseHistoryMain(null, 'store')">
+                                Mağaza ${getSortIcon('store')}
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -5912,6 +6020,256 @@
             `;
             
             document.getElementById('customerPurchaseHistoryMain').innerHTML = html;
+        }
+        
+        function performCustomerAIAnalysisMain(data, profile) {
+            console.log('🤖 Müşteri AI analizi başlatılıyor...', profile);
+            
+            // Veri analizi
+            const brandData = {};
+            const categoryData = {};
+            const storeData = {};
+            const monthlyData = {};
+            
+            data.forEach(item => {
+                // Marka
+                const brand = item.brand || 'Bilinmiyor';
+                if (!brandData[brand]) brandData[brand] = {sales: 0, qty: 0, count: 0};
+                brandData[brand].sales += parseFloat(item.usd_amount || 0);
+                brandData[brand].qty += parseFloat(item.quantity || 0);
+                brandData[brand].count += 1;
+                
+                // Kategori
+                const category = item.category_1 || 'Bilinmiyor';
+                if (!categoryData[category]) categoryData[category] = {sales: 0, qty: 0};
+                categoryData[category].sales += parseFloat(item.usd_amount || 0);
+                categoryData[category].qty += parseFloat(item.quantity || 0);
+                
+                // Mağaza
+                const store = item.store || 'Bilinmiyor';
+                if (!storeData[store]) storeData[store] = {sales: 0, count: 0};
+                storeData[store].sales += parseFloat(item.usd_amount || 0);
+                storeData[store].count += 1;
+                
+                // Aylık
+                const month = item.date ? item.date.substring(0, 7) : 'Bilinmiyor';
+                if (!monthlyData[month]) monthlyData[month] = 0;
+                monthlyData[month] += parseFloat(item.usd_amount || 0);
+            });
+            
+            // Top 3 listeler
+            const topBrands = Object.entries(brandData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 3);
+            const topCategories = Object.entries(categoryData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 3);
+            const topStores = Object.entries(storeData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 3);
+            const monthlySales = Object.entries(monthlyData).sort((a, b) => new Date(b[0]) - new Date(a[0])).slice(0, 6);
+            
+            // En çok alınan ürün
+            const productData = {};
+            data.forEach(item => {
+                const product = item.product || 'Bilinmiyor';
+                if (!productData[product]) productData[product] = {qty: 0, sales: 0};
+                productData[product].qty += parseFloat(item.quantity || 0);
+                productData[product].sales += parseFloat(item.usd_amount || 0);
+            });
+            const topProduct = Object.entries(productData).sort((a, b) => b[1].qty - a[1].qty)[0];
+            
+            // AI İçgörüleri
+            const insights = {
+                positive: [],
+                negative: [],
+                neutral: [],
+                recommendations: []
+            };
+            
+            // Pozitif İçgörüler
+            if (profile.totalSales > 10000) {
+                insights.positive.push({
+                    title: '💎 VIP Müşteri',
+                    description: `${profile.name}, toplam $${profile.totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} alışveriş ile VIP müşteri kategorisinde. Bu müşteriye özel ilgi gösterilmeli.`
+                });
+            } else if (profile.totalSales > 5000) {
+                insights.positive.push({
+                    title: '⭐ Değerli Müşteri',
+                    description: `${profile.name}, toplam $${profile.totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} alışveriş ile değerli müşteri kategorisinde.`
+                });
+            }
+            
+            if (profile.transactionCount > 10) {
+                insights.positive.push({
+                    title: '🔄 Sadık Müşteri',
+                    description: `${profile.transactionCount} işlem ile düzenli alışveriş yapan sadık bir müşteri. Müşteri memnuniyeti yüksek.`
+                });
+            }
+            
+            if (profile.avgBasket > 1000) {
+                insights.positive.push({
+                    title: '🛒 Yüksek Sepet Ortalaması',
+                    description: `Ortalama sepet tutarı $${profile.avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2})}. Premium ürünlere ilgi gösteriyor.`
+                });
+            }
+            
+            if (topBrands.length > 0) {
+                insights.positive.push({
+                    title: `🏷️ Favori Marka: ${topBrands[0][0]}`,
+                    description: `${topBrands[0][0]} markasından $${topBrands[0][1].sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} değerinde ${topBrands[0][1].count} adet ürün aldı. Bu markada yeni ürünler önerilmeli.`
+                });
+            }
+            
+            // Negatif İçgörüler / Dikkat Edilmesi Gerekenler
+            if (profile.transactionCount < 3) {
+                insights.negative.push({
+                    title: '⚠️ Yeni Müşteri',
+                    description: `Sadece ${profile.transactionCount} işlem gerçekleştirdi. Müşteri sadakati oluşturmak için özel kampanyalar sunulmalı.`
+                });
+            }
+            
+            if (profile.avgBasket < 500) {
+                insights.negative.push({
+                    title: '📊 Düşük Sepet Ortalaması',
+                    description: `Ortalama sepet tutarı $${profile.avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2})}. Cross-sell ve up-sell fırsatları değerlendirilmeli.`
+                });
+            }
+            
+            const lastPurchaseDate = data.length > 0 ? new Date(Math.max(...data.map(item => new Date(item.date)))) : null;
+            if (lastPurchaseDate) {
+                const daysSinceLastPurchase = Math.floor((new Date() - lastPurchaseDate) / (1000 * 60 * 60 * 24));
+                if (daysSinceLastPurchase > 90) {
+                    insights.negative.push({
+                        title: '⏰ Uzun Süredir Alışveriş Yok',
+                        description: `Son alışverişten ${daysSinceLastPurchase} gün geçti. Müşteriyi geri kazanmak için hatırlatma kampanyası düzenlenebilir.`
+                    });
+                }
+            }
+            
+            // Nötr İçgörüler
+            insights.neutral.push({
+                title: '📍 Konum Bilgisi',
+                description: `Müşteri ${profile.city} şehrinden alışveriş yapıyor. ${topStores.length > 0 ? `En çok ${topStores[0][0]} mağazasını tercih ediyor.` : ''}`
+            });
+            
+            if (topCategories.length > 0) {
+                insights.neutral.push({
+                    title: `📂 İlgi Alanı: ${topCategories[0][0]}`,
+                    description: `${topCategories[0][0]} kategorisinden $${topCategories[0][1].sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} değerinde alışveriş yaptı.`
+                });
+            }
+            
+            if (topProduct) {
+                insights.neutral.push({
+                    title: `🎯 En Çok Aldığı Ürün`,
+                    description: `${topProduct[0]} ürününden ${topProduct[1].qty.toLocaleString('tr-TR', {minimumFractionDigits: 2})} adet aldı.`
+                });
+            }
+            
+            // Öneriler
+            if (topBrands.length > 1) {
+                insights.recommendations.push({
+                    icon: '🎁',
+                    title: 'Çapraz Satış Fırsatı',
+                    description: `Müşteri ${topBrands.map(b => b[0]).join(', ')} markalarını tercih ediyor. Bu markaların yeni ürünleri ve aksesuarları önerilebilir.`
+                });
+            }
+            
+            if (profile.avgBasket > 500) {
+                insights.recommendations.push({
+                    icon: '💳',
+                    title: 'Premium Ürün Önerisi',
+                    description: `Yüksek sepet ortalaması nedeniyle premium ve lüks ürünler önerilebilir. Özel koleksiyonlar sunulmalı.`
+                });
+            }
+            
+            if (profile.transactionCount > 5) {
+                insights.recommendations.push({
+                    icon: '🎖️',
+                    title: 'Sadakat Programı',
+                    description: `Düzenli müşteri olduğu için sadakat programına dahil edilmeli. Özel indirimler ve erken erişim fırsatları sunulabilir.`
+                });
+            }
+            
+            if (topStores.length > 0) {
+                insights.recommendations.push({
+                    icon: '🏪',
+                    title: 'Mağaza Bazlı Kampanya',
+                    description: `${topStores[0][0]} mağazasını sıklıkla tercih ediyor. Bu mağazada özel etkinlikler ve lansmanlar için davet gönderilebilir.`
+                });
+            }
+            
+            insights.recommendations.push({
+                icon: '📧',
+                title: 'Kişiselleştirilmiş İletişim',
+                description: `${topCategories.length > 0 ? topCategories[0][0] : 'İlgi alanı'} kategorisindeki yeni ürünler hakkında e-posta veya SMS ile bilgilendirme yapılabilir.`
+            });
+            
+            if (monthlySales.length > 0) {
+                const avgMonthlySales = monthlySales.reduce((sum, item) => sum + item[1], 0) / monthlySales.length;
+                insights.recommendations.push({
+                    icon: '📊',
+                    title: 'Alışveriş Tahmini',
+                    description: `Aylık ortalama $${avgMonthlySales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} alışveriş yapıyor. Gelecek ay için özel teklifler hazırlanabilir.`
+                });
+            }
+            
+            // HTML oluşturma
+            let html = `
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px;">
+                    ${insights.positive.length > 0 ? `
+                    <div class="analysis-section">
+                        <h3 style="color: white; margin-top: 0;">✅ Güçlü Yönler</h3>
+                        ${insights.positive.map(item => `
+                            <div class="insight-item insight-positive" style="background: rgba(56, 239, 125, 0.2); padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #38ef7d;">
+                                <span class="insight-icon" style="font-size: 1.5em; margin-right: 10px;">✅</span>
+                                <strong style="font-size: 1.1em;">${item.title}</strong><br>
+                                <span style="opacity: 0.95; margin-top: 8px; display: block;">${item.description}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                    
+                    ${insights.negative.length > 0 ? `
+                    <div class="analysis-section" style="margin-top: 30px;">
+                        <h3 style="color: white;">⚠️ Dikkat Edilmesi Gerekenler</h3>
+                        ${insights.negative.map(item => `
+                            <div class="insight-item insight-negative" style="background: rgba(255, 107, 107, 0.2); padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #ff6b6b;">
+                                <span class="insight-icon" style="font-size: 1.5em; margin-right: 10px;">⚠️</span>
+                                <strong style="font-size: 1.1em;">${item.title}</strong><br>
+                                <span style="opacity: 0.95; margin-top: 8px; display: block;">${item.description}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                    
+                    ${insights.neutral.length > 0 ? `
+                    <div class="analysis-section" style="margin-top: 30px;">
+                        <h3 style="color: white;">📊 Genel Bilgiler</h3>
+                        ${insights.neutral.map(item => `
+                            <div class="insight-item insight-neutral" style="background: rgba(255, 255, 255, 0.2); padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid white;">
+                                <span class="insight-icon" style="font-size: 1.5em; margin-right: 10px;">📊</span>
+                                <strong style="font-size: 1.1em;">${item.title}</strong><br>
+                                <span style="opacity: 0.95; margin-top: 8px; display: block;">${item.description}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                    
+                    ${insights.recommendations.length > 0 ? `
+                    <div class="analysis-section" style="margin-top: 30px;">
+                        <h3 style="color: white;">💡 Aksiyon Önerileri</h3>
+                        ${insights.recommendations.map(item => `
+                            <div class="recommendation" style="background: rgba(255, 215, 0, 0.2); padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #ffd700; display: flex; align-items: start; gap: 15px;">
+                                <span class="recommendation-icon" style="font-size: 2em; flex-shrink: 0;">${item.icon}</span>
+                                <div style="flex: 1;">
+                                    <strong style="font-size: 1.1em; display: block; margin-bottom: 5px;">${item.title}</strong>
+                                    <span style="opacity: 0.95;">${item.description}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            document.getElementById('customerAIAnalysisContentMain').innerHTML = html;
+            document.getElementById('customerAIAnalysisPanelMain').style.display = 'block';
         }
         
         // ==================== OLD CUSTOMER SEARCH TAB (DEPRECATED) ====================
@@ -7132,6 +7490,9 @@
             renderSalespersonStoreChart(salespersonData);
             renderSalespersonMonthlyChart(salespersonData);
             
+            // Veriyi kaydet (sıralama için)
+            lastSalespersonTopProductsData = salespersonData;
+            
             // Top 20 ve Bottom 10 ürünler
             renderSalespersonTopProducts(salespersonData);
             renderSalespersonBottomProducts(salespersonData);
@@ -7373,7 +7734,27 @@
             });
         }
         
-        function renderSalespersonTopProducts(data) {
+        function renderSalespersonTopProducts(data = null, sortColumn = null, sortDirection = null) {
+            // Eğer data null ise, mevcut veriyi kullan
+            if (data === null && lastSalespersonTopProductsData) {
+                data = lastSalespersonTopProductsData;
+            }
+            
+            if (!data || data.length === 0) {
+                document.getElementById('salespersonTopProductsTable').innerHTML = '<p style="text-align: center; padding: 20px;">Veri bulunamadı</p>';
+                return;
+            }
+            
+            // Sıralama parametrelerini güncelle
+            if (sortColumn !== null) {
+                if (currentSalespersonSortColumn === sortColumn) {
+                    currentSalespersonSortDirection = currentSalespersonSortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSalespersonSortColumn = sortColumn;
+                    currentSalespersonSortDirection = 'desc';
+                }
+            }
+            
             // Ürün bazında grupla
             const productData = {};
             data.forEach(item => {
@@ -7392,20 +7773,78 @@
                 productData[product].count += 1;
             });
             
+            // Sıralama
+            let sorted = Object.entries(productData);
+            
+            if (currentSalespersonSortColumn === 'product') {
+                sorted.sort((a, b) => {
+                    return currentSalespersonSortDirection === 'asc' 
+                        ? a[0].localeCompare(b[0], 'tr')
+                        : b[0].localeCompare(a[0], 'tr');
+                });
+            } else if (currentSalespersonSortColumn === 'brand') {
+                sorted.sort((a, b) => {
+                    return currentSalespersonSortDirection === 'asc'
+                        ? a[1].brand.localeCompare(b[1].brand, 'tr')
+                        : b[1].brand.localeCompare(a[1].brand, 'tr');
+                });
+            } else if (currentSalespersonSortColumn === 'category') {
+                sorted.sort((a, b) => {
+                    return currentSalespersonSortDirection === 'asc'
+                        ? a[1].category.localeCompare(b[1].category, 'tr')
+                        : b[1].category.localeCompare(a[1].category, 'tr');
+                });
+            } else if (currentSalespersonSortColumn === 'sales') {
+                sorted.sort((a, b) => {
+                    return currentSalespersonSortDirection === 'asc'
+                        ? a[1].sales - b[1].sales
+                        : b[1].sales - a[1].sales;
+                });
+            } else if (currentSalespersonSortColumn === 'qty') {
+                sorted.sort((a, b) => {
+                    return currentSalespersonSortDirection === 'asc'
+                        ? a[1].qty - b[1].qty
+                        : b[1].qty - a[1].qty;
+                });
+            } else if (currentSalespersonSortColumn === 'count') {
+                sorted.sort((a, b) => {
+                    return currentSalespersonSortDirection === 'asc'
+                        ? a[1].count - b[1].count
+                        : b[1].count - a[1].count;
+                });
+            }
+            
             // Top 20
-            const sorted = Object.entries(productData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 20);
+            sorted = sorted.slice(0, 20);
+            
+            const getSortIcon = (column) => {
+                if (currentSalespersonSortColumn !== column) return '⇅';
+                return currentSalespersonSortDirection === 'asc' ? '↑' : '↓';
+            };
             
             let html = `
                 <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
                     <thead style="background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%); color: white;">
                         <tr>
                             <th style="padding: 15px; text-align: left;">#</th>
-                            <th style="padding: 15px; text-align: left;">Ürün</th>
-                            <th style="padding: 15px; text-align: left;">Marka</th>
-                            <th style="padding: 15px; text-align: left;">Kategori</th>
-                            <th style="padding: 15px; text-align: right;">Satış (USD)</th>
-                            <th style="padding: 15px; text-align: right;">Miktar</th>
-                            <th style="padding: 15px; text-align: right;">İşlem</th>
+                            <th style="padding: 15px; text-align: left; cursor: pointer;" onclick="renderSalespersonTopProducts(null, 'product')">
+                                Ürün ${getSortIcon('product')}
+                            </th>
+                            <th style="padding: 15px; text-align: left; cursor: pointer;" onclick="renderSalespersonTopProducts(null, 'brand')">
+                                Marka ${getSortIcon('brand')}
+                            </th>
+                            <th style="padding: 15px; text-align: left; cursor: pointer;" onclick="renderSalespersonTopProducts(null, 'category')">
+                                Kategori ${getSortIcon('category')}
+                            </th>
+                            <th style="padding: 15px; text-align: right; cursor: pointer;" onclick="renderSalespersonTopProducts(null, 'sales')">
+                                Satış (USD) ${getSortIcon('sales')}
+                            </th>
+                            <th style="padding: 15px; text-align: right; cursor: pointer;" onclick="renderSalespersonTopProducts(null, 'qty')">
+                                Miktar ${getSortIcon('qty')}
+                            </th>
+                            <th style="padding: 15px; text-align: right; cursor: pointer;" onclick="renderSalespersonTopProducts(null, 'count')">
+                                İşlem ${getSortIcon('count')}
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
