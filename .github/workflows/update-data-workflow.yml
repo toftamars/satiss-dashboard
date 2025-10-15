@@ -1,9 +1,9 @@
 name: Odoo Veri Güncelleme
 
 on:
-  schedule:
-    - cron: '0 23 * * *'
-  workflow_dispatch:
+  # schedule:
+  #   - cron: '0 23 * * *'  # Otomatik çalışma kapatıldı
+  workflow_dispatch:  # Manuel çalıştırma aktif
 
 jobs:
   update-data:
