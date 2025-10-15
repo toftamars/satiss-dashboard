@@ -384,45 +384,58 @@ jobs:
                                 print(f"\n✅ TOPLAM {len(all_data)} fatura satırı çekildi (XML-RPC)!")
                                 print(f"📊 Veri boyutu: ~{len(all_data) * 0.5 / 1024:.2f} MB")
                                 
-                                # HİBRİT YÖNTEM: USD tutarlarını account.invoice.report'tan çek
-                                print(f"\n💰 USD tutarları account.invoice.report'tan çekiliyor (HİBRİT YÖNTEM)...")
+                                # HİBRİT YÖNTEM: USD tutarları VE ŞEHİR bilgisini account.invoice.report'tan çek
+                                print(f"\n💰 USD tutarları ve şehir bilgisi account.invoice.report'tan çekiliyor (HİBRİT YÖNTEM)...")
                                 
                                 # move.line ID'lerini topla
                                 line_ids = [line.get('id') for line in all_data if line.get('id')]
-                                print(f"📦 {len(line_ids)} satır için USD tutar çekilecek...")
+                                print(f"📦 {len(line_ids)} satır için USD tutar ve şehir çekilecek...")
                                 
                                 usd_amount_map = {}
+                                state_id_map = {}  # Şehir bilgisi için yeni map
                                 try:
-                                    # account.invoice.report'tan USD tutarlarını batch olarak çek
+                                    # account.invoice.report'tan USD tutarlarını ve state_id'yi batch olarak çek
                                     for i in range(0, len(line_ids), 5000):
                                         batch_ids = line_ids[i:i+5000]
-                                        print(f"   💵 USD batch {i//5000 + 1}: {len(batch_ids)} kayıt...")
+                                        print(f"   💵 USD + Şehir batch {i//5000 + 1}: {len(batch_ids)} kayıt...")
                                         
-                                        # account.invoice.report'tan price_usd_subtotal çek
+                                        # account.invoice.report'tan price_usd_subtotal ve state_id çek
                                         usd_batch = models.execute_kw(
                                             db, uid_xmlrpc, password,
                                             'account.invoice.report', 'search_read',
                                             [[('id', 'in', batch_ids)]],
-                                            {'fields': ['id', 'price_usd_subtotal', 'currency_id']}
+                                            {'fields': ['id', 'price_usd_subtotal', 'currency_id', 'state_id']}
                                         )
                                         
                                         for usd_record in usd_batch:
                                             line_id = usd_record.get('id')
                                             usd_subtotal = usd_record.get('price_usd_subtotal', 0)
+                                            state_id = usd_record.get('state_id')
+                                            
                                             usd_amount_map[line_id] = float(usd_subtotal) if usd_subtotal else 0
+                                            
+                                            # state_id'yi şehir adına çevir
+                                            if state_id and isinstance(state_id, list) and len(state_id) > 1:
+                                                state_id_map[line_id] = state_id[1]  # [id, name] formatında geliyor
+                                            else:
+                                                state_id_map[line_id] = 'Bilinmeyen'
                                     
                                     print(f"✅ {len(usd_amount_map)} satır için USD tutar eşleştirildi!")
+                                    print(f"✅ {len(state_id_map)} satır için şehir bilgisi eşleştirildi!")
                                     
                                     # İstatistik
                                     with_usd = sum(1 for v in usd_amount_map.values() if v > 0)
                                     total_usd = sum(usd_amount_map.values())
+                                    with_city = sum(1 for c in state_id_map.values() if c != 'Bilinmeyen')
                                     print(f"   💰 USD > 0 olan: {with_usd}")
                                     print(f"   💵 Toplam USD: ${total_usd:,.2f}")
+                                    print(f"   🏙️ Şehir bilgisi olan: {with_city}")
                                     
                                 except Exception as e:
-                                    print(f"⚠️ USD tutar çekme hatası: {e}")
+                                    print(f"⚠️ USD tutar + şehir çekme hatası: {e}")
                                     print(f"⚠️ Fallback: currency_id kontrolü ile USD hesaplanacak")
                                     usd_amount_map = {}
+                                    state_id_map = {}
                                 
                                 # Satış temsilcilerini çek (account.move'dan)
                                 print(f"\n👤 Satış temsilcileri çekiliyor...")
@@ -687,8 +700,9 @@ jobs:
                                     partner_name = partner[1] if isinstance(partner, list) and len(partner) > 1 else 'Bilinmeyen'
                                     partner_id = partner[0] if isinstance(partner, list) else 0
                                     
-                                    # Şehir - partner_city_map'den çek
-                                    city = partner_city_map.get(partner_id, 'Bilinmeyen')
+                                    # Şehir - account.invoice.report'tan state_id_map'den çek (HİBRİT YÖNTEM)
+                                    line_id = line.get('id')
+                                    city = state_id_map.get(line_id, 'Bilinmeyen') if state_id_map else partner_city_map.get(partner_id, 'Bilinmeyen')
                                     
                                     # Mağaza - analytic_account_id'den
                                     analytic_account = line.get('analytic_account_id')
