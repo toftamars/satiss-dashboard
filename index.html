@@ -687,6 +687,7 @@
             <button class="tab active" onclick="switchTab('sales')">📊 Satış Analizi</button>
             <button class="tab" onclick="switchTab('targets')">🎯 Hedef Takip</button>
             <button class="tab" onclick="switchTab('customers')">👥 Müşteri Analizi</button>
+            <button class="tab" onclick="switchTab('time')">⏰ Zaman Analizi</button>
         </div>
 
         <!-- Sales Analysis Tab -->
@@ -940,6 +941,97 @@
             </div>
         </div>
         <!-- End Customers Tab -->
+
+        <!-- Time Analysis Tab -->
+        <div id="timeTab" class="tab-content">
+            <div class="content">
+                <h2 style="margin-bottom: 20px;">⏰ Zaman Analizi</h2>
+                
+                <!-- Time Summary Cards -->
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <h3>En Yoğun Saat</h3>
+                        <p id="peakHour">-</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>En Yoğun Gün</h3>
+                        <p id="peakDay">-</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Mesai Saati Satış</h3>
+                        <p id="workHoursSales">-</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Hafta Sonu Satış</h3>
+                        <p id="weekendSales">-</p>
+                    </div>
+                </div>
+                
+                <!-- AI Time Insights -->
+                <div id="timeInsightsPanel" style="display: none;"></div>
+                
+                <!-- Hourly Chart -->
+                <div class="chart-container" style="margin: 30px 0;">
+                    <h3 style="text-align: center; margin-bottom: 20px;">📊 Saatlik Yoğunluk (24 Saat)</h3>
+                    <canvas id="hourlyChart"></canvas>
+                </div>
+                
+                <!-- Daily Chart -->
+                <div class="chart-container" style="margin: 30px 0;">
+                    <h3 style="text-align: center; margin-bottom: 20px;">📅 Günlük Trend (Haftalık)</h3>
+                    <canvas id="dailyChart"></canvas>
+                </div>
+                
+                <!-- Heatmap -->
+                <div style="margin: 30px 0;">
+                    <h3 style="text-align: center; margin-bottom: 20px;">🔥 Gün x Saat Heatmap</h3>
+                    <div id="heatmapContainer" style="overflow-x: auto;"></div>
+                </div>
+                
+                <!-- Store Time Comparison -->
+                <div style="margin: 30px 0;">
+                    <h3 style="text-align: center; margin-bottom: 20px;">🏪 Mağaza Bazında Saat Karşılaştırması</h3>
+                    <div style="margin-bottom: 20px; text-align: center;">
+                        <label>Mağaza Seç: </label>
+                        <select id="storeTimeFilter" onchange="renderStoreTimeChart()" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+                            <option value="">Tüm Mağazalar</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="storeTimeChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Category Time Analysis -->
+                <div style="margin: 30px 0;">
+                    <h3 style="text-align: center; margin-bottom: 20px;">📦 Kategori Bazında Saat Analizi</h3>
+                    <div style="margin-bottom: 20px; text-align: center;">
+                        <label>Kategori Seç: </label>
+                        <select id="categoryTimeFilter" onchange="renderCategoryTimeChart()" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+                            <option value="">Tüm Kategoriler</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="categoryTimeChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Sales Person Time Analysis -->
+                <div style="margin: 30px 0;">
+                    <h3 style="text-align: center; margin-bottom: 20px;">👤 Satış Temsilcisi Bazında Saat Analizi</h3>
+                    <div style="margin-bottom: 20px; text-align: center;">
+                        <label>Temsilci Seç: </label>
+                        <select id="salesPersonTimeFilter" onchange="renderSalesPersonTimeChart()" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+                            <option value="">Tüm Temsilciler</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="salesPersonTimeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Time Analysis Tab -->
 
     </div>
 
@@ -2526,6 +2618,680 @@
             });
             
             return insights;
+        }
+
+        // ==================== TAB SWITCHING ====================
+        function switchTab(tabName) {
+            // Tüm tab'ları gizle
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Tüm tab butonlarını pasif yap
+            document.querySelectorAll('.tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Seçili tab'ı göster
+            const selectedTab = document.getElementById(tabName + 'Tab');
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+            }
+            
+            // Seçili butonu aktif yap
+            event.target.classList.add('active');
+            
+            // Tab'a göre özel işlemler
+            if (tabName === 'targets') {
+                calculateTargets();
+            } else if (tabName === 'customers') {
+                analyzeCustomers();
+            } else if (tabName === 'time') {
+                analyzeTime();
+            }
+        }
+
+        // ==================== TIME ANALYSIS ====================
+        let hourlyChartInstance = null;
+        let dailyChartInstance = null;
+        let storeTimeChartInstance = null;
+        let categoryTimeChartInstance = null;
+        let salesPersonTimeChartInstance = null;
+        
+        function analyzeTime() {
+            console.log('⏰ Zaman analizi başlatılıyor...');
+            
+            // Summary cards güncelle
+            updateTimeSummary();
+            
+            // Grafikleri render et
+            renderHourlyChart();
+            renderDailyChart();
+            renderHeatmap();
+            
+            // Filtreleri doldur
+            populateTimeFilters();
+            
+            // İlk grafikleri render et
+            renderStoreTimeChart();
+            renderCategoryTimeChart();
+            renderSalesPersonTimeChart();
+            
+            // AI analiz
+            performTimeAIAnalysis();
+        }
+        
+        function updateTimeSummary() {
+            // Saatlik veri topla
+            const hourData = {};
+            const dayData = {};
+            let workHoursSales = 0;
+            let weekendSales = 0;
+            
+            filteredData.forEach(item => {
+                const hour = item.create_hour || 0;
+                const day = item.day_of_week || 0;
+                const sales = parseFloat(item.usd_amount || 0);
+                
+                // Saatlik
+                if (!hourData[hour]) hourData[hour] = 0;
+                hourData[hour] += sales;
+                
+                // Günlük
+                if (!dayData[day]) dayData[day] = 0;
+                dayData[day] += sales;
+                
+                // Mesai saati (09:00-18:00)
+                if (hour >= 9 && hour < 18) {
+                    workHoursSales += sales;
+                }
+                
+                // Hafta sonu (Cumartesi=5, Pazar=6)
+                if (day === 5 || day === 6) {
+                    weekendSales += sales;
+                }
+            });
+            
+            // En yoğun saat
+            let peakHour = 0;
+            let maxHourSales = 0;
+            for (const [hour, sales] of Object.entries(hourData)) {
+                if (sales > maxHourSales) {
+                    maxHourSales = sales;
+                    peakHour = parseInt(hour);
+                }
+            }
+            
+            // En yoğun gün
+            const dayNames = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
+            let peakDay = 0;
+            let maxDaySales = 0;
+            for (const [day, sales] of Object.entries(dayData)) {
+                if (sales > maxDaySales) {
+                    maxDaySales = sales;
+                    peakDay = parseInt(day);
+                }
+            }
+            
+            // UI güncelle
+            document.getElementById('peakHour').textContent = `${String(peakHour).padStart(2, '0')}:00-${String(peakHour + 1).padStart(2, '0')}:00`;
+            document.getElementById('peakDay').textContent = dayNames[peakDay];
+            document.getElementById('workHoursSales').textContent = '$' + workHoursSales.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            document.getElementById('weekendSales').textContent = '$' + weekendSales.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+        }
+        
+        function renderHourlyChart() {
+            const ctx = document.getElementById('hourlyChart');
+            if (!ctx) return;
+            
+            // 24 saatlik veri
+            const hourData = Array(24).fill(0);
+            const hourCount = Array(24).fill(0);
+            
+            filteredData.forEach(item => {
+                const hour = item.create_hour || 0;
+                hourData[hour] += parseFloat(item.usd_amount || 0);
+                hourCount[hour] += 1;
+            });
+            
+            if (hourlyChartInstance) {
+                hourlyChartInstance.destroy();
+            }
+            
+            hourlyChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`),
+                    datasets: [{
+                        label: 'Satış ($)',
+                        data: hourData,
+                        backgroundColor: hourData.map((val, idx) => {
+                            const max = Math.max(...hourData);
+                            if (val === max) return 'rgba(245, 87, 108, 0.8)'; // En yoğun
+                            if (idx >= 9 && idx < 18) return 'rgba(56, 239, 125, 0.6)'; // Mesai saati
+                            return 'rgba(102, 126, 234, 0.6)'; // Normal
+                        }),
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Satış: $${context.parsed.y.toLocaleString('tr-TR')} (${hourCount[context.dataIndex]} adet)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderDailyChart() {
+            const ctx = document.getElementById('dailyChart');
+            if (!ctx) return;
+            
+            const dayNames = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
+            const dayData = Array(7).fill(0);
+            const dayCount = Array(7).fill(0);
+            
+            filteredData.forEach(item => {
+                const day = item.day_of_week || 0;
+                dayData[day] += parseFloat(item.usd_amount || 0);
+                dayCount[day] += 1;
+            });
+            
+            if (dailyChartInstance) {
+                dailyChartInstance.destroy();
+            }
+            
+            dailyChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dayNames,
+                    datasets: [{
+                        label: 'Satış ($)',
+                        data: dayData,
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Satış: $${context.parsed.y.toLocaleString('tr-TR')} (${dayCount[context.dataIndex]} adet)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderHeatmap() {
+            const container = document.getElementById('heatmapContainer');
+            if (!container) return;
+            
+            const dayNames = ['Paz', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+            const heatmapData = {};
+            
+            // Veriyi topla
+            for (let day = 0; day < 7; day++) {
+                heatmapData[day] = {};
+                for (let hour = 0; hour < 24; hour++) {
+                    heatmapData[day][hour] = 0;
+                }
+            }
+            
+            filteredData.forEach(item => {
+                const day = item.day_of_week || 0;
+                const hour = item.create_hour || 0;
+                heatmapData[day][hour] += parseFloat(item.usd_amount || 0);
+            });
+            
+            // Maksimum değeri bul (renk skalası için)
+            let maxValue = 0;
+            for (let day = 0; day < 7; day++) {
+                for (let hour = 0; hour < 24; hour++) {
+                    if (heatmapData[day][hour] > maxValue) {
+                        maxValue = heatmapData[day][hour];
+                    }
+                }
+            }
+            
+            // HTML oluştur
+            let html = '<table style="border-collapse: collapse; margin: 0 auto;">';
+            html += '<tr><th style="padding: 8px; border: 1px solid #ddd;">Gün/Saat</th>';
+            for (let hour = 0; hour < 24; hour++) {
+                html += `<th style="padding: 8px; border: 1px solid #ddd; font-size: 0.8em;">${String(hour).padStart(2, '0')}</th>`;
+            }
+            html += '</tr>';
+            
+            for (let day = 0; day < 7; day++) {
+                html += `<tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: 600;">${dayNames[day]}</td>`;
+                for (let hour = 0; hour < 24; hour++) {
+                    const value = heatmapData[day][hour];
+                    const intensity = maxValue > 0 ? (value / maxValue) : 0;
+                    const color = `rgba(102, 126, 234, ${intensity})`;
+                    const textColor = intensity > 0.5 ? '#fff' : '#333';
+                    html += `<td style="padding: 8px; border: 1px solid #ddd; background: ${color}; color: ${textColor}; text-align: center; font-size: 0.8em;" title="$${value.toLocaleString('tr-TR')}">
+                        ${value > 0 ? '$' + (value / 1000).toFixed(1) + 'K' : '-'}
+                    </td>`;
+                }
+                html += '</tr>';
+            }
+            html += '</table>';
+            
+            container.innerHTML = html;
+        }
+        
+        function populateTimeFilters() {
+            // Mağaza filtresi
+            const stores = [...new Set(filteredData.map(item => item.store).filter(Boolean))];
+            const storeSelect = document.getElementById('storeTimeFilter');
+            storeSelect.innerHTML = '<option value="">Tüm Mağazalar</option>';
+            stores.forEach(store => {
+                storeSelect.innerHTML += `<option value="${store}">${store}</option>`;
+            });
+            
+            // Kategori filtresi
+            const categories = [...new Set(filteredData.map(item => item.category_1).filter(Boolean))];
+            const categorySelect = document.getElementById('categoryTimeFilter');
+            categorySelect.innerHTML = '<option value="">Tüm Kategoriler</option>';
+            categories.forEach(cat => {
+                categorySelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
+            
+            // Satış temsilcisi filtresi
+            const salesPersons = [...new Set(filteredData.map(item => item.sales_person).filter(Boolean))];
+            const salesPersonSelect = document.getElementById('salesPersonTimeFilter');
+            salesPersonSelect.innerHTML = '<option value="">Tüm Temsilciler</option>';
+            salesPersons.forEach(person => {
+                salesPersonSelect.innerHTML += `<option value="${person}">${person}</option>`;
+            });
+        }
+        
+        function renderStoreTimeChart() {
+            const ctx = document.getElementById('storeTimeChart');
+            if (!ctx) return;
+            
+            const selectedStore = document.getElementById('storeTimeFilter').value;
+            const data = selectedStore ? 
+                filteredData.filter(item => item.store === selectedStore) : 
+                filteredData;
+            
+            const hourData = Array(24).fill(0);
+            data.forEach(item => {
+                const hour = item.create_hour || 0;
+                hourData[hour] += parseFloat(item.usd_amount || 0);
+            });
+            
+            if (storeTimeChartInstance) {
+                storeTimeChartInstance.destroy();
+            }
+            
+            storeTimeChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`),
+                    datasets: [{
+                        label: selectedStore || 'Tüm Mağazalar',
+                        data: hourData,
+                        backgroundColor: 'rgba(56, 239, 125, 0.6)',
+                        borderColor: 'rgba(56, 239, 125, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: true}
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderCategoryTimeChart() {
+            const ctx = document.getElementById('categoryTimeChart');
+            if (!ctx) return;
+            
+            const selectedCategory = document.getElementById('categoryTimeFilter').value;
+            const data = selectedCategory ? 
+                filteredData.filter(item => item.category_1 === selectedCategory) : 
+                filteredData;
+            
+            const hourData = Array(24).fill(0);
+            data.forEach(item => {
+                const hour = item.create_hour || 0;
+                hourData[hour] += parseFloat(item.usd_amount || 0);
+            });
+            
+            if (categoryTimeChartInstance) {
+                categoryTimeChartInstance.destroy();
+            }
+            
+            categoryTimeChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`),
+                    datasets: [{
+                        label: selectedCategory || 'Tüm Kategoriler',
+                        data: hourData,
+                        backgroundColor: 'rgba(245, 87, 108, 0.6)',
+                        borderColor: 'rgba(245, 87, 108, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: true}
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderSalesPersonTimeChart() {
+            const ctx = document.getElementById('salesPersonTimeChart');
+            if (!ctx) return;
+            
+            const selectedPerson = document.getElementById('salesPersonTimeFilter').value;
+            const data = selectedPerson ? 
+                filteredData.filter(item => item.sales_person === selectedPerson) : 
+                filteredData;
+            
+            const hourData = Array(24).fill(0);
+            data.forEach(item => {
+                const hour = item.create_hour || 0;
+                hourData[hour] += parseFloat(item.usd_amount || 0);
+            });
+            
+            if (salesPersonTimeChartInstance) {
+                salesPersonTimeChartInstance.destroy();
+            }
+            
+            salesPersonTimeChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`),
+                    datasets: [{
+                        label: selectedPerson || 'Tüm Temsilciler',
+                        data: hourData,
+                        backgroundColor: 'rgba(240, 147, 251, 0.6)',
+                        borderColor: 'rgba(240, 147, 251, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: true}
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function performTimeAIAnalysis() {
+            console.log('🤖 Zaman AI analizi başlatılıyor...');
+            
+            const panel = document.getElementById('timeInsightsPanel');
+            if (!panel || filteredData.length === 0) return;
+            
+            // Zaman verilerini analiz et
+            const hourData = {};
+            const dayData = {};
+            const storeHourData = {};
+            const categoryHourData = {};
+            
+            filteredData.forEach(item => {
+                const hour = item.create_hour || 0;
+                const day = item.day_of_week || 0;
+                const store = item.store || 'Bilinmiyor';
+                const category = item.category_1 || 'Bilinmiyor';
+                const sales = parseFloat(item.usd_amount || 0);
+                
+                if (!hourData[hour]) hourData[hour] = {sales: 0, count: 0};
+                hourData[hour].sales += sales;
+                hourData[hour].count += 1;
+                
+                if (!dayData[day]) dayData[day] = {sales: 0, count: 0};
+                dayData[day].sales += sales;
+                dayData[day].count += 1;
+                
+                if (!storeHourData[store]) storeHourData[store] = {};
+                if (!storeHourData[store][hour]) storeHourData[store][hour] = 0;
+                storeHourData[store][hour] += sales;
+                
+                if (!categoryHourData[category]) categoryHourData[category] = {};
+                if (!categoryHourData[category][hour]) categoryHourData[category][hour] = 0;
+                categoryHourData[category][hour] += sales;
+            });
+            
+            // İçgörüler üret
+            const insights = {
+                positive: [],
+                negative: [],
+                neutral: [],
+                recommendations: []
+            };
+            
+            // En yoğun saat
+            let peakHour = 0;
+            let maxHourSales = 0;
+            for (const [hour, data] of Object.entries(hourData)) {
+                if (data.sales > maxHourSales) {
+                    maxHourSales = data.sales;
+                    peakHour = parseInt(hour);
+                }
+            }
+            
+            insights.positive.push({
+                title: `En Yoğun Saat: ${String(peakHour).padStart(2, '0')}:00-${String(peakHour + 1).padStart(2, '0')}:00`,
+                description: `<span class="metric-highlight">$${maxHourSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</span> satış ile en yoğun saat dilimi. Bu saatte personel sayısını artırın.`
+            });
+            
+            // Gün analizi
+            const dayNames = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
+            let peakDay = 0;
+            let maxDaySales = 0;
+            let minDay = 0;
+            let minDaySales = Infinity;
+            
+            for (const [day, data] of Object.entries(dayData)) {
+                if (data.sales > maxDaySales) {
+                    maxDaySales = data.sales;
+                    peakDay = parseInt(day);
+                }
+                if (data.sales < minDaySales) {
+                    minDaySales = data.sales;
+                    minDay = parseInt(day);
+                }
+            }
+            
+            insights.positive.push({
+                title: `En Yoğun Gün: ${dayNames[peakDay]}`,
+                description: `<span class="metric-highlight">$${maxDaySales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</span> satış ile haftanın en yoğun günü.`
+            });
+            
+            if (maxDaySales / minDaySales > 2) {
+                insights.negative.push({
+                    title: 'Günler Arası Büyük Fark',
+                    description: `${dayNames[peakDay]} ile ${dayNames[minDay]} arasında <span class="metric-highlight">${((maxDaySales / minDaySales - 1) * 100).toFixed(0)}%</span> fark var. ${dayNames[minDay]} için özel kampanyalar düşünün.`
+                });
+            }
+            
+            // Mesai saati vs mesai dışı
+            let workHoursSales = 0;
+            let offHoursSales = 0;
+            for (const [hour, data] of Object.entries(hourData)) {
+                if (parseInt(hour) >= 9 && parseInt(hour) < 18) {
+                    workHoursSales += data.sales;
+                } else {
+                    offHoursSales += data.sales;
+                }
+            }
+            
+            const workHoursPercent = (workHoursSales / (workHoursSales + offHoursSales) * 100).toFixed(1);
+            insights.neutral.push({
+                title: 'Mesai Saati Dağılımı',
+                description: `Satışların <span class="metric-highlight">%${workHoursPercent}</span>'i mesai saatlerinde (09:00-18:00) gerçekleşiyor.`
+            });
+            
+            // Öneriler
+            insights.recommendations.push({
+                icon: '⏰',
+                title: 'Personel Planlaması',
+                description: `${String(peakHour).padStart(2, '0')}:00-${String(peakHour + 1).padStart(2, '0')}:00 saatleri arasında personel sayısını artırın. Bu saatte satışların %${((maxHourSales / Object.values(hourData).reduce((sum, d) => sum + d.sales, 0)) * 100).toFixed(1)}'i gerçekleşiyor.`
+            });
+            
+            insights.recommendations.push({
+                icon: '📅',
+                title: 'Kampanya Zamanlaması',
+                description: `${dayNames[minDay]} günleri için özel kampanyalar düzenleyin. Mevcut satışlar ${dayNames[peakDay]}'ye göre %${((1 - minDaySales / maxDaySales) * 100).toFixed(0)} daha düşük.`
+            });
+            
+            if (offHoursSales > workHoursSales * 0.3) {
+                insights.recommendations.push({
+                    icon: '🌙',
+                    title: 'Mesai Dışı Potansiyel',
+                    description: `Mesai dışı satışlar toplam satışların %${((offHoursSales / (workHoursSales + offHoursSales)) * 100).toFixed(1)}'ini oluşturuyor. Online satış kanallarını güçlendirin.`
+                });
+            }
+            
+            // HTML oluştur
+            let html = `
+                <div class="analysis-panel" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <h2 style="margin: 0 0 20px 0; font-size: 2em;">⏰ Zaman Analizi AI Önerileri</h2>
+                    <p style="opacity: 0.9; margin-bottom: 20px;">Filtrelenen ${filteredData.length.toLocaleString('tr-TR')} kayıt üzerinden yapılan zaman analizi sonuçları</p>
+                    
+                    ${insights.positive.length > 0 ? `
+                    <div class="analysis-section">
+                        <h3>✅ Olumlu Tespitler</h3>
+                        ${insights.positive.map(item => `
+                            <div class="insight-item insight-positive">
+                                <span class="insight-icon">✅</span>
+                                <strong>${item.title}</strong><br>
+                                ${item.description}
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                    
+                    ${insights.negative.length > 0 ? `
+                    <div class="analysis-section">
+                        <h3>⚠️ Dikkat Edilmesi Gerekenler</h3>
+                        ${insights.negative.map(item => `
+                            <div class="insight-item insight-negative">
+                                <span class="insight-icon">⚠️</span>
+                                <strong>${item.title}</strong><br>
+                                ${item.description}
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                    
+                    ${insights.neutral.length > 0 ? `
+                    <div class="analysis-section">
+                        <h3>💡 Önemli Bilgiler</h3>
+                        ${insights.neutral.map(item => `
+                            <div class="insight-item insight-neutral">
+                                <span class="insight-icon">💡</span>
+                                <strong>${item.title}</strong><br>
+                                ${item.description}
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                    
+                    <div class="analysis-section">
+                        <h3>🎯 Aksiyon Önerileri</h3>
+                        ${insights.recommendations.map(item => `
+                            <div class="recommendation">
+                                <span class="recommendation-icon">${item.icon}</span>
+                                <div>
+                                    <strong style="font-size: 1.1em;">${item.title}</strong><br>
+                                    <p style="margin: 10px 0 0 0; opacity: 0.95;">${item.description}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            panel.innerHTML = html;
+            panel.style.display = 'block';
         }
 
         // Load data on page load
