@@ -3630,6 +3630,8 @@
             const store = document.getElementById('targetYearStore').value;
             const target = parseFloat(document.getElementById('yearlyTarget').value) || 0;
             
+            console.log('💾 saveYearlyTarget çağrıldı:', {year, store, target});
+            
             if (target <= 0) {
                 alert('⚠️ Lütfen geçerli bir hedef girin!');
                 return;
@@ -3637,6 +3639,7 @@
             
             // Mevcut hedefleri al
             let yearlyTargets = JSON.parse(localStorage.getItem('yearlyTargets') || '{}');
+            console.log('📂 Mevcut localStorage:', yearlyTargets);
             
             // Yıl yoksa oluştur
             if (!yearlyTargets[year]) {
@@ -3646,6 +3649,9 @@
             // Mağaza bazında hedefi kaydet
             yearlyTargets[year][store] = target;
             localStorage.setItem('yearlyTargets', JSON.stringify(yearlyTargets));
+            
+            console.log('✅ localStorage\'a kaydedildi:', yearlyTargets);
+            console.log('🔍 Kontrol: localStorage.getItem:', localStorage.getItem('yearlyTargets'));
             
             // Hesapla
             calculateTargets();
@@ -3661,10 +3667,14 @@
             const store = document.getElementById('targetYearStore').value;
             const yearlyTargets = JSON.parse(localStorage.getItem('yearlyTargets') || '{}');
             
+            console.log('📊 loadYearlyTarget çağrıldı:', {year, store, yearlyTargets});
+            
             if (yearlyTargets[year] && yearlyTargets[year][store]) {
                 document.getElementById('yearlyTarget').value = yearlyTargets[year][store];
+                console.log('✅ Yıllık hedef yüklendi:', yearlyTargets[year][store]);
             } else {
                 document.getElementById('yearlyTarget').value = '';
+                console.log('⚠️ Kaydedilmiş yıllık hedef yok');
             }
             
             calculateTargets();
