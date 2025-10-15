@@ -148,10 +148,34 @@
             font-size: 1em;
             outline: none;
             transition: all 0.3s;
+            min-height: 42px;
+        }
+
+        .filter-group select[multiple] {
+            min-height: 120px;
+            padding: 5px;
+        }
+
+        .filter-group select[multiple] option {
+            padding: 8px;
+            border-radius: 4px;
+            margin: 2px 0;
+        }
+
+        .filter-group select[multiple] option:checked {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
         }
 
         .filter-group select:focus {
             border-color: #667eea;
+        }
+        
+        .selected-count {
+            font-size: 0.85em;
+            color: #667eea;
+            margin-top: 3px;
+            font-weight: 600;
         }
 
         .filter-buttons {
@@ -347,92 +371,69 @@
 
         <div class="search-section">
             <div class="search-box">
-                <input type="text" id="smartSearch" placeholder="Ornek: Akasya magaza son 1 ay Fender satislari" onkeypress="if(event.key==='Enter') applySmartSearch()">
-                <button onclick="applySmartSearch()">🔍 Ara</button>
+                <input type="text" id="smartSearch" placeholder="🤖 AI Agent: Doğal dille sorun - Örnek: Akasya 2025 ekim Fender satışları" onkeypress="if(event.key==='Enter') applySmartSearch()">
+                <button onclick="applySmartSearch()">🤖 AI Ara</button>
             </div>
             <p style="text-align: center; margin-top: 10px; font-size: 0.9em; color: #6c757d;">
-                💡 İpucu: "Akasya 2025 ekim Fender" veya "son 30 gün gitar" gibi doğal dille arayın
+                💡 <strong>AI Destekli Arama:</strong> "Akasya son 30 gün gitar", "2025 ekim yamaha", "kadıköy fender" gibi doğal dille yazın
             </p>
         </div>
 
         <div class="filters-section">
             <div class="filters-grid">
                 <div class="filter-group">
-                    <label>Marka</label>
-                    <select id="filterBrand">
-                        <option value="">Tumu</option>
+                    <label>Marka <span class="selected-count" id="countBrand"></span></label>
+                    <select id="filterBrand" multiple>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Kategori 1</label>
-                    <select id="filterCategory1">
-                        <option value="">Tumu</option>
+                    <label>Kategori 1 <span class="selected-count" id="countCategory1"></span></label>
+                    <select id="filterCategory1" multiple>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Kategori 2</label>
-                    <select id="filterCategory2">
-                        <option value="">Tumu</option>
+                    <label>Kategori 2 <span class="selected-count" id="countCategory2"></span></label>
+                    <select id="filterCategory2" multiple>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Kategori 3</label>
-                    <select id="filterCategory3">
-                        <option value="">Tumu</option>
+                    <label>Kategori 3 <span class="selected-count" id="countCategory3"></span></label>
+                    <select id="filterCategory3" multiple>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Kategori 4</label>
-                    <select id="filterCategory4">
-                        <option value="">Tumu</option>
+                    <label>Kategori 4 <span class="selected-count" id="countCategory4"></span></label>
+                    <select id="filterCategory4" multiple>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Kategori 5</label>
-                    <select id="filterCategory5">
-                        <option value="">Tumu</option>
+                    <label>Satis Temsilcisi <span class="selected-count" id="countSalesPerson"></span></label>
+                    <select id="filterSalesPerson" multiple>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Musteri Etiketi</label>
-                    <select id="filterTag">
-                        <option value="">Tumu</option>
+                    <label>Magaza <span class="selected-count" id="countStore"></span></label>
+                    <select id="filterStore" multiple>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Satis Temsilcisi</label>
-                    <select id="filterSalesPerson">
-                        <option value="">Tumu</option>
+                    <label>Sehir <span class="selected-count" id="countCity"></span></label>
+                    <select id="filterCity" multiple>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Magaza</label>
-                    <select id="filterStore">
-                        <option value="">Tumu</option>
+                    <label>Yil <span class="selected-count" id="countYear"></span></label>
+                    <select id="filterYear" multiple>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Sehir</label>
-                    <select id="filterCity">
-                        <option value="">Tumu</option>
+                    <label>Ay <span class="selected-count" id="countMonth"></span></label>
+                    <select id="filterMonth" multiple>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Yil</label>
-                    <select id="filterYear">
-                        <option value="">Tumu</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>Ay</label>
-                    <select id="filterMonth">
-                        <option value="">Tumu</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>Gun</label>
-                    <select id="filterDay">
-                        <option value="">Tumu</option>
+                    <label>Gun <span class="selected-count" id="countDay"></span></label>
+                    <select id="filterDay" multiple>
                     </select>
                 </div>
             </div>
@@ -518,8 +519,6 @@
             const cat2 = new Set();
             const cat3 = new Set();
             const cat4 = new Set();
-            const cat5 = new Set();
-            const tags = new Set();
             const salesPersons = new Set();
             const stores = new Set();
             const cities = new Set();
@@ -533,8 +532,6 @@
                 if (item.category_2) cat2.add(item.category_2);
                 if (item.category_3) cat3.add(item.category_3);
                 if (item.category_4) cat4.add(item.category_4);
-                if (item.category_5) cat5.add(item.category_5);
-                if (item.tags) item.tags.split(',').forEach(tag => tags.add(tag.trim()));
                 if (item.sales_person) salesPersons.add(item.sales_person);
                 if (item.store) stores.add(item.store);
                 if (item.city) cities.add(item.city);
@@ -550,100 +547,117 @@
                 }
             });
             
-            populateSelect('filterBrand', Array.from(brands).sort());
-            populateSelect('filterCategory1', Array.from(cat1).sort());
-            populateSelect('filterCategory2', Array.from(cat2).sort());
-            populateSelect('filterCategory3', Array.from(cat3).sort());
-            populateSelect('filterCategory4', Array.from(cat4).sort());
-            populateSelect('filterCategory5', Array.from(cat5).sort());
-            populateSelect('filterTag', Array.from(tags).sort());
-            populateSelect('filterSalesPerson', Array.from(salesPersons).sort());
-            populateSelect('filterStore', Array.from(stores).sort());
-            populateSelect('filterCity', Array.from(cities).sort());
-            populateSelect('filterYear', Array.from(years).sort().reverse()); // En yeni once
-            populateSelect('filterMonth', Array.from(months).sort());
-            populateSelect('filterDay', Array.from(days).sort());
+            populateMultiSelect('filterBrand', Array.from(brands).sort(), 'countBrand');
+            populateMultiSelect('filterCategory1', Array.from(cat1).sort(), 'countCategory1');
+            populateMultiSelect('filterCategory2', Array.from(cat2).sort(), 'countCategory2');
+            populateMultiSelect('filterCategory3', Array.from(cat3).sort(), 'countCategory3');
+            populateMultiSelect('filterCategory4', Array.from(cat4).sort(), 'countCategory4');
+            populateMultiSelect('filterSalesPerson', Array.from(salesPersons).sort(), 'countSalesPerson');
+            populateMultiSelect('filterStore', Array.from(stores).sort(), 'countStore');
+            populateMultiSelect('filterCity', Array.from(cities).sort(), 'countCity');
+            populateMultiSelect('filterYear', Array.from(years).sort().reverse(), 'countYear'); // En yeni once
+            populateMultiSelect('filterMonth', Array.from(months).sort(), 'countMonth');
+            populateMultiSelect('filterDay', Array.from(days).sort(), 'countDay');
         }
 
-        function populateSelect(id, values) {
+        function populateMultiSelect(id, values, countId) {
             const select = document.getElementById(id);
-            const currentValue = select.value;
-            select.innerHTML = '<option value="">Tumu</option>';
+            const currentValues = Array.from(select.selectedOptions).map(opt => opt.value);
+            select.innerHTML = '';
+            
             values.forEach(value => {
                 const option = document.createElement('option');
                 option.value = value;
                 option.textContent = value;
+                if (currentValues.includes(value)) {
+                    option.selected = true;
+                }
                 select.appendChild(option);
             });
-            select.value = currentValue;
+            
+            // Seçim sayısını güncelle
+            updateSelectionCount(id, countId);
+            
+            // Change event ekle
+            select.addEventListener('change', () => updateSelectionCount(id, countId));
+        }
+        
+        function updateSelectionCount(selectId, countId) {
+            const select = document.getElementById(selectId);
+            const count = select.selectedOptions.length;
+            const countSpan = document.getElementById(countId);
+            if (count > 0) {
+                countSpan.textContent = `(${count} seçili)`;
+            } else {
+                countSpan.textContent = '';
+            }
+        }
+        
+        function getSelectedValues(selectId) {
+            const select = document.getElementById(selectId);
+            return Array.from(select.selectedOptions).map(opt => opt.value);
         }
 
         function applyFilters() {
-            const brand = document.getElementById('filterBrand').value;
-            const cat1 = document.getElementById('filterCategory1').value;
-            const cat2 = document.getElementById('filterCategory2').value;
-            const cat3 = document.getElementById('filterCategory3').value;
-            const cat4 = document.getElementById('filterCategory4').value;
-            const cat5 = document.getElementById('filterCategory5').value;
-            const tag = document.getElementById('filterTag').value;
-            const salesPerson = document.getElementById('filterSalesPerson').value;
-            const store = document.getElementById('filterStore').value;
-            const city = document.getElementById('filterCity').value;
-            const year = document.getElementById('filterYear').value;
-            const month = document.getElementById('filterMonth').value;
-            const day = document.getElementById('filterDay').value;
+            const brands = getSelectedValues('filterBrand');
+            const cat1s = getSelectedValues('filterCategory1');
+            const cat2s = getSelectedValues('filterCategory2');
+            const cat3s = getSelectedValues('filterCategory3');
+            const cat4s = getSelectedValues('filterCategory4');
+            const salesPersons = getSelectedValues('filterSalesPerson');
+            const stores = getSelectedValues('filterStore');
+            const cities = getSelectedValues('filterCity');
+            const years = getSelectedValues('filterYear');
+            const months = getSelectedValues('filterMonth');
+            const days = getSelectedValues('filterDay');
             
-            console.log('Filtreler:', {brand, cat1, cat2, cat3, cat4, cat5, tag, salesPerson, store, city, year, month, day});
-            
-            // Debug: Ilk 3 kaydi goster
-            if (allData.length > 0) {
-                console.log('Ornek veri (ilk kayit):', allData[0]);
-                console.log('Veri tipleri:', {
-                    date: typeof allData[0].date,
-                    store: typeof allData[0].store,
-                    quantity: typeof allData[0].quantity,
-                    usd_amount: typeof allData[0].usd_amount
-                });
-            }
+            console.log('🔍 Çoklu Filtreler:', {
+                brands: brands.length,
+                cat1s: cat1s.length,
+                cat2s: cat2s.length,
+                cat3s: cat3s.length,
+                cat4s: cat4s.length,
+                salesPersons: salesPersons.length,
+                stores: stores.length,
+                cities: cities.length,
+                years: years.length,
+                months: months.length,
+                days: days.length
+            });
             
             filteredData = allData.filter(item => {
-                // Marka filtresi
-                if (brand && item.brand !== brand) return false;
+                // Marka filtresi (çoklu)
+                if (brands.length > 0 && !brands.includes(item.brand)) return false;
                 
-                // Kategori filtreleri
-                if (cat1 && item.category_1 !== cat1) return false;
-                if (cat2 && item.category_2 !== cat2) return false;
-                if (cat3 && item.category_3 !== cat3) return false;
-                if (cat4 && item.category_4 !== cat4) return false;
-                if (cat5 && item.category_5 !== cat5) return false;
+                // Kategori filtreleri (çoklu)
+                if (cat1s.length > 0 && !cat1s.includes(item.category_1)) return false;
+                if (cat2s.length > 0 && !cat2s.includes(item.category_2)) return false;
+                if (cat3s.length > 0 && !cat3s.includes(item.category_3)) return false;
+                if (cat4s.length > 0 && !cat4s.includes(item.category_4)) return false;
                 
-                // Etiket filtresi
-                if (tag && (!item.tags || !item.tags.includes(tag))) return false;
+                // Satis temsilcisi filtresi (çoklu)
+                if (salesPersons.length > 0 && !salesPersons.includes(item.sales_person)) return false;
                 
-                // Satis temsilcisi filtresi
-                if (salesPerson && item.sales_person !== salesPerson) return false;
-                
-                // Magaza filtresi - KISMI ESLEME (case-insensitive)
-                if (store) {
+                // Magaza filtresi (çoklu) - KISMI ESLEME
+                if (stores.length > 0) {
                     const itemStore = (item.store || '').toLowerCase();
-                    const filterStore = store.toLowerCase();
-                    // "Akasya" filtresi "[1101404] Perakende - Akasya" ile eslesir
-                    if (!itemStore.includes(filterStore)) return false;
+                    const matches = stores.some(store => itemStore.includes(store.toLowerCase()));
+                    if (!matches) return false;
                 }
                 
-                // Sehir filtresi
-                if (city && item.city !== city) return false;
+                // Sehir filtresi (çoklu)
+                if (cities.length > 0 && !cities.includes(item.city)) return false;
                 
-                // Tarih filtreleri - DAHA GUVENLI
-                if (year || month || day) {
+                // Tarih filtreleri (çoklu)
+                if (years.length > 0 || months.length > 0 || days.length > 0) {
                     if (!item.date) return false;
                     
                     const dateParts = item.date.split('-');
                     if (dateParts.length < 3) return false;
                     
-                    if (year && dateParts[0] !== year) return false;
-                    if (month && dateParts[1] !== month) return false;
-                    if (day && dateParts[2] !== day) return false;
+                    if (years.length > 0 && !years.includes(dateParts[0])) return false;
+                    if (months.length > 0 && !months.includes(dateParts[1])) return false;
+                    if (days.length > 0 && !days.includes(dateParts[2])) return false;
                 }
                 
                 return true;
@@ -705,155 +719,433 @@
         }
 
         function resetFilters() {
-            document.getElementById('filterBrand').value = '';
-            document.getElementById('filterCategory1').value = '';
-            document.getElementById('filterCategory2').value = '';
-            document.getElementById('filterCategory3').value = '';
-            document.getElementById('filterCategory4').value = '';
-            document.getElementById('filterCategory5').value = '';
-            document.getElementById('filterTag').value = '';
-            document.getElementById('filterSalesPerson').value = '';
-            document.getElementById('filterStore').value = '';
-            document.getElementById('filterCity').value = '';
-            document.getElementById('filterYear').value = '';
-            document.getElementById('filterMonth').value = '';
-            document.getElementById('filterDay').value = '';
+            // Tüm select'lerin seçimlerini temizle
+            ['filterBrand', 'filterCategory1', 'filterCategory2', 'filterCategory3', 'filterCategory4',
+             'filterSalesPerson', 'filterStore', 'filterCity', 'filterYear', 'filterMonth', 'filterDay'].forEach(id => {
+                const select = document.getElementById(id);
+                Array.from(select.options).forEach(opt => opt.selected = false);
+            });
+            
+            // Seçim sayılarını güncelle
+            ['countBrand', 'countCategory1', 'countCategory2', 'countCategory3', 'countCategory4',
+             'countSalesPerson', 'countStore', 'countCity', 'countYear', 'countMonth', 'countDay'].forEach(id => {
+                document.getElementById(id).textContent = '';
+            });
+            
             document.getElementById('smartSearch').value = '';
+            document.getElementById('debugPanel').style.display = 'none';
             
             filteredData = [...allData];
             updateSummary();
             renderTable();
         }
 
+        // 🤖 AI AGENT - Gelişmiş Doğal Dil İşleme Motoru
         function applySmartSearch() {
-            const query = document.getElementById('smartSearch').value.toLowerCase().trim();
+            const query = document.getElementById('smartSearch').value.trim();
             if (!query) {
                 resetFilters();
                 return;
             }
             
-            console.log('🔍 Akıllı Arama:', query);
+            console.log('🤖 AI AGENT BAŞLATILIYOR...');
+            console.log('📝 Sorgu:', query);
             
             // Önce filtreleri sıfırla
             resetFilters();
             
-            // Akıllı anahtar kelime analizi
-            const keywords = query.split(/\s+/);
+            // AI Agent analizi
+            const aiAnalysis = analyzeQueryWithAI(query);
+            console.log('🧠 AI Analiz Sonucu:', aiAnalysis);
             
-            // Tarih aralığı tespiti
-            let dateFilter = null;
-            const monthNames = {
-                'ocak': '01', 'şubat': '02', 'mart': '03', 'nisan': '04',
-                'mayıs': '05', 'mayis': '05', 'haziran': '06', 'temmuz': '07',
-                'ağustos': '08', 'agustos': '08', 'eylül': '09', 'eylul': '09',
-                'ekim': '10', 'kasım': '11', 'kasim': '11', 'aralık': '12', 'aralik': '12'
-            };
+            // Filtreleri uygula
+            applyAIFilters(aiAnalysis);
             
-            // "son X ay/gün" tespiti
-            const timeMatch = query.match(/son\s+(\d+)\s+(ay|gun|gün)/);
-            if (timeMatch) {
-                const amount = parseInt(timeMatch[1]);
-                const unit = timeMatch[2];
-                const today = new Date();
-                
-                if (unit === 'ay') {
-                    today.setMonth(today.getMonth() - amount);
-                } else {
-                    today.setDate(today.getDate() - amount);
-                }
-                
-                dateFilter = today.toISOString().split('T')[0];
-                console.log('📅 Tarih filtresi:', dateFilter, 've sonrası');
-            }
+            // Veriyi filtrele
+            filteredData = filterDataWithAI(allData, aiAnalysis);
             
-            // Ay ismi tespiti
-            for (const [monthName, monthNum] of Object.entries(monthNames)) {
-                if (query.includes(monthName)) {
-                    document.getElementById('filterMonth').value = monthNum;
-                    console.log('📅 Ay filtresi:', monthName, '→', monthNum);
-                    break;
-                }
-            }
+            console.log(`✅ AI Agent Sonucu: ${filteredData.length} kayıt bulundu`);
             
-            // Yıl tespiti (2020-2030 arası)
-            const yearMatch = query.match(/\b(202[0-9])\b/);
-            if (yearMatch) {
-                document.getElementById('filterYear').value = yearMatch[1];
-                console.log('📅 Yıl filtresi:', yearMatch[1]);
-            }
-            
-            // Mağaza tespiti (akasya, kadıköy, vb.)
-            const storeKeywords = ['akasya', 'kadıköy', 'kadiköy', 'kadikoy', 'beylikdüzü', 'beylikduzu'];
-            for (const storeKey of storeKeywords) {
-                if (query.includes(storeKey)) {
-                    document.getElementById('filterStore').value = storeKey;
-                    console.log('🏪 Mağaza filtresi:', storeKey);
-                    break;
-                }
-            }
-            
-            // Genel arama (tüm alanlarda)
-            filteredData = allData.filter(item => {
-                // Tarih filtresi kontrolü
-                if (dateFilter && item.date < dateFilter) {
-                    return false;
-                }
-                
-                // Mağaza filtresi kontrolü
-                const storeFilter = document.getElementById('filterStore').value;
-                if (storeFilter) {
-                    const itemStore = (item.store || '').toLowerCase();
-                    if (!itemStore.includes(storeFilter)) return false;
-                }
-                
-                // Ay filtresi kontrolü
-                const monthFilter = document.getElementById('filterMonth').value;
-                if (monthFilter && item.date) {
-                    const itemMonth = item.date.split('-')[1];
-                    if (itemMonth !== monthFilter) return false;
-                }
-                
-                // Yıl filtresi kontrolü
-                const yearFilter = document.getElementById('filterYear').value;
-                if (yearFilter && item.date) {
-                    const itemYear = item.date.split('-')[0];
-                    if (itemYear !== yearFilter) return false;
-                }
-                
-                // Anahtar kelime araması (tüm alanlarda)
-                const searchableText = [
-                    item.partner || '',
-                    item.product || '',
-                    item.brand || '',
-                    item.category_1 || '',
-                    item.category_2 || '',
-                    item.category_3 || '',
-                    item.category_4 || '',
-                    item.category_5 || '',
-                    item.sales_person || '',
-                    item.store || '',
-                    item.city || '',
-                    item.tags || ''
-                ].join(' ').toLowerCase();
-                
-                // Tüm anahtar kelimelerin en az birinin geçmesi yeterli
-                return keywords.some(keyword => {
-                    // Tarih/mağaza anahtar kelimelerini atla (zaten filtrelendi)
-                    if (['son', 'ay', 'gun', 'gün', ...storeKeywords, ...Object.keys(monthNames)].includes(keyword)) {
-                        return true;
-                    }
-                    // Sayıları atla
-                    if (/^\d+$/.test(keyword)) {
-                        return true;
-                    }
-                    return searchableText.includes(keyword);
-                });
-            });
-            
-            console.log(`✅ Arama sonucu: ${filteredData.length} kayıt bulundu`);
+            // Kullanıcıya AI'nın ne anladığını göster
+            showAIInterpretation(aiAnalysis, filteredData.length);
             
             updateSummary();
             renderTable();
+        }
+        
+        // 🧠 AI Analiz Motoru
+        function analyzeQueryWithAI(query) {
+            const lowerQuery = query.toLowerCase();
+            const analysis = {
+                intent: 'search', // search, filter, analyze, compare
+                entities: {
+                    stores: [],
+                    brands: [],
+                    categories: [],
+                    cities: [],
+                    salesPersons: [],
+                    dateRange: null,
+                    years: [],
+                    months: [],
+                    keywords: []
+                },
+                confidence: 0,
+                interpretation: ''
+            };
+            
+            // 1. MAĞAZA TESPİTİ (Fuzzy matching ile)
+            const allStores = [...new Set(allData.map(item => item.store).filter(Boolean))];
+            allStores.forEach(store => {
+                const storeLower = store.toLowerCase();
+                // Tam eşleşme veya kısmi eşleşme
+                if (lowerQuery.includes(storeLower) || 
+                    storeLower.includes(lowerQuery) ||
+                    fuzzyMatch(lowerQuery, storeLower)) {
+                    analysis.entities.stores.push(store);
+                }
+            });
+            
+            // Yaygın mağaza kısaltmaları
+            const storeAliases = {
+                'aka': 'akasya', 'kadi': 'kadıköy', 'kadı': 'kadıköy',
+                'beylik': 'beylikdüzü', 'beyl': 'beylikdüzü'
+            };
+            for (const [alias, fullName] of Object.entries(storeAliases)) {
+                if (lowerQuery.includes(alias)) {
+                    const matchingStores = allStores.filter(s => s.toLowerCase().includes(fullName));
+                    analysis.entities.stores.push(...matchingStores);
+                }
+            }
+            
+            // 2. MARKA TESPİTİ
+            const allBrands = [...new Set(allData.map(item => item.brand).filter(Boolean))];
+            allBrands.forEach(brand => {
+                if (lowerQuery.includes(brand.toLowerCase())) {
+                    analysis.entities.brands.push(brand);
+                }
+            });
+            
+            // 3. KATEGORİ TESPİTİ (Tüm seviyeler)
+            const allCategories = new Set();
+            allData.forEach(item => {
+                [item.category_1, item.category_2, item.category_3, item.category_4].forEach(cat => {
+                    if (cat) allCategories.add(cat);
+                });
+            });
+            Array.from(allCategories).forEach(category => {
+                if (lowerQuery.includes(category.toLowerCase())) {
+                    analysis.entities.categories.push(category);
+                }
+            });
+            
+            // Yaygın kategori anahtar kelimeleri
+            const categoryKeywords = {
+                'gitar': ['gitar', 'guitar'],
+                'piyano': ['piyano', 'piano'],
+                'davul': ['davul', 'drum', 'bateri'],
+                'keman': ['keman', 'violin'],
+                'saz': ['saz', 'bağlama'],
+                'aksesu': ['aksesuar', 'aksesuarlar']
+            };
+            for (const [key, keywords] of Object.entries(categoryKeywords)) {
+                if (keywords.some(kw => lowerQuery.includes(kw))) {
+                    const matchingCats = Array.from(allCategories).filter(c => 
+                        c.toLowerCase().includes(key)
+                    );
+                    analysis.entities.categories.push(...matchingCats);
+                }
+            }
+            
+            // 4. TARİH ANALİZİ (Gelişmiş)
+            // "son X gün/ay" tespiti
+            const timePatterns = [
+                /son\s+(\d+)\s+(gün|gun)/i,
+                /son\s+(\d+)\s+(ay)/i,
+                /son\s+(\d+)\s+(hafta)/i,
+                /geçen\s+(\d+)\s+(gün|gun|ay|hafta)/i,
+                /gecen\s+(\d+)\s+(gün|gun|ay|hafta)/i
+            ];
+            
+            for (const pattern of timePatterns) {
+                const match = query.match(pattern);
+                if (match) {
+                    const amount = parseInt(match[1]);
+                    const unit = match[2].toLowerCase();
+                    const today = new Date();
+                    
+                    if (unit.includes('ay')) {
+                        today.setMonth(today.getMonth() - amount);
+                    } else if (unit.includes('hafta')) {
+                        today.setDate(today.getDate() - (amount * 7));
+                    } else {
+                        today.setDate(today.getDate() - amount);
+                    }
+                    
+                    analysis.entities.dateRange = {
+                        from: today.toISOString().split('T')[0],
+                        to: new Date().toISOString().split('T')[0],
+                        description: `Son ${amount} ${unit}`
+                    };
+                    break;
+                }
+            }
+            
+            // Ay isimleri (Türkçe ve İngilizce)
+            const monthNames = {
+                'ocak': '01', 'january': '01', 'jan': '01',
+                'şubat': '02', 'subat': '02', 'february': '02', 'feb': '02',
+                'mart': '03', 'march': '03', 'mar': '03',
+                'nisan': '04', 'april': '04', 'apr': '04',
+                'mayıs': '05', 'mayis': '05', 'may': '05',
+                'haziran': '06', 'june': '06', 'jun': '06',
+                'temmuz': '07', 'july': '07', 'jul': '07',
+                'ağustos': '08', 'agustos': '08', 'august': '08', 'aug': '08',
+                'eylül': '09', 'eylul': '09', 'september': '09', 'sep': '09',
+                'ekim': '10', 'october': '10', 'oct': '10',
+                'kasım': '11', 'kasim': '11', 'november': '11', 'nov': '11',
+                'aralık': '12', 'aralik': '12', 'december': '12', 'dec': '12'
+            };
+            
+            for (const [monthName, monthNum] of Object.entries(monthNames)) {
+                if (lowerQuery.includes(monthName)) {
+                    analysis.entities.months.push(monthNum);
+                }
+            }
+            
+            // Yıl tespiti (2020-2030)
+            const yearMatches = query.match(/\b(202[0-9])\b/g);
+            if (yearMatches) {
+                analysis.entities.years.push(...yearMatches);
+            }
+            
+            // 5. ŞEHİR TESPİTİ
+            const allCities = [...new Set(allData.map(item => item.city).filter(Boolean))];
+            allCities.forEach(city => {
+                if (lowerQuery.includes(city.toLowerCase())) {
+                    analysis.entities.cities.push(city);
+                }
+            });
+            
+            // 6. SATIŞ TEMSİLCİSİ TESPİTİ
+            const allSalesPersons = [...new Set(allData.map(item => item.sales_person).filter(Boolean))];
+            allSalesPersons.forEach(person => {
+                if (lowerQuery.includes(person.toLowerCase())) {
+                    analysis.entities.salesPersons.push(person);
+                }
+            });
+            
+            // 7. GENEL ANAHTAR KELİMELER
+            const stopWords = ['ve', 'veya', 'ile', 'için', 'son', 'gün', 'gun', 'ay', 'yıl', 'yil', 
+                               'toplam', 'kaç', 'kac', 'ne', 'kadar', 'göster', 'goster', 'bul', 'ara'];
+            const words = query.toLowerCase().split(/\s+/).filter(w => 
+                w.length > 2 && !stopWords.includes(w) && !/^\d+$/.test(w)
+            );
+            analysis.entities.keywords = words;
+            
+            // 8. GÜVENİLİRLİK SKORU
+            let confidence = 0;
+            if (analysis.entities.stores.length > 0) confidence += 30;
+            if (analysis.entities.brands.length > 0) confidence += 25;
+            if (analysis.entities.categories.length > 0) confidence += 20;
+            if (analysis.entities.dateRange || analysis.entities.years.length > 0 || analysis.entities.months.length > 0) confidence += 15;
+            if (analysis.entities.keywords.length > 0) confidence += 10;
+            analysis.confidence = Math.min(confidence, 100);
+            
+            // 9. YORUMLAMA
+            const parts = [];
+            if (analysis.entities.stores.length > 0) parts.push(`Mağaza: ${analysis.entities.stores.join(', ')}`);
+            if (analysis.entities.brands.length > 0) parts.push(`Marka: ${analysis.entities.brands.join(', ')}`);
+            if (analysis.entities.categories.length > 0) parts.push(`Kategori: ${analysis.entities.categories.join(', ')}`);
+            if (analysis.entities.dateRange) parts.push(`Tarih: ${analysis.entities.dateRange.description}`);
+            else if (analysis.entities.years.length > 0) parts.push(`Yıl: ${analysis.entities.years.join(', ')}`);
+            if (analysis.entities.months.length > 0) parts.push(`Ay: ${analysis.entities.months.join(', ')}`);
+            if (analysis.entities.keywords.length > 0) parts.push(`Anahtar: ${analysis.entities.keywords.join(', ')}`);
+            
+            analysis.interpretation = parts.length > 0 ? parts.join(' | ') : 'Genel arama';
+            
+            return analysis;
+        }
+        
+        // 🎯 Fuzzy Matching (Benzerlik skoru)
+        function fuzzyMatch(query, target) {
+            const queryWords = query.split(/\s+/);
+            const targetLower = target.toLowerCase();
+            return queryWords.some(word => {
+                if (word.length < 3) return false;
+                return targetLower.includes(word) || levenshteinDistance(word, targetLower) < 3;
+            });
+        }
+        
+        // 📏 Levenshtein Distance (Düzenleme mesafesi)
+        function levenshteinDistance(a, b) {
+            const matrix = [];
+            for (let i = 0; i <= b.length; i++) {
+                matrix[i] = [i];
+            }
+            for (let j = 0; j <= a.length; j++) {
+                matrix[0][j] = j;
+            }
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            matrix[i][j - 1] + 1,
+                            matrix[i - 1][j] + 1
+                        );
+                    }
+                }
+            }
+            return matrix[b.length][a.length];
+        }
+        
+        // 🔧 AI Filtrelerini Uygula
+        function applyAIFilters(analysis) {
+            // Mağaza filtrelerini seç
+            if (analysis.entities.stores.length > 0) {
+                const storeSelect = document.getElementById('filterStore');
+                Array.from(storeSelect.options).forEach(opt => {
+                    if (analysis.entities.stores.some(store => 
+                        opt.value.toLowerCase().includes(store.toLowerCase())
+                    )) {
+                        opt.selected = true;
+                    }
+                });
+                updateSelectionCount('filterStore', 'countStore');
+            }
+            
+            // Marka filtrelerini seç
+            if (analysis.entities.brands.length > 0) {
+                const brandSelect = document.getElementById('filterBrand');
+                Array.from(brandSelect.options).forEach(opt => {
+                    if (analysis.entities.brands.includes(opt.value)) {
+                        opt.selected = true;
+                    }
+                });
+                updateSelectionCount('filterBrand', 'countBrand');
+            }
+            
+            // Yıl filtrelerini seç
+            if (analysis.entities.years.length > 0) {
+                const yearSelect = document.getElementById('filterYear');
+                Array.from(yearSelect.options).forEach(opt => {
+                    if (analysis.entities.years.includes(opt.value)) {
+                        opt.selected = true;
+                    }
+                });
+                updateSelectionCount('filterYear', 'countYear');
+            }
+            
+            // Ay filtrelerini seç
+            if (analysis.entities.months.length > 0) {
+                const monthSelect = document.getElementById('filterMonth');
+                Array.from(monthSelect.options).forEach(opt => {
+                    if (analysis.entities.months.includes(opt.value)) {
+                        opt.selected = true;
+                    }
+                });
+                updateSelectionCount('filterMonth', 'countMonth');
+            }
+        }
+        
+        // 🔍 AI ile Veri Filtreleme
+        function filterDataWithAI(data, analysis) {
+            return data.filter(item => {
+                // Mağaza kontrolü
+                if (analysis.entities.stores.length > 0) {
+                    const itemStore = (item.store || '').toLowerCase();
+                    const matches = analysis.entities.stores.some(store => 
+                        itemStore.includes(store.toLowerCase())
+                    );
+                    if (!matches) return false;
+                }
+                
+                // Marka kontrolü
+                if (analysis.entities.brands.length > 0) {
+                    if (!analysis.entities.brands.includes(item.brand)) return false;
+                }
+                
+                // Kategori kontrolü (tüm seviyeler)
+                if (analysis.entities.categories.length > 0) {
+                    const itemCategories = [item.category_1, item.category_2, item.category_3, item.category_4]
+                        .filter(Boolean).map(c => c.toLowerCase());
+                    const matches = analysis.entities.categories.some(cat => 
+                        itemCategories.some(ic => ic.includes(cat.toLowerCase()) || cat.toLowerCase().includes(ic))
+                    );
+                    if (!matches) return false;
+                }
+                
+                // Tarih aralığı kontrolü
+                if (analysis.entities.dateRange) {
+                    if (!item.date || item.date < analysis.entities.dateRange.from) return false;
+                }
+                
+                // Yıl kontrolü
+                if (analysis.entities.years.length > 0 && item.date) {
+                    const itemYear = item.date.split('-')[0];
+                    if (!analysis.entities.years.includes(itemYear)) return false;
+                }
+                
+                // Ay kontrolü
+                if (analysis.entities.months.length > 0 && item.date) {
+                    const itemMonth = item.date.split('-')[1];
+                    if (!analysis.entities.months.includes(itemMonth)) return false;
+                }
+                
+                // Şehir kontrolü
+                if (analysis.entities.cities.length > 0) {
+                    if (!analysis.entities.cities.includes(item.city)) return false;
+                }
+                
+                // Satış temsilcisi kontrolü
+                if (analysis.entities.salesPersons.length > 0) {
+                    if (!analysis.entities.salesPersons.includes(item.sales_person)) return false;
+                }
+                
+                // Anahtar kelime kontrolü (fuzzy)
+                if (analysis.entities.keywords.length > 0) {
+                    const searchableText = [
+                        item.partner, item.product, item.brand,
+                        item.category_1, item.category_2, item.category_3, item.category_4,
+                        item.sales_person, item.store, item.city
+                    ].filter(Boolean).join(' ').toLowerCase();
+                    
+                    const matches = analysis.entities.keywords.some(keyword => 
+                        searchableText.includes(keyword)
+                    );
+                    if (!matches) return false;
+                }
+                
+                return true;
+            });
+        }
+        
+        // 💬 AI Yorumunu Göster
+        function showAIInterpretation(analysis, resultCount) {
+            const debugPanel = document.getElementById('debugPanel');
+            const debugInfo = document.getElementById('debugInfo');
+            
+            let html = `<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px;">`;
+            html += `<h4 style="margin: 0 0 10px 0; color: white;">🤖 AI Agent Analizi</h4>`;
+            html += `<p style="margin: 5px 0; font-size: 0.95em;"><strong>Anladığım:</strong> ${analysis.interpretation}</p>`;
+            html += `<p style="margin: 5px 0; font-size: 0.9em;">📊 Güvenilirlik: ${analysis.confidence}% | 🎯 Sonuç: ${resultCount} kayıt</p>`;
+            html += `</div>`;
+            
+            html += `<strong>🔍 Tespit Edilen Varlıklar:</strong><br>`;
+            if (analysis.entities.stores.length > 0) html += `🏪 Mağazalar: ${analysis.entities.stores.join(', ')}<br>`;
+            if (analysis.entities.brands.length > 0) html += `🏷️ Markalar: ${analysis.entities.brands.join(', ')}<br>`;
+            if (analysis.entities.categories.length > 0) html += `📂 Kategoriler: ${analysis.entities.categories.join(', ')}<br>`;
+            if (analysis.entities.dateRange) html += `📅 Tarih: ${analysis.entities.dateRange.description}<br>`;
+            if (analysis.entities.years.length > 0) html += `📆 Yıl: ${analysis.entities.years.join(', ')}<br>`;
+            if (analysis.entities.months.length > 0) html += `📆 Ay: ${analysis.entities.months.join(', ')}<br>`;
+            if (analysis.entities.cities.length > 0) html += `🌍 Şehir: ${analysis.entities.cities.join(', ')}<br>`;
+            if (analysis.entities.salesPersons.length > 0) html += `👤 Satış Tem.: ${analysis.entities.salesPersons.join(', ')}<br>`;
+            if (analysis.entities.keywords.length > 0) html += `🔑 Anahtar Kelimeler: ${analysis.entities.keywords.join(', ')}<br>`;
+            
+            debugInfo.innerHTML = html;
+            debugPanel.style.display = 'block';
         }
 
         function updateSummary() {
@@ -888,8 +1180,6 @@
             html += '<th>Kategori 2</th>';
             html += '<th>Kategori 3</th>';
             html += '<th>Kategori 4</th>';
-            html += '<th>Kategori 5</th>';
-            html += '<th>Etiketler</th>';
             html += '<th>Satis Tem.</th>';
             html += '<th>Magaza</th>';
             html += '<th>Sehir</th>';
@@ -906,8 +1196,6 @@
                 html += `<td title="${item.category_2 || '-'}">${item.category_2 || '-'}</td>`;
                 html += `<td title="${item.category_3 || '-'}">${item.category_3 || '-'}</td>`;
                 html += `<td title="${item.category_4 || '-'}">${item.category_4 || '-'}</td>`;
-                html += `<td title="${item.category_5 || '-'}">${item.category_5 || '-'}</td>`;
-                html += `<td title="${item.tags || '-'}">${item.tags || '-'}</td>`;
                 html += `<td title="${item.sales_person || '-'}">${item.sales_person || '-'}</td>`;
                 html += `<td title="${item.store || '-'}">${item.store || '-'}</td>`;
                 html += `<td title="${item.city || '-'}">${item.city || '-'}</td>`;
