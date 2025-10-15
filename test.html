@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satış Dashboard - Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #667eea;
+        }
+        .status {
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            background: #e3f2fd;
+        }
+        select, button {
+            padding: 10px;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Satış Dashboard - GZIP Test</h1>
+        
+        <div class="status">
+            <h2>📁 Veri Durumu</h2>
+            <p id="status">Yükleniyor...</p>
+        </div>
+
+        <div>
+            <label>Yıl Seçin:</label>
+            <select id="yearSelect">
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+            </select>
+            <button onclick="loadYear()">Yükle</button>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        let currentData = null;
+
+        // Sayfa yüklendiğinde metadata'yı kontrol et
+        window.onload = async function() {
+            try {
+                const response = await fetch('data-metadata.json');
+                if (!response.ok) throw new Error('Metadata bulunamadı');
+                
+                const metadata = await response.json();
+                document.getElementById('status').innerHTML = `
+                    ✅ Veri Hazır!<br>
+                    📅 Mevcut Yıllar: ${metadata.years.join(', ')}<br>
+                    📊 Toplam Kayıt: ${metadata.total_records.toLocaleString('tr-TR')}<br>
+                    🕐 Son Güncelleme: ${metadata.last_update}
+                `;
+            } catch (error) {
+                document.getElementById('status').innerHTML = `❌ Metadata yüklenemedi: ${error.message}`;
+            }
+        };
+
+        async function loadYear() {
+            const year = document.getElementById('yearSelect').value;
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.innerHTML = '⏳ Yükleniyor...';
+            
+            try {
+                // GZIP dosyasını indir
+                const response = await fetch(`data-${year}.json.gz`);
+                if (!response.ok) throw new Error(`${year} verisi bulunamadı`);
+                
+                // Blob olarak al
+                const blob = await response.blob();
+                
+                // DecompressionStream ile aç (modern tarayıcılar)
+                const ds = new DecompressionStream('gzip');
+                const decompressedStream = blob.stream().pipe(ds);
+                const decompressed = await new Response(decompressedStream).text();
+                
+                // JSON'a çevir
+                currentData = JSON.parse(decompressed);
+                
+                // Özet göster
+                resultDiv.innerHTML = `
+                    <h3>✅ ${year} Verisi Yüklendi!</h3>
+                    <p>📋 Detay Kayıt: ${currentData.details?.length.toLocaleString('tr-TR') || 0}</p>
+                    <p>🏷️ Ürün Sayısı: ${Object.keys(currentData.products || {}).length.toLocaleString('tr-TR')}</p>
+                    <p>🤝 Müşteri Sayısı: ${Object.keys(currentData.partners || {}).length.toLocaleString('tr-TR')}</p>
+                    <p>📦 Kategori Sayısı: ${Object.keys(currentData.categories || {}).length.toLocaleString('tr-TR')}</p>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Hata: ${error.message}`;
+                console.error('Yükleme hatası:', error);
+            }
+        }
+    </script>
+</body>
+</html>
+
