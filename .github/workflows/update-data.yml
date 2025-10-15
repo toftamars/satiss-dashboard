@@ -537,8 +537,26 @@ jobs:
                                     skipped_no_usd += 1
                                     continue
                                 
+                                # Saat ve gun bilgisi - create_date'den cikar
+                                create_date_str = line.get('create_date', '')
+                                create_hour = 0
+                                day_of_week = 0
+                                
+                                if create_date_str:
+                                    try:
+                                        # Format: '2025-10-15 17:47:14'
+                                        from datetime import datetime
+                                        dt = datetime.strptime(create_date_str, '%Y-%m-%d %H:%M:%S')
+                                        create_hour = dt.hour  # 0-23
+                                        day_of_week = dt.weekday()  # 0=Pazartesi, 6=Pazar
+                                    except:
+                                        pass
+                                
                                 details.append({
                                     'date': line.get('date', ''),
+                                    'create_date': create_date_str,
+                                    'create_hour': create_hour,
+                                    'day_of_week': day_of_week,
                                     'partner': line['partner_id'][1] if line.get('partner_id') else '',
                                     'product': line['product_id'][1] if line.get('product_id') else '',
                                     'brand': product_brand_map.get(product_id, 'Bilinmeyen'),

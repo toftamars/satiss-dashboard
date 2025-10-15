@@ -4007,6 +4007,11 @@
         let productSalesPersonChartInstance = null;
         let productMonthlyChartInstance = null;
         
+        // Ürün tablosu sıralama için
+        let currentProductData = [];
+        let currentSortColumn = 'sales';
+        let currentSortDirection = 'desc';
+        
         function searchProduct() {
             const searchTerm = document.getElementById('productSearchInput').value.trim();
             
@@ -4296,7 +4301,19 @@
             });
         }
         
-        function renderProductDetailTable(data) {
+        function renderProductDetailTable(data, sortColumn = null, sortDirection = null) {
+            // Sıralama parametrelerini güncelle
+            if (sortColumn !== null) {
+                if (currentSortColumn === sortColumn) {
+                    // Aynı kolona tıklandı, yönü değiştir
+                    currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    // Farklı kolon, varsayılan azalan
+                    currentSortColumn = sortColumn;
+                    currentSortDirection = 'desc';
+                }
+            }
+            
             // Ürün bazında grupla
             const productData = {};
             data.forEach(item => {
@@ -4315,26 +4332,82 @@
                 productData[product].count += 1;
             });
             
-            const sorted = Object.entries(productData).sort((a, b) => b[1].sales - a[1].sales);
+            // Veriyi global değişkene kaydet (sıralama için)
+            currentProductData = Object.entries(productData);
+            
+            // Sıralama
+            currentProductData.sort((a, b) => {
+                let valA, valB;
+                
+                if (currentSortColumn === 'product') {
+                    valA = a[0].toLowerCase();
+                    valB = b[0].toLowerCase();
+                    return currentSortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                } else if (currentSortColumn === 'brand') {
+                    valA = a[1].brand.toLowerCase();
+                    valB = b[1].brand.toLowerCase();
+                    return currentSortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                } else if (currentSortColumn === 'category') {
+                    valA = a[1].category.toLowerCase();
+                    valB = b[1].category.toLowerCase();
+                    return currentSortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                } else if (currentSortColumn === 'sales') {
+                    valA = a[1].sales;
+                    valB = b[1].sales;
+                } else if (currentSortColumn === 'qty') {
+                    valA = a[1].qty;
+                    valB = b[1].qty;
+                } else if (currentSortColumn === 'count') {
+                    valA = a[1].count;
+                    valB = b[1].count;
+                } else if (currentSortColumn === 'avgPrice') {
+                    valA = a[1].sales / Math.max(a[1].qty, 1);
+                    valB = b[1].sales / Math.max(b[1].qty, 1);
+                }
+                
+                return currentSortDirection === 'asc' ? valA - valB : valB - valA;
+            });
+            
+            // Sıralama oku ikonu
+            const getSortIcon = (column) => {
+                if (currentSortColumn === column) {
+                    return currentSortDirection === 'asc' ? ' ▲' : ' ▼';
+                }
+                return ' ⇅';
+            };
             
             let html = `
                 <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
                     <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                         <tr>
                             <th style="padding: 15px; text-align: left; border-bottom: 2px solid #ddd;">#</th>
-                            <th style="padding: 15px; text-align: left; border-bottom: 2px solid #ddd;">Ürün</th>
-                            <th style="padding: 15px; text-align: left; border-bottom: 2px solid #ddd;">Marka</th>
-                            <th style="padding: 15px; text-align: left; border-bottom: 2px solid #ddd;">Kategori</th>
-                            <th style="padding: 15px; text-align: right; border-bottom: 2px solid #ddd;">Satış (USD)</th>
-                            <th style="padding: 15px; text-align: right; border-bottom: 2px solid #ddd;">Miktar</th>
-                            <th style="padding: 15px; text-align: right; border-bottom: 2px solid #ddd;">İşlem</th>
-                            <th style="padding: 15px; text-align: right; border-bottom: 2px solid #ddd;">Ort. Fiyat</th>
+                            <th onclick="renderProductDetailTable(null, 'product')" style="padding: 15px; text-align: left; border-bottom: 2px solid #ddd; cursor: pointer; user-select: none;" title="Sıralamak için tıklayın">
+                                Ürün${getSortIcon('product')}
+                            </th>
+                            <th onclick="renderProductDetailTable(null, 'brand')" style="padding: 15px; text-align: left; border-bottom: 2px solid #ddd; cursor: pointer; user-select: none;" title="Sıralamak için tıklayın">
+                                Marka${getSortIcon('brand')}
+                            </th>
+                            <th onclick="renderProductDetailTable(null, 'category')" style="padding: 15px; text-align: left; border-bottom: 2px solid #ddd; cursor: pointer; user-select: none;" title="Sıralamak için tıklayın">
+                                Kategori${getSortIcon('category')}
+                            </th>
+                            <th onclick="renderProductDetailTable(null, 'sales')" style="padding: 15px; text-align: right; border-bottom: 2px solid #ddd; cursor: pointer; user-select: none;" title="Sıralamak için tıklayın">
+                                Satış (USD)${getSortIcon('sales')}
+                            </th>
+                            <th onclick="renderProductDetailTable(null, 'qty')" style="padding: 15px; text-align: right; border-bottom: 2px solid #ddd; cursor: pointer; user-select: none;" title="Sıralamak için tıklayın">
+                                Miktar${getSortIcon('qty')}
+                            </th>
+                            <th onclick="renderProductDetailTable(null, 'count')" style="padding: 15px; text-align: right; border-bottom: 2px solid #ddd; cursor: pointer; user-select: none;" title="Sıralamak için tıklayın">
+                                İşlem${getSortIcon('count')}
+                            </th>
+                            <th onclick="renderProductDetailTable(null, 'avgPrice')" style="padding: 15px; text-align: right; border-bottom: 2px solid #ddd; cursor: pointer; user-select: none;" title="Sıralamak için tıklayın">
+                                Ort. Fiyat${getSortIcon('avgPrice')}
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
             `;
             
-            sorted.forEach((item, index) => {
+            currentProductData.forEach((item, index) => {
                 const product = item[0];
                 const stats = item[1];
                 const avgPrice = stats.sales / Math.max(stats.qty, 1);
