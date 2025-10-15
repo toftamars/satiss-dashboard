@@ -2139,6 +2139,11 @@
                 updateSummary();
                 renderTable();
                 
+                // Hedef takip mağaza dropdown'larını doldur ve hedefleri yükle
+                populateTargetStoreDropdowns();
+                loadYearlyTarget();
+                loadMonthlyTarget();
+                
                 // Diğer yılları arka planda yükle
                 setTimeout(() => loadRemainingYears(latestYear), 2000);
                 
@@ -3725,11 +3730,7 @@
             calculateTargets();
         }
         
-        // Sayfa yüklendiğinde hedefleri yükle
-        window.addEventListener('load', () => {
-            loadYearlyTarget();
-            loadMonthlyTarget();
-        });
+        // NOT: Hedefler artık loadData() içinde veriler yüklendikten sonra yükleniyor
         
         function calculateTargets() {
             // Mağazaları doldur (ilk kez çağrıldığında)
@@ -7045,7 +7046,15 @@
             console.log('✅ Şehir dropdown dolduruldu:', cities.size, 'şehir');
         }
         
+        let targetStoresPopulated = false; // Sadece bir kez doldur
+        
         function populateTargetStoreDropdowns() {
+            // Veri yoksa veya zaten doldurulduysa çık
+            if (!allData || allData.length === 0) {
+                console.warn('⚠️ Mağaza dropdown doldurulamıyor: Veri yok');
+                return;
+            }
+            
             // Mağazaları topla
             const stores = new Set();
             allData.forEach(item => {
@@ -7057,7 +7066,11 @@
             // Yıllık hedef mağaza dropdown
             const yearStoreSelect = document.getElementById('targetYearStore');
             if (yearStoreSelect) {
-                const currentYearValue = yearStoreSelect.value; // Mevcut seçimi koru
+                // Mevcut seçimi koru (localStorage'dan gelecek)
+                const savedYearTargets = JSON.parse(localStorage.getItem('yearlyTargets') || '{}');
+                const currentYear = document.getElementById('targetYear').value;
+                const savedStoreForYear = savedYearTargets[currentYear] ? Object.keys(savedYearTargets[currentYear])[0] : 'TÜM MAĞAZALAR';
+                
                 yearStoreSelect.innerHTML = '<option value="TÜM MAĞAZALAR">🏢 Tüm Mağazalar</option>';
                 sortedStores.forEach(store => {
                     const option = document.createElement('option');
@@ -7065,16 +7078,24 @@
                     option.textContent = store;
                     yearStoreSelect.appendChild(option);
                 });
-                // Mevcut seçimi geri yükle
-                if (currentYearValue && sortedStores.includes(currentYearValue)) {
-                    yearStoreSelect.value = currentYearValue;
+                
+                // Kaydedilmiş mağazayı seç
+                if (savedStoreForYear) {
+                    yearStoreSelect.value = savedStoreForYear;
                 }
             }
             
             // Aylık hedef mağaza dropdown
             const monthStoreSelect = document.getElementById('targetMonthStore');
             if (monthStoreSelect) {
-                const currentMonthValue = monthStoreSelect.value; // Mevcut seçimi koru
+                // Mevcut seçimi koru (localStorage'dan gelecek)
+                const savedMonthTargets = JSON.parse(localStorage.getItem('monthlyTargets') || '{}');
+                const currentYear = document.getElementById('targetYear').value;
+                const currentMonth = document.getElementById('targetMonth').value;
+                const savedStoreForMonth = savedMonthTargets[currentYear] && savedMonthTargets[currentYear][currentMonth] 
+                    ? Object.keys(savedMonthTargets[currentYear])[0] 
+                    : 'TÜM MAĞAZALAR';
+                
                 monthStoreSelect.innerHTML = '<option value="TÜM MAĞAZALAR">🏢 Tüm Mağazalar</option>';
                 sortedStores.forEach(store => {
                     const option = document.createElement('option');
@@ -7082,13 +7103,15 @@
                     option.textContent = store;
                     monthStoreSelect.appendChild(option);
                 });
-                // Mevcut seçimi geri yükle
-                if (currentMonthValue && sortedStores.includes(currentMonthValue)) {
-                    monthStoreSelect.value = currentMonthValue;
+                
+                // Kaydedilmiş mağazayı seç
+                if (savedStoreForMonth) {
+                    monthStoreSelect.value = savedStoreForMonth;
                 }
             }
             
-            console.log('🏪 Hedef takip mağaza dropdownları dolduruldu:', stores.size, 'mağaza');
+            targetStoresPopulated = true;
+            console.log('✅ Hedef takip mağaza dropdownları dolduruldu:', stores.size, 'mağaza');
         }
         
         function analyzeCityPerformance() {
