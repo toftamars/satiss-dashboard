@@ -326,7 +326,7 @@ jobs:
                                 fields = [
                                     'move_id', 'date', 'create_date', 'write_date',
                                     'product_id', 'quantity', 'price_subtotal', 
-                                    'currency_id', 'partner_id', 'analytic_account_id'
+                                    'currency_id', 'partner_id', 'analytic_account_id', 'id'
                                 ]
                                 
                                 # TÜM VERİYİ BATCH (PARÇA PARÇA) ÇEK
@@ -383,6 +383,46 @@ jobs:
                                 
                                 print(f"\n✅ TOPLAM {len(all_data)} fatura satırı çekildi (XML-RPC)!")
                                 print(f"📊 Veri boyutu: ~{len(all_data) * 0.5 / 1024:.2f} MB")
+                                
+                                # HİBRİT YÖNTEM: USD tutarlarını account.invoice.report'tan çek
+                                print(f"\n💰 USD tutarları account.invoice.report'tan çekiliyor (HİBRİT YÖNTEM)...")
+                                
+                                # move.line ID'lerini topla
+                                line_ids = [line.get('id') for line in all_data if line.get('id')]
+                                print(f"📦 {len(line_ids)} satır için USD tutar çekilecek...")
+                                
+                                usd_amount_map = {}
+                                try:
+                                    # account.invoice.report'tan USD tutarlarını batch olarak çek
+                                    for i in range(0, len(line_ids), 5000):
+                                        batch_ids = line_ids[i:i+5000]
+                                        print(f"   💵 USD batch {i//5000 + 1}: {len(batch_ids)} kayıt...")
+                                        
+                                        # account.invoice.report'tan price_usd_subtotal çek
+                                        usd_batch = models.execute_kw(
+                                            db, uid_xmlrpc, password,
+                                            'account.invoice.report', 'search_read',
+                                            [[('id', 'in', batch_ids)]],
+                                            {'fields': ['id', 'price_usd_subtotal', 'currency_id']}
+                                        )
+                                        
+                                        for usd_record in usd_batch:
+                                            line_id = usd_record.get('id')
+                                            usd_subtotal = usd_record.get('price_usd_subtotal', 0)
+                                            usd_amount_map[line_id] = float(usd_subtotal) if usd_subtotal else 0
+                                    
+                                    print(f"✅ {len(usd_amount_map)} satır için USD tutar eşleştirildi!")
+                                    
+                                    # İstatistik
+                                    with_usd = sum(1 for v in usd_amount_map.values() if v > 0)
+                                    total_usd = sum(usd_amount_map.values())
+                                    print(f"   💰 USD > 0 olan: {with_usd}")
+                                    print(f"   💵 Toplam USD: ${total_usd:,.2f}")
+                                    
+                                except Exception as e:
+                                    print(f"⚠️ USD tutar çekme hatası: {e}")
+                                    print(f"⚠️ Fallback: currency_id kontrolü ile USD hesaplanacak")
+                                    usd_amount_map = {}
                                 
                                 # Satış temsilcilerini çek (account.move'dan)
                                 print(f"\n👤 Satış temsilcileri çekiliyor...")
@@ -662,8 +702,27 @@ jobs:
                                     # Sayısal değerler - SADECE USD VE MİKTAR
                                     qty = float(line.get('quantity', 0))
                                     
-                                    # USD tutar - Fatura kaleminde zaten USD cinsinden
-                                    usd_amount = float(line.get('price_subtotal', 0))
+                                    # USD tutar - HİBRİT YÖNTEM (account.invoice.report'tan price_usd_subtotal)
+                                    line_id = line.get('id')
+                                    
+                                    # 1. Önce account.invoice.report'tan USD tutarı kullan
+                                    if line_id in usd_amount_map and usd_amount_map[line_id] > 0:
+                                        usd_amount = usd_amount_map[line_id]
+                                    else:
+                                        # 2. Fallback: currency_id kontrolü ile hesapla
+                                        currency = line.get('currency_id')
+                                        currency_code = currency[1] if isinstance(currency, list) and len(currency) > 1 else ''
+                                        price_subtotal = float(line.get('price_subtotal', 0))
+                                        
+                                        if 'USD' in currency_code.upper():
+                                            # USD ise direkt kullan
+                                            usd_amount = price_subtotal
+                                        elif price_subtotal > 0:
+                                            # TRY ise kura böl (fallback - gerçek kur için account.invoice.report kullanılmalı)
+                                            # Not: Bu sadece emergency fallback, çoğu kayıt yukarıdan gelecek
+                                            usd_amount = price_subtotal / 34.5  # Ortalama kur
+                                        else:
+                                            usd_amount = 0
                                     
                                     # Kategori bazlı toplama - SADECE USD VE MİKTAR
                                     if categ_name not in processed_data['categories']:

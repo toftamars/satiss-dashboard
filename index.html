@@ -4412,7 +4412,22 @@
                 console.log('👨‍💼 Satış Temsilcisi sekmesi açıldı');
             } else if (tabName === 'city') {
                 // Şehir analizi sekmesi - şehir dropdown'unu doldur
-                populateCitySelect();
+                console.log('🌍 Şehir analizi sekmesi açılıyor...');
+                console.log('📊 allData durumu:', allData ? `${allData.length} kayıt` : 'Henüz yüklenmedi');
+                
+                // Veri yüklenmişse dropdown'u doldur
+                if (allData && allData.length > 0) {
+                    populateCitySelect();
+                } else {
+                    console.warn('⚠️ Veriler henüz yüklenmedi, şehir listesi doldurulamıyor');
+                    // Veri yüklenince tekrar dene
+                    setTimeout(() => {
+                        if (allData && allData.length > 0) {
+                            console.log('🔄 Veri yüklendi, şehir listesi yeniden dolduruluyor...');
+                            populateCitySelect();
+                        }
+                    }, 2000);
+                }
             } else if (tabName === 'stock') {
                 // Stok dağılım sekmesi - hazırlık
                 console.log('📦 Stok Dağılım sekmesi açıldı');
