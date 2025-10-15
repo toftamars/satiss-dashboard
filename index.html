@@ -1101,7 +1101,7 @@
                 <p id="totalRecords">-</p>
             </div>
             <div class="info-card">
-                <h3>Toplam USD Tutar</h3>
+                <h3>Toplam USD (KDV Hariç)</h3>
                 <p id="totalUSD">-</p>
             </div>
         </div>
@@ -1228,7 +1228,7 @@
             
             <div class="summary-cards">
                 <div class="summary-card">
-                    <h3>Toplam Satis (USD)</h3>
+                    <h3>Toplam Satis (USD - KDV Hariç)</h3>
                     <p id="summaryUSD">$0</p>
                 </div>
                 <div class="summary-card">
@@ -1610,7 +1610,7 @@
                     <!-- Summary Cards -->
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
                         <div class="summary-card">
-                            <h3>Toplam Satış</h3>
+                            <h3>Toplam Satış (KDV Hariç)</h3>
                             <p id="productTotalSales">$0</p>
                         </div>
                         <div class="summary-card">
@@ -1810,7 +1810,7 @@
                         <h2 style="margin: 0 0 20px 0; font-size: 2em;">👨‍💼 <span id="salespersonName">-</span></h2>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
                             <div>
-                                <div style="opacity: 0.8; font-size: 0.9em;">💰 Toplam Satış</div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">💰 Toplam Satış (KDV Hariç)</div>
                                 <div style="font-size: 1.5em; font-weight: bold;" id="salespersonTotalSales">$0</div>
                             </div>
                             <div>
@@ -1904,7 +1904,7 @@
                     <!-- City Summary Cards -->
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
                         <div class="summary-card">
-                            <h3>💰 Toplam Satış</h3>
+                            <h3>💰 Toplam Satış (KDV Hariç)</h3>
                             <p id="cityTotalSales">$0</p>
                         </div>
                         <div class="summary-card">
@@ -3286,7 +3286,7 @@
                 data: {
                     labels: data.map(d => d[0]),
                     datasets: [{
-                        label: 'Satış ($)',
+                        label: 'Satış ($ - KDV Hariç)',
                         data: data.map(d => d[1]),
                         backgroundColor: 'rgba(102, 126, 234, 0.8)',
                         borderColor: 'rgba(102, 126, 234, 1)',
@@ -3327,7 +3327,7 @@
                 data: {
                     labels: data.map(d => d[0]),
                     datasets: [{
-                        label: 'Satış ($)',
+                        label: 'Satış ($ - KDV Hariç)',
                         data: data.map(d => d[1]),
                         backgroundColor: 'rgba(56, 239, 125, 0.8)',
                         borderColor: 'rgba(56, 239, 125, 1)',
@@ -3368,7 +3368,7 @@
                 data: {
                     labels: data.map(d => d[0].substring(0, 30) + (d[0].length > 30 ? '...' : '')),
                     datasets: [{
-                        label: 'Satış ($)',
+                        label: 'Satış ($ - KDV Hariç)',
                         data: data.map(d => d[1]),
                         backgroundColor: 'rgba(245, 87, 108, 0.8)',
                         borderColor: 'rgba(245, 87, 108, 1)',
@@ -3416,7 +3416,7 @@
                 data: {
                     labels: data.map(d => d[0]),
                     datasets: [{
-                        label: 'Satış ($)',
+                        label: 'Satış ($ - KDV Hariç)',
                         data: data.map(d => d[1]),
                         backgroundColor: 'rgba(240, 147, 251, 0.8)',
                         borderColor: 'rgba(240, 147, 251, 1)',
@@ -3499,7 +3499,7 @@
                 'Şehir': item.city || '',
                 'Tarih': item.date || '',
                 'Miktar': parseFloat(item.quantity || 0),
-                'USD Tutar': parseFloat(item.usd_amount || 0)
+                'USD (KDV Hariç)': parseFloat(item.usd_amount || 0)
             }));
             
             // Özet satırı ekle
@@ -3516,7 +3516,7 @@
                 'Şehir': '',
                 'Tarih': '',
                 'Miktar': filteredData.reduce((sum, item) => sum + parseFloat(item.quantity || 0), 0),
-                'USD Tutar': filteredData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0)
+                'USD (KDV Hariç)': filteredData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0)
             };
             excelData.push(summary);
             
@@ -3538,7 +3538,7 @@
                 {wch: 15}, // Şehir
                 {wch: 12}, // Tarih
                 {wch: 12}, // Miktar
-                {wch: 15}  // USD Tutar
+                {wch: 18}  // USD (KDV Hariç)
             ];
             
             XLSX.utils.book_append_sheet(wb, ws, 'Satış Verileri');
@@ -4533,7 +4533,7 @@
                 data: {
                     labels: Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`),
                     datasets: [{
-                        label: 'Satış ($)',
+                        label: 'Satış ($ - KDV Hariç)',
                         data: hourData,
                         backgroundColor: hourData.map((val, idx) => {
                             const max = Math.max(...hourData);
@@ -4597,7 +4597,7 @@
                 data: {
                     labels: dayNames,
                     datasets: [{
-                        label: 'Satış ($)',
+                        label: 'Satış ($ - KDV Hariç)',
                         data: dayData,
                         borderColor: 'rgba(102, 126, 234, 1)',
                         backgroundColor: 'rgba(102, 126, 234, 0.1)',
@@ -5173,7 +5173,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Satış (USD)',
+                        label: 'Satış (USD - KDV Hariç)',
                         data: salesValues,
                         backgroundColor: 'rgba(102, 126, 234, 0.6)',
                         borderColor: 'rgba(102, 126, 234, 1)',
@@ -5247,7 +5247,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Satış (USD)',
+                        label: 'Satış (USD - KDV Hariç)',
                         data: salesValues,
                         backgroundColor: 'rgba(56, 239, 125, 0.6)',
                         borderColor: 'rgba(56, 239, 125, 1)',
@@ -5321,7 +5321,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Satış (USD)',
+                        label: 'Satış (USD - KDV Hariç)',
                         data: salesValues,
                         backgroundColor: 'rgba(245, 87, 108, 0.6)',
                         borderColor: 'rgba(245, 87, 108, 1)',
@@ -6078,7 +6078,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Satış (USD)',
+                        label: 'Satış (USD - KDV Hariç)',
                         data: values,
                         backgroundColor: 'rgba(102, 126, 234, 0.6)',
                         borderColor: 'rgba(102, 126, 234, 1)',
@@ -6130,7 +6130,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Satış (USD)',
+                        label: 'Satış (USD - KDV Hariç)',
                         data: values,
                         backgroundColor: 'rgba(56, 239, 125, 0.6)',
                         borderColor: 'rgba(56, 239, 125, 1)',
@@ -6637,7 +6637,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Satış (USD)',
+                        label: 'Satış (USD - KDV Hariç)',
                         data: values,
                         backgroundColor: 'rgba(102, 126, 234, 0.6)',
                         borderColor: 'rgba(102, 126, 234, 1)',
@@ -6690,7 +6690,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Satış (USD)',
+                        label: 'Satış (USD - KDV Hariç)',
                         data: values,
                         backgroundColor: 'rgba(56, 239, 125, 0.6)',
                         borderColor: 'rgba(56, 239, 125, 1)',
@@ -6743,7 +6743,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Satış (USD)',
+                        label: 'Satış (USD - KDV Hariç)',
                         data: values,
                         backgroundColor: 'rgba(245, 87, 108, 0.6)',
                         borderColor: 'rgba(245, 87, 108, 1)',
@@ -7174,7 +7174,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Satış (USD)',
+                        label: 'Satış (USD - KDV Hariç)',
                         data: salesValues,
                         backgroundColor: 'rgba(102, 126, 234, 0.6)',
                         borderColor: 'rgba(102, 126, 234, 1)',
@@ -7231,7 +7231,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Satış (USD)',
+                        label: 'Satış (USD - KDV Hariç)',
                         data: salesValues,
                         backgroundColor: 'rgba(56, 239, 125, 0.6)',
                         borderColor: 'rgba(56, 239, 125, 1)',
@@ -7288,7 +7288,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Satış (USD)',
+                        label: 'Satış (USD - KDV Hariç)',
                         data: salesValues,
                         backgroundColor: 'rgba(245, 87, 108, 0.6)',
                         borderColor: 'rgba(245, 87, 108, 1)',
@@ -7880,7 +7880,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Satış (USD)',
+                        label: 'Satış (USD - KDV Hariç)',
                         data: salesValues,
                         backgroundColor: 'rgba(102, 126, 234, 0.6)',
                         borderColor: 'rgba(102, 126, 234, 1)',
@@ -7937,7 +7937,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Satış (USD)',
+                        label: 'Satış (USD - KDV Hariç)',
                         data: salesValues,
                         backgroundColor: 'rgba(56, 239, 125, 0.6)',
                         borderColor: 'rgba(56, 239, 125, 1)',
@@ -7994,7 +7994,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Satış (USD)',
+                        label: 'Satış (USD - KDV Hariç)',
                         data: salesValues,
                         backgroundColor: 'rgba(245, 87, 108, 0.6)',
                         borderColor: 'rgba(245, 87, 108, 1)',
