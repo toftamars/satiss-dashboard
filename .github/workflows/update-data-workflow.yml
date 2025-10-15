@@ -15,6 +15,12 @@ jobs:
       with:
         token: ${{ secrets.PAT_TOKEN }}
         persist-credentials: true
+        lfs: true
+    
+    - name: Git LFS kurulumu
+      run: |
+        git lfs install
+        git lfs track "data.json"
     
     - name: Python kurulumu
       uses: actions/setup-python@v4
@@ -997,7 +1003,14 @@ jobs:
             mv data.json.backup data.json
           fi
           
-          git add data.json
+          # Git LFS için .gitattributes oluştur
+          echo "data.json filter=lfs diff=lfs merge=lfs -text" > .gitattributes
+          
+          # LFS track
+          git lfs track "data.json"
+          
+          # Add files
+          git add .gitattributes data.json
           
           if [[ -n $(git status -s) ]]; then
             git commit -m "Veriler güncellendi - $(date +'%Y-%m-%d %H:%M')"
