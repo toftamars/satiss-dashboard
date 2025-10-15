@@ -3888,13 +3888,16 @@
             const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
                            'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
             const targetYear = document.getElementById('targetYear').value;
+            const yearStore = document.getElementById('targetYearStore').value;
             
             const monthlySales = months.map((month, index) => {
                 const monthNum = String(index + 1).padStart(2, '0');
                 const monthData = allData.filter(item => {
                     if (!item.date) return false;
                     const itemDate = item.date.split('-');
-                    return itemDate[0] === targetYear && itemDate[1] === monthNum;
+                    const dateMatch = itemDate[0] === targetYear && itemDate[1] === monthNum;
+                    const storeMatch = yearStore === 'TÜM MAĞAZALAR' || item.store === yearStore;
+                    return dateMatch && storeMatch;
                 });
                 return monthData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
             });
@@ -3925,7 +3928,7 @@
                         },
                         title: {
                             display: true,
-                            text: `${targetYear} Yılı Aylık Satış Performansı`,
+                            text: `${targetYear} Yılı Aylık Satış Performansı ${yearStore !== 'TÜM MAĞAZALAR' ? '(' + yearStore + ')' : ''}`,
                             font: {
                                 size: 16,
                                 weight: 'bold'
