@@ -3698,13 +3698,19 @@
             const yearlyTargets = JSON.parse(localStorage.getItem('yearlyTargets') || '{}');
             
             console.log('📊 loadYearlyTarget çağrıldı:', {year, store, yearlyTargets});
+            console.log('🔍 Bu yıl için hedefler:', yearlyTargets[year]);
+            console.log('🔍 Bu mağaza için hedef:', yearlyTargets[year] ? yearlyTargets[year][store] : 'yok');
             
+            // Hedef inputunu temizle
+            const targetInput = document.getElementById('yearlyTarget');
+            targetInput.value = '';
+            
+            // Eğer bu mağaza için hedef varsa doldur
             if (yearlyTargets[year] && yearlyTargets[year][store]) {
-                document.getElementById('yearlyTarget').value = yearlyTargets[year][store];
+                targetInput.value = yearlyTargets[year][store];
                 console.log('✅ Yıllık hedef yüklendi:', yearlyTargets[year][store]);
             } else {
-                document.getElementById('yearlyTarget').value = '';
-                console.log('⚠️ Kaydedilmiş yıllık hedef yok');
+                console.log('⚠️ Bu mağaza için kaydedilmiş hedef yok');
             }
             
             calculateTargets();
@@ -3766,10 +3772,19 @@
             const store = document.getElementById('targetMonthStore').value;
             const monthlyTargets = JSON.parse(localStorage.getItem('monthlyTargets') || '{}');
             
+            console.log('📊 loadMonthlyTarget çağrıldı:', {year, month, store});
+            console.log('🔍 Bu mağaza için aylık hedefler:', monthlyTargets[year] ? monthlyTargets[year][store] : 'yok');
+            
+            // Hedef inputunu temizle
+            const targetInput = document.getElementById('monthlyTarget');
+            targetInput.value = '';
+            
+            // Eğer bu mağaza ve ay için hedef varsa doldur
             if (monthlyTargets[year] && monthlyTargets[year][store] && monthlyTargets[year][store][month]) {
-                document.getElementById('monthlyTarget').value = monthlyTargets[year][store][month];
+                targetInput.value = monthlyTargets[year][store][month];
+                console.log('✅ Aylık hedef yüklendi:', monthlyTargets[year][store][month]);
             } else {
-                document.getElementById('monthlyTarget').value = '';
+                console.log('⚠️ Bu mağaza ve ay için kaydedilmiş hedef yok');
             }
             
             calculateTargets();
