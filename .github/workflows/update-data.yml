@@ -177,7 +177,7 @@ jobs:
                         # ONCE: Hangi alanlarin mevcut oldugunu test et
                         print("\n🔍 Mevcut alanlari test ediyoruz...")
                         test_fields_list = [
-                            ['move_id', 'date', 'product_id', 'quantity', 'price_subtotal', 'partner_id', 'analytic_account_id', 'display_type'],
+                            ['move_id', 'date', 'create_date', 'write_date', 'product_id', 'quantity', 'price_subtotal', 'partner_id', 'analytic_account_id', 'display_type'],
                             ['price_usd_subtotal'],
                             ['usd_rate'],
                             ['x_studio_usd_tutar'],
@@ -186,7 +186,7 @@ jobs:
                             ['balance']
                         ]
                         
-                        working_fields = ['move_id', 'date', 'product_id', 'quantity', 'price_subtotal', 'partner_id', 'analytic_account_id', 'display_type']
+                        working_fields = ['move_id', 'date', 'create_date', 'write_date', 'product_id', 'quantity', 'price_subtotal', 'partner_id', 'analytic_account_id', 'display_type']
                         
                         for test_fields in test_fields_list[1:]:  # Temel alanlari atla
                             try:
