@@ -3803,16 +3803,17 @@
             const yearStore = document.getElementById('targetYearStore').value;
             const monthStore = document.getElementById('targetMonthStore').value;
             
-            // Yıllık hesaplama
+            // Yıllık hesaplama - HER ZAMAN gerçekleşmeyi göster (hedef olsun/olmasın)
+            const yearlyData = allData.filter(item => {
+                if (!item.date) return false;
+                const dateMatch = item.date.startsWith(targetYear);
+                const storeMatch = yearStore === 'TÜM MAĞAZALAR' || item.store === yearStore;
+                return dateMatch && storeMatch;
+            });
+            
+            const yearlyAchieved = yearlyData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
+            
             if (yearlyTarget > 0) {
-                const yearlyData = allData.filter(item => {
-                    if (!item.date) return false;
-                    const dateMatch = item.date.startsWith(targetYear);
-                    const storeMatch = yearStore === 'TÜM MAĞAZALAR' || item.store === yearStore;
-                    return dateMatch && storeMatch;
-                });
-                
-                const yearlyAchieved = yearlyData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
                 const yearlyRemaining = Math.max(0, yearlyTarget - yearlyAchieved);
                 const yearlyPercent = Math.min(100, (yearlyAchieved / yearlyTarget) * 100);
                 
@@ -3828,19 +3829,28 @@
                 document.getElementById('yearlyRemaining').textContent = '$' + yearlyRemaining.toLocaleString('tr-TR', {minimumFractionDigits: 2});
                 document.getElementById('yearlyDaysLeft').textContent = daysLeft;
                 document.getElementById('yearlyDailyRequired').textContent = '$' + dailyRequired.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            } else {
+                // Hedef yoksa sadece gerçekleşmeyi göster, diğer alanları temizle
+                document.getElementById('yearlyProgress').style.width = '0%';
+                document.getElementById('yearlyProgress').textContent = '0%';
+                document.getElementById('yearlyAchieved').textContent = '$' + yearlyAchieved.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                document.getElementById('yearlyRemaining').textContent = '$0,00';
+                document.getElementById('yearlyDaysLeft').textContent = '-';
+                document.getElementById('yearlyDailyRequired').textContent = '$0,00';
             }
             
-            // Aylık hesaplama
+            // Aylık hesaplama - HER ZAMAN gerçekleşmeyi göster (hedef olsun/olmasın)
+            const monthlyData = allData.filter(item => {
+                if (!item.date) return false;
+                const itemDate = item.date.split('-');
+                const dateMatch = itemDate[0] === targetYear && itemDate[1] === targetMonth;
+                const storeMatch = monthStore === 'TÜM MAĞAZALAR' || item.store === monthStore;
+                return dateMatch && storeMatch;
+            });
+            
+            const monthlyAchieved = monthlyData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
+            
             if (monthlyTarget > 0) {
-                const monthlyData = allData.filter(item => {
-                    if (!item.date) return false;
-                    const itemDate = item.date.split('-');
-                    const dateMatch = itemDate[0] === targetYear && itemDate[1] === targetMonth;
-                    const storeMatch = monthStore === 'TÜM MAĞAZALAR' || item.store === monthStore;
-                    return dateMatch && storeMatch;
-                });
-                
-                const monthlyAchieved = monthlyData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
                 const monthlyRemaining = Math.max(0, monthlyTarget - monthlyAchieved);
                 const monthlyPercent = Math.min(100, (monthlyAchieved / monthlyTarget) * 100);
                 
@@ -3856,6 +3866,14 @@
                 document.getElementById('monthlyRemaining').textContent = '$' + monthlyRemaining.toLocaleString('tr-TR', {minimumFractionDigits: 2});
                 document.getElementById('monthlyDaysLeft').textContent = daysLeft;
                 document.getElementById('monthlyDailyRequired').textContent = '$' + dailyRequired.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            } else {
+                // Hedef yoksa sadece gerçekleşmeyi göster, diğer alanları temizle
+                document.getElementById('monthlyProgress').style.width = '0%';
+                document.getElementById('monthlyProgress').textContent = '0%';
+                document.getElementById('monthlyAchieved').textContent = '$' + monthlyAchieved.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                document.getElementById('monthlyRemaining').textContent = '$0,00';
+                document.getElementById('monthlyDaysLeft').textContent = '-';
+                document.getElementById('monthlyDailyRequired').textContent = '$0,00';
             }
             
             // Grafik çiz
