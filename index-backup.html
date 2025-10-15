@@ -2023,136 +2023,38 @@
     <script>
         let allData = [];
         let filteredData = [];
-        let metadata = null;
-        let loadedYears = new Set();
-
-        // GZIP Decompression ve Yıl Yükleme Fonksiyonları
-        async function loadMetadata() {
-            try {
-                const response = await fetch('data-metadata.json');
-                if (!response.ok) throw new Error('Metadata yüklenemedi');
-                metadata = await response.json();
-                console.log('✅ Metadata yüklendi:', metadata);
-                return metadata;
-            } catch (error) {
-                console.error('❌ Metadata hatası:', error);
-                return null;
-            }
-        }
-
-        async function loadYearData(year) {
-            try {
-                console.log(`📦 ${year} yükleniyor...`);
-                
-                // GZIP dosyasını indir
-                const response = await fetch(`data-${year}.json.gz`);
-                if (!response.ok) throw new Error(`${year} verisi bulunamadı`);
-                
-                // Blob olarak al
-                const blob = await response.blob();
-                
-                // DecompressionStream ile aç
-                const ds = new DecompressionStream('gzip');
-                const decompressedStream = blob.stream().pipe(ds);
-                const decompressed = await new Response(decompressedStream).text();
-                
-                // JSON'a çevir
-                const yearData = JSON.parse(decompressed);
-                
-                console.log(`✅ ${year} yüklendi: ${yearData.details?.length || 0} kayıt`);
-                
-                loadedYears.add(year);
-                return yearData;
-                
-            } catch (error) {
-                console.error(`❌ ${year} yükleme hatası:`, error);
-                throw error;
-            }
-        }
 
         async function loadData() {
             try {
-                document.getElementById('dataStatus').innerHTML = '<span class="status-badge" style="background:#ffc107;color:#000;">⏳ Yükleniyor...</span>';
-                document.getElementById('tableContainer').innerHTML = '<div style="text-align:center;padding:50px;font-size:1.2em;">⏳ Veriler yükleniyor, lütfen bekleyin...</div>';
+                const response = await fetch('data.json');
+                if (!response.ok) throw new Error('Veri yuklenemedi');
                 
-                // İlk olarak metadata'yı yükle
-                metadata = await loadMetadata();
-                
-                if (!metadata || !metadata.years || metadata.years.length === 0) {
-                    throw new Error('Geçerli yıl verisi bulunamadı');
-                }
-                
-                // En yeni yılı yükle (genellikle 2025)
-                const latestYear = metadata.years[metadata.years.length - 1];
-                const latestData = await loadYearData(latestYear);
-                
-                // İlk veriyi yükle
-                allData = latestData.details || [];
-                filteredData = [...allData];
+                const data = await response.json();
                 
                 // Update info cards
-                document.getElementById('dataStatus').innerHTML = `<span class="status-badge status-success">✅ ${latestYear}</span>`;
-                document.getElementById('lastUpdate').textContent = metadata.last_update || '-';
-                document.getElementById('totalRecords').textContent = allData.length.toLocaleString('tr-TR');
+                document.getElementById('dataStatus').innerHTML = '<span class="status-badge status-success">Aktif</span>';
+                document.getElementById('lastUpdate').textContent = data.last_update || '-';
+                document.getElementById('totalRecords').textContent = (data.total_records || 0).toLocaleString('tr-TR');
                 
                 // Calculate total USD
                 let totalUSD = 0;
-                if (allData && Array.isArray(allData)) {
-                    totalUSD = allData.reduce((sum, item) => sum + (parseFloat(item.usd_amount) || 0), 0);
+                if (data.details && Array.isArray(data.details)) {
+                    totalUSD = data.details.reduce((sum, item) => sum + (parseFloat(item.usd_amount) || 0), 0);
                 }
                 document.getElementById('totalUSD').textContent = '$' + totalUSD.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                
+                allData = data.details || [];
+                filteredData = [...allData];
                 
                 populateFilters();
                 updateSummary();
                 renderTable();
                 
-                // Diğer yılları arka planda yükle
-                setTimeout(() => loadRemainingYears(latestYear), 2000);
-                
             } catch (error) {
                 console.error('Error loading data:', error);
-                document.getElementById('dataStatus').innerHTML = '<span class="status-badge status-error">❌ Hata</span>';
-                document.getElementById('tableContainer').innerHTML = '<div class="error">❌ Veri yüklenirken hata oluştu!<br><small>' + error.message + '</small></div>';
+                document.getElementById('dataStatus').innerHTML = '<span class="status-badge status-error">Hata</span>';
+                document.getElementById('tableContainer').innerHTML = '<div class="error">❌ Veri yuklenirken hata olustu!</div>';
             }
-        }
-
-        async function loadRemainingYears(skipYear) {
-            if (!metadata || !metadata.years) return;
-            
-            console.log('📦 Diğer yıllar arka planda yükleniyor...');
-            
-            for (const year of metadata.years) {
-                if (year === skipYear || loadedYears.has(year)) continue;
-                
-                try {
-                    const yearData = await loadYearData(year);
-                    
-                    // Verileri birleştir
-                    if (yearData.details && Array.isArray(yearData.details)) {
-                        allData = [...allData, ...yearData.details];
-                        filteredData = [...allData];
-                        
-                        // Filtreleri ve tabloyu güncelle
-                        populateFilters();
-                        updateSummary();
-                        
-                        // Status güncelle
-                        const loadedYearsList = Array.from(loadedYears).sort().join(', ');
-                        document.getElementById('dataStatus').innerHTML = `<span class="status-badge status-success">✅ ${loadedYearsList}</span>`;
-                        document.getElementById('totalRecords').textContent = allData.length.toLocaleString('tr-TR');
-                        
-                        let totalUSD = allData.reduce((sum, item) => sum + (parseFloat(item.usd_amount) || 0), 0);
-                        document.getElementById('totalUSD').textContent = '$' + totalUSD.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                    }
-                    
-                } catch (error) {
-                    console.error(`⚠️ ${year} yüklenemedi:`, error);
-                }
-            }
-            
-            console.log('✅ Tüm yıllar yüklendi!');
-            const allYears = metadata.years.sort().join(', ');
-            document.getElementById('dataStatus').innerHTML = `<span class="status-badge status-success">✅ Tüm Yıllar (${allYears})</span>`;
         }
 
         function populateFilters() {
