@@ -15,12 +15,6 @@ jobs:
       with:
         token: ${{ secrets.PAT_TOKEN }}
         persist-credentials: true
-        lfs: true
-    
-    - name: Git LFS kurulumu
-      run: |
-        git lfs install
-        git lfs track "data.json"
     
     - name: Python kurulumu
       uses: actions/setup-python@v4
@@ -762,7 +756,6 @@ jobs:
                                         processed_data['partners'][partner_id] = {
                                             'name': partner_name,
                                             'city': city,
-                                            'tags': partner_tags_map.get(partner_id, []),
                                             'quantity': 0,
                                             'usd_amount': 0
                                         }
@@ -824,7 +817,6 @@ jobs:
                                     
                                     details.append({
                                         'date': date_str,
-                                        'create_date': create_date_str,
                                         'create_hour': create_hour,
                                         'day_of_week': create_day_of_week,
                                         'partner': partner_name,
@@ -1003,14 +995,8 @@ jobs:
             mv data.json.backup data.json
           fi
           
-          # Git LFS için .gitattributes oluştur
-          echo "data.json filter=lfs diff=lfs merge=lfs -text" > .gitattributes
-          
-          # LFS track
-          git lfs track "data.json"
-          
-          # Add files
-          git add .gitattributes data.json
+          # Add data.json
+          git add data.json
           
           if [[ -n $(git status -s) ]]; then
             git commit -m "Veriler güncellendi - $(date +'%Y-%m-%d %H:%M')"
