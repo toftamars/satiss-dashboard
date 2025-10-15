@@ -730,7 +730,6 @@
             <button class="tab active" onclick="switchTab('sales')">📊 Satış Analizi</button>
             <button class="tab" onclick="switchTab('targets')">🎯 Hedef Takip</button>
             <button class="tab" onclick="switchTab('customers')">👥 Müşteri Analizi</button>
-            <button class="tab" onclick="switchTab('customer_search')">🔍 Müşteri Arama</button>
             <button class="tab" onclick="switchTab('salesperson')">👨‍💼 Satış Temsilcisi</button>
             <button class="tab" onclick="switchTab('city')">🌍 Şehir Analizi</button>
             <button class="tab" onclick="switchTab('stock')">📦 Stok Dağılım</button>
@@ -1000,6 +999,75 @@
                     <div class="summary-card">
                         <h3>En Yüksek Sipariş</h3>
                         <p id="maxOrderValue">$0</p>
+                    </div>
+                </div>
+                
+                <!-- Customer Search Section -->
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; margin: 30px 0;">
+                    <h3 style="color: white; margin: 0 0 20px 0;">🔍 Müşteri Arama</h3>
+                    <div style="position: relative; max-width: 600px;">
+                        <input type="text" id="customerSearchInputMain" placeholder="Müşteri adı yazın... (örn: Ahmet Yılmaz)" 
+                               style="width: 100%; padding: 15px 60px 15px 15px; font-size: 1em; border: 2px solid white; border-radius: 10px; outline: none;"
+                               onkeyup="if(event.key==='Enter') searchCustomerProfileMain()">
+                        <button onclick="searchCustomerProfileMain()" 
+                                style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: white; color: #667eea; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                            🔍 Ara
+                        </button>
+                    </div>
+                    <p style="color: white; opacity: 0.9; margin-top: 10px; font-size: 0.9em;">
+                        💡 Müşteri adının bir kısmını yazmak yeterli
+                    </p>
+                </div>
+                
+                <!-- Customer Profile Results (Initially Hidden) -->
+                <div id="customerProfileMainContainer" style="display: none; margin-bottom: 40px;">
+                    <!-- Customer Profile Header -->
+                    <div style="background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%); color: white; padding: 30px; border-radius: 15px; margin-bottom: 30px;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 1.8em;">👤 <span id="customerNameMain">-</span></h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.85em;">🌍 Şehir</div>
+                                <div style="font-size: 1.1em; font-weight: bold;" id="customerCityMain">-</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.85em;">🏷️ Etiketler</div>
+                                <div style="font-size: 0.95em; font-weight: bold;" id="customerTagsMain">-</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.85em;">💰 Toplam Alışveriş</div>
+                                <div style="font-size: 1.3em; font-weight: bold;" id="customerTotalSalesMain">$0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.85em;">📦 Toplam Adet</div>
+                                <div style="font-size: 1.3em; font-weight: bold;" id="customerTotalQtyMain">0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.85em;">🛒 İşlem Sayısı</div>
+                                <div style="font-size: 1.3em; font-weight: bold;" id="customerTransactionCountMain">0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.85em;">📊 Ortalama Sepet</div>
+                                <div style="font-size: 1.3em; font-weight: bold;" id="customerAvgBasketMain">$0</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Customer Charts -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                        <div class="chart-container">
+                            <h3 style="text-align: center; margin-bottom: 15px;">🏷️ En Çok Tercih Ettiği Markalar</h3>
+                            <canvas id="customerBrandChartMain"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 style="text-align: center; margin-bottom: 15px;">📂 En Çok Aldığı Kategoriler</h3>
+                            <canvas id="customerCategoryChartMain"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Purchase History -->
+                    <div style="margin-top: 30px;">
+                        <h3 style="margin-bottom: 15px;">🛍️ Son Alışverişler (Son 20)</h3>
+                        <div id="customerPurchaseHistoryMain" style="overflow-x: auto;"></div>
                     </div>
                 </div>
                 
@@ -3684,9 +3752,6 @@
                 calculateTargets();
             } else if (tabName === 'customers') {
                 analyzeCustomers();
-            } else if (tabName === 'customer_search') {
-                // Müşteri arama sekmesi - şehir dropdown'unu doldur
-                populateCityDropdownForCustomerSearch();
             } else if (tabName === 'salesperson') {
                 // Satış temsilcisi sekmesi
                 console.log('👨‍💼 Satış Temsilcisi sekmesi açıldı');
@@ -4374,6 +4439,7 @@
         let currentProductData = [];
         let currentSortColumn = 'sales';
         let currentSortDirection = 'desc';
+        let lastProductSearchData = null;
         
         function searchProduct() {
             const searchTerm = document.getElementById('productSearchInput').value.trim();
@@ -4406,6 +4472,9 @@
             // Sonuçları göster
             document.getElementById('productResultsContainer').style.display = 'block';
             document.getElementById('productNoResults').style.display = 'none';
+            
+            // Veriyi kaydet (sıralama için)
+            lastProductSearchData = results;
             
             // Özet kartları güncelle
             const totalSales = results.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
@@ -4712,7 +4781,17 @@
             });
         }
         
-        function renderProductDetailTable(data, sortColumn = null, sortDirection = null) {
+        function renderProductDetailTable(data = null, sortColumn = null, sortDirection = null) {
+            // Eğer data null ise, mevcut veriyi kullan
+            if (data === null && lastProductSearchData) {
+                data = lastProductSearchData;
+            }
+            
+            if (!data || data.length === 0) {
+                document.getElementById('productDetailTable').innerHTML = '<p style="text-align: center; padding: 20px;">Veri bulunamadı</p>';
+                return;
+            }
+            
             // Sıralama parametrelerini güncelle
             if (sortColumn !== null) {
                 if (currentSortColumn === sortColumn) {
@@ -5253,15 +5332,218 @@
         console.log('   showGPTStats() - Maliyet istatistiklerini göster');
         console.log('   resetGPTStats() - Maliyet istatistiklerini sıfırla');
         
-        // ==================== CUSTOMER SEARCH TAB ====================
+        // ==================== CUSTOMER SEARCH IN MAIN TAB ====================
+        let customerBrandChartMainInstance = null;
+        let customerCategoryChartMainInstance = null;
+        
+        function searchCustomerProfileMain() {
+            const searchQuery = document.getElementById('customerSearchInputMain').value.trim().toLowerCase();
+            
+            if (!searchQuery) {
+                alert('Lütfen bir müşteri adı girin');
+                return;
+            }
+            
+            console.log('🔍 Müşteri aranıyor:', searchQuery);
+            
+            // Müşteri verilerini filtrele (fuzzy matching)
+            const customerData = allData.filter(item => 
+                item.partner && item.partner.toLowerCase().includes(searchQuery)
+            );
+            
+            if (customerData.length === 0) {
+                document.getElementById('customerProfileMainContainer').style.display = 'none';
+                alert('Müşteri bulunamadı. Lütfen farklı bir isim deneyin.');
+                return;
+            }
+            
+            // Sonuçları göster
+            document.getElementById('customerProfileMainContainer').style.display = 'block';
+            
+            // Müşteri bilgilerini hesapla
+            const customerName = customerData[0].partner;
+            const customerCity = customerData[0].city || 'Bilinmiyor';
+            const customerTags = customerData[0].tags || '-';
+            
+            const totalSales = customerData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
+            const totalQty = customerData.reduce((sum, item) => sum + parseFloat(item.quantity || 0), 0);
+            const uniqueDates = new Set(customerData.map(item => item.date));
+            const transactionCount = uniqueDates.size;
+            const avgBasket = totalSales / Math.max(transactionCount, 1);
+            
+            // UI güncelle
+            document.getElementById('customerNameMain').textContent = customerName;
+            document.getElementById('customerCityMain').textContent = customerCity;
+            document.getElementById('customerTagsMain').textContent = customerTags;
+            document.getElementById('customerTotalSalesMain').textContent = '$' + totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            document.getElementById('customerTotalQtyMain').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            document.getElementById('customerTransactionCountMain').textContent = transactionCount;
+            document.getElementById('customerAvgBasketMain').textContent = '$' + avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            
+            // Grafikleri render et
+            renderCustomerBrandChartMain(customerData);
+            renderCustomerCategoryChartMain(customerData);
+            
+            // Satın alma geçmişi tablosu
+            renderCustomerPurchaseHistoryMain(customerData);
+            
+            // Sonuçlara scroll
+            document.getElementById('customerProfileMainContainer').scrollIntoView({behavior: 'smooth', block: 'start'});
+        }
+        
+        function renderCustomerBrandChartMain(data) {
+            const brandData = {};
+            data.forEach(item => {
+                const brand = item.brand || 'Bilinmiyor';
+                if (!brandData[brand]) brandData[brand] = 0;
+                brandData[brand] += parseFloat(item.usd_amount || 0);
+            });
+            
+            const sorted = Object.entries(brandData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const labels = sorted.map(item => item[0]);
+            const values = sorted.map(item => item[1]);
+            
+            const ctx = document.getElementById('customerBrandChartMain');
+            if (!ctx) return;
+            
+            if (customerBrandChartMainInstance) {
+                customerBrandChartMainInstance.destroy();
+            }
+            
+            customerBrandChartMainInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Satış (USD)',
+                        data: values,
+                        backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: false}
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderCustomerCategoryChartMain(data) {
+            const categoryData = {};
+            data.forEach(item => {
+                const category = item.category_1 || 'Bilinmiyor';
+                if (!categoryData[category]) categoryData[category] = 0;
+                categoryData[category] += parseFloat(item.usd_amount || 0);
+            });
+            
+            const sorted = Object.entries(categoryData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const labels = sorted.map(item => item[0]);
+            const values = sorted.map(item => item[1]);
+            
+            const ctx = document.getElementById('customerCategoryChartMain');
+            if (!ctx) return;
+            
+            if (customerCategoryChartMainInstance) {
+                customerCategoryChartMainInstance.destroy();
+            }
+            
+            customerCategoryChartMainInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Satış (USD)',
+                        data: values,
+                        backgroundColor: 'rgba(56, 239, 125, 0.6)',
+                        borderColor: 'rgba(56, 239, 125, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: false}
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderCustomerPurchaseHistoryMain(data) {
+            // Son 20 işlemi göster
+            const sorted = [...data].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 20);
+            
+            let html = `
+                <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <tr>
+                            <th style="padding: 12px; text-align: left;">Tarih</th>
+                            <th style="padding: 12px; text-align: left;">Ürün</th>
+                            <th style="padding: 12px; text-align: left;">Marka</th>
+                            <th style="padding: 12px; text-align: right;">Adet</th>
+                            <th style="padding: 12px; text-align: right;">Tutar</th>
+                            <th style="padding: 12px; text-align: left;">Mağaza</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            sorted.forEach((item, index) => {
+                html += `
+                    <tr style="border-bottom: 1px solid #eee; ${index % 2 === 0 ? 'background: #f8f9fa;' : ''}">
+                        <td style="padding: 10px;">${item.date}</td>
+                        <td style="padding: 10px;"><strong>${item.product}</strong></td>
+                        <td style="padding: 10px;">${item.brand}</td>
+                        <td style="padding: 10px; text-align: right;">${parseFloat(item.quantity || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                        <td style="padding: 10px; text-align: right; color: #38ef7d; font-weight: bold;">$${parseFloat(item.usd_amount || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                        <td style="padding: 10px;">${item.store}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            document.getElementById('customerPurchaseHistoryMain').innerHTML = html;
+        }
+        
+        // ==================== OLD CUSTOMER SEARCH TAB (DEPRECATED) ====================
         let customerBrandChartInstance = null;
         let customerCategoryChartInstance = null;
         let customerStoreChartInstance = null;
         let customerMonthlyTrendChartInstance = null;
         
         function populateCityDropdownForCustomerSearch() {
-            // Şu an için bir şey yapmıyoruz, müşteri arama şehir bazlı değil
-            console.log('🔍 Müşteri Arama sekmesi hazır');
+            // Artık kullanılmıyor - Müşteri arama Müşteri Analizi içinde
+            console.log('⚠️ Bu fonksiyon artık kullanılmıyor');
         }
         
         function searchCustomerProfile() {
