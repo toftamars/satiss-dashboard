@@ -303,15 +303,15 @@ jobs:
                                         print("⚠️ 'ALL ZUHAL' filtresi bulunamadı! Temel filtre kullanılıyor...")
                                         domain = [
                                             ('state', 'not in', ('draft', 'cancel')),
-                                            ('move_type', 'in', ('out_invoice', 'out_refund'))
+                                            ('move_type', '=', 'out_invoice')  # Sadece satış faturaları, iade yok
                                         ]
                                 except Exception as e:
                                     print(f"⚠️ Filtre çekme hatası: {e}")
                                     print("📌 Temel filtre kullanılıyor...")
                                     domain = [
-                                        ('move_id.state', '=', 'posted'),
-                                        ('move_id.move_type', '=', 'out_invoice'),
-                                        ('display_type', '=', False)
+                                        ('move_id.state', '=', 'posted'),  # Sadece onaylanmış
+                                        ('move_id.move_type', '=', 'out_invoice'),  # Sadece satış faturaları
+                                        ('display_type', '=', False)  # Başlık ve not satırları hariç
                                     ]
                                 
                                 # Kayıt sayısını kontrol et (account.move.line)
