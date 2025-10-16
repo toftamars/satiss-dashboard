@@ -4013,11 +4013,37 @@
             const year = document.getElementById('targetYear').value;
             const store = document.getElementById('targetYearStore').value;
             
-            // Önce Google Sheets'ten, yoksa localStorage'dan
-            const yearlyTargets = googleSheetsTargets.yearly[year] || 
-                                JSON.parse(localStorage.getItem('yearlyTargets') || '{}')[year] || {};
+            // Mağaza adını temizle (kodları kaldır)
+            const cleanStoreName = store.replace(/\[.*?\]\s*/g, '').replace(/^.*?\s-\s/, '').trim();
             
-            console.log('📊 loadYearlyTarget çağrıldı:', {year, store, yearlyTargets});
+            // Önce Google Sheets'ten (kısmi eşleşme ile), yoksa localStorage'dan
+            let yearlyTarget = null;
+            if (googleSheetsTargets.yearly[year]) {
+                // Tam eşleşme veya kısmi eşleşme dene
+                yearlyTarget = googleSheetsTargets.yearly[year][cleanStoreName] || 
+                              googleSheetsTargets.yearly[year][store];
+                
+                // Hala bulunamadıysa, içeren mağaza ara
+                if (!yearlyTarget) {
+                    for (const [sheetStore, targetValue] of Object.entries(googleSheetsTargets.yearly[year])) {
+                        if (cleanStoreName.toLowerCase().includes(sheetStore.toLowerCase()) || 
+                            sheetStore.toLowerCase().includes(cleanStoreName.toLowerCase())) {
+                            yearlyTarget = targetValue;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // localStorage fallback
+            if (!yearlyTarget) {
+                const localTargets = JSON.parse(localStorage.getItem('yearlyTargets') || '{}')[year] || {};
+                yearlyTarget = localTargets[store];
+            }
+            
+            const yearlyTargets = {[store]: yearlyTarget};
+            
+            console.log('📊 loadYearlyTarget çağrıldı:', {year, store, cleanStoreName, yearlyTarget});
             
             // Hedef inputunu temizle
             const targetInput = document.getElementById('yearlyTarget');
@@ -4089,8 +4115,28 @@
             const month = document.getElementById('targetMonth').value;
             const store = document.getElementById('targetMonthStore').value;
             
-            // Önce Google Sheets'ten, yoksa localStorage'dan
-            const googleTarget = googleSheetsTargets.monthly[year]?.[month]?.[store];
+            // Mağaza adını temizle (kodları kaldır)
+            const cleanStoreName = store.replace(/\[.*?\]\s*/g, '').replace(/^.*?\s-\s/, '').trim();
+            
+            // Önce Google Sheets'ten (kısmi eşleşme ile), yoksa localStorage'dan
+            let googleTarget = null;
+            if (googleSheetsTargets.monthly[year]?.[month]) {
+                // Tam eşleşme veya kısmi eşleşme dene
+                googleTarget = googleSheetsTargets.monthly[year][month][cleanStoreName] || 
+                               googleSheetsTargets.monthly[year][month][store];
+                
+                // Hala bulunamadıysa, içeren mağaza ara
+                if (!googleTarget) {
+                    for (const [sheetStore, targetValue] of Object.entries(googleSheetsTargets.monthly[year][month])) {
+                        if (cleanStoreName.toLowerCase().includes(sheetStore.toLowerCase()) || 
+                            sheetStore.toLowerCase().includes(cleanStoreName.toLowerCase())) {
+                            googleTarget = targetValue;
+                            break;
+                        }
+                    }
+                }
+            }
+            
             const localTarget = JSON.parse(localStorage.getItem('monthlyTargets') || '{}')[year]?.[store]?.[month];
             const target = googleTarget || localTarget;
             
@@ -4147,7 +4193,7 @@
             
             if (yearlyTarget > 0) {
                 const yearlyRemaining = Math.max(0, yearlyTarget - yearlyAchieved);
-                const yearlyPercent = Math.min(100, (yearlyAchieved / yearlyTarget) * 100);
+                const yearlyPercent = (yearlyAchieved / yearlyTarget) * 100; // Math.min kaldırıldı, %100 üstü gösterilecek
                 
                 // Kalan günleri hesapla
                 const today = new Date();
@@ -4155,7 +4201,8 @@
                 const daysLeft = Math.max(0, Math.ceil((endOfYear - today) / (1000 * 60 * 60 * 24)));
                 const dailyRequired = daysLeft > 0 ? yearlyRemaining / daysLeft : 0;
                 
-                document.getElementById('yearlyProgress').style.width = yearlyPercent + '%';
+                // Progress bar max 100% genişlikte kalır, ama text gerçek yüzdeyi gösterir
+                document.getElementById('yearlyProgress').style.width = Math.min(100, yearlyPercent) + '%';
                 document.getElementById('yearlyProgress').textContent = yearlyPercent.toFixed(1) + '%';
                 document.getElementById('yearlyAchieved').textContent = '$' + yearlyAchieved.toLocaleString('tr-TR', {minimumFractionDigits: 2});
                 document.getElementById('yearlyRemaining').textContent = '$' + yearlyRemaining.toLocaleString('tr-TR', {minimumFractionDigits: 2});
@@ -4184,7 +4231,7 @@
             
             if (monthlyTarget > 0) {
                 const monthlyRemaining = Math.max(0, monthlyTarget - monthlyAchieved);
-                const monthlyPercent = Math.min(100, (monthlyAchieved / monthlyTarget) * 100);
+                const monthlyPercent = (monthlyAchieved / monthlyTarget) * 100; // Math.min kaldırıldı, %100 üstü gösterilecek
                 
                 // Kalan günleri hesapla
                 const today = new Date();
@@ -4192,7 +4239,8 @@
                 const daysLeft = Math.max(0, Math.ceil((endOfMonth - today) / (1000 * 60 * 60 * 24)));
                 const dailyRequired = daysLeft > 0 ? monthlyRemaining / daysLeft : 0;
                 
-                document.getElementById('monthlyProgress').style.width = monthlyPercent + '%';
+                // Progress bar max 100% genişlikte kalır, ama text gerçek yüzdeyi gösterir
+                document.getElementById('monthlyProgress').style.width = Math.min(100, monthlyPercent) + '%';
                 document.getElementById('monthlyProgress').textContent = monthlyPercent.toFixed(1) + '%';
                 document.getElementById('monthlyAchieved').textContent = '$' + monthlyAchieved.toLocaleString('tr-TR', {minimumFractionDigits: 2});
                 document.getElementById('monthlyRemaining').textContent = '$' + monthlyRemaining.toLocaleString('tr-TR', {minimumFractionDigits: 2});
@@ -7871,6 +7919,10 @@
             const catData = {};
             data.forEach(item => {
                 const cat = item.category_2 || 'Bilinmiyor';
+                // ALL, Analitik, Eğitim atla
+                if (cat.toLowerCase() === 'all' || cat.toLowerCase().includes('analitik') || cat.toLowerCase().includes('eğitim')) {
+                    return;
+                }
                 if (!catData[cat]) catData[cat] = 0;
                 catData[cat] += parseFloat(item.usd_amount || 0);
             });
