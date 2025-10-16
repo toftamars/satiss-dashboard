@@ -2120,14 +2120,12 @@
                             <p id="cityAvgBasket">$0</p>
                         </div>
                         <div class="summary-card" style="background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%); color: white;">
-                            <h3>👤 En Çok Satış Yapan Temsilci</h3>
-                            <p id="cityTopSalesperson" style="color: white;">-</p>
-                            <small id="cityTopSalespersonAmount" style="opacity: 0.9; font-size: 0.9em;">$0</small>
+                            <h3>👤 En Çok Satış Yapan İlk 5 Temsilci</h3>
+                            <div id="cityTopSalespersons" style="color: white; font-size: 0.9em;"></div>
                         </div>
                         <div class="summary-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                            <h3>🏪 En Çok Satış Yapan Mağaza</h3>
-                            <p id="cityTopStore" style="color: white;">-</p>
-                            <small id="cityTopStoreAmount" style="opacity: 0.9; font-size: 0.9em;">$0</small>
+                            <h3>🏪 En Çok Satış Yapan İlk 5 Mağaza</h3>
+                            <div id="cityTopStores" style="color: white; font-size: 0.9em;"></div>
                         </div>
                     </div>
                     
@@ -2148,6 +2146,10 @@
                         <div class="chart-container">
                             <h3 style="text-align: center; margin-bottom: 20px;">📈 Aylık Satış Trendi</h3>
                             <canvas id="cityMonthlyChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 style="text-align: center; margin-bottom: 20px;">📊 Yıllık Satış Trendi</h3>
+                            <canvas id="cityYearlyChart"></canvas>
                         </div>
                     </div>
                     
@@ -7831,15 +7833,23 @@
             document.getElementById('cityCustomerCount').textContent = uniqueCustomers;
             document.getElementById('cityAvgBasket').textContent = '$' + avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             
-            // Temsilci ve mağaza
-            if (topSalesperson) {
-                document.getElementById('cityTopSalesperson').textContent = topSalesperson[0];
-                document.getElementById('cityTopSalespersonAmount').textContent = '$' + topSalesperson[1].toLocaleString('tr-TR', {minimumFractionDigits: 2});
-            }
-            if (topStore) {
-                document.getElementById('cityTopStore').textContent = topStore[0];
-                document.getElementById('cityTopStoreAmount').textContent = '$' + topStore[1].toLocaleString('tr-TR', {minimumFractionDigits: 2});
-            }
+            // İlk 5 Temsilci
+            const top5Salespersons = Object.entries(salespersonData).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            let spHTML = '';
+            top5Salespersons.forEach((sp, idx) => {
+                const percent = (sp[1] / totalSales * 100).toFixed(1);
+                spHTML += `<div style="margin: 5px 0;">${idx + 1}. ${sp[0]}: <strong>$${sp[1].toLocaleString('tr-TR', {minimumFractionDigits: 2})}</strong> (%${percent})</div>`;
+            });
+            document.getElementById('cityTopSalespersons').innerHTML = spHTML;
+            
+            // İlk 5 Mağaza
+            const top5Stores = Object.entries(storeData).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            let storeHTML = '';
+            top5Stores.forEach((store, idx) => {
+                const percent = (store[1] / totalSales * 100).toFixed(1);
+                storeHTML += `<div style="margin: 5px 0;">${idx + 1}. ${store[0]}: <strong>$${store[1].toLocaleString('tr-TR', {minimumFractionDigits: 2})}</strong> (%${percent})</div>`;
+            });
+            document.getElementById('cityTopStores').innerHTML = storeHTML;
             
             // Container'ı göster
             document.getElementById('cityAnalysisContainer').style.display = 'block';
@@ -7849,6 +7859,7 @@
             renderCityProductChart(cityData);
             renderCityCategoryChart(cityData);
             renderCityMonthlyChart(cityData);
+            renderCityYearlyChart(cityData);
             
             // AI analiz
             performCityAIAnalysis(cityData, selectedCity, {totalSales, totalQty, uniqueCustomers, avgBasket});
@@ -7971,7 +7982,11 @@
         function renderCityCategoryChart(data) {
             const categoryData = {};
             data.forEach(item => {
-                const category = item.category_1 || 'Bilinmiyor';
+                // category_2 kullan, ALL/Analitik/Eğitim atla
+                const category = item.category_2 || 'Bilinmiyor';
+                if (category.toLowerCase() === 'all' || category.toLowerCase().includes('analitik') || category.toLowerCase().includes('eğitim')) {
+                    return;
+                }
                 if (!categoryData[category]) categoryData[category] = {sales: 0, qty: 0};
                 categoryData[category].sales += parseFloat(item.usd_amount || 0);
                 categoryData[category].qty += parseFloat(item.quantity || 0);
@@ -8057,6 +8072,60 @@
                         borderWidth: 3,
                         fill: true,
                         tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: true}
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        let cityYearlyChartInstance = null;
+        
+        function renderCityYearlyChart(data) {
+            const yearlyData = {};
+            data.forEach(item => {
+                const date = new Date(item.date);
+                const year = date.getFullYear();
+                if (!yearlyData[year]) yearlyData[year] = 0;
+                yearlyData[year] += parseFloat(item.usd_amount || 0);
+            });
+            
+            const sorted = Object.entries(yearlyData).sort((a, b) => a[0] - b[0]);
+            const labels = sorted.map(item => item[0]);
+            const values = sorted.map(item => item[1]);
+            
+            const ctx = document.getElementById('cityYearlyChart');
+            if (!ctx) return;
+            
+            if (cityYearlyChartInstance) {
+                cityYearlyChartInstance.destroy();
+            }
+            
+            cityYearlyChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Yıllık Satış (USD)',
+                        data: values,
+                        backgroundColor: 'rgba(118, 75, 162, 0.6)',
+                        borderColor: 'rgba(118, 75, 162, 1)',
+                        borderWidth: 2
                     }]
                 },
                 options: {
