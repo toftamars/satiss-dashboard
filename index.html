@@ -1968,14 +1968,17 @@
                     <div style="position: relative;">
                         <input type="text" id="storeSearchInput" placeholder="Mağaza adı yazın... (örn: Toptan)" 
                                style="width: 100%; padding: 20px 60px 20px 20px; font-size: 1.1em; border: 2px solid #667eea; border-radius: 15px; outline: none;"
-                               onkeyup="if(event.key==='Enter') searchStoreProfile()">
+                               oninput="showStoreSuggestions(this.value)"
+                               onkeydown="handleStoreKeydown(event)"
+                               onfocus="showStoreSuggestions(this.value)">
                         <button onclick="searchStoreProfile()" 
                                 style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-size: 1em;">
                             🔍 Ara
                         </button>
+                        <div id="storeSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #667eea; border-top: none; border-radius: 0 0 15px 15px; max-height: 300px; overflow-y: auto; display: none; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
                     </div>
                     <p style="text-align: center; color: #6c757d; margin-top: 10px; font-size: 0.9em;">
-                        💡 İpucu: Mağaza adının bir kısmını yazmak yeterli. Filtre seçerseniz karşılaştırma yapabilirsiniz!
+                        💡 İpucu: Mağaza adının bir kısmını yazmak yeterli, listeden seçebilirsiniz. Filtre seçerseniz karşılaştırma yapabilirsiniz!
                     </p>
                 </div>
                 
@@ -7029,6 +7032,112 @@
             });
         }
         
+        // MAĞAZA AUTOCOMPLETE
+        let storeSuggestionIndex = -1;
+        
+        function showStoreSuggestions(query) {
+            const suggestionsDiv = document.getElementById('storeSuggestions');
+            query = query.trim().toLowerCase();
+            
+            if (query.length < 2) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+            
+            if (!allData || allData.length === 0) {
+                return;
+            }
+            
+            // Benzersiz mağazaları bul
+            const storeMap = {};
+            allData.forEach(item => {
+                const name = item.store || '';
+                if (name && name.toLowerCase().includes(query)) {
+                    if (!storeMap[name]) {
+                        storeMap[name] = {
+                            name: name,
+                            sales: 0,
+                            count: 0
+                        };
+                    }
+                    storeMap[name].sales += parseFloat(item.usd_amount || 0);
+                    storeMap[name].count += 1;
+                }
+            });
+            
+            // Satışa göre sırala, ilk 10
+            const stores = Object.values(storeMap)
+                .sort((a, b) => b.sales - a.sales)
+                .slice(0, 10);
+            
+            if (stores.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+            
+            let html = '';
+            stores.forEach((store, idx) => {
+                html += `<div class="suggestion-item" data-index="${idx}" data-name="${store.name}" 
+                    style="padding: 12px 20px; cursor: pointer; border-bottom: 1px solid #e0e0e0; transition: background 0.2s;"
+                    onmouseover="this.style.background='#f0f0ff'; storeSuggestionIndex=${idx};"
+                    onmouseout="this.style.background='white';"
+                    onclick="selectStoreSuggestion('${store.name.replace(/'/g, "\\'")}')">
+                    <strong>${store.name}</strong>
+                    <span style="color: #667eea; margin-left: 10px; font-size: 0.9em;">
+                        $${store.sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} • ${store.count} satış
+                    </span>
+                </div>`;
+            });
+            
+            suggestionsDiv.innerHTML = html;
+            suggestionsDiv.style.display = 'block';
+            storeSuggestionIndex = -1;
+        }
+        
+        function selectStoreSuggestion(name) {
+            document.getElementById('storeSearchInput').value = name;
+            document.getElementById('storeSuggestions').style.display = 'none';
+            searchStoreProfile();
+        }
+        
+        function handleStoreKeydown(event) {
+            const suggestionsDiv = document.getElementById('storeSuggestions');
+            const items = suggestionsDiv.querySelectorAll('.suggestion-item');
+            
+            if (items.length === 0) return;
+            
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                storeSuggestionIndex = Math.min(storeSuggestionIndex + 1, items.length - 1);
+                highlightStoreSuggestion(items);
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                storeSuggestionIndex = Math.max(storeSuggestionIndex - 1, 0);
+                highlightStoreSuggestion(items);
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                if (storeSuggestionIndex >= 0 && items[storeSuggestionIndex]) {
+                    const name = items[storeSuggestionIndex].getAttribute('data-name');
+                    selectStoreSuggestion(name);
+                } else {
+                    searchStoreProfile();
+                }
+            } else if (event.key === 'Escape') {
+                suggestionsDiv.style.display = 'none';
+            }
+        }
+        
+        function highlightStoreSuggestion(items) {
+            items.forEach((item, idx) => {
+                if (idx === storeSuggestionIndex) {
+                    item.style.background = '#f0f0ff';
+                    item.scrollIntoView({block: 'nearest'});
+                } else {
+                    item.style.background = 'white';
+                }
+            });
+        }
+        
         // Dışarı tıklandığında suggestion'ları kapat
         document.addEventListener('click', function(event) {
             if (!event.target.closest('#customerSearchInput') && !event.target.closest('#customerSuggestions')) {
@@ -7036,6 +7145,9 @@
             }
             if (!event.target.closest('#salespersonSearchInput') && !event.target.closest('#salespersonSuggestions')) {
                 document.getElementById('salespersonSuggestions').style.display = 'none';
+            }
+            if (!event.target.closest('#storeSearchInput') && !event.target.closest('#storeSuggestions')) {
+                document.getElementById('storeSuggestions').style.display = 'none';
             }
         });
         
