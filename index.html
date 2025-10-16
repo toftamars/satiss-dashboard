@@ -3451,33 +3451,62 @@
 
         // ==================== TAB SYSTEM ====================
         function switchTab(tabName) {
-            // Tüm tab'ları gizle
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab').forEach(tab => {
+            console.log('🔄 switchTab çağrıldı:', tabName);
+            
+            // Tüm tab içeriklerini gizle
+            const allTabContents = document.querySelectorAll('.tab-content');
+            allTabContents.forEach(tab => {
                 tab.classList.remove('active');
             });
             
-            // Seçili tab'ı göster
-            if (tabName === 'sales') {
-                document.getElementById('salesTab').classList.add('active');
-                document.querySelectorAll('.tab')[0].classList.add('active');
-            } else if (tabName === 'targets') {
-                document.getElementById('targetsTab').classList.add('active');
-                document.querySelectorAll('.tab')[1].classList.add('active');
+            // Tüm tab butonlarını pasif yap
+            const allTabs = document.querySelectorAll('.tab');
+            allTabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Seçilen tab'ı aktif et
+            const selectedTab = document.getElementById(tabName + 'Tab');
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+            }
+            
+            // İlgili tab butonunu aktif et
+            const tabButtons = {
+                'sales': 0,
+                'targets': 1,
+                'customers': 2,
+                'salesperson': 3,
+                'city': 4,
+                'stock': 5,
+                'time': 6,
+                'product': 7
+            };
+            if (tabButtons[tabName] !== undefined) {
+                allTabs[tabButtons[tabName]].classList.add('active');
+            }
+            
+            // Tab'a göre özel işlemler
+            if (tabName === 'targets') {
                 calculateTargets();
             } else if (tabName === 'customers') {
-                document.getElementById('customersTab').classList.add('active');
-                document.querySelectorAll('.tab')[2].classList.add('active');
                 analyzeCustomers();
             } else if (tabName === 'time') {
-                document.getElementById('timeTab').classList.add('active');
-                document.querySelectorAll('.tab')[3].classList.add('active');
                 analyzeTime();
-            } else if (tabName === 'product') {
-                document.getElementById('productTab').classList.add('active');
-                document.querySelectorAll('.tab')[4].classList.add('active');
+            } else if (tabName === 'city') {
+                console.log('🌍 Şehir analizi sekmesi açılıyor...');
+                console.log('📊 allData durumu:', allData ? `${allData.length} kayıt` : 'Henüz yüklenmedi');
+                if (allData && allData.length > 0) {
+                    populateCitySelect();
+                } else {
+                    console.warn('⚠️ Veriler henüz yüklenmedi, şehir listesi doldurulamıyor');
+                    setTimeout(() => {
+                        if (allData && allData.length > 0) {
+                            console.log('🔄 Veri yüklendi, şehir listesi yeniden dolduruluyor...');
+                            populateCitySelect();
+                        }
+                    }, 2000);
+                }
             }
         }
         
@@ -3559,60 +3588,6 @@
             alert(`✅ ${filteredData.length} kayıt Excel'e aktarıldı!\nDosya: ${filename}`);
         }
         
-        // ==================== TAB SWITCHING ====================
-        function switchTab(tabName) {
-            console.log('🔄 switchTab çağrıldı:', tabName);
-            
-            // Tüm tab içeriklerini gizle
-            const allTabContents = document.querySelectorAll('.tab-content');
-            allTabContents.forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Tüm tab butonlarını pasif yap
-            const allTabs = document.querySelectorAll('.tab');
-            allTabs.forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Seçilen tab'ı aktif et
-            const selectedTab = document.getElementById(tabName + 'Tab');
-            if (selectedTab) {
-                selectedTab.classList.add('active');
-            }
-            
-            // İlgili tab butonunu aktif et
-            const tabButtons = {
-                'sales': 0,
-                'targets': 1,
-                'customers': 2,
-                'salesperson': 3,
-                'city': 4,
-                'stock': 5,
-                'time': 6,
-                'product': 7
-            };
-            if (tabButtons[tabName] !== undefined) {
-                allTabs[tabButtons[tabName]].classList.add('active');
-            }
-            
-            // Şehir sekmesine geçildiğinde şehir listesini doldur
-            if (tabName === 'city') {
-                console.log('🌍 Şehir analizi sekmesi açılıyor...');
-                console.log('📊 allData durumu:', allData ? `${allData.length} kayıt` : 'Henüz yüklenmedi');
-                if (allData && allData.length > 0) {
-                    populateCitySelect();
-                } else {
-                    console.warn('⚠️ Veriler henüz yüklenmedi, şehir listesi doldurulamıyor');
-                    setTimeout(() => {
-                        if (allData && allData.length > 0) {
-                            console.log('🔄 Veri yüklendi, şehir listesi yeniden dolduruluyor...');
-                            populateCitySelect();
-                        }
-                    }, 2000);
-                }
-            }
-        }
         
         // ==================== VOICE SEARCH ====================
         let recognition = null;
@@ -4518,60 +4493,6 @@
             return insights;
         }
 
-        // ==================== TAB SWITCHING ====================
-        function switchTab(tabName) {
-            // Tüm tab'ları gizle
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Tüm tab butonlarını pasif yap
-            document.querySelectorAll('.tab').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Seçili tab'ı göster
-            const selectedTab = document.getElementById(tabName + 'Tab');
-            if (selectedTab) {
-                selectedTab.classList.add('active');
-            }
-            
-            // Seçili butonu aktif yap
-            event.target.classList.add('active');
-            
-            // Tab'a göre özel işlemler
-            if (tabName === 'targets') {
-                calculateTargets();
-            } else if (tabName === 'customers') {
-                analyzeCustomers();
-            } else if (tabName === 'salesperson') {
-                // Satış temsilcisi sekmesi
-                console.log('👨‍💼 Satış Temsilcisi sekmesi açıldı');
-            } else if (tabName === 'city') {
-                // Şehir analizi sekmesi - şehir dropdown'unu doldur
-                console.log('🌍 Şehir analizi sekmesi açılıyor...');
-                console.log('📊 allData durumu:', allData ? `${allData.length} kayıt` : 'Henüz yüklenmedi');
-                
-                // Veri yüklenmişse dropdown'u doldur
-                if (allData && allData.length > 0) {
-                    populateCitySelect();
-                } else {
-                    console.warn('⚠️ Veriler henüz yüklenmedi, şehir listesi doldurulamıyor');
-                    // Veri yüklenince tekrar dene
-                    setTimeout(() => {
-                        if (allData && allData.length > 0) {
-                            console.log('🔄 Veri yüklendi, şehir listesi yeniden dolduruluyor...');
-                            populateCitySelect();
-                        }
-                    }, 2000);
-                }
-            } else if (tabName === 'stock') {
-                // Stok dağılım sekmesi - hazırlık
-                console.log('📦 Stok Dağılım sekmesi açıldı');
-            } else if (tabName === 'time') {
-                analyzeTime();
-            }
-        }
 
         // ==================== TIME ANALYSIS ====================
         let hourlyChartInstance = null;

@@ -404,7 +404,7 @@ jobs:
                                             db, uid_xmlrpc, password,
                                             'account.invoice.report', 'search_read',
                                             [[('id', 'in', batch_ids)]],
-                                            {'fields': ['id', 'price_usd_subtotal', 'currency_id', 'state_id']}
+                                            {'fields': ['id', 'price_usd_subtotal', 'state_id']}
                                         )
                                         
                                         for usd_record in usd_batch:
