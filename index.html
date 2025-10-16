@@ -7610,25 +7610,44 @@
         let lastStoreTopProductsData = null;
         
         function populateStoreYearFilter() {
-            const yearSelect = document.getElementById('storeYearFilter');
-            if (!yearSelect || !allData) return;
+            if (!allData || allData.length === 0) return;
             
             const years = new Set();
+            const months = new Set();
+            const days = new Set();
+            
             allData.forEach(item => {
-                if (item.date) years.add(item.date.substring(0, 4));
+                if (item.date) {
+                    const dateParts = item.date.split('-');
+                    if (dateParts.length >= 3) {
+                        years.add(dateParts[0]); // YYYY
+                        months.add(dateParts[1]); // MM
+                        days.add(dateParts[2]); // DD
+                    }
+                }
             });
             
-            yearSelect.innerHTML = '<option value="">Tüm Yıllar</option>';
-            Array.from(years).sort().reverse().forEach(year => {
-                yearSelect.innerHTML += `<option value="${year}">${year}</option>`;
-            });
+            populateMultiSelect('filterStoreYear', Array.from(years).sort().reverse(), 'countStoreYear');
+            populateMultiSelect('filterStoreMonth', Array.from(months).sort(), 'countStoreMonth');
+            populateMultiSelect('filterStoreDay', Array.from(days).sort(), 'countStoreDay');
         }
         
         function clearStoreFilters() {
-            document.getElementById('storeYearFilter').selectedIndex = 0;
-            document.getElementById('storeMonthFilter').selectedIndex = 0;
-            document.getElementById('storeStartDay').value = '';
-            document.getElementById('storeEndDay').value = '';
+            // Checkbox'ları temizle
+            const yearCheckboxes = document.querySelectorAll('#filterStoreYear input[type="checkbox"]');
+            const monthCheckboxes = document.querySelectorAll('#filterStoreMonth input[type="checkbox"]');
+            const dayCheckboxes = document.querySelectorAll('#filterStoreDay input[type="checkbox"]');
+            
+            yearCheckboxes.forEach(cb => cb.checked = false);
+            monthCheckboxes.forEach(cb => cb.checked = false);
+            dayCheckboxes.forEach(cb => cb.checked = false);
+            
+            // Sayaçları güncelle
+            updateSelectionCount('filterStoreYear', 'countStoreYear');
+            updateSelectionCount('filterStoreMonth', 'countStoreMonth');
+            updateSelectionCount('filterStoreDay', 'countStoreDay');
+            
+            console.log('✅ Mağaza filtreleri temizlendi');
         }
         
         function searchStoreProfile() {
@@ -9015,32 +9034,28 @@
         let salespersonStoreChartInstance = null;
         let salespersonMonthlyChartInstance = null;
         
-        // Satış temsilcisi yıl filtrelerini doldur
+        // Satış temsilcisi filtrelerini doldur (checkbox yapısı)
         function populateSalespersonYearFilter() {
-            const yearSelect = document.getElementById('salespersonYearFilter');
-            if (!yearSelect || !allData) return;
+            if (!allData || allData.length === 0) return;
             
             const years = new Set();
+            const months = new Set();
+            const days = new Set();
+            
             allData.forEach(item => {
                 if (item.date) {
-                    const year = item.date.substring(0, 4);
-                    years.add(year);
+                    const dateParts = item.date.split('-');
+                    if (dateParts.length >= 3) {
+                        years.add(dateParts[0]); // YYYY
+                        months.add(dateParts[1]); // MM
+                        days.add(dateParts[2]); // DD
+                    }
                 }
             });
             
-            // Mevcut seçimleri koru
-            const selectedYears = Array.from(yearSelect.selectedOptions).map(opt => opt.value);
-            
-            yearSelect.innerHTML = '<option value="">Tüm Yıllar</option>';
-            Array.from(years).sort().reverse().forEach(year => {
-                const option = document.createElement('option');
-                option.value = year;
-                option.textContent = year;
-                if (selectedYears.includes(year)) {
-                    option.selected = true;
-                }
-                yearSelect.appendChild(option);
-            });
+            populateMultiSelect('filterSalespersonYear', Array.from(years).sort().reverse(), 'countSalespersonYear');
+            populateMultiSelect('filterSalespersonMonth', Array.from(months).sort(), 'countSalespersonMonth');
+            populateMultiSelect('filterSalespersonDay', Array.from(days).sort(), 'countSalespersonDay');
         }
         
         // Satış temsilcisi filtrelerini temizle
@@ -9063,19 +9078,20 @@
         }
         
         function clearSalespersonFilters() {
-            // Tüm seçimleri temizle
-            const yearFilter = document.getElementById('salespersonYearFilter');
-            const monthFilter = document.getElementById('salespersonMonthFilter');
-            for (let i = 0; i < yearFilter.options.length; i++) {
-                yearFilter.options[i].selected = false;
-            }
-            for (let i = 0; i < monthFilter.options.length; i++) {
-                monthFilter.options[i].selected = false;
-            }
-            document.getElementById('salespersonDayRange').value = '';
-            document.getElementById('salespersonStartDay').value = '';
-            document.getElementById('salespersonEndDay').value = '';
-            document.getElementById('salespersonCustomDayRange').style.display = 'none';
+            // Checkbox'ları temizle
+            const yearCheckboxes = document.querySelectorAll('#filterSalespersonYear input[type="checkbox"]');
+            const monthCheckboxes = document.querySelectorAll('#filterSalespersonMonth input[type="checkbox"]');
+            const dayCheckboxes = document.querySelectorAll('#filterSalespersonDay input[type="checkbox"]');
+            
+            yearCheckboxes.forEach(cb => cb.checked = false);
+            monthCheckboxes.forEach(cb => cb.checked = false);
+            dayCheckboxes.forEach(cb => cb.checked = false);
+            
+            // Sayaçları güncelle
+            updateSelectionCount('filterSalespersonYear', 'countSalespersonYear');
+            updateSelectionCount('filterSalespersonMonth', 'countSalespersonMonth');
+            updateSelectionCount('filterSalespersonDay', 'countSalespersonDay');
+            
             console.log('✅ Satış temsilcisi filtreleri temizlendi');
         }
         
