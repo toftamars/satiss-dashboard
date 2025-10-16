@@ -1791,77 +1791,34 @@
             <div class="content">
                 <h2 style="margin-bottom: 30px;">👨‍💼 Satış Temsilcisi Performans Analizi</h2>
                 
-                <!-- Filters Section -->
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                    <h3 style="margin-bottom: 25px; color: white; text-align: center;">📅 Dönem Filtreleri (Çoklu Seçim - Karşılaştırma)</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px;">
-                        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                            <label style="display: block; margin-bottom: 12px; font-weight: 600; color: #667eea; font-size: 1.05em;">📆 Yıllar</label>
-                            <select id="salespersonYearFilter" multiple size="5" 
-                                    style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; outline: none; font-size: 1em; background: #fafafa; transition: border 0.3s;"
-                                    onfocus="this.style.borderColor='#667eea';"
-                                    onblur="this.style.borderColor='#e0e0e0';">
-                                <option value="">✨ Tüm Yıllar</option>
-                            </select>
-                            <small style="color: #6c757d; display: block; margin-top: 8px; text-align: center;">
-                                💡 Ctrl/Cmd + Tıklama ile çoklu seçim
-                            </small>
-                        </div>
-                        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                            <label style="display: block; margin-bottom: 12px; font-weight: 600; color: #667eea; font-size: 1.05em;">📅 Aylar</label>
-                            <select id="salespersonMonthFilter" multiple size="5"
-                                    style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; outline: none; font-size: 1em; background: #fafafa; transition: border 0.3s;"
-                                    onfocus="this.style.borderColor='#667eea';"
-                                    onblur="this.style.borderColor='#e0e0e0';">
-                                <option value="">✨ Tüm Aylar</option>
-                                <option value="01">📅 Ocak</option>
-                                <option value="02">📅 Şubat</option>
-                                <option value="03">📅 Mart</option>
-                                <option value="04">📅 Nisan</option>
-                                <option value="05">📅 Mayıs</option>
-                                <option value="06">📅 Haziran</option>
-                                <option value="07">📅 Temmuz</option>
-                                <option value="08">📅 Ağustos</option>
-                                <option value="09">📅 Eylül</option>
-                                <option value="10">📅 Ekim</option>
-                                <option value="11">📅 Kasım</option>
-                                <option value="12">📅 Aralık</option>
-                            </select>
-                            <small style="color: #6c757d; display: block; margin-top: 8px; text-align: center;">
-                                💡 Ctrl/Cmd + Tıklama ile çoklu seçim
-                            </small>
-                        </div>
-                        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                            <label style="display: block; margin-bottom: 12px; font-weight: 600; color: #667eea; font-size: 1.05em;">📍 Gün Aralığı (Opsiyonel)</label>
-                            <select id="salespersonDayRange" 
-                                    style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; outline: none; font-size: 1em; background: #fafafa; margin-bottom: 10px; transition: border 0.3s;"
-                                    onfocus="this.style.borderColor='#667eea';"
-                                    onblur="this.style.borderColor='#e0e0e0';"
-                                    onchange="toggleSalespersonCustomDayRange(this.value)">
-                                <option value="">🌟 Tüm Günler</option>
-                                <option value="1-10">📅 1-10 Arası</option>
-                                <option value="11-20">📅 11-20 Arası</option>
-                                <option value="21-31">📅 21-31 Arası</option>
-                                <option value="custom">✏️ Özel Aralık</option>
-                            </select>
-                            <div id="salespersonCustomDayRange" style="display: none; margin-top: 10px;">
-                                <div style="display: flex; gap: 10px;">
-                                    <input type="number" id="salespersonStartDay" placeholder="Başlangıç (1-31)" min="1" max="31"
-                                           style="width: 48%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; outline: none; font-size: 0.95em;">
-                                    <input type="number" id="salespersonEndDay" placeholder="Bitiş (1-31)" min="1" max="31"
-                                           style="width: 48%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; outline: none; font-size: 0.95em;">
-                                </div>
+                <!-- Filters Section (Satış Analizi ile aynı yapı) -->
+                <div class="filters-section" style="margin-bottom: 30px;">
+                    <div class="filters-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                        <div class="filter-group">
+                            <label>Yıl <span class="selected-count" id="countSalespersonYear"></span></label>
+                            <div class="filter-search-box">
+                                <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterSalespersonYear', this.value)">
                             </div>
-                            <small style="color: #6c757d; display: block; margin-top: 8px; text-align: center;">
-                                📌 Ay içi dönem karşılaştırması
-                            </small>
+                            <div class="checkbox-container" id="filterSalespersonYear"></div>
+                        </div>
+                        <div class="filter-group">
+                            <label>Ay <span class="selected-count" id="countSalespersonMonth"></span></label>
+                            <div class="filter-search-box">
+                                <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterSalespersonMonth', this.value)">
+                            </div>
+                            <div class="checkbox-container" id="filterSalespersonMonth"></div>
+                        </div>
+                        <div class="filter-group">
+                            <label>Gün <span class="selected-count" id="countSalespersonDay"></span></label>
+                            <div class="filter-search-box">
+                                <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterSalespersonDay', this.value)">
+                            </div>
+                            <div class="checkbox-container" id="filterSalespersonDay"></div>
                         </div>
                     </div>
-                    <div style="text-align: center; margin-top: 25px;">
+                    <div style="text-align: center; margin-top: 20px;">
                         <button onclick="clearSalespersonFilters()" 
-                                style="background: rgba(255,255,255,0.2); color: white; border: 2px solid white; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-weight: 600; font-size: 1em; transition: all 0.3s;"
-                                onmouseover="this.style.background='white'; this.style.color='#667eea';"
-                                onmouseout="this.style.background='rgba(255,255,255,0.2)'; this.style.color='white';">
+                                style="background: #6c757d; color: white; border: none; padding: 12px 30px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
                             🔄 Filtreleri Temizle
                         </button>
                     </div>
@@ -1973,52 +1930,34 @@
             <div class="content">
                 <h2 style="margin-bottom: 30px;">🏪 Mağaza Performans Analizi</h2>
                 
-                <!-- Filters Section -->
-                <div style="background: #f8f9fa; padding: 25px; border-radius: 15px; margin-bottom: 30px;">
-                    <h3 style="margin-bottom: 20px; color: #667eea;">📅 Dönem Filtreleri (Opsiyonel - Karşılaştırma için birden fazla seçebilirsiniz)</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                        <div>
-                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">📆 Yıllar:</label>
-                            <select id="storeYearFilter" multiple size="4" 
-                                    style="width: 100%; padding: 10px; border: 2px solid #667eea; border-radius: 10px; outline: none;">
-                                <option value="">Tüm Yıllar</option>
-                            </select>
-                            <small style="color: #6c757d;">Ctrl/Cmd ile çoklu seçim</small>
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">📅 Aylar:</label>
-                            <select id="storeMonthFilter" multiple size="4"
-                                    style="width: 100%; padding: 10px; border: 2px solid #667eea; border-radius: 10px; outline: none;">
-                                <option value="">Tüm Aylar</option>
-                                <option value="01">Ocak</option>
-                                <option value="02">Şubat</option>
-                                <option value="03">Mart</option>
-                                <option value="04">Nisan</option>
-                                <option value="05">Mayıs</option>
-                                <option value="06">Haziran</option>
-                                <option value="07">Temmuz</option>
-                                <option value="08">Ağustos</option>
-                                <option value="09">Eylül</option>
-                                <option value="10">Ekim</option>
-                                <option value="11">Kasım</option>
-                                <option value="12">Aralık</option>
-                            </select>
-                            <small style="color: #6c757d;">Ctrl/Cmd ile çoklu seçim</small>
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">📍 Günler (İsteğe bağlı):</label>
-                            <div style="display: flex; gap: 10px;">
-                                <input type="number" id="storeStartDay" placeholder="Başlangıç günü (1-31)" min="1" max="31"
-                                       style="width: 100%; padding: 10px; border: 2px solid #667eea; border-radius: 10px; outline: none;">
-                                <input type="number" id="storeEndDay" placeholder="Bitiş günü (1-31)" min="1" max="31"
-                                       style="width: 100%; padding: 10px; border: 2px solid #667eea; border-radius: 10px; outline: none;">
+                <!-- Filters Section (Satış Analizi ile aynı yapı) -->
+                <div class="filters-section" style="margin-bottom: 30px;">
+                    <div class="filters-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                        <div class="filter-group">
+                            <label>Yıl <span class="selected-count" id="countStoreYear"></span></label>
+                            <div class="filter-search-box">
+                                <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterStoreYear', this.value)">
                             </div>
-                            <small style="color: #6c757d;">Örn: 1-15 arası</small>
+                            <div class="checkbox-container" id="filterStoreYear"></div>
+                        </div>
+                        <div class="filter-group">
+                            <label>Ay <span class="selected-count" id="countStoreMonth"></span></label>
+                            <div class="filter-search-box">
+                                <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterStoreMonth', this.value)">
+                            </div>
+                            <div class="checkbox-container" id="filterStoreMonth"></div>
+                        </div>
+                        <div class="filter-group">
+                            <label>Gün <span class="selected-count" id="countStoreDay"></span></label>
+                            <div class="filter-search-box">
+                                <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterStoreDay', this.value)">
+                            </div>
+                            <div class="checkbox-container" id="filterStoreDay"></div>
                         </div>
                     </div>
-                    <div style="text-align: center; margin-top: 15px;">
+                    <div style="text-align: center; margin-top: 20px;">
                         <button onclick="clearStoreFilters()" 
-                                style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer;">
+                                style="background: #6c757d; color: white; border: none; padding: 12px 30px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
                             🔄 Filtreleri Temizle
                         </button>
                     </div>
