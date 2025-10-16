@@ -8024,6 +8024,18 @@
             });
             const topSP = Object.entries(spData).sort((a, b) => b[1] - a[1]).slice(0, 3);
             
+            // Kategori analizi (category_2 kullan, ALL/Analitik/Eğitim atla)
+            const categoryData = {};
+            data.forEach(item => {
+                const cat = item.category_2 || 'Bilinmiyor';
+                if (cat.toLowerCase() === 'all' || cat.toLowerCase().includes('analitik') || cat.toLowerCase().includes('eğitim')) {
+                    return;
+                }
+                if (!categoryData[cat]) categoryData[cat] = 0;
+                categoryData[cat] += parseFloat(item.usd_amount || 0);
+            });
+            const topCategories = Object.entries(categoryData).sort((a, b) => b[1] - a[1]).slice(0, 3);
+            
             // ZAMAN ANALİZLERİ
             // Aylık analiz
             const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
@@ -8128,6 +8140,15 @@
                 });
             }
             
+            if (topCategories.length > 0) {
+                const topCat = topCategories[0];
+                const catPercent = (topCat[1] / profile.totalSales * 100).toFixed(1);
+                insights.positive.push({
+                    title: `📂 En Başarılı Kategori: ${topCat[0]}`,
+                    description: `<span class="metric-highlight">%${catPercent}</span> pay ile en çok satan kategori.`
+                });
+            }
+            
             // ZAMAN BAZLI ANALİZLER - Neutral
             if (bestMonth && worstMonth) {
                 const bestPercent = ((bestMonth.value / profile.totalSales) * 100).toFixed(1);
@@ -8192,6 +8213,13 @@
                 title: '📊 Genel Performans',
                 description: `<span class="metric-highlight">${profile.uniqueCustomers}</span> farklı müşteri, <span class="metric-highlight">${profile.uniqueProducts}</span> farklı ürün satıldı.`
             });
+            
+            if (topCategories.length >= 3) {
+                insights.neutral.push({
+                    title: '📂 Kategori Çeşitliliği',
+                    description: `En çok satılan kategoriler: ${topCategories.map(c => c[0]).join(', ')}. Bu kategorilerde güçlü performans.`
+                });
+            }
             
             // Öneriler - ZAMAN BAZLI (ÇALIŞMA SAATLERİ DİKKATE ALINARAK)
             if (worstDay && bestDay) {
@@ -9827,10 +9855,13 @@
             const topBrands = Object.entries(brandData).sort((a, b) => b[1] - a[1]).slice(0, 3);
             const bottomBrands = Object.entries(brandData).sort((a, b) => a[1] - b[1]).slice(0, 3);
             
-            // Kategori analizi
+            // Kategori analizi (category_2 kullan, ALL/Analitik/Eğitim atla)
             const categoryData = {};
             data.forEach(item => {
-                const category = item.category_1 || 'Bilinmiyor';
+                const category = item.category_2 || 'Bilinmiyor';
+                if (category.toLowerCase() === 'all' || category.toLowerCase().includes('analitik') || category.toLowerCase().includes('eğitim')) {
+                    return;
+                }
                 if (!categoryData[category]) categoryData[category] = 0;
                 categoryData[category] += parseFloat(item.usd_amount || 0);
             });
@@ -10011,6 +10042,13 @@
                 insights.neutral.push({
                     title: '🏷️ Marka Çeşitliliği',
                     description: `En çok satılan markalar: ${topBrands.map(b => b[0]).join(', ')}. Bu markalarda yoğunlaşma var.`
+                });
+            }
+            
+            if (topCategories.length >= 3) {
+                insights.neutral.push({
+                    title: '📂 Kategori Çeşitliliği',
+                    description: `En çok satılan kategoriler: ${topCategories.map(c => c[0]).join(', ')}. Bu kategorilerde uzmanlaşma mevcut.`
                 });
             }
             
