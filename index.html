@@ -7379,6 +7379,17 @@
             renderStoreSalespersonChart(storeData);
             renderStoreMonthlyChart(storeData);
             renderStoreTopProducts(storeData);
+            
+            // AI analiz
+            performStoreAIAnalysis(storeData, {
+                name: storeName,
+                totalSales,
+                totalQty,
+                transactionCount,
+                avgTransaction,
+                uniqueCustomers,
+                uniqueProducts
+            });
         }
         
         function renderStoreBrandChart(data) {
@@ -7543,6 +7554,116 @@
             
             html += '</tbody></table>';
             document.getElementById('storeTopProductsTable').innerHTML = html;
+        }
+        
+        function performStoreAIAnalysis(data, profile) {
+            const insights = {positive: [], negative: [], neutral: [], recommendations: []};
+            
+            // Marka analizi
+            const brandData = {};
+            data.forEach(item => {
+                const brand = item.brand || 'Bilinmiyor';
+                if (!brandData[brand]) brandData[brand] = 0;
+                brandData[brand] += parseFloat(item.usd_amount || 0);
+            });
+            const topBrands = Object.entries(brandData).sort((a, b) => b[1] - a[1]).slice(0, 3);
+            
+            // Satış temsilcisi analizi
+            const spData = {};
+            data.forEach(item => {
+                const sp = item.sales_person || 'Bilinmiyor';
+                if (!spData[sp]) spData[sp] = 0;
+                spData[sp] += parseFloat(item.usd_amount || 0);
+            });
+            const topSP = Object.entries(spData).sort((a, b) => b[1] - a[1]).slice(0, 3);
+            
+            // Pozitif
+            if (profile.totalSales > 100000) {
+                insights.positive.push({
+                    title: '💰 Yüksek Ciro',
+                    description: `Mağaza toplam <span class="metric-highlight">$${profile.totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</span> satış gerçekleştirmiş. Mükemmel performans!`
+                });
+            }
+            
+            if (topBrands.length > 0) {
+                const topBrand = topBrands[0];
+                const brandPercent = (topBrand[1] / profile.totalSales * 100).toFixed(1);
+                insights.positive.push({
+                    title: `🏷️ En Başarılı Marka: ${topBrand[0]}`,
+                    description: `<span class="metric-highlight">%${brandPercent}</span> pay ile lider marka.`
+                });
+            }
+            
+            // Nötr
+            if (topSP.length > 0) {
+                const spList = topSP.map((sp, idx) => {
+                    const percent = (sp[1] / profile.totalSales * 100).toFixed(1);
+                    return `${idx + 1}. ${sp[0]} (%${percent})`;
+                }).join('<br>');
+                insights.neutral.push({
+                    title: '👨‍💼 En Başarılı Satış Temsilcileri',
+                    description: spList
+                });
+            }
+            
+            insights.neutral.push({
+                title: '📊 Genel Performans',
+                description: `<span class="metric-highlight">${profile.uniqueCustomers}</span> farklı müşteri, <span class="metric-highlight">${profile.uniqueProducts}</span> farklı ürün satıldı.`
+            });
+            
+            // Öneriler
+            insights.recommendations.push({
+                icon: '🎯',
+                title: 'Stok Yönetimi',
+                description: `En çok satan markalar: ${topBrands.map(b => b[0]).join(', ')}. Bu markaların stok seviyelerini takip edin.`
+            });
+            
+            insights.recommendations.push({
+                icon: '👥',
+                title: 'Ekip Yönetimi',
+                description: `En başarılı temsilci ${topSP[0][0]}. Başarı hikayesini diğer ekip üyeleriyle paylaşın.`
+            });
+            
+            let html = `<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px;">`;
+            
+            if (insights.positive.length > 0) {
+                html += `<div class="analysis-section"><h3 style="color: white; margin-top: 0;">✅ Güçlü Yönler</h3>`;
+                insights.positive.forEach(item => {
+                    html += `<div class="insight-item" style="background: rgba(56, 239, 125, 0.2); padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #38ef7d;">
+                        <strong style="font-size: 1.1em;">${item.title}</strong><br>
+                        <span style="opacity: 0.95; margin-top: 8px; display: block;">${item.description}</span>
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+            
+            if (insights.neutral.length > 0) {
+                html += `<div class="analysis-section" style="margin-top: 25px;"><h3 style="color: white;">💡 Önemli Bilgiler</h3>`;
+                insights.neutral.forEach(item => {
+                    html += `<div class="insight-item" style="background: rgba(255, 215, 0, 0.2); padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #ffd700;">
+                        <strong style="font-size: 1.1em;">${item.title}</strong><br>
+                        <span style="opacity: 0.95; margin-top: 8px; display: block;">${item.description}</span>
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+            
+            if (insights.recommendations.length > 0) {
+                html += `<div class="analysis-section" style="margin-top: 25px;"><h3 style="color: white;">🎯 Öneriler</h3>`;
+                insights.recommendations.forEach(item => {
+                    html += `<div class="recommendation" style="background: rgba(255, 255, 255, 0.15); padding: 18px; border-radius: 10px; margin: 12px 0;">
+                        <span style="font-size: 1.8em; margin-right: 12px;">${item.icon}</span>
+                        <div style="display: inline-block; vertical-align: top; width: calc(100% - 50px);">
+                            <strong style="font-size: 1.15em; display: block; margin-bottom: 8px;">${item.title}</strong>
+                            <p style="margin: 0; opacity: 0.95; line-height: 1.6;">${item.description}</p>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+            
+            html += `</div>`;
+            document.getElementById('storeAIAnalysisContent').innerHTML = html;
         }
         
         // ==================== CITY ANALYSIS TAB ====================

@@ -443,6 +443,9 @@ jobs:
                                 print(f"📦 {len(move_ids)} fatura başlığı için satış temsilcisi çekiliyor (5000'erlik batch)...")
                                 
                                 invoice_user_map = {}
+                                invoice_datetime_map = {}  # Fatura kesilme zamanı (saat için)
+                                invoice_date_map = {}  # Gerçek fatura tarihi
+                                
                                 try:
                                     for i in range(0, len(move_ids), 5000):
                                         batch_ids = move_ids[i:i+5000]
@@ -451,21 +454,34 @@ jobs:
                                             db, uid_xmlrpc, password,
                                             'account.move', 'search_read',
                                             [[('id', 'in', batch_ids)]],
-                                            {'fields': ['id', 'invoice_user_id', 'user_id']}
+                                            {'fields': ['id', 'invoice_user_id', 'user_id', 'create_date', 'invoice_date']}
                                         )
                                         for move in batch_moves:
                                             move_id = move['id']
-                                            # invoice_user_id veya user_id dene
+                                            
+                                            # Satış temsilcisi
                                             if move.get('invoice_user_id') and isinstance(move.get('invoice_user_id'), list):
                                                 invoice_user_map[move_id] = move['invoice_user_id'][1]
                                             elif move.get('user_id') and isinstance(move.get('user_id'), list):
                                                 invoice_user_map[move_id] = move['user_id'][1]
                                             else:
                                                 invoice_user_map[move_id] = 'Sistem'
+                                            
+                                            # Fatura kesilme zamanı (tarih + saat)
+                                            if move.get('create_date'):
+                                                invoice_datetime_map[move_id] = move['create_date']
+                                            
+                                            # Gerçek fatura tarihi
+                                            if move.get('invoice_date'):
+                                                invoice_date_map[move_id] = move['invoice_date']
                                     print(f"✅ {len(invoice_user_map)} fatura için satış temsilcisi eşleştirildi!")
+                                    print(f"✅ {len(invoice_datetime_map)} fatura için tarih-saat bilgisi alındı!")
+                                    print(f"✅ {len(invoice_date_map)} fatura için gerçek tarih alındı!")
                                 except Exception as e:
-                                    print(f"⚠️ Satış temsilcisi çekme hatası: {e}")
+                                    print(f"⚠️ Satış temsilcisi + tarih çekme hatası: {e}")
                                     invoice_user_map = {}
+                                    invoice_datetime_map = {}
+                                    invoice_date_map = {}
                                 
                             except Exception as e:
                                 print(f"❌ XML-RPC veri çekme hatası: {e}")
@@ -659,8 +675,12 @@ jobs:
                             
                             for line in all_data:
                                 try:
-                                    # Tarih
-                                    date_str = line.get('date', '')
+                                    # Tarih - GERÇEK FATURA TARİHİ
+                                    # Önce account.move'dan invoice_date, yoksa account.move.line'dan date
+                                    move = line.get('move_id')
+                                    move_id = move[0] if isinstance(move, list) else 0
+                                    
+                                    date_str = invoice_date_map.get(move_id) or line.get('date', '')
                                     if date_str:
                                         year = date_str[:4]
                                         month = date_str[:7]
@@ -668,11 +688,11 @@ jobs:
                                         year = 'Bilinmeyen'
                                         month = 'Bilinmeyen'
                                     
-                                    # Saat bilgisi - create_date'den çıkar
-                                    create_date_str = line.get('create_date', '')
+                                    # Saat bilgisi - account.move'dan create_date (FATURA KESİLME ZAMANI)
                                     create_hour = 0
                                     create_day_of_week = 0
                                     
+                                    create_date_str = invoice_datetime_map.get(move_id, '')
                                     if create_date_str:
                                         try:
                                             # Format: '2025-10-15 14:35:22'
