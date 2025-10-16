@@ -9493,7 +9493,11 @@
         function renderSalespersonCategoryChart(data) {
             const categoryData = {};
             data.forEach(item => {
-                const category = item.category_1 || 'Bilinmiyor';
+                const category = item.category_2 || 'Bilinmiyor';
+                // ALL, Analitik, Eğitim atla
+                if (category.toLowerCase() === 'all' || category.toLowerCase().includes('analitik') || category.toLowerCase().includes('eğitim')) {
+                    return;
+                }
                 if (!categoryData[category]) categoryData[category] = {sales: 0, qty: 0};
                 categoryData[category].sales += parseFloat(item.usd_amount || 0);
                 categoryData[category].qty += parseFloat(item.quantity || 0);
