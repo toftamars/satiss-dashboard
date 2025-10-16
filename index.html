@@ -1142,11 +1142,10 @@
                     </div>
                     <div class="checkbox-container" id="filterBrand"></div>
                 </div>
-                <!-- Kategori 1 her zaman "All" olduğu için gizlendi -->
-                <div class="filter-group" style="display: none;">
+                <div class="filter-group">
                     <label>Kategori 1 <span class="selected-count" id="countCategory1"></span></label>
                     <div class="filter-search-box">
-                        <input type="text" class="filter-search-input" placeholder="🔍 Ara (örn: davul)..." oninput="filterCheckboxes('filterCategory1', this.value)">
+                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterCategory1', this.value)">
                     </div>
                     <div class="checkbox-container" id="filterCategory1"></div>
                 </div>
@@ -1163,13 +1162,6 @@
                         <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterCategory3', this.value)">
                     </div>
                     <div class="checkbox-container" id="filterCategory3"></div>
-                </div>
-                <div class="filter-group">
-                    <label>Kategori 4 <span class="selected-count" id="countCategory4"></span></label>
-                    <div class="filter-search-box">
-                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterCategory4', this.value)">
-                    </div>
-                    <div class="checkbox-container" id="filterCategory4"></div>
                 </div>
                 <div class="filter-group">
                     <label>Satis Temsilcisi <span class="selected-count" id="countSalesPerson"></span></label>
@@ -2509,10 +2501,10 @@
             
             allData.forEach(item => {
                 if (item.brand) brands.add(item.brand);
-                if (item.category_1) cat1.add(item.category_1);
-                if (item.category_2) cat2.add(item.category_2);
-                if (item.category_3) cat3.add(item.category_3);
-                if (item.category_4) cat4.add(item.category_4);
+                // Kategori kaydırması: category_2 -> Kategori 1, category_3 -> Kategori 2, category_4 -> Kategori 3
+                if (item.category_2) cat1.add(item.category_2);
+                if (item.category_3) cat2.add(item.category_3);
+                if (item.category_4) cat3.add(item.category_4);
                 if (item.sales_person) salesPersons.add(item.sales_person);
                 if (item.store) stores.add(item.store);
                 if (item.city) cities.add(item.city);
@@ -2532,7 +2524,6 @@
             populateMultiSelect('filterCategory1', Array.from(cat1).sort(), 'countCategory1');
             populateMultiSelect('filterCategory2', Array.from(cat2).sort(), 'countCategory2');
             populateMultiSelect('filterCategory3', Array.from(cat3).sort(), 'countCategory3');
-            populateMultiSelect('filterCategory4', Array.from(cat4).sort(), 'countCategory4');
             populateMultiSelect('filterSalesPerson', Array.from(salesPersons).sort(), 'countSalesPerson');
             populateMultiSelect('filterStore', Array.from(stores).sort(), 'countStore');
             populateMultiSelect('filterCity', Array.from(cities).sort(), 'countCity');
@@ -2622,10 +2613,9 @@
 
         function applyFilters() {
             const brands = getSelectedValues('filterBrand');
-            const cat1s = getSelectedValues('filterCategory1');
-            const cat2s = getSelectedValues('filterCategory2');
-            const cat3s = getSelectedValues('filterCategory3');
-            const cat4s = getSelectedValues('filterCategory4');
+            const cat1s = getSelectedValues('filterCategory1'); // category_2 verisi
+            const cat2s = getSelectedValues('filterCategory2'); // category_3 verisi
+            const cat3s = getSelectedValues('filterCategory3'); // category_4 verisi
             const salesPersons = getSelectedValues('filterSalesPerson');
             const stores = getSelectedValues('filterStore');
             const cities = getSelectedValues('filterCity');
@@ -2638,7 +2628,6 @@
                 cat1s: cat1s.length,
                 cat2s: cat2s.length,
                 cat3s: cat3s.length,
-                cat4s: cat4s.length,
                 salesPersons: salesPersons.length,
                 stores: stores.length,
                 cities: cities.length,
@@ -2651,11 +2640,10 @@
                 // Marka filtresi (çoklu)
                 if (brands.length > 0 && !brands.includes(item.brand)) return false;
                 
-                // Kategori filtreleri (çoklu)
-                if (cat1s.length > 0 && !cat1s.includes(item.category_1)) return false;
-                if (cat2s.length > 0 && !cat2s.includes(item.category_2)) return false;
-                if (cat3s.length > 0 && !cat3s.includes(item.category_3)) return false;
-                if (cat4s.length > 0 && !cat4s.includes(item.category_4)) return false;
+                // Kategori filtreleri (çoklu) - KAYDıRıLMıŞ
+                if (cat1s.length > 0 && !cat1s.includes(item.category_2)) return false; // Kategori 1 = category_2
+                if (cat2s.length > 0 && !cat2s.includes(item.category_3)) return false; // Kategori 2 = category_3
+                if (cat3s.length > 0 && !cat3s.includes(item.category_4)) return false; // Kategori 3 = category_4
                 
                 // Satis temsilcisi filtresi (çoklu)
                 if (salesPersons.length > 0 && !salesPersons.includes(item.sales_person)) return false;
@@ -3821,15 +3809,14 @@
             
             console.log('📥 Excel export başlatılıyor...');
             
-            // Veriyi Excel formatına dönüştür
+            // Veriyi Excel formatına dönüştür (Kategori kaydırılmış)
             const excelData = filteredData.map(item => ({
                 'İş Ortağı': item.partner || '',
                 'Ürün': item.product || '',
                 'Marka': item.brand || '',
-                'Kategori 1': item.category_1 || '',
-                'Kategori 2': item.category_2 || '',
-                'Kategori 3': item.category_3 || '',
-                'Kategori 4': item.category_4 || '',
+                'Kategori 1': item.category_2 || '', // category_2 -> Kategori 1
+                'Kategori 2': item.category_3 || '', // category_3 -> Kategori 2
+                'Kategori 3': item.category_4 || '', // category_4 -> Kategori 3
                 'Satış Temsilcisi': item.sales_person || '',
                 'Mağaza': item.store || '',
                 'Şehir': item.city || '',
@@ -3846,7 +3833,6 @@
                 'Kategori 1': '',
                 'Kategori 2': '',
                 'Kategori 3': '',
-                'Kategori 4': '',
                 'Satış Temsilcisi': '',
                 'Mağaza': '',
                 'Şehir': '',
@@ -3868,7 +3854,6 @@
                 {wch: 20}, // Kategori 1
                 {wch: 20}, // Kategori 2
                 {wch: 20}, // Kategori 3
-                {wch: 20}, // Kategori 4
                 {wch: 20}, // Satış Temsilcisi
                 {wch: 30}, // Mağaza
                 {wch: 15}, // Şehir
