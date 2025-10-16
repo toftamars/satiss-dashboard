@@ -1688,14 +1688,17 @@
                     <div style="position: relative;">
                         <input type="text" id="customerSearchInput" placeholder="Müşteri adı yazın... (örn: Ahmet Yılmaz)" 
                                style="width: 100%; padding: 20px 60px 20px 20px; font-size: 1.1em; border: 2px solid #667eea; border-radius: 15px; outline: none;"
-                               onkeyup="if(event.key==='Enter') searchCustomerProfile()">
+                               oninput="showCustomerSuggestions(this.value)"
+                               onkeydown="handleCustomerKeydown(event)"
+                               onfocus="showCustomerSuggestions(this.value)">
                         <button onclick="searchCustomerProfile()" 
                                 style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-size: 1em;">
                             🔍 Ara
                         </button>
+                        <div id="customerSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #667eea; border-top: none; border-radius: 0 0 15px 15px; max-height: 300px; overflow-y: auto; display: none; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
                     </div>
                     <p style="text-align: center; color: #6c757d; margin-top: 10px; font-size: 0.9em;">
-                        💡 İpucu: Müşteri adının bir kısmını yazmak yeterli
+                        💡 İpucu: Müşteri adının bir kısmını yazmak yeterli, listeden seçebilirsiniz
                     </p>
                 </div>
                 
@@ -1844,14 +1847,17 @@
                     <div style="position: relative;">
                         <input type="text" id="salespersonSearchInput" placeholder="Satış temsilcisi adı yazın... (örn: Mustafa Kılıç)" 
                                style="width: 100%; padding: 20px 60px 20px 20px; font-size: 1.1em; border: 2px solid #667eea; border-radius: 15px; outline: none;"
-                               onkeyup="if(event.key==='Enter') searchSalespersonProfile()">
+                               oninput="showSalespersonSuggestions(this.value)"
+                               onkeydown="handleSalespersonKeydown(event)"
+                               onfocus="showSalespersonSuggestions(this.value)">
                         <button onclick="searchSalespersonProfile()" 
                                 style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-size: 1em;">
                             🔍 Ara
                         </button>
+                        <div id="salespersonSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #667eea; border-top: none; border-radius: 0 0 15px 15px; max-height: 300px; overflow-y: auto; display: none; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
                     </div>
                     <p style="text-align: center; color: #6c757d; margin-top: 10px; font-size: 0.9em;">
-                        💡 İpucu: Temsilci adının bir kısmını yazmak yeterli. Filtre seçerseniz karşılaştırma yapabilirsiniz!
+                        💡 İpucu: Temsilci adının bir kısmını yazmak yeterli, listeden seçebilirsiniz. Filtre seçerseniz karşılaştırma yapabilirsiniz!
                     </p>
                 </div>
                 
@@ -6843,6 +6849,231 @@
             // Artık kullanılmıyor - Müşteri arama Müşteri Analizi içinde
             console.log('⚠️ Bu fonksiyon artık kullanılmıyor');
         }
+        
+        // ==================== AUTOCOMPLETE FUNCTIONS ====================
+        let customerSuggestionIndex = -1;
+        let salespersonSuggestionIndex = -1;
+        
+        function showCustomerSuggestions(query) {
+            const suggestionsDiv = document.getElementById('customerSuggestions');
+            query = query.trim().toLowerCase();
+            
+            if (query.length < 2) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+            
+            if (!allData || allData.length === 0) {
+                return;
+            }
+            
+            // Benzersiz müşterileri bul
+            const customerMap = {};
+            allData.forEach(item => {
+                const name = item.partner || '';
+                if (name && name.toLowerCase().includes(query)) {
+                    if (!customerMap[name]) {
+                        customerMap[name] = {
+                            name: name,
+                            sales: 0,
+                            count: 0
+                        };
+                    }
+                    customerMap[name].sales += parseFloat(item.usd_amount || 0);
+                    customerMap[name].count += 1;
+                }
+            });
+            
+            // Satışa göre sırala, ilk 10
+            const customers = Object.values(customerMap)
+                .sort((a, b) => b.sales - a.sales)
+                .slice(0, 10);
+            
+            if (customers.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+            
+            let html = '';
+            customers.forEach((customer, idx) => {
+                html += `<div class="suggestion-item" data-index="${idx}" data-name="${customer.name}" 
+                    style="padding: 12px 20px; cursor: pointer; border-bottom: 1px solid #e0e0e0; transition: background 0.2s;"
+                    onmouseover="this.style.background='#f0f0ff'; customerSuggestionIndex=${idx};"
+                    onmouseout="this.style.background='white';"
+                    onclick="selectCustomerSuggestion('${customer.name.replace(/'/g, "\\'")}')">
+                    <strong>${customer.name}</strong>
+                    <span style="color: #667eea; margin-left: 10px; font-size: 0.9em;">
+                        $${customer.sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} • ${customer.count} sipariş
+                    </span>
+                </div>`;
+            });
+            
+            suggestionsDiv.innerHTML = html;
+            suggestionsDiv.style.display = 'block';
+            customerSuggestionIndex = -1;
+        }
+        
+        function selectCustomerSuggestion(name) {
+            document.getElementById('customerSearchInput').value = name;
+            document.getElementById('customerSuggestions').style.display = 'none';
+            searchCustomerProfile();
+        }
+        
+        function handleCustomerKeydown(event) {
+            const suggestionsDiv = document.getElementById('customerSuggestions');
+            const items = suggestionsDiv.querySelectorAll('.suggestion-item');
+            
+            if (items.length === 0) return;
+            
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                customerSuggestionIndex = Math.min(customerSuggestionIndex + 1, items.length - 1);
+                highlightCustomerSuggestion(items);
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                customerSuggestionIndex = Math.max(customerSuggestionIndex - 1, 0);
+                highlightCustomerSuggestion(items);
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                if (customerSuggestionIndex >= 0 && items[customerSuggestionIndex]) {
+                    const name = items[customerSuggestionIndex].getAttribute('data-name');
+                    selectCustomerSuggestion(name);
+                } else {
+                    searchCustomerProfile();
+                }
+            } else if (event.key === 'Escape') {
+                suggestionsDiv.style.display = 'none';
+            }
+        }
+        
+        function highlightCustomerSuggestion(items) {
+            items.forEach((item, idx) => {
+                if (idx === customerSuggestionIndex) {
+                    item.style.background = '#f0f0ff';
+                    item.scrollIntoView({block: 'nearest'});
+                } else {
+                    item.style.background = 'white';
+                }
+            });
+        }
+        
+        function showSalespersonSuggestions(query) {
+            const suggestionsDiv = document.getElementById('salespersonSuggestions');
+            query = query.trim().toLowerCase();
+            
+            if (query.length < 2) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+            
+            if (!allData || allData.length === 0) {
+                return;
+            }
+            
+            // Benzersiz satış temsilcilerini bul
+            const spMap = {};
+            allData.forEach(item => {
+                const name = item.sales_person || '';
+                const store = item.store || '';
+                // Analitik ve Eğitim hariç
+                if (store.toLowerCase().includes('analitik') || store.toLowerCase().includes('eğitim')) {
+                    return;
+                }
+                if (name && name.toLowerCase().includes(query)) {
+                    if (!spMap[name]) {
+                        spMap[name] = {
+                            name: name,
+                            sales: 0,
+                            count: 0
+                        };
+                    }
+                    spMap[name].sales += parseFloat(item.usd_amount || 0);
+                    spMap[name].count += 1;
+                }
+            });
+            
+            // Satışa göre sırala, ilk 10
+            const salespersons = Object.values(spMap)
+                .sort((a, b) => b.sales - a.sales)
+                .slice(0, 10);
+            
+            if (salespersons.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+            
+            let html = '';
+            salespersons.forEach((sp, idx) => {
+                html += `<div class="suggestion-item" data-index="${idx}" data-name="${sp.name}" 
+                    style="padding: 12px 20px; cursor: pointer; border-bottom: 1px solid #e0e0e0; transition: background 0.2s;"
+                    onmouseover="this.style.background='#f0f0ff'; salespersonSuggestionIndex=${idx};"
+                    onmouseout="this.style.background='white';"
+                    onclick="selectSalespersonSuggestion('${sp.name.replace(/'/g, "\\'")}')">
+                    <strong>${sp.name}</strong>
+                    <span style="color: #667eea; margin-left: 10px; font-size: 0.9em;">
+                        $${sp.sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} • ${sp.count} satış
+                    </span>
+                </div>`;
+            });
+            
+            suggestionsDiv.innerHTML = html;
+            suggestionsDiv.style.display = 'block';
+            salespersonSuggestionIndex = -1;
+        }
+        
+        function selectSalespersonSuggestion(name) {
+            document.getElementById('salespersonSearchInput').value = name;
+            document.getElementById('salespersonSuggestions').style.display = 'none';
+            searchSalespersonProfile();
+        }
+        
+        function handleSalespersonKeydown(event) {
+            const suggestionsDiv = document.getElementById('salespersonSuggestions');
+            const items = suggestionsDiv.querySelectorAll('.suggestion-item');
+            
+            if (items.length === 0) return;
+            
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                salespersonSuggestionIndex = Math.min(salespersonSuggestionIndex + 1, items.length - 1);
+                highlightSalespersonSuggestion(items);
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                salespersonSuggestionIndex = Math.max(salespersonSuggestionIndex - 1, 0);
+                highlightSalespersonSuggestion(items);
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                if (salespersonSuggestionIndex >= 0 && items[salespersonSuggestionIndex]) {
+                    const name = items[salespersonSuggestionIndex].getAttribute('data-name');
+                    selectSalespersonSuggestion(name);
+                } else {
+                    searchSalespersonProfile();
+                }
+            } else if (event.key === 'Escape') {
+                suggestionsDiv.style.display = 'none';
+            }
+        }
+        
+        function highlightSalespersonSuggestion(items) {
+            items.forEach((item, idx) => {
+                if (idx === salespersonSuggestionIndex) {
+                    item.style.background = '#f0f0ff';
+                    item.scrollIntoView({block: 'nearest'});
+                } else {
+                    item.style.background = 'white';
+                }
+            });
+        }
+        
+        // Dışarı tıklandığında suggestion'ları kapat
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('#customerSearchInput') && !event.target.closest('#customerSuggestions')) {
+                document.getElementById('customerSuggestions').style.display = 'none';
+            }
+            if (!event.target.closest('#salespersonSearchInput') && !event.target.closest('#salespersonSuggestions')) {
+                document.getElementById('salespersonSuggestions').style.display = 'none';
+            }
+        });
         
         function searchCustomerProfile() {
             const searchQuery = document.getElementById('customerSearchInput').value.trim().toLowerCase();
