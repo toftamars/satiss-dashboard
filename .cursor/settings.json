@@ -1,0 +1,23 @@
+{
+  "// Token Tasarrufu İçin Cursor Ayarları": "",
+  
+  "// Daha az içerik gönder": "",
+  "cursor.chat.maxContextLines": 100,
+  "cursor.chat.includeDiagnostics": false,
+  
+  "// Dosya boyutu limiti": "",
+  "cursor.chat.maxFileSize": 100000,
+  
+  "// Otomatik indexleme azalt": "",
+  "cursor.cpp.autocomplete": false,
+  
+  "// AI'ya daha az veri gönder": "",
+  "cursor.general.enableShadowWorkspace": false,
+  
+  "// Sadece açık dosyaları dahil et": "",
+  "cursor.chat.onlyUseOpenFiles": true,
+  
+  "// Terminal çıktılarını sınırla": "",
+  "terminal.integrated.scrollback": 1000
+}
+

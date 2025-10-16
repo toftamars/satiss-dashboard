@@ -1112,6 +1112,7 @@
             <button class="tab" onclick="switchTab('targets')">🎯 Hedef Takip</button>
             <button class="tab" onclick="switchTab('customers')">👥 Müşteri Analizi</button>
             <button class="tab" onclick="switchTab('salesperson')">👨‍💼 Satış Temsilcisi</button>
+            <button class="tab" onclick="switchTab('store')">🏪 Mağaza Analizi</button>
             <button class="tab" onclick="switchTab('city')">🌍 Şehir Analizi</button>
             <button class="tab" onclick="switchTab('stock')">📦 Stok Dağılım</button>
             <button class="tab" onclick="switchTab('time')">⏰ Zaman Analizi</button>
@@ -1936,6 +1937,154 @@
         </div>
         <!-- End Salesperson Analysis Tab -->
 
+        <!-- Store Analysis Tab -->
+        <div id="storeTab" class="tab-content">
+            <div class="content">
+                <h2 style="margin-bottom: 30px;">🏪 Mağaza Performans Analizi</h2>
+                
+                <!-- Filters Section -->
+                <div style="background: #f8f9fa; padding: 25px; border-radius: 15px; margin-bottom: 30px;">
+                    <h3 style="margin-bottom: 20px; color: #667eea;">📅 Dönem Filtreleri (Opsiyonel - Karşılaştırma için birden fazla seçebilirsiniz)</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">📆 Yıllar:</label>
+                            <select id="storeYearFilter" multiple size="4" 
+                                    style="width: 100%; padding: 10px; border: 2px solid #667eea; border-radius: 10px; outline: none;">
+                                <option value="">Tüm Yıllar</option>
+                            </select>
+                            <small style="color: #6c757d;">Ctrl/Cmd ile çoklu seçim</small>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">📅 Aylar:</label>
+                            <select id="storeMonthFilter" multiple size="4"
+                                    style="width: 100%; padding: 10px; border: 2px solid #667eea; border-radius: 10px; outline: none;">
+                                <option value="">Tüm Aylar</option>
+                                <option value="01">Ocak</option>
+                                <option value="02">Şubat</option>
+                                <option value="03">Mart</option>
+                                <option value="04">Nisan</option>
+                                <option value="05">Mayıs</option>
+                                <option value="06">Haziran</option>
+                                <option value="07">Temmuz</option>
+                                <option value="08">Ağustos</option>
+                                <option value="09">Eylül</option>
+                                <option value="10">Ekim</option>
+                                <option value="11">Kasım</option>
+                                <option value="12">Aralık</option>
+                            </select>
+                            <small style="color: #6c757d;">Ctrl/Cmd ile çoklu seçim</small>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">📍 Günler (İsteğe bağlı):</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="number" id="storeStartDay" placeholder="Başlangıç günü (1-31)" min="1" max="31"
+                                       style="width: 100%; padding: 10px; border: 2px solid #667eea; border-radius: 10px; outline: none;">
+                                <input type="number" id="storeEndDay" placeholder="Bitiş günü (1-31)" min="1" max="31"
+                                       style="width: 100%; padding: 10px; border: 2px solid #667eea; border-radius: 10px; outline: none;">
+                            </div>
+                            <small style="color: #6c757d;">Örn: 1-15 arası</small>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 15px;">
+                        <button onclick="clearStoreFilters()" 
+                                style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer;">
+                            🔄 Filtreleri Temizle
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Search Input -->
+                <div style="max-width: 800px; margin: 0 auto 40px;">
+                    <div style="position: relative;">
+                        <input type="text" id="storeSearchInput" placeholder="Mağaza adı yazın... (örn: Toptan)" 
+                               style="width: 100%; padding: 20px 60px 20px 20px; font-size: 1.1em; border: 2px solid #667eea; border-radius: 15px; outline: none;"
+                               onkeyup="if(event.key==='Enter') searchStoreProfile()">
+                        <button onclick="searchStoreProfile()" 
+                                style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-size: 1em;">
+                            🔍 Ara
+                        </button>
+                    </div>
+                    <p style="text-align: center; color: #6c757d; margin-top: 10px; font-size: 0.9em;">
+                        💡 İpucu: Mağaza adının bir kısmını yazmak yeterli. Filtre seçerseniz karşılaştırma yapabilirsiniz!
+                    </p>
+                </div>
+                
+                <!-- Results Container -->
+                <div id="storeProfileContainer" style="display: none;">
+                    <!-- Store Profile Header -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; border-radius: 20px; margin-bottom: 30px;">
+                        <h2 style="margin: 0 0 20px 0; font-size: 2em;">🏪 <span id="storeName">-</span></h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">💰 Toplam Satış (KDV Hariç)</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="storeTotalSales">$0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">📦 Toplam Adet</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="storeTotalQty">0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">🛒 İşlem Sayısı</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="storeTransactionCount">0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">📊 Ortalama İşlem</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="storeAvgTransaction">$0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">👥 Farklı Müşteri</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="storeUniqueCustomers">0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">🎯 Farklı Ürün</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="storeUniqueProducts">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 30px; margin-bottom: 30px;">
+                        <div class="chart-container">
+                            <h3 style="text-align: center; margin-bottom: 20px;">🏷️ En Çok Satan Markalar (Top 10)</h3>
+                            <canvas id="storeBrandChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 style="text-align: center; margin-bottom: 20px;">📂 En Çok Satan Kategoriler</h3>
+                            <canvas id="storeCategoryChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 style="text-align: center; margin-bottom: 20px;">👨‍💼 Satış Temsilcileri</h3>
+                            <canvas id="storeSalespersonChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 style="text-align: center; margin-bottom: 20px;">📈 Aylık Performans Trendi</h3>
+                            <canvas id="storeMonthlyChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Top 20 Products -->
+                    <div style="margin-bottom: 40px;">
+                        <h3 style="margin-bottom: 20px;">🎯 En Çok Satan Ürünler (Top 20)</h3>
+                        <div id="storeTopProductsTable" style="overflow-x: auto;"></div>
+                    </div>
+                    
+                    <!-- AI Store Analysis -->
+                    <div id="storeAIAnalysisPanel" style="margin: 40px 0;">
+                        <h3 style="margin-bottom: 20px;">🤖 AI Performans Analizi ve Öneriler</h3>
+                        <div id="storeAIAnalysisContent"></div>
+                    </div>
+                </div>
+                
+                <!-- No Results Message -->
+                <div id="storeSearchNoResults" style="display: none; text-align: center; padding: 60px; background: #f8f9fa; border-radius: 15px;">
+                    <div style="font-size: 4em; margin-bottom: 20px;">🔍</div>
+                    <h3 style="color: #6c757d; margin-bottom: 10px;">Mağaza Bulunamadı</h3>
+                    <p style="color: #adb5bd;">Lütfen farklı bir isim deneyin</p>
+                </div>
+            </div>
+        </div>
+        <!-- End Store Analysis Tab -->
+
         <!-- City Analysis Tab -->
         <div id="cityTab" class="tab-content">
             <div class="content">
@@ -2195,8 +2344,9 @@
                 loadYearlyTarget();
                 loadMonthlyTarget();
                 
-                // Satış temsilcisi yıl filtrelerini doldur
+                // Satış temsilcisi ve mağaza yıl filtrelerini doldur
                 populateSalespersonYearFilter();
+                populateStoreYearFilter();
                 
                 // Diğer yılları arka planda yükle
                 setTimeout(() => loadRemainingYears(latestYear), 2000);
@@ -2228,8 +2378,9 @@
                         populateFilters();
                         updateSummary();
                         
-                        // Satış temsilcisi yıl filtrelerini güncelle
+                        // Satış temsilcisi ve mağaza yıl filtrelerini güncelle
                         populateSalespersonYearFilter();
+                        populateStoreYearFilter();
                         
                         // Status güncelle
                         const loadedYearsList = Array.from(loadedYears).sort().join(', ');
@@ -3534,10 +3685,11 @@
                 'targets': 1,
                 'customers': 2,
                 'salesperson': 3,
-                'city': 4,
-                'stock': 5,
-                'time': 6,
-                'product': 7
+                'store': 4,
+                'city': 5,
+                'stock': 6,
+                'time': 7,
+                'product': 8
             };
             if (tabButtons[tabName] !== undefined) {
                 allTabs[tabButtons[tabName]].classList.add('active');
@@ -7139,6 +7291,258 @@
             `;
             
             document.getElementById('customerAIAnalysisContent').innerHTML = html;
+        }
+        
+        // ==================== STORE ANALYSIS TAB ====================
+        let storeBrandChartInstance = null;
+        let storeCategoryChartInstance = null;
+        let storeSalespersonChartInstance = null;
+        let storeMonthlyChartInstance = null;
+        let lastStoreTopProductsData = null;
+        
+        function populateStoreYearFilter() {
+            const yearSelect = document.getElementById('storeYearFilter');
+            if (!yearSelect || !allData) return;
+            
+            const years = new Set();
+            allData.forEach(item => {
+                if (item.date) years.add(item.date.substring(0, 4));
+            });
+            
+            yearSelect.innerHTML = '<option value="">Tüm Yıllar</option>';
+            Array.from(years).sort().reverse().forEach(year => {
+                yearSelect.innerHTML += `<option value="${year}">${year}</option>`;
+            });
+        }
+        
+        function clearStoreFilters() {
+            document.getElementById('storeYearFilter').selectedIndex = 0;
+            document.getElementById('storeMonthFilter').selectedIndex = 0;
+            document.getElementById('storeStartDay').value = '';
+            document.getElementById('storeEndDay').value = '';
+        }
+        
+        function searchStoreProfile() {
+            const searchQuery = document.getElementById('storeSearchInput').value.trim().toLowerCase();
+            if (!searchQuery) {
+                alert('Lütfen bir mağaza adı girin');
+                return;
+            }
+            
+            const yearFilter = Array.from(document.getElementById('storeYearFilter').selectedOptions).map(opt => opt.value).filter(v => v !== '');
+            const monthFilter = Array.from(document.getElementById('storeMonthFilter').selectedOptions).map(opt => opt.value).filter(v => v !== '');
+            const startDay = parseInt(document.getElementById('storeStartDay').value) || null;
+            const endDay = parseInt(document.getElementById('storeEndDay').value) || null;
+            
+            let storeData = allData.filter(item => {
+                if (!item.store || !item.store.toLowerCase().includes(searchQuery)) return false;
+                const store = (item.store || '').toLowerCase();
+                if (store.includes('analitik') || store.includes('eğitim')) return false;
+                if (!item.date) return false;
+                if (yearFilter.length > 0 && !yearFilter.includes(item.date.substring(0, 4))) return false;
+                if (monthFilter.length > 0 && !monthFilter.includes(item.date.substring(5, 7))) return false;
+                if (startDay || endDay) {
+                    const itemDay = parseInt(item.date.substring(8, 10));
+                    if (startDay && itemDay < startDay) return false;
+                    if (endDay && itemDay > endDay) return false;
+                }
+                return true;
+            });
+            
+            if (storeData.length === 0) {
+                document.getElementById('storeProfileContainer').style.display = 'none';
+                document.getElementById('storeSearchNoResults').style.display = 'block';
+                return;
+            }
+            
+            document.getElementById('storeSearchNoResults').style.display = 'none';
+            document.getElementById('storeProfileContainer').style.display = 'block';
+            
+            const storeName = storeData[0].store;
+            const totalSales = storeData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
+            const totalQty = storeData.reduce((sum, item) => sum + parseFloat(item.quantity || 0), 0);
+            const transactionCount = new Set(storeData.map(item => item.date)).size;
+            const avgTransaction = totalSales / Math.max(transactionCount, 1);
+            const uniqueCustomers = new Set(storeData.map(item => item.partner)).size;
+            const uniqueProducts = new Set(storeData.map(item => item.product)).size;
+            
+            document.getElementById('storeName').textContent = storeName;
+            document.getElementById('storeTotalSales').textContent = '$' + totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            document.getElementById('storeTotalQty').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            document.getElementById('storeTransactionCount').textContent = transactionCount;
+            document.getElementById('storeAvgTransaction').textContent = '$' + avgTransaction.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            document.getElementById('storeUniqueCustomers').textContent = uniqueCustomers;
+            document.getElementById('storeUniqueProducts').textContent = uniqueProducts;
+            
+            renderStoreBrandChart(storeData);
+            renderStoreCategoryChart(storeData);
+            renderStoreSalespersonChart(storeData);
+            renderStoreMonthlyChart(storeData);
+            renderStoreTopProducts(storeData);
+        }
+        
+        function renderStoreBrandChart(data) {
+            const brandData = {};
+            data.forEach(item => {
+                const brand = item.brand || 'Bilinmiyor';
+                if (!brandData[brand]) brandData[brand] = {sales: 0, qty: 0};
+                brandData[brand].sales += parseFloat(item.usd_amount || 0);
+                brandData[brand].qty += parseFloat(item.quantity || 0);
+            });
+            
+            const sorted = Object.entries(brandData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 10);
+            const ctx = document.getElementById('storeBrandChart');
+            if (!ctx) return;
+            if (storeBrandChartInstance) storeBrandChartInstance.destroy();
+            
+            storeBrandChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(item => item[0]),
+                    datasets: [{
+                        label: 'Satış (USD)',
+                        data: sorted.map(item => item[1].sales),
+                        backgroundColor: 'rgba(102, 126, 234, 0.6)'
+                    }]
+                },
+                options: {responsive: true, maintainAspectRatio: false}
+            });
+        }
+        
+        function renderStoreCategoryChart(data) {
+            const catData = {};
+            data.forEach(item => {
+                const cat = item.category_2 || 'Bilinmiyor';
+                if (!catData[cat]) catData[cat] = 0;
+                catData[cat] += parseFloat(item.usd_amount || 0);
+            });
+            
+            const sorted = Object.entries(catData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const ctx = document.getElementById('storeCategoryChart');
+            if (!ctx) return;
+            if (storeCategoryChartInstance) storeCategoryChartInstance.destroy();
+            
+            storeCategoryChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: sorted.map(item => item[0]),
+                    datasets: [{data: sorted.map(item => item[1])}]
+                },
+                options: {responsive: true, maintainAspectRatio: false}
+            });
+        }
+        
+        function renderStoreSalespersonChart(data) {
+            const spData = {};
+            data.forEach(item => {
+                const sp = item.sales_person || 'Bilinmiyor';
+                if (!spData[sp]) spData[sp] = 0;
+                spData[sp] += parseFloat(item.usd_amount || 0);
+            });
+            
+            const sorted = Object.entries(spData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const ctx = document.getElementById('storeSalespersonChart');
+            if (!ctx) return;
+            if (storeSalespersonChartInstance) storeSalespersonChartInstance.destroy();
+            
+            storeSalespersonChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(item => item[0]),
+                    datasets: [{
+                        label: 'Satış (USD)',
+                        data: sorted.map(item => item[1]),
+                        backgroundColor: 'rgba(118, 75, 162, 0.6)'
+                    }]
+                },
+                options: {responsive: true, maintainAspectRatio: false}
+            });
+        }
+        
+        function renderStoreMonthlyChart(data) {
+            const yearlyMonthlyData = {};
+            data.forEach(item => {
+                const date = new Date(item.date);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                if (!yearlyMonthlyData[year]) yearlyMonthlyData[year] = {};
+                if (!yearlyMonthlyData[year][month]) yearlyMonthlyData[year][month] = 0;
+                yearlyMonthlyData[year][month] += parseFloat(item.usd_amount || 0);
+            });
+            
+            const allMonthKeys = new Set();
+            Object.values(yearlyMonthlyData).forEach(yearData => {
+                Object.keys(yearData).forEach(month => allMonthKeys.add(month));
+            });
+            const sortedMonths = Array.from(allMonthKeys).sort();
+            
+            const datasets = [];
+            const colors = [
+                {border: 'rgba(102, 126, 234, 1)', bg: 'rgba(102, 126, 234, 0.1)'},
+                {border: 'rgba(245, 87, 108, 1)', bg: 'rgba(245, 87, 108, 0.1)'},
+                {border: 'rgba(56, 239, 125, 1)', bg: 'rgba(56, 239, 125, 0.1)'}
+            ];
+            
+            Object.keys(yearlyMonthlyData).sort().forEach((year, idx) => {
+                const yearData = yearlyMonthlyData[year];
+                const values = sortedMonths.map(month => yearData[month] || 0);
+                const color = colors[idx % colors.length];
+                
+                datasets.push({
+                    label: `${year}`,
+                    data: values,
+                    borderColor: color.border,
+                    backgroundColor: color.bg,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                });
+            });
+            
+            const ctx = document.getElementById('storeMonthlyChart');
+            if (!ctx) return;
+            if (storeMonthlyChartInstance) storeMonthlyChartInstance.destroy();
+            
+            const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+            const labels = sortedMonths.map(m => monthNames[parseInt(m) - 1]);
+            
+            storeMonthlyChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {labels: labels, datasets: datasets},
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {legend: {display: true, position: 'top'}}
+                }
+            });
+        }
+        
+        function renderStoreTopProducts(data) {
+            const productData = {};
+            data.forEach(item => {
+                const product = item.product || 'Bilinmiyor';
+                if (!productData[product]) {
+                    productData[product] = {brand: item.brand || 'Bilinmiyor', sales: 0, qty: 0};
+                }
+                productData[product].sales += parseFloat(item.usd_amount || 0);
+                productData[product].qty += parseFloat(item.quantity || 0);
+            });
+            
+            const sorted = Object.entries(productData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 20);
+            
+            let html = '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #667eea; color: white;"><th style="padding: 12px; text-align: left;">Ürün</th><th style="padding: 12px; text-align: left;">Marka</th><th style="padding: 12px; text-align: right;">Satış (USD)</th><th style="padding: 12px; text-align: right;">Adet</th></tr></thead><tbody>';
+            
+            sorted.forEach((item, index) => {
+                html += `<tr style="border-bottom: 1px solid #eee; ${index % 2 === 0 ? 'background: #f8f9fa;' : ''}">
+                    <td style="padding: 12px;">${item[0]}</td>
+                    <td style="padding: 12px;">${item[1].brand}</td>
+                    <td style="padding: 12px; text-align: right;">$${item[1].sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                    <td style="padding: 12px; text-align: right;">${item[1].qty.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('storeTopProductsTable').innerHTML = html;
         }
         
         // ==================== CITY ANALYSIS TAB ====================
