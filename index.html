@@ -2215,6 +2215,57 @@
         const GOOGLE_SHEETS_ID = '1LKfQjUkcDcTxaSt9SjjMRnrWWQV1BSC1_jgPUzIQ9Gk';
         let googleSheetsTargets = {yearly: {}, monthly: {}};
         
+        // MAĞAZA ÇALIŞMA SAATLERİ VE KAPALILIKLARI
+        const STORE_WORKING_HOURS = {
+            // Özel saatli mağazalar (10:00-20:00, Pazar kapalı)
+            'Tünel': { openHour: 10, closeHour: 20, closedDays: [0] }, // 0 = Pazar
+            'İzmir': { openHour: 10, closeHour: 20, closedDays: [0] },
+            'Antalya': { openHour: 10, closeHour: 20, closedDays: [0] },
+            'Kızılay': { openHour: 10, closeHour: 20, closedDays: [0] },
+            // Default: Tüm diğer mağazalar (10:00-22:00, 7 gün açık)
+            'default': { openHour: 10, closeHour: 22, closedDays: [] }
+        };
+        
+        // Mağaza çalışma saatlerini kontrol eden fonksiyon
+        function getStoreWorkingHours(storeName) {
+            // Mağaza adını temizle (kodları kaldır)
+            const cleanName = storeName.replace(/\[.*?\]\s*/g, '').trim();
+            
+            // Özel mağazalarda arama yap (kısmi eşleşme)
+            for (const [key, hours] of Object.entries(STORE_WORKING_HOURS)) {
+                if (key !== 'default' && cleanName.toLowerCase().includes(key.toLowerCase())) {
+                    return hours;
+                }
+            }
+            
+            // Bulunamazsa default döndür
+            return STORE_WORKING_HOURS.default;
+        }
+        
+        // Satış verisinin çalışma saatleri içinde olup olmadığını kontrol eden fonksiyon
+        function isWithinWorkingHours(item) {
+            const hours = getStoreWorkingHours(item.store || '');
+            const hour = item.create_hour;
+            const dayOfWeek = item.day_of_week;
+            
+            // Gün kontrolü (kapalı gün mü?)
+            if (dayOfWeek !== undefined && dayOfWeek !== null) {
+                const dayIndex = (dayOfWeek + 1) % 7; // 0=Pazar, 1=Pazartesi, ...
+                if (hours.closedDays.includes(dayIndex)) {
+                    return false; // Kapalı gün
+                }
+            }
+            
+            // Saat kontrolü (çalışma saatleri içinde mi?)
+            if (hour !== undefined && hour !== null) {
+                if (hour < hours.openHour || hour >= hours.closeHour) {
+                    return false; // Çalışma saatleri dışında
+                }
+            }
+            
+            return true; // Çalışma saatleri içinde
+        }
+        
         async function loadTargetsFromGoogleSheets() {
             try {
                 console.log('🎯 Google Sheets\'ten hedefler yükleniyor...');
@@ -8127,6 +8178,18 @@
                 });
             }
             
+            // MAĞAZA ÇALIŞMA SAATLERİ BİLGİSİ
+            const storeHours = getStoreWorkingHours(profile.name || '');
+            const closedDayNames = storeHours.closedDays.map(d => {
+                const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+                return days[d];
+            }).join(', ');
+            
+            insights.neutral.push({
+                title: '🕐 Mağaza Çalışma Saatleri',
+                description: `<span class="metric-highlight">${storeHours.openHour}:00 - ${storeHours.closeHour}:00</span>${closedDayNames ? `<br>Kapalı: ${closedDayNames}` : '<br>7 gün açık'}`
+            });
+            
             // Nötr
             if (topSP.length > 0) {
                 const spList = topSP.map((sp, idx) => {
@@ -8144,21 +8207,36 @@
                 description: `<span class="metric-highlight">${profile.uniqueCustomers}</span> farklı müşteri, <span class="metric-highlight">${profile.uniqueProducts}</span> farklı ürün satıldı.`
             });
             
-            // Öneriler - ZAMAN BAZLI
+            // Öneriler - ZAMAN BAZLI (ÇALIŞMA SAATLERİ DİKKATE ALINARAK)
             if (worstDay && bestDay) {
-                insights.recommendations.push({
-                    icon: '📆',
-                    title: 'Gün Bazlı Strateji',
-                    description: `${worstDay.name} günleri zayıf. ${bestDay.name} günlerindeki başarılı stratejileri ${worstDay.name}'ya da uygulayın. Özel kampanyalar düzenleyin.`
-                });
+                // Kapalı gün kontrolü
+                const worstDayIndex = worstDay.day;
+                const isWorstDayClosed = storeHours.closedDays.includes(worstDayIndex);
+                
+                if (isWorstDayClosed) {
+                    insights.recommendations.push({
+                        icon: '📆',
+                        title: 'Kapalı Gün Değerlendirmesi',
+                        description: `${worstDay.name} günleri mağaza kapalı. Bu gün için özel bir strateji gerekmiyor.`
+                    });
+                } else {
+                    insights.recommendations.push({
+                        icon: '📆',
+                        title: 'Gün Bazlı Strateji',
+                        description: `${worstDay.name} günleri zayıf. ${bestDay.name} günlerindeki başarılı stratejileri ${worstDay.name}'ya da uygulayın. Özel kampanyalar düzenleyin.`
+                    });
+                }
             }
             
             if (topSpHour) {
-                insights.recommendations.push({
-                    icon: '⏰',
-                    title: 'Saat Bazlı Planlama',
-                    description: `${topSpHour.sp} saat ${topSpHour.hour}:00'da en başarılı. Vardiya planlamasını buna göre optimize edin.`
-                });
+                const bestHourInRange = topSpHour.hour >= storeHours.openHour && topSpHour.hour < storeHours.closeHour;
+                if (bestHourInRange) {
+                    insights.recommendations.push({
+                        icon: '⏰',
+                        title: 'Saat Bazlı Planlama',
+                        description: `${topSpHour.sp} saat ${topSpHour.hour}:00'da en başarılı. Vardiya planlamasını buna göre optimize edin. (Çalışma saatleri: ${storeHours.openHour}:00-${storeHours.closeHour}:00)`
+                    });
+                }
             }
             
             if (timeSlots.length > 1) {
@@ -8167,7 +8245,7 @@
                 insights.recommendations.push({
                     icon: '🎯',
                     title: 'Zayıf Saat Dilimini Güçlendir',
-                    description: `${weakSlot.name} sadece %${weakPercent} ciro yapıyor. Bu saatlerde özel indirimler veya etkinlikler düzenleyin.`
+                    description: `${weakSlot.name} sadece %${weakPercent} ciro yapıyor. Mağaza çalışma saatleri (${storeHours.openHour}:00-${storeHours.closeHour}:00) içinde bu saatlerde özel indirimler veya etkinlikler düzenleyin.`
                 });
             }
             
@@ -9925,10 +10003,17 @@
                 const storeDayPercent = ((topStoreDay.value / profile.totalSales) * 100).toFixed(1);
                 // Mağaza adını sadeleştir (kodları temizle)
                 const cleanStoreName = topStoreDay.store.replace(/\[.*?\]\s*/g, '').trim();
-                insights.neutral.push({
-                    title: '⭐ En Başarılı Kombinasyon',
-                    description: `<span class="metric-highlight">${cleanStoreName}</span> - <span class="metric-highlight">${topStoreDay.dayName}</span> günleri harika! (%${storeDayPercent})`
-                });
+                
+                // Bu mağazanın çalışma saatlerini kontrol et
+                const topStoreHours = getStoreWorkingHours(topStoreDay.store);
+                const isDayClosed = topStoreHours.closedDays.includes(topStoreDay.day);
+                
+                if (!isDayClosed) {
+                    insights.neutral.push({
+                        title: '⭐ En Başarılı Kombinasyon',
+                        description: `<span class="metric-highlight">${cleanStoreName}</span> - <span class="metric-highlight">${topStoreDay.dayName}</span> günleri harika! (%${storeDayPercent})`
+                    });
+                }
             }
             
             insights.neutral.push({
