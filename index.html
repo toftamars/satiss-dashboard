@@ -7657,10 +7657,15 @@
                 return;
             }
             
-            const yearFilter = Array.from(document.getElementById('storeYearFilter').selectedOptions).map(opt => opt.value).filter(v => v !== '');
-            const monthFilter = Array.from(document.getElementById('storeMonthFilter').selectedOptions).map(opt => opt.value).filter(v => v !== '');
-            const startDay = parseInt(document.getElementById('storeStartDay').value) || null;
-            const endDay = parseInt(document.getElementById('storeEndDay').value) || null;
+            // Filtre değerlerini al (checkbox'lardan)
+            const yearFilter = Array.from(document.querySelectorAll('#filterStoreYear input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+            const monthFilter = Array.from(document.querySelectorAll('#filterStoreMonth input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+            const dayFilter = Array.from(document.querySelectorAll('#filterStoreDay input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+            
+            console.log('📅 Mağaza Filtreleri:', {yearFilter, monthFilter, dayFilter});
             
             let storeData = allData.filter(item => {
                 if (!item.store || !item.store.toLowerCase().includes(searchQuery)) return false;
@@ -7669,11 +7674,7 @@
                 if (!item.date) return false;
                 if (yearFilter.length > 0 && !yearFilter.includes(item.date.substring(0, 4))) return false;
                 if (monthFilter.length > 0 && !monthFilter.includes(item.date.substring(5, 7))) return false;
-                if (startDay || endDay) {
-                    const itemDay = parseInt(item.date.substring(8, 10));
-                    if (startDay && itemDay < startDay) return false;
-                    if (endDay && itemDay > endDay) return false;
-                }
+                if (dayFilter.length > 0 && !dayFilter.includes(item.date.substring(8, 10))) return false;
                 return true;
             });
             
@@ -9105,15 +9106,15 @@
             
             console.log('🔍 Satış temsilcisi aranıyor:', searchQuery);
             
-            // Filtre değerlerini al
-            const yearFilter = Array.from(document.getElementById('salespersonYearFilter').selectedOptions)
-                .map(opt => opt.value).filter(v => v !== '');
-            const monthFilter = Array.from(document.getElementById('salespersonMonthFilter').selectedOptions)
-                .map(opt => opt.value).filter(v => v !== '');
-            const startDay = parseInt(document.getElementById('salespersonStartDay').value) || null;
-            const endDay = parseInt(document.getElementById('salespersonEndDay').value) || null;
+            // Filtre değerlerini al (checkbox'lardan)
+            const yearFilter = Array.from(document.querySelectorAll('#filterSalespersonYear input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+            const monthFilter = Array.from(document.querySelectorAll('#filterSalespersonMonth input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+            const dayFilter = Array.from(document.querySelectorAll('#filterSalespersonDay input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
             
-            console.log('📅 Filtreler:', {yearFilter, monthFilter, startDay, endDay});
+            console.log('📅 Filtreler:', {yearFilter, monthFilter, dayFilter});
             
             // Temsilci verilerini filtrele (fuzzy matching + dönem filtreleri)
             let salespersonData = allData.filter(item => {
@@ -9144,10 +9145,9 @@
                 }
                 
                 // Gün filtresi
-                if (startDay || endDay) {
-                    const itemDay = parseInt(item.date.substring(8, 10));
-                    if (startDay && itemDay < startDay) return false;
-                    if (endDay && itemDay > endDay) return false;
+                if (dayFilter.length > 0) {
+                    const itemDay = item.date.substring(8, 10);
+                    if (!dayFilter.includes(itemDay)) return false;
                 }
                 
                 return true;
