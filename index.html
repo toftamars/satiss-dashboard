@@ -9751,6 +9751,8 @@
         function performSalespersonAIAnalysis(data, profile) {
             console.log('🤖 Satış temsilcisi AI analizi başlatılıyor...');
             
+            const insights = {positive: [], negative: [], neutral: [], recommendations: []};
+            
             // Marka analizi
             const brandData = {};
             data.forEach(item => {
@@ -9771,12 +9773,77 @@
             const topCategories = Object.entries(categoryData).sort((a, b) => b[1] - a[1]).slice(0, 3);
             const bottomCategories = Object.entries(categoryData).sort((a, b) => a[1] - b[1]).slice(0, 3);
             
-            const insights = {
-                positive: [],
-                negative: [],
-                neutral: [],
-                recommendations: []
-            };
+            // ZAMAN ANALİZLERİ
+            // Aylık analiz
+            const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+            const monthData = {};
+            data.forEach(item => {
+                const date = new Date(item.date);
+                const month = date.getMonth();
+                if (!monthData[month]) monthData[month] = 0;
+                monthData[month] += parseFloat(item.usd_amount || 0);
+            });
+            const monthEntries = Object.entries(monthData).map(([m, v]) => ({month: parseInt(m), name: monthNames[m], value: v}));
+            const bestMonth = monthEntries.sort((a, b) => b.value - a.value)[0];
+            const worstMonth = monthEntries.sort((a, b) => a.value - b.value)[0];
+            
+            // Günlük analiz (haftanın günleri)
+            const dayNames = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+            const dayData = {};
+            data.forEach(item => {
+                const day = item.day_of_week;
+                if (day !== undefined && day !== null) {
+                    const dayIndex = (day + 1) % 7; // 0=Paz, 1=Pzt, ...
+                    if (!dayData[dayIndex]) dayData[dayIndex] = 0;
+                    dayData[dayIndex] += parseFloat(item.usd_amount || 0);
+                }
+            });
+            const dayEntries = Object.entries(dayData).map(([d, v]) => ({day: parseInt(d), name: dayNames[d], value: v}));
+            const bestDay = dayEntries.sort((a, b) => b.value - a.value)[0];
+            const worstDay = dayEntries.sort((a, b) => a.value - b.value)[0];
+            
+            // Saatlik analiz
+            const hourData = {};
+            data.forEach(item => {
+                const hour = item.create_hour;
+                if (hour !== undefined && hour !== null) {
+                    if (!hourData[hour]) hourData[hour] = 0;
+                    hourData[hour] += parseFloat(item.usd_amount || 0);
+                }
+            });
+            const hourEntries = Object.entries(hourData).map(([h, v]) => ({hour: parseInt(h), value: v}));
+            const bestHour = hourEntries.sort((a, b) => b.value - a.value)[0];
+            
+            // Saat aralığı analizi (sabah, öğlen, akşam)
+            let morning = 0, afternoon = 0, evening = 0, night = 0;
+            data.forEach(item => {
+                const hour = item.create_hour;
+                const amount = parseFloat(item.usd_amount || 0);
+                if (hour >= 6 && hour < 12) morning += amount;
+                else if (hour >= 12 && hour < 17) afternoon += amount;
+                else if (hour >= 17 && hour < 22) evening += amount;
+                else night += amount;
+            });
+            const timeSlots = [
+                {name: 'Sabah (06:00-12:00)', value: morning},
+                {name: 'Öğlen (12:00-17:00)', value: afternoon},
+                {name: 'Akşam (17:00-22:00)', value: evening},
+                {name: 'Gece (22:00-06:00)', value: night}
+            ].sort((a, b) => b.value - a.value);
+            
+            // Mağaza-Gün kombinasyonu
+            const storeDayData = {};
+            data.forEach(item => {
+                const store = item.store || 'Bilinmiyor';
+                const day = item.day_of_week;
+                if (day !== undefined && day !== null) {
+                    const dayIndex = (day + 1) % 7;
+                    const key = `${store}_${dayIndex}`;
+                    if (!storeDayData[key]) storeDayData[key] = {store, day: dayIndex, dayName: dayNames[dayIndex], value: 0};
+                    storeDayData[key].value += parseFloat(item.usd_amount || 0);
+                }
+            });
+            const topStoreDay = Object.values(storeDayData).sort((a, b) => b.value - a.value)[0];
             
             // Pozitif içgörüler
             if (profile.totalSales > 100000) {
@@ -9826,10 +9893,47 @@
                 });
             }
             
-            // Nötr bilgiler
+            // Nötr bilgiler - ZAMAN ANALİZLERİ
+            if (bestMonth && worstMonth) {
+                const bestPercent = ((bestMonth.value / profile.totalSales) * 100).toFixed(1);
+                const worstPercent = ((worstMonth.value / profile.totalSales) * 100).toFixed(1);
+                insights.neutral.push({
+                    title: '📅 Aylık Performans',
+                    description: `En güçlü ay: <span class="metric-highlight">${bestMonth.name}</span> (%${bestPercent})<br>En zayıf ay: ${worstMonth.name} (%${worstPercent})`
+                });
+            }
+            
+            if (bestDay && worstDay) {
+                const bestDayPercent = ((bestDay.value / profile.totalSales) * 100).toFixed(1);
+                const worstDayPercent = ((worstDay.value / profile.totalSales) * 100).toFixed(1);
+                insights.neutral.push({
+                    title: '📆 Günlük Performans',
+                    description: `En güçlü gün: <span class="metric-highlight">${bestDay.name}</span> (%${bestDayPercent})<br>En zayıf gün: ${worstDay.name} (%${worstDayPercent})`
+                });
+            }
+            
+            if (timeSlots.length > 0) {
+                const bestSlot = timeSlots[0];
+                const bestSlotPercent = ((bestSlot.value / profile.totalSales) * 100).toFixed(1);
+                insights.neutral.push({
+                    title: '🕐 Saat Dilimi Performansı',
+                    description: `En güçlü: <span class="metric-highlight">${bestSlot.name}</span> - Cironun %${bestSlotPercent}'i bu saatlerde`
+                });
+            }
+            
+            if (topStoreDay) {
+                const storeDayPercent = ((topStoreDay.value / profile.totalSales) * 100).toFixed(1);
+                // Mağaza adını sadeleştir (kodları temizle)
+                const cleanStoreName = topStoreDay.store.replace(/\[.*?\]\s*/g, '').trim();
+                insights.neutral.push({
+                    title: '⭐ En Başarılı Kombinasyon',
+                    description: `<span class="metric-highlight">${cleanStoreName}</span> - <span class="metric-highlight">${topStoreDay.dayName}</span> günleri harika! (%${storeDayPercent})`
+                });
+            }
+            
             insights.neutral.push({
                 title: '📊 Genel Performans',
-                description: `${profile.uniqueProducts} farklı ürün, ${profile.uniqueCustomers} farklı müşteriye satıldı. Ortalama işlem değeri $${profile.avgTransaction.toLocaleString('tr-TR', {minimumFractionDigits: 2})}.`
+                description: `<span class="metric-highlight">${profile.uniqueProducts}</span> farklı ürün, <span class="metric-highlight">${profile.uniqueCustomers}</span> farklı müşteriye satıldı. Ortalama işlem değeri $${profile.avgTransaction.toLocaleString('tr-TR', {minimumFractionDigits: 2})}.`
             });
             
             if (topBrands.length >= 3) {
@@ -9839,32 +9943,54 @@
                 });
             }
             
-            // Öneriler
-            insights.recommendations.push({
-                icon: '📚',
-                title: 'Ürün Eğitimi',
-                description: `${bottomBrands[0][0]} ve ${bottomCategories[0][0]} konularında ürün eğitimi almalı. Bu alanlardaki bilgi eksikliği satışları etkiliyor olabilir.`
-            });
+            // Öneriler - ZAMAN BAZLI
+            if (worstDay && bestDay) {
+                insights.recommendations.push({
+                    icon: '📆',
+                    title: 'Gün Bazlı Strateji',
+                    description: `${worstDay.name} günleri zayıf. ${bestDay.name} günlerindeki başarılı yaklaşımları ${worstDay.name}'ya da uygulayın. Müşteri ziyaretlerini buna göre planlayın.`
+                });
+            }
             
-            insights.recommendations.push({
-                icon: '🎯',
-                title: 'Hedef Belirleme',
-                description: `${topBrands[0][0]} markasındaki başarıyı diğer markalara da taşımak için aylık hedefler belirleyin. Cross-selling fırsatlarını değerlendirin.`
-            });
+            if (bestHour) {
+                insights.recommendations.push({
+                    icon: '⏰',
+                    title: 'Saat Bazlı Optimizasyon',
+                    description: `Saat ${bestHour.hour}:00 civarında en başarılı. Bu saatlerde daha fazla müşteri görüşmesi planlayın.`
+                });
+            }
+            
+            if (timeSlots.length > 1) {
+                const weakSlot = timeSlots[timeSlots.length - 1];
+                const weakPercent = ((weakSlot.value / profile.totalSales) * 100).toFixed(1);
+                insights.recommendations.push({
+                    icon: '🎯',
+                    title: 'Zayıf Zaman Dilimini Güçlendir',
+                    description: `${weakSlot.name} sadece %${weakPercent} ciro yapıyor. Bu saatlerde aktivite artırılmalı.`
+                });
+            }
+            
+            if (bottomBrands.length > 0) {
+                insights.recommendations.push({
+                    icon: '📚',
+                    title: 'Ürün Eğitimi',
+                    description: `${bottomBrands[0][0]} ve ${bottomCategories[0][0]} konularında ürün eğitimi almalı. Bu alanlardaki bilgi eksikliği satışları etkiliyor olabilir.`
+                });
+            }
+            
+            if (topBrands.length > 0) {
+                insights.recommendations.push({
+                    icon: '🎯',
+                    title: 'Başarılı Stratejileri Yaygınlaştır',
+                    description: `${topBrands[0][0]} markasındaki başarıyı diğer markalara da taşımak için aylık hedefler belirleyin. Cross-selling fırsatlarını değerlendirin.`
+                });
+            }
             
             insights.recommendations.push({
                 icon: '👥',
                 title: 'Müşteri Geliştirme',
                 description: `Mevcut ${profile.uniqueCustomers} müşteriye ek olarak yeni müşteri kazanımı için aktif çalışma yapılmalı. Referans sistemi kullanılabilir.`
             });
-            
-            if (profile.avgTransaction > 1000) {
-                insights.recommendations.push({
-                    icon: '💎',
-                    title: 'Premium Ürün Odağı',
-                    description: `Ortalama işlem değeri yüksek ($${profile.avgTransaction.toLocaleString('tr-TR', {minimumFractionDigits: 2})}). Premium ürünlerde uzmanlaşma fırsatı var.`
-                });
-            }
             
             // HTML oluştur
             let html = `
