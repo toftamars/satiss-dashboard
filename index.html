@@ -2210,6 +2210,68 @@
         let filteredData = [];
         let metadata = null;
         let loadedYears = new Set();
+        
+        // Google Sheets Hedefler
+        const GOOGLE_SHEETS_ID = '1LKfQjUkcDcTxaSt9SjjMRnrWWQV1BSC1_jgPUzIQ9Gk';
+        let googleSheetsTargets = {yearly: {}, monthly: {}};
+        
+        async function loadTargetsFromGoogleSheets() {
+            try {
+                console.log('🎯 Google Sheets\'ten hedefler yükleniyor...');
+                
+                // CSV formatında al
+                const csvUrl = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEETS_ID}/export?format=csv&gid=0`;
+                const response = await fetch(csvUrl);
+                
+                if (!response.ok) {
+                    console.warn('⚠️ Google Sheets erişilemedi, localStorage kullanılacak');
+                    return;
+                }
+                
+                const csvText = await response.text();
+                const lines = csvText.trim().split('\n');
+                
+                // İlk satır başlık, atla
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    // CSV parse (virgülle ayrılmış, tırnak işaretlerini temizle)
+                    const values = line.split(',').map(v => v.replace(/"/g, '').trim());
+                    const [type, year, month, store, target] = values;
+                    
+                    if (type === 'yearly') {
+                        if (!googleSheetsTargets.yearly[year]) {
+                            googleSheetsTargets.yearly[year] = {};
+                        }
+                        googleSheetsTargets.yearly[year][store] = parseFloat(target);
+                    } else if (type === 'monthly') {
+                        if (!googleSheetsTargets.monthly[year]) {
+                            googleSheetsTargets.monthly[year] = {};
+                        }
+                        if (!googleSheetsTargets.monthly[year][month]) {
+                            googleSheetsTargets.monthly[year][month] = {};
+                        }
+                        googleSheetsTargets.monthly[year][month][store] = parseFloat(target);
+                    }
+                }
+                
+                console.log('✅ Google Sheets hedefleri yüklendi:', googleSheetsTargets);
+                
+                // localStorage'a da kaydet (offline erişim için)
+                localStorage.setItem('cachedTargets', JSON.stringify(googleSheetsTargets));
+                
+            } catch (error) {
+                console.error('❌ Google Sheets yükleme hatası:', error);
+                
+                // Hata durumunda cache'den yükle
+                const cached = localStorage.getItem('cachedTargets');
+                if (cached) {
+                    googleSheetsTargets = JSON.parse(cached);
+                    console.log('📦 Cache\'den hedefler yüklendi');
+                }
+            }
+        }
 
         // GZIP Decompression ve Yıl Yükleme Fonksiyonları
         async function loadMetadata() {
@@ -2316,6 +2378,10 @@
                 
                 // Hedef takip mağaza dropdown'larını doldur ve hedefleri yükle
                 populateTargetStoreDropdowns();
+                
+                // Google Sheets'ten hedefleri yükle
+                await loadTargetsFromGoogleSheets();
+                
                 loadYearlyTarget();
                 loadMonthlyTarget();
                 
@@ -3909,20 +3975,21 @@
         function loadYearlyTarget() {
             const year = document.getElementById('targetYear').value;
             const store = document.getElementById('targetYearStore').value;
-            const yearlyTargets = JSON.parse(localStorage.getItem('yearlyTargets') || '{}');
+            
+            // Önce Google Sheets'ten, yoksa localStorage'dan
+            const yearlyTargets = googleSheetsTargets.yearly[year] || 
+                                JSON.parse(localStorage.getItem('yearlyTargets') || '{}')[year] || {};
             
             console.log('📊 loadYearlyTarget çağrıldı:', {year, store, yearlyTargets});
-            console.log('🔍 Bu yıl için hedefler:', yearlyTargets[year]);
-            console.log('🔍 Bu mağaza için hedef:', yearlyTargets[year] ? yearlyTargets[year][store] : 'yok');
             
             // Hedef inputunu temizle
             const targetInput = document.getElementById('yearlyTarget');
             targetInput.value = '';
             
             // Eğer bu mağaza için hedef varsa doldur
-            if (yearlyTargets[year] && yearlyTargets[year][store]) {
-                targetInput.value = yearlyTargets[year][store];
-                console.log('✅ Yıllık hedef yüklendi:', yearlyTargets[year][store]);
+            if (yearlyTargets[store]) {
+                targetInput.value = yearlyTargets[store];
+                console.log('✅ Yıllık hedef yüklendi (Google Sheets):', yearlyTargets[store]);
             } else {
                 console.log('⚠️ Bu mağaza için kaydedilmiş hedef yok');
             }
@@ -3984,19 +4051,23 @@
             const year = document.getElementById('targetYear').value;
             const month = document.getElementById('targetMonth').value;
             const store = document.getElementById('targetMonthStore').value;
-            const monthlyTargets = JSON.parse(localStorage.getItem('monthlyTargets') || '{}');
             
-            console.log('📊 loadMonthlyTarget çağrıldı:', {year, month, store});
-            console.log('🔍 Bu mağaza için aylık hedefler:', monthlyTargets[year] ? monthlyTargets[year][store] : 'yok');
+            // Önce Google Sheets'ten, yoksa localStorage'dan
+            const googleTarget = googleSheetsTargets.monthly[year]?.[month]?.[store];
+            const localTarget = JSON.parse(localStorage.getItem('monthlyTargets') || '{}')[year]?.[store]?.[month];
+            const target = googleTarget || localTarget;
+            
+            console.log('📊 loadMonthlyTarget çağrıldı:', {year, month, store, googleTarget, localTarget});
             
             // Hedef inputunu temizle
             const targetInput = document.getElementById('monthlyTarget');
             targetInput.value = '';
             
             // Eğer bu mağaza ve ay için hedef varsa doldur
-            if (monthlyTargets[year] && monthlyTargets[year][store] && monthlyTargets[year][store][month]) {
-                targetInput.value = monthlyTargets[year][store][month];
-                console.log('✅ Aylık hedef yüklendi:', monthlyTargets[year][store][month]);
+            if (target) {
+                targetInput.value = target;
+                const source = googleTarget ? 'Google Sheets' : 'localStorage';
+                console.log(`✅ Aylık hedef yüklendi (${source}):`, target);
             } else {
                 console.log('⚠️ Bu mağaza ve ay için kaydedilmiş hedef yok');
             }
@@ -4010,12 +4081,22 @@
             // Mağazaları doldur (ilk kez çağrıldığında)
             populateTargetStoreDropdowns();
             
-            const yearlyTarget = parseFloat(document.getElementById('yearlyTarget').value) || 0;
-            const monthlyTarget = parseFloat(document.getElementById('monthlyTarget').value) || 0;
             const targetYear = document.getElementById('targetYear').value;
             const targetMonth = document.getElementById('targetMonth').value;
             const yearStore = document.getElementById('targetYearStore').value;
             const monthStore = document.getElementById('targetMonthStore').value;
+            
+            // Hedefleri Google Sheets'ten veya input'tan al
+            let yearlyTarget = parseFloat(document.getElementById('yearlyTarget').value) || 0;
+            let monthlyTarget = parseFloat(document.getElementById('monthlyTarget').value) || 0;
+            
+            // Eğer input boşsa Google Sheets'ten yükle
+            if (yearlyTarget === 0 && googleSheetsTargets.yearly[targetYear]) {
+                yearlyTarget = googleSheetsTargets.yearly[targetYear][yearStore] || 0;
+            }
+            if (monthlyTarget === 0 && googleSheetsTargets.monthly[targetYear]?.[targetMonth]) {
+                monthlyTarget = googleSheetsTargets.monthly[targetYear][targetMonth][monthStore] || 0;
+            }
             
             // Yıllık hesaplama - HER ZAMAN gerçekleşmeyi göster (hedef olsun/olmasın)
             const yearlyData = allData.filter(item => {
