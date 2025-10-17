@@ -607,6 +607,12 @@ jobs:
                             # Detay kayıtları için liste
                             details = []
                             
+                            # İade faturaları istatistikleri
+                            refund_count = 0
+                            refund_total_usd = 0
+                            invoice_count = 0
+                            invoice_total_usd = 0
+                            
                             for line in all_data:
                                 try:
                                     # Tarih - GERÇEK FATURA TARİHİ
@@ -697,8 +703,18 @@ jobs:
                                     is_refund = (move_type == 'out_refund')
                                     
                                     if is_refund:
-                                        usd_amount = -abs(usd_amount)  # İade faturaları negatif
-                                        qty = -abs(qty)  # Miktar da negatif
+                                        # İstatistik
+                                        refund_count += 1
+                                        refund_total_usd += abs(usd_amount)
+                                        
+                                        # ZATEN NEGATİF İSE TEKRAR NEGATİF YAPMA!
+                                        if usd_amount > 0:
+                                            usd_amount = -usd_amount
+                                        if qty > 0:
+                                            qty = -qty
+                                    else:
+                                        invoice_count += 1
+                                        invoice_total_usd += usd_amount
                                     
                                     # Kategori bazlı toplama - SADECE USD VE MİKTAR
                                     if categ_name not in processed_data['categories']:
@@ -843,6 +859,10 @@ jobs:
                             print(f"🏙️ Şehir sayısı: {len(processed_data['cities'])}")
                             print(f"📅 Yıl sayısı: {len(processed_data['years'])}")
                             print(f"📆 Ay sayısı: {len(processed_data['months'])}")
+                            print(f"\n💰 FATURA İSTATİSTİKLERİ:")
+                            print(f"   ✅ Satış Faturaları (out_invoice): {invoice_count} adet, ${invoice_total_usd:,.2f}")
+                            print(f"   ❌ İade Faturaları (out_refund): {refund_count} adet, ${refund_total_usd:,.2f}")
+                            print(f"   📊 NET TOPLAM: ${invoice_total_usd - refund_total_usd:,.2f}")
                             
                             # RES.PARTNER (Müşteri) Detaylı Bilgileri Çek (XML-RPC) - TÜM MÜŞTERİLER
                             print("\n4️⃣ Müşteri detay bilgileri çekiliyor (res.partner - XML-RPC)...")
