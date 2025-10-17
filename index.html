@@ -1859,7 +1859,7 @@
                                 <div style="font-size: 1.5em; font-weight: bold;" id="salespersonAvgTransaction">$0</div>
                             </div>
                             <div>
-                                <div style="opacity: 0.8; font-size: 0.9em;">👥 Farklı Müşteri</div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">📄 Fatura Adedi</div>
                                 <div style="font-size: 1.5em; font-weight: bold;" id="salespersonUniqueCustomers">0</div>
                             </div>
                             <div>
@@ -1998,7 +1998,7 @@
                                 <div style="font-size: 1.5em; font-weight: bold;" id="storeAvgTransaction">$0</div>
                             </div>
                             <div>
-                                <div style="opacity: 0.8; font-size: 0.9em;">👥 Farklı Müşteri</div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">📄 Fatura Adedi</div>
                                 <div style="font-size: 1.5em; font-weight: bold;" id="storeUniqueCustomers">0</div>
                             </div>
                             <div>
@@ -7874,7 +7874,7 @@
             document.getElementById('storeTotalQty').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('storeTransactionCount').textContent = transactionCount;
             document.getElementById('storeAvgTransaction').textContent = '$' + avgTransaction.toLocaleString('tr-TR', {minimumFractionDigits: 2});
-            document.getElementById('storeUniqueCustomers').textContent = uniqueCustomers;
+            document.getElementById('storeUniqueCustomers').textContent = transactionCount;
             document.getElementById('storeUniqueProducts').textContent = uniqueProducts;
             
             renderStoreBrandChart(storeData);
@@ -9609,7 +9609,7 @@
             document.getElementById('salespersonTotalQty').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('salespersonTransactionCount').textContent = transactionCount;
             document.getElementById('salespersonAvgTransaction').textContent = '$' + avgTransaction.toLocaleString('tr-TR', {minimumFractionDigits: 2});
-            document.getElementById('salespersonUniqueCustomers').textContent = uniqueCustomers;
+            document.getElementById('salespersonUniqueCustomers').textContent = transactionCount;
             document.getElementById('salespersonUniqueProducts').textContent = uniqueProducts;
             
             // Grafikleri render et
