@@ -670,17 +670,11 @@ jobs:
                                     move_name = move[1] if isinstance(move, list) and len(move) > 1 else ''
                                     
                                     # İADE KONTROLÜ: 
-                                    # 1. Fatura numarası içinde "/R" geçiyor mu? (örn: MRKZ/2025/R123)
-                                    # 2. Parantez içinde "R" ile başlıyor mu? (örn: (ZHL2025R...))
-                                    # 3. move_type kontrolü (çift güvenlik)
+                                    # Format: RMRKZ/2024/00053 (EFT2024000000163)
+                                    # İADE FATURALARI DAİMA "R" ile başlar!
                                     is_refund = False
-                                    if move_name:
-                                        # "/R" kontrolü (MRKZ/2025/R123 formatı)
-                                        if '/R' in move_name.upper():
-                                            is_refund = True
-                                        # Parantez içi kontrol (ZHL2025R...)
-                                        elif '(' in move_name and 'R' in move_name.split('(')[1][:8]:  # Parantezden sonra ilk 8 karakter
-                                            is_refund = True
+                                    if move_name and move_name.upper().startswith('R'):
+                                        is_refund = True
                                     
                                     # Ek kontrol: move_type de kontrol et (çift güvenlik)
                                     move_type = move_type_map.get(move_id, '')
