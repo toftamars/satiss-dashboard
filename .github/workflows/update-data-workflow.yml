@@ -852,9 +852,9 @@ jobs:
                                     processed_data['partners'][partner_id]['quantity'] += qty
                                     processed_data['partners'][partner_id]['usd_amount'] += usd_amount
                                     
-                                    # DEBUG: DORUK TEKİN için özel log
-                                    if 'DORUK' in partner_name.upper() and 'TEKİN' in partner_name.upper():
-                                        print(f"💎 DORUK TEKİN: move={move_name}, is_refund={is_refund}, qty={qty}, usd={usd_amount}, toplam_usd={processed_data['partners'][partner_id]['usd_amount']}")
+                                    # DEBUG: DORUK TEKİN için özel log (daha geniş arama)
+                                    if 'DORUK' in partner_name.upper():
+                                        print(f"💎 DORUK: partner={partner_name}, move={move_name}, is_refund={is_refund}, qty={qty}, usd={usd_amount}, toplam_usd={processed_data['partners'][partner_id]['usd_amount']}")
                                     
                                     # Satış Temsilcisi bazlı - SADECE USD VE MİKTAR
                                     if user_name not in processed_data['sales_persons']:
