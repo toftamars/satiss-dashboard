@@ -725,21 +725,19 @@ jobs:
                                         else:
                                             usd_amount = 0
                                     
-                                    # İADE FATURALARINI NEGATİF YAP (düşmesi için)
+                                    # İADE FATURA KONTROLÜ (istatistik için)
                                     move_type = move_type_map.get(move_id, '')
                                     is_refund = (move_type == 'out_refund')
                                     
                                     if is_refund:
-                                        # İstatistik
+                                        # İstatistik - out_refund iadeler için
                                         refund_count += 1
-                                        refund_total_usd += abs(usd_amount)
+                                        refund_total_usd += abs(usd_amount)  # İstatistik için mutlak değer
                                         
-                                        # ZATEN NEGATİF İSE TEKRAR NEGATİF YAPMA!
-                                        if usd_amount > 0:
-                                            usd_amount = -usd_amount
-                                        if qty > 0:
-                                            qty = -qty
+                                        # ÖNEMLİ: Odoo'dan gelen veriler ZATEN DOĞRU İŞARETLİ!
+                                        # out_refund kayıtları zaten negatif geliyor, hiçbir şey yapma!
                                     else:
+                                        # Normal satış faturaları için istatistik
                                         invoice_count += 1
                                         invoice_total_usd += usd_amount
                                     
