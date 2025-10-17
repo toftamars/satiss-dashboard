@@ -1990,7 +1990,7 @@
                                 <div style="font-size: 1.5em; font-weight: bold;" id="storeTotalQty">0</div>
                             </div>
                             <div>
-                                <div style="opacity: 0.8; font-size: 0.9em;">🛒 İşlem Sayısı</div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">👥 Farklı Müşteri</div>
                                 <div style="font-size: 1.5em; font-weight: bold;" id="storeTransactionCount">0</div>
                             </div>
                             <div>
@@ -7871,7 +7871,7 @@
             document.getElementById('storeName').textContent = storeName;
             document.getElementById('storeTotalSales').textContent = '$' + totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('storeTotalQty').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2});
-            document.getElementById('storeTransactionCount').textContent = transactionCount;
+            document.getElementById('storeTransactionCount').textContent = uniqueCustomers;
             document.getElementById('storeAvgTransaction').textContent = '$' + avgTransaction.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('storeUniqueCustomers').textContent = uniqueCustomers;
             document.getElementById('storeUniqueProducts').textContent = uniqueProducts;
@@ -8083,19 +8083,25 @@
                         sales: 0,
                         qty: 0,
                         invoiceCount: 0,
-                        invoices: new Set()
+                        uniqueCustomers: 0,
+                        invoices: new Set(),
+                        customers: new Set()
                     };
                 }
                 spData[sp].sales += parseFloat(item.usd_amount || 0);
                 spData[sp].qty += parseFloat(item.quantity || 0);
                 // Fatura numarası unique olarak say (move_id kullan)
                 if (item.move_id) spData[sp].invoices.add(item.move_id);
+                // Müşteri sayısını unique olarak say
+                if (item.partner) spData[sp].customers.add(item.partner);
             });
             
-            // Fatura sayısını hesapla
+            // Fatura ve müşteri sayısını hesapla
             Object.keys(spData).forEach(sp => {
                 spData[sp].invoiceCount = spData[sp].invoices.size;
+                spData[sp].uniqueCustomers = spData[sp].customers.size;
                 delete spData[sp].invoices; // Set'i sil
+                delete spData[sp].customers; // Set'i sil
             });
             
             const sorted = Object.entries(spData).sort((a, b) => b[1].sales - a[1].sales);
@@ -8117,7 +8123,7 @@
                                 📦 Ürün Miktarı <span style="font-size: 0.8em;">▼</span>
                             </th>
                             <th style="padding: 15px; text-align: right; cursor: pointer;" onclick="sortStoreSpTable(4)">
-                                📄 Fatura Adedi <span style="font-size: 0.8em;">▼</span>
+                                👥 Farklı Müşteri <span style="font-size: 0.8em;">▼</span>
                             </th>
                             <th style="padding: 15px; text-align: right; cursor: pointer;" onclick="sortStoreSpTable(5)">
                                 📊 Ortalama Fatura <span style="font-size: 0.8em;">▼</span>
@@ -8144,7 +8150,7 @@
                         <td style="padding: 12px;"><strong>${sp}</strong></td>
                         <td style="padding: 12px; text-align: right; color: #667eea; font-weight: bold;">$${stats.sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
                         <td style="padding: 12px; text-align: right;">${stats.qty.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</td>
-                        <td style="padding: 12px; text-align: right; color: #764ba2; font-weight: bold;">${stats.invoiceCount.toLocaleString('tr-TR')}</td>
+                        <td style="padding: 12px; text-align: right; color: #764ba2; font-weight: bold;">${stats.uniqueCustomers.toLocaleString('tr-TR')}</td>
                         <td style="padding: 12px; text-align: right;">$${avgInvoice.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
                         <td style="padding: 12px; text-align: right;">
                             <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 4px 12px; border-radius: 12px; font-weight: bold;">
