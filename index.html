@@ -2329,7 +2329,16 @@
         // GZIP Decompression ve Yıl Yükleme Fonksiyonları
         async function loadMetadata() {
             try {
-                const response = await fetch('data-metadata.json');
+                // Cache-busting: Her seferinde yeni veri çek
+                const cacheBuster = new Date().getTime();
+                const response = await fetch(`data-metadata.json?v=${cacheBuster}`, {
+                    cache: 'no-cache',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    }
+                });
                 if (!response.ok) throw new Error('Metadata yüklenemedi');
                 metadata = await response.json();
                 console.log('✅ Metadata yüklendi:', metadata);
@@ -2344,8 +2353,16 @@
             try {
                 console.log(`📦 ${year} yükleniyor...`);
                 
-                // GZIP dosyasını indir
-                const response = await fetch(`data-${year}.json.gz`);
+                // GZIP dosyasını indir - Cache-busting ile
+                const cacheBuster = new Date().getTime();
+                const response = await fetch(`data-${year}.json.gz?v=${cacheBuster}`, {
+                    cache: 'no-cache',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    }
+                });
                 if (!response.ok) throw new Error(`${year} verisi bulunamadı`);
                 
                 // ArrayBuffer olarak al
