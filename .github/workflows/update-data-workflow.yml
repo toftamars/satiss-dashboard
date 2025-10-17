@@ -707,7 +707,8 @@ jobs:
                                     line_id = line.get('id')
                                     
                                     # 1. Önce account.invoice.report'tan USD tutarı kullan
-                                    if line_id in usd_amount_map and usd_amount_map[line_id] > 0:
+                                    # ÖNEMLİ: != 0 kontrolü yap (negatif değerler de kullanılmalı!)
+                                    if line_id in usd_amount_map and usd_amount_map[line_id] != 0:
                                         usd_amount = usd_amount_map[line_id]
                                     else:
                                         # 2. Fallback: currency_id kontrolü ile hesapla
