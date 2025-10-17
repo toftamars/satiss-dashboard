@@ -176,144 +176,99 @@ jobs:
                                 print("🔍 'TestDeneme' filtresinin domain'i çekiliyor...")
                                 
                                 try:
-                                    # Kullanıcının TÜM filtrelerini çek (HER İKİ MODELDEN)
-                                    print("🔍 Kullanıcının tüm filtreleri çekiliyor...")
+                                    # SADECE 'TestDeneme' FİLTRESİNİ ARA
+                                    print("🔍 'TestDeneme' filtresi aranıyor...")
                                     
-                                    # Önce account.invoice.report'tan ara (Fatura Raporlama)
+                                    # Önce account.invoice.report'tan ara
                                     filters = models.execute_kw(
                                         db, uid_xmlrpc, password,
                                         'ir.filters', 'search_read',
                                         [[
                                             ('user_id', '=', uid_xmlrpc),
-                                            ('model_id', '=', 'account.invoice.report')
+                                            ('model_id', '=', 'account.invoice.report'),
+                                            ('name', '=', 'TestDeneme')
                                         ]],
-                                        {'fields': ['name', 'domain', 'context', 'is_default', 'action_id', 'user_id']}
+                                        {'fields': ['name', 'domain', 'context']}
                                     )
                                     
-                                    if filters:
-                                        print(f"✅ account.invoice.report'ta {len(filters)} filtre bulundu!")
-                                    else:
-                                        # Bulunamazsa account.move.line'dan ara
-                                        print("⚠️ account.invoice.report'ta filtre yok, account.move.line kontrol ediliyor...")
-                                        filters = models.execute_kw(
-                                            db, uid_xmlrpc, password,
-                                            'ir.filters', 'search_read',
-                                            [[
-                                                ('user_id', '=', uid_xmlrpc),
-                                                ('model_id', '=', 'account.move.line')
-                                            ]],
-                                            {'fields': ['name', 'domain', 'context', 'is_default', 'action_id', 'user_id']}
-                                        )
-                                    
-                                    # Seçenek 2: Eğer yoksa, genel (paylaşılmış) filtreleri de ara
+                                    # Bulunamazsa account.move.line'dan ara
                                     if not filters:
-                                        print("⚠️ Kullanıcıya özel filtre yok, genel filtreler kontrol ediliyor...")
+                                        print("⚠️ account.invoice.report'ta bulunamadı, account.move.line kontrol ediliyor...")
                                         filters = models.execute_kw(
                                             db, uid_xmlrpc, password,
                                             'ir.filters', 'search_read',
                                             [[
-                                                ('model_id', '=', 'account.move.line'),
-                                                '|',
                                                 ('user_id', '=', uid_xmlrpc),
-                                                ('user_id', '=', False)  # Paylaşılmış filtreler
+                                                ('model_id', '=', 'account.move.line'),
+                                                ('name', '=', 'TestDeneme')
                                             ]],
-                                            {'fields': ['name', 'domain', 'context', 'is_default', 'action_id', 'user_id']}
+                                            {'fields': ['name', 'domain', 'context']}
                                         )
                                     
-                                    print(f"📋 Bulunan filtreler ({len(filters)} adet):")
-                                    for f in filters:
-                                        print(f"   - '{f['name']}' (default: {f.get('is_default', False)}, user: {f.get('user_id', 'N/A')})")
+                                    # Hala bulunamadıysa genel (paylaşılmış) filtrelere bak
+                                    if not filters:
+                                        print("⚠️ Kullanıcıya özel bulunamadı, paylaşılmış filtreler kontrol ediliyor...")
+                                        filters = models.execute_kw(
+                                            db, uid_xmlrpc, password,
+                                            'ir.filters', 'search_read',
+                                            [[
+                                                ('user_id', '=', False),
+                                                ('name', '=', 'TestDeneme')
+                                            ]],
+                                            {'fields': ['name', 'domain', 'context']}
+                                        )
                                     
-                                    # "TestDeneme" filtresini bul (tam eşleşme veya kısmi)
-                                    target_filter = None
+                                    # Filtre bulunamadıysa HATA VER VE DURDUR
+                                    if not filters or len(filters) == 0:
+                                        print("❌ HATA: 'TestDeneme' filtresi bulunamadı!")
+                                        print("❌ Lütfen Odoo'da 'TestDeneme' adında bir filtre oluşturun.")
+                                        exit(1)
                                     
-                                    # 1. Tam eşleşme
-                                    for f in filters:
-                                        if f['name'].lower() == 'testdeneme':
-                                            target_filter = f
-                                            print(f"✅ Tam eşleşme bulundu: '{f['name']}'")
-                                            break
+                                    # Filtre bulundu
+                                    filter_data = filters[0]
+                                    print(f"✅ 'TestDeneme' filtresi bulundu!")
+                                    print(f"📋 Domain: {filter_data['domain']}")
                                     
-                                    # 2. Kısmi eşleşme (hem all hem zuhal içeren)
-                                    if not target_filter:
-                                        for f in filters:
-                                            if 'all' in f['name'].lower() and 'zuhal' in f['name'].lower():
-                                                target_filter = f
-                                                print(f"✅ Kısmi eşleşme bulundu: '{f['name']}'")
-                                                break
+                                    # Domain'i parse et
+                                    import ast
+                                    domain = ast.literal_eval(filter_data['domain']) if filter_data['domain'] else []
                                     
-                                    # 3. Sadece "zuhal" içeren
-                                    if not target_filter:
-                                        for f in filters:
-                                            if 'zuhal' in f['name'].lower():
-                                                target_filter = f
-                                                print(f"✅ 'Zuhal' içeren filtre bulundu: '{f['name']}'")
-                                                break
+                                    if not domain:
+                                        print("❌ HATA: Filtre domain'i boş!")
+                                        exit(1)
                                     
-                                    # 4. Ön tanımlı filtre
-                                    if not target_filter:
-                                        for f in filters:
-                                            if f.get('is_default'):
-                                                target_filter = f
-                                                print(f"✅ Ön tanımlı filtre kullanılıyor: '{f['name']}'")
-                                                break
+                                    # Domain'i account.move.line formatına çevir
+                                    print("🔄 Domain account.move.line formatına çevriliyor...")
+                                    converted_domain = []
+                                    for item in domain:
+                                        if isinstance(item, tuple) and len(item) >= 3:
+                                            field, operator, value = item[0], item[1], item[2]
+                                            # Alan adlarını dönüştür
+                                            if field == 'state':
+                                                # account.move.line'da state alanı yok, atla
+                                                continue
+                                            elif field == 'move_type':
+                                                field = 'move_id.move_type'
+                                            elif field == 'analytic_account_id':
+                                                field = 'analytic_account_id'
+                                            elif field == 'product_categ_id':
+                                                field = 'product_id.categ_id'
+                                            elif field == 'product_id':
+                                                field = 'product_id'
+                                            converted_domain.append((field, operator, value))
+                                        else:
+                                            converted_domain.append(item)
                                     
-                                    # 5. İlk filtre
-                                    if not target_filter and filters:
-                                        target_filter = filters[0]
-                                        print(f"⚠️ Hiçbir eşleşme yok, ilk filtre kullanılıyor: '{target_filter['name']}'")
+                                    # display_type ekle
+                                    converted_domain.append(('display_type', '=', False))
+                                    domain = converted_domain
+                                    print(f"✅ Domain dönüştürüldü: {len(domain)} koşul")
                                     
-                                    filters = [target_filter] if target_filter else []
-                                    
-                                    if filters and len(filters) > 0:
-                                        filter_data = filters[0]
-                                        print(f"✅ Filtre bulundu: {filter_data['name']}")
-                                        print(f"📋 Domain: {filter_data['domain']}")
-                                        
-                                        # Domain'i parse et
-                                        import ast
-                                        domain = ast.literal_eval(filter_data['domain']) if filter_data['domain'] else []
-                                        
-                                        # Domain'i account.move.line formatına çevir
-                                        print("🔄 Domain account.move.line formatına çevriliyor...")
-                                        converted_domain = []
-                                        for item in domain:
-                                            if isinstance(item, tuple) and len(item) >= 3:
-                                                field, operator, value = item[0], item[1], item[2]
-                                                # Alan adlarını dönüştür
-                                                if field == 'state':
-                                                    # account.move.line'da state alanı yok, atla
-                                                    continue
-                                                elif field == 'move_type':
-                                                    field = 'move_id.move_type'
-                                                elif field == 'analytic_account_id':
-                                                    field = 'analytic_account_id'
-                                                elif field == 'product_categ_id':
-                                                    field = 'product_id.categ_id'
-                                                elif field == 'product_id':
-                                                    field = 'product_id'
-                                                converted_domain.append((field, operator, value))
-                                            else:
-                                                converted_domain.append(item)
-                                        
-                                        # display_type ekle
-                                        converted_domain.append(('display_type', '=', False))
-                                        domain = converted_domain
-                                        print(f"✅ Domain dönüştürüldü: {len(domain)} koşul")
-                                    else:
-                                        print("⚠️ 'TestDeneme' filtresi bulunamadı! Temel filtre kullanılıyor...")
-                                    domain = [
-                                        ('move_id.state', 'not in', ('draft', 'cancel')),
-                                        ('move_id.move_type', 'in', ('out_invoice', 'out_refund'))  # Satış ve iade faturaları
-                                    ]
                                 except Exception as e:
-                                    print(f"⚠️ Filtre çekme hatası: {e}")
-                                    print("📌 Temel filtre kullanılıyor...")
-                                    domain = [
-                                        ('move_id.state', '=', 'posted'),  # Sadece onaylanmış
-                                        ('move_id.move_type', 'in', ('out_invoice', 'out_refund')),  # Satış ve iade faturaları
-                                        ('display_type', '=', False)  # Başlık ve not satırları hariç
-                                    ]
+                                    print(f"❌ HATA: Filtre çekme hatası: {e}")
+                                    import traceback
+                                    traceback.print_exc()
+                                    exit(1)
                                 
                                 # Kayıt sayısını kontrol et (account.move.line)
                                 count = models.execute_kw(
