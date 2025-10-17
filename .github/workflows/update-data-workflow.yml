@@ -725,17 +725,26 @@ jobs:
                                         else:
                                             usd_amount = 0
                                     
-                                    # İADE FATURA KONTROLÜ (istatistik için)
+                                    # İADE FATURA KONTROLÜ VE İŞLEME
                                     move_type = move_type_map.get(move_id, '')
                                     is_refund = (move_type == 'out_refund')
                                     
+                                    # DEBUG: İlk 5 out_refund kaydını logla
+                                    if is_refund and refund_count < 5:
+                                        print(f"🔍 DEBUG out_refund #{refund_count + 1}: qty={qty}, usd={usd_amount}, partner={partner_name[:30]}")
+                                    
                                     if is_refund:
-                                        # İstatistik - out_refund iadeler için
+                                        # İstatistik
                                         refund_count += 1
-                                        refund_total_usd += abs(usd_amount)  # İstatistik için mutlak değer
+                                        refund_total_usd += abs(usd_amount)
                                         
-                                        # ÖNEMLİ: Odoo'dan gelen veriler ZATEN DOĞRU İŞARETLİ!
-                                        # out_refund kayıtları zaten negatif geliyor, hiçbir şey yapma!
+                                        # KRİTİK: Odoo'nun price_subtotal'i out_refund için POZİTİF mi NEGATİF mi geliyor?
+                                        # Eğer pozitif geliyorsa negatif yap
+                                        if usd_amount > 0:
+                                            usd_amount = -usd_amount
+                                            qty = -abs(qty)
+                                        # Eğer zaten negatif geliyorsa olduğu gibi bırak
+                                        # (hiçbir şey yapma)
                                     else:
                                         # Normal satış faturaları için istatistik
                                         invoice_count += 1
