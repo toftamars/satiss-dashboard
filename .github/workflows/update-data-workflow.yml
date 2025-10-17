@@ -201,6 +201,12 @@ jobs:
                                     print(f"✅ 'TestDeneme' filtresi bulundu!")
                                     print(f"📋 Domain: {filter_data['domain']}")
                                     
+                                    # KONTROL: Filtre out_refund'ları dahil ediyor mu?
+                                    if 'out_refund' in str(filter_data['domain']):
+                                        print("⚠️ DİKKAT: Filtre domain'inde 'out_refund' bulundu!")
+                                    else:
+                                        print("⚠️ UYARI: Filtre domain'inde 'out_refund' YOK - İadeler filtrede hariç tutulmuş olabilir!")
+                                    
                                     # Domain'i parse et
                                     import ast
                                     domain = ast.literal_eval(filter_data['domain']) if filter_data['domain'] else []
@@ -212,6 +218,8 @@ jobs:
                                     # Domain'i account.move.line formatına çevir
                                     print("🔄 Domain account.move.line formatına çevriliyor...")
                                     converted_domain = []
+                                    has_move_type_filter = False
+                                    
                                     for item in domain:
                                         if isinstance(item, tuple) and len(item) >= 3:
                                             field, operator, value = item[0], item[1], item[2]
@@ -221,6 +229,20 @@ jobs:
                                                 continue
                                             elif field == 'move_type':
                                                 field = 'move_id.move_type'
+                                                has_move_type_filter = True
+                                                # ÖNEMLİ: move_type filtresini out_invoice VE out_refund içerecek şekilde değiştir
+                                                if operator == '=' and value == 'out_invoice':
+                                                    # Sadece out_invoice varsa, out_refund'u da ekle
+                                                    operator = 'in'
+                                                    value = ('out_invoice', 'out_refund')
+                                                    print("🔧 move_type filtresi güncellendi: out_invoice + out_refund dahil")
+                                                elif operator == 'in' and isinstance(value, (list, tuple)):
+                                                    # Eğer liste varsa ve out_refund yoksa ekle
+                                                    value_list = list(value)
+                                                    if 'out_invoice' in value_list and 'out_refund' not in value_list:
+                                                        value_list.append('out_refund')
+                                                        value = tuple(value_list)
+                                                        print("🔧 move_type filtresine out_refund eklendi")
                                             elif field == 'analytic_account_id':
                                                 field = 'analytic_account_id'
                                             elif field == 'product_categ_id':
@@ -230,6 +252,11 @@ jobs:
                                             converted_domain.append((field, operator, value))
                                         else:
                                             converted_domain.append(item)
+                                    
+                                    # Eğer move_type filtresi yoksa ekle (hem out_invoice hem out_refund)
+                                    if not has_move_type_filter:
+                                        converted_domain.append(('move_id.move_type', 'in', ('out_invoice', 'out_refund')))
+                                        print("➕ move_type filtresi eklendi: out_invoice + out_refund")
                                     
                                     # display_type ekle
                                     converted_domain.append(('display_type', '=', False))
