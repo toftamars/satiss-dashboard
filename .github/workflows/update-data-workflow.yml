@@ -282,7 +282,8 @@ jobs:
                                                 field, operator, value = item[0], item[1], item[2]
                                                 # Alan adlarını dönüştür
                                                 if field == 'state':
-                                                    field = 'move_id.state'
+                                                    # account.move.line'da state alanı yok, atla
+                                                    continue
                                                 elif field == 'move_type':
                                                     field = 'move_id.move_type'
                                                 elif field == 'analytic_account_id':
@@ -302,7 +303,7 @@ jobs:
                                     else:
                                         print("⚠️ 'ALL ZUHAL' filtresi bulunamadı! Temel filtre kullanılıyor...")
                                     domain = [
-                                        ('state', 'not in', ('draft', 'cancel')),
+                                        ('move_id.state', 'not in', ('draft', 'cancel')),
                                         ('move_id.move_type', 'in', ('out_invoice', 'out_refund'))  # Satış ve iade faturaları
                                     ]
                                 except Exception as e:
