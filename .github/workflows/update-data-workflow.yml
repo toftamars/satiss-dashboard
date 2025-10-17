@@ -913,31 +913,34 @@ jobs:
                                     processed_data['months'][month]['quantity'] += qty
                                     processed_data['months'][month]['usd_amount'] += usd_amount
                                     
-                                    # Detay kaydı ekle - AMA İADE FATURALARINI EKLEME (sayfada gösterme)
-                                    if not is_refund:
-                                        cat_info = {}
-                                        for cat_id, cat_data in category_hierarchy.items():
-                                            if product_categ_map.get(product_id) == cat_data.get('full_path'):
-                                                cat_info = cat_data
-                                                break
-                                        
-                                        details.append({
-                                            'date': date_str,
-                                            'create_hour': create_hour,
-                                            'day_of_week': create_day_of_week,
-                                            'partner': partner_name,
-                                            'product': product_name,
-                                            'brand': product_brand_map.get(product_id, 'Bilinmeyen'),
-                                            'category_1': cat_info.get('level1', ''),
-                                            'category_2': cat_info.get('level2', ''),
-                                            'category_3': cat_info.get('level3', ''),
-                                            'category_4': cat_info.get('level4', ''),
-                                            'sales_person': user_name,
-                                            'store': store_name,
-                                            'city': city,
-                                            'quantity': qty,
-                                            'usd_amount': usd_amount
-                                        })
+                                    # Detay kaydı ekle - HİBRİT YAKLAŞIM:
+                                    # Aggregated (partners, products, etc.) → Net değerler (satış - iade) ✅
+                                    # Details → Her satır ayrı (satış + iade görünür) ✅
+                                    cat_info = {}
+                                    for cat_id, cat_data in category_hierarchy.items():
+                                        if product_categ_map.get(product_id) == cat_data.get('full_path'):
+                                            cat_info = cat_data
+                                            break
+                                    
+                                    details.append({
+                                        'date': date_str,
+                                        'create_hour': create_hour,
+                                        'day_of_week': create_day_of_week,
+                                        'partner': partner_name,
+                                        'product': product_name,
+                                        'brand': product_brand_map.get(product_id, 'Bilinmeyen'),
+                                        'category_1': cat_info.get('level1', ''),
+                                        'category_2': cat_info.get('level2', ''),
+                                        'category_3': cat_info.get('level3', ''),
+                                        'category_4': cat_info.get('level4', ''),
+                                        'sales_person': user_name,
+                                        'store': store_name,
+                                        'city': city,
+                                        'quantity': qty,  # Negatif olabilir (iade)
+                                        'usd_amount': usd_amount,  # Negatif olabilir (iade)
+                                        'is_refund': is_refund,  # İade mi değil mi?
+                                        'move_name': move_name  # Fatura numarası
+                                    })
                                     
                                 except Exception as e:
                                     print(f"⚠️ Satır işleme hatası: {e}")
