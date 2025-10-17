@@ -659,11 +659,18 @@ jobs:
                             
                             for line in all_data:
                                 try:
-                                    # ÖNCE move_type'ı belirle (en başta!)
+                                    # ÖNCE move bilgisini al
                                     move = line.get('move_id')
                                     move_id = move[0] if isinstance(move, list) else 0
+                                    move_name = move[1] if isinstance(move, list) and len(move) > 1 else ''
+                                    
+                                    # İADE KONTROLÜ: Fatura numarası R ile başlıyor mu?
+                                    is_refund = move_name.startswith('R') if move_name else False
+                                    
+                                    # Ek kontrol: move_type de kontrol et (çift güvenlik)
                                     move_type = move_type_map.get(move_id, '')
-                                    is_refund = (move_type == 'out_refund')
+                                    if move_type == 'out_refund':
+                                        is_refund = True
                                     
                                     # Tarih - GERÇEK FATURA TARİHİ
                                     # account.move'dan invoice_date, yoksa account.move.line'dan date
@@ -758,7 +765,7 @@ jobs:
                                     if is_refund:
                                         # DEBUG: İlk 5 out_refund kaydını logla (işaret değiştirmeden ÖNCE)
                                         if refund_count < 5:
-                                            print(f"🔍 DEBUG out_refund #{refund_count + 1} ÖNCE: qty={qty}, usd={usd_amount}, partner={partner_name[:30] if len(partner_name) > 30 else partner_name}")
+                                            print(f"🔍 DEBUG İADE #{refund_count + 1} ÖNCE: move_name={move_name}, qty={qty}, usd={usd_amount}, partner={partner_name[:30] if len(partner_name) > 30 else partner_name}")
                                         
                                         # İstatistik
                                         refund_count += 1
@@ -771,7 +778,7 @@ jobs:
                                         
                                         # DEBUG: İşaret değiştirdikten SONRA
                                         if refund_count <= 5:
-                                            print(f"🔍 DEBUG out_refund #{refund_count} SONRA: qty={qty}, usd={usd_amount}")
+                                            print(f"🔍 DEBUG İADE #{refund_count} SONRA: qty={qty}, usd={usd_amount}, is_refund={is_refund}")
                                     else:
                                         # Normal satış faturaları için istatistik
                                         invoice_count += 1
