@@ -165,15 +165,15 @@ jobs:
                         print("=" * 60)
                         
                         # XML-RPC İLE VERİ ÇEK
-                        print("\n1️⃣ ALL ZUHAL filtresi ile fatura satırları çekiliyor (XML-RPC)...")
+                        print("\n1️⃣ TestDeneme filtresi ile fatura satırları çekiliyor (XML-RPC)...")
                         
                         if models:
                             # XML-RPC ile çek
                             try:
                                 print("⏳ Veri çekiliyor (bu 2-3 dakika sürebilir)...")
                                 
-                                # ALL ZUHAL FİLTRESİ - Kullanıcının kaydedilmiş filtresini çek
-                                print("🔍 'ALL ZUHAL' filtresinin domain'i çekiliyor...")
+                                # TestDeneme FİLTRESİ - Kullanıcının kaydedilmiş filtresini çek
+                                print("🔍 'TestDeneme' filtresinin domain'i çekiliyor...")
                                 
                                 try:
                                     # Kullanıcının TÜM filtrelerini çek (HER İKİ MODELDEN)
@@ -224,12 +224,12 @@ jobs:
                                     for f in filters:
                                         print(f"   - '{f['name']}' (default: {f.get('is_default', False)}, user: {f.get('user_id', 'N/A')})")
                                     
-                                    # "ALL ZUHAL" filtresini bul (tam eşleşme veya kısmi)
+                                    # "TestDeneme" filtresini bul (tam eşleşme veya kısmi)
                                     target_filter = None
                                     
                                     # 1. Tam eşleşme
                                     for f in filters:
-                                        if f['name'].lower() == 'all zuhal':
+                                        if f['name'].lower() == 'testdeneme':
                                             target_filter = f
                                             print(f"✅ Tam eşleşme bulundu: '{f['name']}'")
                                             break
@@ -301,7 +301,7 @@ jobs:
                                         domain = converted_domain
                                         print(f"✅ Domain dönüştürüldü: {len(domain)} koşul")
                                     else:
-                                        print("⚠️ 'ALL ZUHAL' filtresi bulunamadı! Temel filtre kullanılıyor...")
+                                        print("⚠️ 'TestDeneme' filtresi bulunamadı! Temel filtre kullanılıyor...")
                                     domain = [
                                         ('move_id.state', 'not in', ('draft', 'cancel')),
                                         ('move_id.move_type', 'in', ('out_invoice', 'out_refund'))  # Satış ve iade faturaları
