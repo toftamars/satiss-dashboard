@@ -2267,28 +2267,15 @@
         
         async function loadTargetsFromGoogleSheets() {
             try {
-                console.log('🎯 Google Sheets\'ten hedefler yükleniyor...');
+                console.log('🎯 Hedefler yükleniyor...');
                 
-                // Direkt CSV linkini dene (CORS olmayabilir)
-                const csvUrl = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEETS_ID}/export?format=csv&gid=0`;
-                let response;
+                // GitHub repo'dan CSV çek (CORS sorunu yok)
+                const csvUrl = 'https://raw.githubusercontent.com/toftamars/satiss-dashboard/main/targets.csv';
                 
-                try {
-                    // Önce direkt dene
-                    response = await fetch(csvUrl);
-                } catch (e) {
-                    console.log('🔄 Direkt erişim başarısız, proxy deneniyor...');
-                    // Proxy ile dene
-                    const proxyUrl = `https://cors-anywhere.herokuapp.com/${csvUrl}`;
-                    response = await fetch(proxyUrl, {
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    });
-                }
+                const response = await fetch(csvUrl);
                 
                 if (!response.ok) {
-                    console.warn('⚠️ Google Sheets erişilemedi, localStorage kullanılacak');
+                    console.warn('⚠️ Hedefler yüklenemedi, localStorage kullanılacak');
                     return;
                 }
                 
