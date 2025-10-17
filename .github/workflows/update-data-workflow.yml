@@ -609,16 +609,11 @@ jobs:
                             
                             for line in all_data:
                                 try:
-                                    # İADE FATURALARINI ATLA (out_refund)
-                                    move = line.get('move_id')
-                                    move_id = move[0] if isinstance(move, list) else 0
-                                    move_type = move_type_map.get(move_id, '')
-                                    
-                                    if move_type == 'out_refund':
-                                        continue  # İade faturalarını atla
-                                    
                                     # Tarih - GERÇEK FATURA TARİHİ
                                     # account.move'dan invoice_date, yoksa account.move.line'dan date
+                                    move = line.get('move_id')
+                                    move_id = move[0] if isinstance(move, list) else 0
+                                    
                                     date_str = invoice_date_map.get(move_id) or line.get('date', '')
                                     if date_str:
                                         year = date_str[:4]
@@ -696,6 +691,14 @@ jobs:
                                             usd_amount = price_subtotal / 34.5  # Ortalama kur
                                         else:
                                             usd_amount = 0
+                                    
+                                    # İADE FATURALARINI NEGATİF YAP (düşmesi için)
+                                    move_type = move_type_map.get(move_id, '')
+                                    is_refund = (move_type == 'out_refund')
+                                    
+                                    if is_refund:
+                                        usd_amount = -abs(usd_amount)  # İade faturaları negatif
+                                        qty = -abs(qty)  # Miktar da negatif
                                     
                                     # Kategori bazlı toplama - SADECE USD VE MİKTAR
                                     if categ_name not in processed_data['categories']:
@@ -801,30 +804,31 @@ jobs:
                                     processed_data['months'][month]['quantity'] += qty
                                     processed_data['months'][month]['usd_amount'] += usd_amount
                                     
-                                    # Detay kaydı ekle
-                                    cat_info = {}
-                                    for cat_id, cat_data in category_hierarchy.items():
-                                        if product_categ_map.get(product_id) == cat_data.get('full_path'):
-                                            cat_info = cat_data
-                                            break
-                                    
-                                    details.append({
-                                        'date': date_str,
-                                        'create_hour': create_hour,
-                                        'day_of_week': create_day_of_week,
-                                        'partner': partner_name,
-                                        'product': product_name,
-                                        'brand': product_brand_map.get(product_id, 'Bilinmeyen'),
-                                        'category_1': cat_info.get('level1', ''),
-                                        'category_2': cat_info.get('level2', ''),
-                                        'category_3': cat_info.get('level3', ''),
-                                        'category_4': cat_info.get('level4', ''),
-                                        'sales_person': user_name,
-                                        'store': store_name,
-                                        'city': city,
-                                        'quantity': qty,
-                                        'usd_amount': usd_amount
-                                    })
+                                    # Detay kaydı ekle - AMA İADE FATURALARINI EKLEME (sayfada gösterme)
+                                    if not is_refund:
+                                        cat_info = {}
+                                        for cat_id, cat_data in category_hierarchy.items():
+                                            if product_categ_map.get(product_id) == cat_data.get('full_path'):
+                                                cat_info = cat_data
+                                                break
+                                        
+                                        details.append({
+                                            'date': date_str,
+                                            'create_hour': create_hour,
+                                            'day_of_week': create_day_of_week,
+                                            'partner': partner_name,
+                                            'product': product_name,
+                                            'brand': product_brand_map.get(product_id, 'Bilinmeyen'),
+                                            'category_1': cat_info.get('level1', ''),
+                                            'category_2': cat_info.get('level2', ''),
+                                            'category_3': cat_info.get('level3', ''),
+                                            'category_4': cat_info.get('level4', ''),
+                                            'sales_person': user_name,
+                                            'store': store_name,
+                                            'city': city,
+                                            'quantity': qty,
+                                            'usd_amount': usd_amount
+                                        })
                                     
                                 except Exception as e:
                                     print(f"⚠️ Satır işleme hatası: {e}")
