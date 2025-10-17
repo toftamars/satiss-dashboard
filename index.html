@@ -2275,7 +2275,9 @@
                 const response = await fetch(csvUrl);
                 
                 if (!response.ok) {
-                    console.warn('⚠️ Hedefler yüklenemedi, localStorage kullanılacak');
+                    console.warn(`⚠️ Hedefler yüklenemedi (HTTP ${response.status}), localStorage kullanılacak`);
+                    console.log('URL:', csvUrl);
+                    console.log('Response:', response);
                     return;
                 }
                 
@@ -8206,7 +8208,7 @@
                 } else if (column === 3) { // Miktar
                     valA = parseFloat(cellsA[3].textContent.replace(/[^0-9,.-]/g, '').replace(',', '.'));
                     valB = parseFloat(cellsB[3].textContent.replace(/[^0-9,.-]/g, '').replace(',', '.'));
-                } else if (column === 4) { // Fatura Adedi
+                } else if (column === 4) { // Farklı Müşteri
                     valA = parseInt(cellsA[4].textContent.replace(/[^0-9]/g, ''));
                     valB = parseInt(cellsB[4].textContent.replace(/[^0-9]/g, ''));
                 } else if (column === 5) { // Ortalama Fatura
