@@ -2269,16 +2269,18 @@
             try {
                 console.log('🎯 Google Sheets\'ten hedefler yükleniyor...');
                 
-                // CSV formatında al
+                // CORS proxy kullan
                 const csvUrl = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEETS_ID}/export?format=csv&gid=0`;
-                const response = await fetch(csvUrl);
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(csvUrl)}`;
+                const response = await fetch(proxyUrl);
                 
                 if (!response.ok) {
                     console.warn('⚠️ Google Sheets erişilemedi, localStorage kullanılacak');
                     return;
                 }
                 
-                const csvText = await response.text();
+                const proxyData = await response.json();
+                const csvText = proxyData.contents;
                 const lines = csvText.trim().split('\n');
                 
                 // İlk satır başlık, atla
@@ -7882,6 +7884,10 @@
             renderStoreTopProducts(storeData);
             renderStoreFullSalespersonTable(storeData);
             
+            // Toplam satış hesapla (tüm mağazalar için)
+            const totalAllSales = allData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
+            const storeSalesPercentage = ((totalSales / totalAllSales) * 100).toFixed(1);
+            
             // AI analiz
             performStoreAIAnalysis(storeData, {
                 name: storeName,
@@ -7890,7 +7896,9 @@
                 transactionCount,
                 avgTransaction,
                 uniqueCustomers,
-                uniqueProducts
+                uniqueProducts,
+                totalAllSales,
+                storeSalesPercentage
             });
         }
         
@@ -8416,6 +8424,12 @@
             insights.neutral.push({
                 title: '📊 Genel Performans',
                 description: `<span class="metric-highlight">${profile.uniqueCustomers}</span> farklı müşteri, <span class="metric-highlight">${profile.uniqueProducts}</span> farklı ürün satıldı.`
+            });
+            
+            // TOPLAM SATIŞ İÇİNDEKİ PAY
+            insights.neutral.push({
+                title: '📈 Toplam Satış İçindeki Pay',
+                description: `${profile.name} mağazası, toplam şirket satışının <strong>%${profile.storeSalesPercentage}</strong> payını oluşturuyor. Bu, $${profile.totalAllSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} toplam satış içinde $${profile.totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} değerinde bir performans.`
             });
             
             if (topCategories.length >= 3) {
