@@ -348,24 +348,26 @@ jobs:
                                 
                                 usd_amount_map = {}
                                 state_id_map = {}  # Şehir bilgisi için yeni map
+                                usd_rate_map = {}  # KUR bilgisi için yeni map
                                 try:
-                                    # account.invoice.report'tan USD tutarlarını ve state_id'yi batch olarak çek
+                                    # account.invoice.report'tan USD tutarlarını, state_id ve usd_rate'i batch olarak çek
                                     for i in range(0, len(line_ids), 5000):
                                         batch_ids = line_ids[i:i+5000]
-                                        print(f"   💵 USD + Şehir batch {i//5000 + 1}: {len(batch_ids)} kayıt...")
+                                        print(f"   💵 USD + Şehir + KUR batch {i//5000 + 1}: {len(batch_ids)} kayıt...")
                                         
-                                        # account.invoice.report'tan price_usd_subtotal ve state_id çek
+                                        # account.invoice.report'tan price_usd_subtotal, state_id ve usd_rate çek
                                         usd_batch = models.execute_kw(
                                             db, uid_xmlrpc, password,
                                             'account.invoice.report', 'search_read',
                                             [[('id', 'in', batch_ids)]],
-                                            {'fields': ['id', 'price_usd_subtotal', 'state_id']}
+                                            {'fields': ['id', 'price_usd_subtotal', 'state_id', 'usd_rate']}
                                         )
                                         
                                         for usd_record in usd_batch:
                                             line_id = usd_record.get('id')
                                             usd_subtotal = usd_record.get('price_usd_subtotal', 0)
                                             state_id = usd_record.get('state_id')
+                                            usd_rate = usd_record.get('usd_rate', 0)
                                             
                                             usd_amount_map[line_id] = float(usd_subtotal) if usd_subtotal else 0
                                             
@@ -374,23 +376,31 @@ jobs:
                                                 state_id_map[line_id] = state_id[1]  # [id, name] formatında geliyor
                                             else:
                                                 state_id_map[line_id] = 'Bilinmeyen'
+                                            
+                                            # usd_rate'i kaydet
+                                            if usd_rate and float(usd_rate) > 0:
+                                                usd_rate_map[line_id] = float(usd_rate)
                                     
                                     print(f"✅ {len(usd_amount_map)} satır için USD tutar eşleştirildi!")
                                     print(f"✅ {len(state_id_map)} satır için şehir bilgisi eşleştirildi!")
+                                    print(f"✅ {len(usd_rate_map)} satır için KUR bilgisi eşleştirildi!")
                                     
                                     # İstatistik
-                                    with_usd = sum(1 for v in usd_amount_map.values() if v > 0)
+                                    with_usd = sum(1 for v in usd_amount_map.values() if v != 0)
                                     total_usd = sum(usd_amount_map.values())
                                     with_city = sum(1 for c in state_id_map.values() if c != 'Bilinmeyen')
-                                    print(f"   💰 USD > 0 olan: {with_usd}")
+                                    with_rate = len(usd_rate_map)
+                                    print(f"   💰 USD olan: {with_usd}")
                                     print(f"   💵 Toplam USD: ${total_usd:,.2f}")
                                     print(f"   🏙️ Şehir bilgisi olan: {with_city}")
+                                    print(f"   💱 KUR bilgisi olan: {with_rate}")
                                     
                                 except Exception as e:
-                                    print(f"⚠️ USD tutar + şehir çekme hatası: {e}")
-                                    print(f"⚠️ Fallback: currency_id kontrolü ile USD hesaplanacak")
+                                    print(f"⚠️ USD tutar + şehir + kur çekme hatası: {e}")
+                                    print(f"⚠️ Fallback: account.move'dan currency_rate çekilecek")
                                     usd_amount_map = {}
                                     state_id_map = {}
+                                    usd_rate_map = {}
                                 
                                 # Satış temsilcileri ve KUR bilgilerini çek (account.move'dan)
                                 print(f"\n👤 Satış temsilcileri ve KUR bilgileri çekiliyor...")
@@ -713,30 +723,32 @@ jobs:
                                     # Sayısal değerler - SADECE USD VE MİKTAR
                                     qty = float(line.get('quantity', 0))
                                     
-                                    # USD tutar - FATURA KURU İLE HESAPLAMA (EN DOĞRU YÖNTEM)
+                                    # USD tutar - HİBRİT YÖNTEM (3 Katmanlı Fallback)
+                                    line_id = line.get('id')
                                     price_subtotal = abs(float(line.get('price_subtotal', 0)))  # TL tutar (mutlak değer)
                                     
-                                    # Faturanın kur bilgisini al
-                                    currency_rate = invoice_currency_rate_map.get(move_id, 0)
-                                    
-                                    if currency_rate and currency_rate > 0:
-                                        # Fatura kuru varsa kullan (price_subtotal / kur = USD)
+                                    # 1. ÖNCELİK: account.invoice.report'tan usd_rate ve USD tutarı kullan
+                                    if line_id in usd_rate_map and usd_rate_map[line_id] > 0:
+                                        # Satır bazında kur varsa kullan (en doğru!)
+                                        usd_rate = usd_rate_map[line_id]
+                                        usd_amount = price_subtotal / usd_rate
+                                    elif line_id in usd_amount_map and usd_amount_map[line_id] != 0:
+                                        # Doğrudan USD tutarı varsa kullan
+                                        usd_amount = abs(usd_amount_map[line_id])
+                                    # 2. FALLBACK: account.move'dan fatura kuru
+                                    elif move_id in invoice_currency_rate_map and invoice_currency_rate_map[move_id] > 0:
+                                        currency_rate = invoice_currency_rate_map[move_id]
                                         usd_amount = price_subtotal / currency_rate
+                                    # 3. SON ÇARE: Currency kontrolü
                                     else:
-                                        # Fallback 1: account.invoice.report'tan USD kullan
-                                        line_id = line.get('id')
-                                        if line_id in usd_amount_map and usd_amount_map[line_id] != 0:
-                                            usd_amount = abs(usd_amount_map[line_id])
+                                        currency = line.get('currency_id')
+                                        currency_code = currency[1] if isinstance(currency, list) and len(currency) > 1 else ''
+                                        
+                                        if 'USD' in currency_code.upper():
+                                            usd_amount = price_subtotal
                                         else:
-                                            # Fallback 2: Currency kontrolü
-                                            currency = line.get('currency_id')
-                                            currency_code = currency[1] if isinstance(currency, list) and len(currency) > 1 else ''
-                                            
-                                            if 'USD' in currency_code.upper():
-                                                usd_amount = price_subtotal
-                                            else:
-                                                # Son çare: ortalama kur
-                                                usd_amount = price_subtotal / 34.5
+                                            # Son çare: ortalama kur
+                                            usd_amount = price_subtotal / 34.5
                                     
                                     # HER ZAMAN POZİTİF OLARAK AL (move_type'a göre sonra işaret belirleyeceğiz)
                                     usd_amount = abs(usd_amount)
