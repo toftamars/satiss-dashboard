@@ -1880,7 +1880,7 @@
                             <canvas id="salespersonCategoryChart"></canvas>
                         </div>
                         <div class="chart-container">
-                            <h3 style="text-align: center; margin-bottom: 20px;">🏪 Çalıştığı Mağazalar</h3>
+                            <h3 style="text-align: center; margin-bottom: 20px;">💰 En Çok Satış Yaptığı Mağazalar</h3>
                             <canvas id="salespersonStoreChart"></canvas>
                         </div>
                         <div class="chart-container">
@@ -2114,7 +2114,7 @@
                             <canvas id="cityMonthlyChart"></canvas>
                         </div>
                         <div class="chart-container">
-                            <h3 style="text-align: center; margin-bottom: 20px;">📊 Yıllık Satış Trendi</h3>
+                            <h3 style="text-align: center; margin-bottom: 20px;">📈 Aylık Performans Trendi (Yıl Karşılaştırmalı)</h3>
                             <canvas id="cityYearlyChart"></canvas>
                         </div>
                     </div>
@@ -7918,9 +7918,13 @@
         function renderStoreCategoryChart(data) {
             const catData = {};
             data.forEach(item => {
-                const cat = item.category_2 || 'Bilinmiyor';
-                // ALL, Analitik, Eğitim atla
-                if (cat.toLowerCase() === 'all' || cat.toLowerCase().includes('analitik') || cat.toLowerCase().includes('eğitim')) {
+                const cat = item.category_2 || '';
+                // ALL, Analitik, Eğitim, Bilinmiyor, boş değerleri atla
+                if (!cat || 
+                    cat.toLowerCase() === 'all' || 
+                    cat.toLowerCase() === 'bilinmiyor' ||
+                    cat.toLowerCase().includes('analitik') || 
+                    cat.toLowerCase().includes('eğitim')) {
                     return;
                 }
                 if (!catData[cat]) catData[cat] = 0;
@@ -8798,17 +8802,49 @@
         let cityYearlyChartInstance = null;
         
         function renderCityYearlyChart(data) {
-            const yearlyData = {};
+            // Yıl bazında aylık grupla (karşılaştırma için - satış temsilcisi gibi)
+            const yearlyMonthlyData = {};
             data.forEach(item => {
                 const date = new Date(item.date);
                 const year = date.getFullYear();
-                if (!yearlyData[year]) yearlyData[year] = 0;
-                yearlyData[year] += parseFloat(item.usd_amount || 0);
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                
+                if (!yearlyMonthlyData[year]) yearlyMonthlyData[year] = {};
+                if (!yearlyMonthlyData[year][month]) yearlyMonthlyData[year][month] = 0;
+                yearlyMonthlyData[year][month] += parseFloat(item.usd_amount || 0);
             });
             
-            const sorted = Object.entries(yearlyData).sort((a, b) => a[0] - b[0]);
-            const labels = sorted.map(item => item[0]);
-            const values = sorted.map(item => item[1]);
+            // Tüm ayları topla
+            const allMonthKeys = new Set();
+            Object.values(yearlyMonthlyData).forEach(yearData => {
+                Object.keys(yearData).forEach(month => allMonthKeys.add(month));
+            });
+            const sortedMonths = Array.from(allMonthKeys).sort();
+            
+            // Dataset oluştur (her yıl için farklı renk)
+            const datasets = [];
+            const colors = [
+                {border: 'rgba(102, 126, 234, 1)', bg: 'rgba(102, 126, 234, 0.1)'},
+                {border: 'rgba(245, 87, 108, 1)', bg: 'rgba(245, 87, 108, 0.1)'},
+                {border: 'rgba(56, 239, 125, 1)', bg: 'rgba(56, 239, 125, 0.1)'},
+                {border: 'rgba(255, 206, 86, 1)', bg: 'rgba(255, 206, 86, 0.1)'}
+            ];
+            
+            Object.keys(yearlyMonthlyData).sort().forEach((year, idx) => {
+                const yearData = yearlyMonthlyData[year];
+                const values = sortedMonths.map(month => yearData[month] || 0);
+                const color = colors[idx % colors.length];
+                
+                datasets.push({
+                    label: `${year} Satışları`,
+                    data: values,
+                    borderColor: color.border,
+                    backgroundColor: color.bg,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                });
+            });
             
             const ctx = document.getElementById('cityYearlyChart');
             if (!ctx) return;
@@ -8817,23 +8853,29 @@
                 cityYearlyChartInstance.destroy();
             }
             
+            // Ay isimlerini göster
+            const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
+                               'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+            const labels = sortedMonths.map(m => monthNames[parseInt(m) - 1]);
+            
             cityYearlyChartInstance = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: 'Yıllık Satış (USD)',
-                        data: values,
-                        backgroundColor: 'rgba(118, 75, 162, 0.6)',
-                        borderColor: 'rgba(118, 75, 162, 1)',
-                        borderWidth: 2
-                    }]
+                    datasets: datasets
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {display: true}
+                        legend: {display: true, position: 'top'},
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': $' + context.parsed.y.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                }
+                            }
+                        }
                     },
                     scales: {
                         y: {
@@ -9493,9 +9535,13 @@
         function renderSalespersonCategoryChart(data) {
             const categoryData = {};
             data.forEach(item => {
-                const category = item.category_2 || 'Bilinmiyor';
-                // ALL, Analitik, Eğitim atla
-                if (category.toLowerCase() === 'all' || category.toLowerCase().includes('analitik') || category.toLowerCase().includes('eğitim')) {
+                const category = item.category_2 || '';
+                // ALL, Analitik, Eğitim, Bilinmiyor, boş değerleri atla
+                if (!category || 
+                    category.toLowerCase() === 'all' || 
+                    category.toLowerCase() === 'bilinmiyor' ||
+                    category.toLowerCase().includes('analitik') || 
+                    category.toLowerCase().includes('eğitim')) {
                     return;
                 }
                 if (!categoryData[category]) categoryData[category] = {sales: 0, qty: 0};
@@ -9560,8 +9606,9 @@
                 storeData[store].qty += parseFloat(item.quantity || 0);
             });
             
-            const sorted = Object.entries(storeData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 10);
-            const labels = sorted.map(item => item[0]);
+            const sorted = Object.entries(storeData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 5); // Top 5 mağaza
+            // Mağaza adlarını temizle (kodları kaldır)
+            const labels = sorted.map(item => item[0].replace(/\[.*?\]\s*/g, '').replace(/^.*?\s-\s/, '').trim());
             const salesValues = sorted.map(item => item[1].sales);
             const qtyValues = sorted.map(item => item[1].qty);
             
