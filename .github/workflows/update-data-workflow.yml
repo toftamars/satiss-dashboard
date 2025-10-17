@@ -755,22 +755,23 @@ jobs:
                                     qty = abs(qty)
                                     
                                     # İADE FATURALARI İÇİN İŞARET KONTROLÜ
-                                    # DEBUG: İlk 5 out_refund kaydını logla
-                                    if is_refund and refund_count < 5:
-                                        print(f"🔍 DEBUG out_refund #{refund_count + 1}: qty={qty}, usd={usd_amount}, partner={partner_name[:30] if len(partner_name) > 30 else partner_name}")
-                                    
                                     if is_refund:
+                                        # DEBUG: İlk 5 out_refund kaydını logla (işaret değiştirmeden ÖNCE)
+                                        if refund_count < 5:
+                                            print(f"🔍 DEBUG out_refund #{refund_count + 1} ÖNCE: qty={qty}, usd={usd_amount}, partner={partner_name[:30] if len(partner_name) > 30 else partner_name}")
+                                        
                                         # İstatistik
                                         refund_count += 1
                                         refund_total_usd += abs(usd_amount)
                                         
-                                        # KRİTİK: Odoo verisi pozitif mi negatif mi kontrol et
-                                        # Eğer pozitif ise negatif yap (düşsün)
-                                        if usd_amount > 0:
-                                            usd_amount = -usd_amount
-                                        if qty > 0:
-                                            qty = -qty
-                                        # Zaten negatif ise olduğu gibi bırak
+                                        # KRİTİK: İADE FATURALARI HER ZAMAN NEGATİF OLMALI!
+                                        # Yukarıda abs() aldık, şimdi negatif yap
+                                        usd_amount = -abs(usd_amount)
+                                        qty = -abs(qty)
+                                        
+                                        # DEBUG: İşaret değiştirdikten SONRA
+                                        if refund_count <= 5:
+                                            print(f"🔍 DEBUG out_refund #{refund_count} SONRA: qty={qty}, usd={usd_amount}")
                                     else:
                                         # Normal satış faturaları için istatistik
                                         invoice_count += 1
