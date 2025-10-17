@@ -706,28 +706,30 @@ jobs:
                                     # Sayısal değerler - SADECE USD VE MİKTAR
                                     qty = float(line.get('quantity', 0))
                                     
-                                    # USD tutar - HİBRİT YÖNTEM (account.invoice.report'tan price_usd_subtotal)
+                                    # USD tutar - HİBRİT YÖNTEM
                                     line_id = line.get('id')
                                     
                                     # 1. Önce account.invoice.report'tan USD tutarı kullan
-                                    # ÖNEMLİ: != 0 kontrolü yap (negatif değerler de kullanılmalı!)
-                                    if line_id in usd_amount_map and usd_amount_map[line_id] != 0:
-                                        usd_amount = usd_amount_map[line_id]
+                                    if line_id in usd_amount_map:
+                                        usd_amount = abs(usd_amount_map[line_id])  # Mutlak değer al
                                     else:
                                         # 2. Fallback: currency_id kontrolü ile hesapla
                                         currency = line.get('currency_id')
                                         currency_code = currency[1] if isinstance(currency, list) and len(currency) > 1 else ''
-                                        price_subtotal = float(line.get('price_subtotal', 0))
+                                        price_subtotal = abs(float(line.get('price_subtotal', 0)))  # Mutlak değer
                                         
                                         if 'USD' in currency_code.upper():
                                             # USD ise direkt kullan
                                             usd_amount = price_subtotal
                                         elif price_subtotal > 0:
-                                            # TRY ise kura böl (fallback - gerçek kur için account.invoice.report kullanılmalı)
-                                            # Not: Bu sadece emergency fallback, çoğu kayıt yukarıdan gelecek
+                                            # TRY ise kura böl
                                             usd_amount = price_subtotal / 34.5  # Ortalama kur
                                         else:
                                             usd_amount = 0
+                                    
+                                    # HER ZAMAN POZİTİF OLARAK AL (move_type'a göre sonra işaret belirleyeceğiz)
+                                    usd_amount = abs(usd_amount)
+                                    qty = abs(qty)
                                     
                                     # İADE FATURALARI İÇİN İŞARET KONTROLÜ
                                     # DEBUG: İlk 5 out_refund kaydını logla
