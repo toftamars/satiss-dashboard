@@ -1,3 +1,6 @@
+
+
+
 # 🔍 Akıllı Arama Kılavuzu
 
 ## Dashboard'da Yapılan İyileştirmeler
