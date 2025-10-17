@@ -1879,12 +1879,12 @@
                             <h3 style="text-align: center; margin-bottom: 20px;">📂 En Çok Sattığı Kategoriler</h3>
                             <canvas id="salespersonCategoryChart"></canvas>
                         </div>
-                        <div class="chart-container">
-                            <h3 style="text-align: center; margin-bottom: 20px;">💰 En Çok Satış Yaptığı Mağazalar</h3>
-                            <canvas id="salespersonStoreChart"></canvas>
-                        </div>
-                        <div class="chart-container">
-                            <h3 style="text-align: center; margin-bottom: 20px;">📈 Aylık Performans Trendi</h3>
+                    </div>
+                    
+                    <!-- Aylık Performans Trendi - Tam Genişlik -->
+                    <div style="margin-bottom: 40px;">
+                        <div class="chart-container" style="height: 400px;">
+                            <h3 style="text-align: center; margin-bottom: 20px;">📈 Aylık Performans Trendi (Yıl Karşılaştırmalı)</h3>
                             <canvas id="salespersonMonthlyChart"></canvas>
                         </div>
                     </div>
@@ -2038,6 +2038,12 @@
                     <div id="storeAIAnalysisPanel" style="margin: 40px 0;">
                         <h3 style="margin-bottom: 20px;">🤖 AI Performans Analizi ve Öneriler</h3>
                         <div id="storeAIAnalysisContent"></div>
+                    </div>
+                    
+                    <!-- Full Salesperson List -->
+                    <div style="margin: 40px 0;">
+                        <h3 style="margin-bottom: 20px;">👥 Tüm Satış Temsilcileri Detaylı Performans Listesi</h3>
+                        <div id="storeFullSalespersonTable" style="overflow-x: auto;"></div>
                     </div>
                 </div>
                 
@@ -7874,6 +7880,7 @@
             renderStoreSalespersonChart(storeData);
             renderStoreMonthlyChart(storeData);
             renderStoreTopProducts(storeData);
+            renderStoreFullSalespersonTable(storeData);
             
             // AI analiz
             performStoreAIAnalysis(storeData, {
@@ -8057,6 +8064,147 @@
             
             html += '</tbody></table>';
             document.getElementById('storeTopProductsTable').innerHTML = html;
+        }
+        
+        function renderStoreFullSalespersonTable(data) {
+            const spData = {};
+            
+            data.forEach(item => {
+                const sp = item.sales_person || 'Bilinmiyor';
+                if (!spData[sp]) {
+                    spData[sp] = {
+                        sales: 0,
+                        qty: 0,
+                        invoiceCount: 0,
+                        invoices: new Set()
+                    };
+                }
+                spData[sp].sales += parseFloat(item.usd_amount || 0);
+                spData[sp].qty += parseFloat(item.quantity || 0);
+                // Fatura numarası unique olarak say (move_id kullan)
+                if (item.move_id) spData[sp].invoices.add(item.move_id);
+            });
+            
+            // Fatura sayısını hesapla
+            Object.keys(spData).forEach(sp => {
+                spData[sp].invoiceCount = spData[sp].invoices.size;
+                delete spData[sp].invoices; // Set'i sil
+            });
+            
+            const sorted = Object.entries(spData).sort((a, b) => b[1].sales - a[1].sales);
+            
+            let html = `
+                <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                            <th style="padding: 15px; text-align: left; cursor: pointer;" onclick="sortStoreSpTable(0)">
+                                # <span style="font-size: 0.8em;">▼</span>
+                            </th>
+                            <th style="padding: 15px; text-align: left; cursor: pointer;" onclick="sortStoreSpTable(1)">
+                                👤 Satış Temsilcisi <span style="font-size: 0.8em;">▼</span>
+                            </th>
+                            <th style="padding: 15px; text-align: right; cursor: pointer;" onclick="sortStoreSpTable(2)">
+                                💰 Toplam Satış (USD) <span style="font-size: 0.8em;">▼</span>
+                            </th>
+                            <th style="padding: 15px; text-align: right; cursor: pointer;" onclick="sortStoreSpTable(3)">
+                                📦 Ürün Miktarı <span style="font-size: 0.8em;">▼</span>
+                            </th>
+                            <th style="padding: 15px; text-align: right; cursor: pointer;" onclick="sortStoreSpTable(4)">
+                                📄 Fatura Adedi <span style="font-size: 0.8em;">▼</span>
+                            </th>
+                            <th style="padding: 15px; text-align: right; cursor: pointer;" onclick="sortStoreSpTable(5)">
+                                📊 Ortalama Fatura <span style="font-size: 0.8em;">▼</span>
+                            </th>
+                            <th style="padding: 15px; text-align: right;">
+                                📈 Pay (%)
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="storeSpTableBody">
+            `;
+            
+            const totalSales = sorted.reduce((sum, item) => sum + item[1].sales, 0);
+            
+            sorted.forEach((item, index) => {
+                const sp = item[0];
+                const stats = item[1];
+                const share = ((stats.sales / totalSales) * 100).toFixed(1);
+                const avgInvoice = stats.invoiceCount > 0 ? (stats.sales / stats.invoiceCount) : 0;
+                
+                html += `
+                    <tr style="border-bottom: 1px solid #eee; ${index % 2 === 0 ? 'background: #f8f9fa;' : 'background: white;'}">
+                        <td style="padding: 12px;">${index + 1}</td>
+                        <td style="padding: 12px;"><strong>${sp}</strong></td>
+                        <td style="padding: 12px; text-align: right; color: #667eea; font-weight: bold;">$${stats.sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                        <td style="padding: 12px; text-align: right;">${stats.qty.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</td>
+                        <td style="padding: 12px; text-align: right; color: #764ba2; font-weight: bold;">${stats.invoiceCount.toLocaleString('tr-TR')}</td>
+                        <td style="padding: 12px; text-align: right;">$${avgInvoice.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                        <td style="padding: 12px; text-align: right;">
+                            <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 4px 12px; border-radius: 12px; font-weight: bold;">
+                                %${share}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+                <p style="margin-top: 10px; color: #6c757d; font-size: 0.9em;">
+                    💡 <strong>Toplam ${sorted.length} satış temsilcisi</strong> - Sütun başlıklarına tıklayarak sıralama yapabilirsiniz
+                </p>
+            `;
+            
+            document.getElementById('storeFullSalespersonTable').innerHTML = html;
+        }
+        
+        // Sıralama fonksiyonu
+        let storeSpSortColumn = 2; // Default: Satış
+        let storeSpSortAsc = false;
+        
+        function sortStoreSpTable(column) {
+            if (storeSpSortColumn === column) {
+                storeSpSortAsc = !storeSpSortAsc; // Toggle
+            } else {
+                storeSpSortColumn = column;
+                storeSpSortAsc = false; // Yeni sütun, descending başla
+            }
+            
+            const tbody = document.getElementById('storeSpTableBody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            rows.sort((a, b) => {
+                const cellsA = a.querySelectorAll('td');
+                const cellsB = b.querySelectorAll('td');
+                
+                let valA, valB;
+                
+                if (column === 0) { // Sıra
+                    valA = parseInt(cellsA[0].textContent);
+                    valB = parseInt(cellsB[0].textContent);
+                } else if (column === 1) { // İsim
+                    valA = cellsA[1].textContent.trim();
+                    valB = cellsB[1].textContent.trim();
+                    return storeSpSortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                } else if (column === 2) { // Satış
+                    valA = parseFloat(cellsA[2].textContent.replace(/[^0-9,.-]/g, '').replace(',', '.'));
+                    valB = parseFloat(cellsB[2].textContent.replace(/[^0-9,.-]/g, '').replace(',', '.'));
+                } else if (column === 3) { // Miktar
+                    valA = parseFloat(cellsA[3].textContent.replace(/[^0-9,.-]/g, '').replace(',', '.'));
+                    valB = parseFloat(cellsB[3].textContent.replace(/[^0-9,.-]/g, '').replace(',', '.'));
+                } else if (column === 4) { // Fatura Adedi
+                    valA = parseInt(cellsA[4].textContent.replace(/[^0-9]/g, ''));
+                    valB = parseInt(cellsB[4].textContent.replace(/[^0-9]/g, ''));
+                } else if (column === 5) { // Ortalama Fatura
+                    valA = parseFloat(cellsA[5].textContent.replace(/[^0-9,.-]/g, '').replace(',', '.'));
+                    valB = parseFloat(cellsB[5].textContent.replace(/[^0-9,.-]/g, '').replace(',', '.'));
+                }
+                
+                return storeSpSortAsc ? (valA - valB) : (valB - valA);
+            });
+            
+            rows.forEach(row => tbody.appendChild(row));
         }
         
         function performStoreAIAnalysis(data, profile) {
@@ -9453,7 +9601,6 @@
             // Grafikleri render et
             renderSalespersonBrandChart(salespersonData);
             renderSalespersonCategoryChart(salespersonData);
-            renderSalespersonStoreChart(salespersonData);
             renderSalespersonMonthlyChart(salespersonData);
             
             // Veriyi kaydet (sıralama için)
