@@ -303,7 +303,7 @@ jobs:
                                         print("⚠️ 'ALL ZUHAL' filtresi bulunamadı! Temel filtre kullanılıyor...")
                                     domain = [
                                         ('state', 'not in', ('draft', 'cancel')),
-                                        ('move_type', 'in', ('out_invoice', 'out_refund'))  # Satış ve iade faturaları
+                                        ('move_id.move_type', 'in', ('out_invoice', 'out_refund'))  # Satış ve iade faturaları
                                     ]
                                 except Exception as e:
                                     print(f"⚠️ Filtre çekme hatası: {e}")
