@@ -609,11 +609,16 @@ jobs:
                             
                             for line in all_data:
                                 try:
-                                    # Tarih - GERÇEK FATURA TARİHİ
-                                    # Önce account.move'dan invoice_date, yoksa account.move.line'dan date
+                                    # İADE FATURALARINI ATLA (out_refund)
                                     move = line.get('move_id')
                                     move_id = move[0] if isinstance(move, list) else 0
+                                    move_type = move_type_map.get(move_id, '')
                                     
+                                    if move_type == 'out_refund':
+                                        continue  # İade faturalarını atla
+                                    
+                                    # Tarih - GERÇEK FATURA TARİHİ
+                                    # account.move'dan invoice_date, yoksa account.move.line'dan date
                                     date_str = invoice_date_map.get(move_id) or line.get('date', '')
                                     if date_str:
                                         year = date_str[:4]
@@ -691,15 +696,6 @@ jobs:
                                             usd_amount = price_subtotal / 34.5  # Ortalama kur
                                         else:
                                             usd_amount = 0
-                                    
-                                    # İADE FİYATLARI NEGATİF YAP
-                                    move_id_value = line.get('move_id')
-                                    move_id_int = move_id_value[0] if isinstance(move_id_value, list) else 0
-                                    move_type = move_type_map.get(move_id_int, '')
-                                    
-                                    if move_type == 'out_refund':
-                                        usd_amount = -abs(usd_amount)  # İade faturaları negatif
-                                        qty = -abs(qty)  # Miktar da negatif
                                     
                                     # Kategori bazlı toplama - SADECE USD VE MİKTAR
                                     if categ_name not in processed_data['categories']:
