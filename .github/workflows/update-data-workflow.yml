@@ -1,6 +1,8 @@
 name: Odoo Veri Güncelleme
 
 on:
+  push:
+    branches: [ main ]  # Her push'ta otomatik çalış
   # schedule:
   #   - cron: '0 23 * * *'  # Otomatik çalışma kapatıldı
   workflow_dispatch:  # Manuel çalıştırma aktif
