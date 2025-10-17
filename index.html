@@ -2269,18 +2269,30 @@
             try {
                 console.log('🎯 Google Sheets\'ten hedefler yükleniyor...');
                 
-                // CORS proxy kullan
+                // Direkt CSV linkini dene (CORS olmayabilir)
                 const csvUrl = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEETS_ID}/export?format=csv&gid=0`;
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(csvUrl)}`;
-                const response = await fetch(proxyUrl);
+                let response;
+                
+                try {
+                    // Önce direkt dene
+                    response = await fetch(csvUrl);
+                } catch (e) {
+                    console.log('🔄 Direkt erişim başarısız, proxy deneniyor...');
+                    // Proxy ile dene
+                    const proxyUrl = `https://cors-anywhere.herokuapp.com/${csvUrl}`;
+                    response = await fetch(proxyUrl, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                }
                 
                 if (!response.ok) {
                     console.warn('⚠️ Google Sheets erişilemedi, localStorage kullanılacak');
                     return;
                 }
                 
-                const proxyData = await response.json();
-                const csvText = proxyData.contents;
+                const csvText = await response.text();
                 const lines = csvText.trim().split('\n');
                 
                 // İlk satır başlık, atla
