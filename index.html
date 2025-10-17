@@ -1998,7 +1998,7 @@
                                 <div style="font-size: 1.5em; font-weight: bold;" id="storeAvgTransaction">$0</div>
                             </div>
                             <div>
-                                <div style="opacity: 0.8; font-size: 0.9em;">📄 Fatura Adedi</div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">👥 Farklı Müşteri</div>
                                 <div style="font-size: 1.5em; font-weight: bold;" id="storeUniqueCustomers">0</div>
                             </div>
                             <div>
@@ -7886,7 +7886,7 @@
             document.getElementById('storeTotalQty').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('storeTransactionCount').textContent = transactionCount;
             document.getElementById('storeAvgTransaction').textContent = '$' + avgTransaction.toLocaleString('tr-TR', {minimumFractionDigits: 2});
-            document.getElementById('storeUniqueCustomers').textContent = transactionCount;
+            document.getElementById('storeUniqueCustomers').textContent = uniqueCustomers;
             document.getElementById('storeUniqueProducts').textContent = uniqueProducts;
             
             renderStoreBrandChart(storeData);
