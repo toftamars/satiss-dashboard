@@ -1163,32 +1163,36 @@ jobs:
           echo "🔄 Remote değişiklikler kontrol ediliyor..."
           git fetch origin
           
-          # Pull yap
-          if git pull --rebase origin main; then
-            echo "✅ Rebase başarılı"
-          elif git pull origin main; then
-            echo "✅ Merge başarılı"
+          # Binary dosyalar için "ours" stratejisi kullan (yeni data her zaman doğrudur)
+          git config merge.ours.driver true
+          echo "data-*.json.gz merge=ours" >> .gitattributes
+          echo "*.gz merge=ours" >> .gitattributes
+          
+          # Pull yap (conflict olursa bizim versiyonu kullan)
+          if git pull origin main --no-rebase -X ours; then
+            echo "✅ Pull başarılı"
           else
-            echo "⚠️ Pull başarısız, devam ediliyor..."
+            echo "⚠️ Pull conflict, yeni data ile devam..."
+            # Conflict varsa bizim dosyaları kullan
+            git checkout --ours data-*.json.gz data-metadata.json
+            git add data-*.json.gz data-metadata.json .gitattributes
           fi
           
           # Tüm data dosyalarını ekle
           git add data-*.json.gz data-metadata.json
           
           if [[ -n $(git status -s) ]]; then
-            git commit -m "Veriler güncellendi - $(date +'%Y-%m-%d %H:%M')"
+            git commit -m "Veriler güncellendi - $(date +'%Y-%m-%d %H:%M')" || echo "Zaten commit edilmiş"
             
             # Push URL'ini PAT ile güncelle
             git remote set-url origin https://x-access-token:${PAT_TOKEN}@github.com/toftamars/satiss-dashboard.git
             
-            # Push dene, başarısız olursa force push
+            # Push et
             if git push origin main; then
               echo "✅ Değişiklikler GitHub'a yüklendi!"
             else
-              echo "⚠️ Normal push başarısız, pull yapıp tekrar deneniyor..."
-              git pull --rebase origin main
-              git push origin main
-              echo "✅ Değişiklikler GitHub'a yüklendi (rebase sonrası)!"
+              echo "❌ Push başarısız!"
+              exit 1
             fi
           else
             echo "ℹ️ Değişiklik yok"
