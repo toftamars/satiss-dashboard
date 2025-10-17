@@ -642,11 +642,14 @@ jobs:
                             
                             for line in all_data:
                                 try:
-                                    # Tarih - GERÇEK FATURA TARİHİ
-                                    # account.move'dan invoice_date, yoksa account.move.line'dan date
+                                    # ÖNCE move_type'ı belirle (en başta!)
                                     move = line.get('move_id')
                                     move_id = move[0] if isinstance(move, list) else 0
+                                    move_type = move_type_map.get(move_id, '')
+                                    is_refund = (move_type == 'out_refund')
                                     
+                                    # Tarih - GERÇEK FATURA TARİHİ
+                                    # account.move'dan invoice_date, yoksa account.move.line'dan date
                                     date_str = invoice_date_map.get(move_id) or line.get('date', '')
                                     if date_str:
                                         year = date_str[:4]
@@ -726,26 +729,23 @@ jobs:
                                         else:
                                             usd_amount = 0
                                     
-                                    # İADE FATURA KONTROLÜ VE İŞLEME
-                                    move_type = move_type_map.get(move_id, '')
-                                    is_refund = (move_type == 'out_refund')
-                                    
+                                    # İADE FATURALARI İÇİN İŞARET KONTROLÜ
                                     # DEBUG: İlk 5 out_refund kaydını logla
                                     if is_refund and refund_count < 5:
-                                        print(f"🔍 DEBUG out_refund #{refund_count + 1}: qty={qty}, usd={usd_amount}, partner={partner_name[:30]}")
+                                        print(f"🔍 DEBUG out_refund #{refund_count + 1}: qty={qty}, usd={usd_amount}, partner={partner_name[:30] if len(partner_name) > 30 else partner_name}")
                                     
                                     if is_refund:
                                         # İstatistik
                                         refund_count += 1
                                         refund_total_usd += abs(usd_amount)
                                         
-                                        # KRİTİK: Odoo'nun price_subtotal'i out_refund için POZİTİF mi NEGATİF mi geliyor?
-                                        # Eğer pozitif geliyorsa negatif yap
+                                        # KRİTİK: Odoo verisi pozitif mi negatif mi kontrol et
+                                        # Eğer pozitif ise negatif yap (düşsün)
                                         if usd_amount > 0:
                                             usd_amount = -usd_amount
-                                            qty = -abs(qty)
-                                        # Eğer zaten negatif geliyorsa olduğu gibi bırak
-                                        # (hiçbir şey yapma)
+                                        if qty > 0:
+                                            qty = -qty
+                                        # Zaten negatif ise olduğu gibi bırak
                                     else:
                                         # Normal satış faturaları için istatistik
                                         invoice_count += 1
