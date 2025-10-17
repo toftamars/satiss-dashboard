@@ -669,8 +669,18 @@ jobs:
                                     move_id = move[0] if isinstance(move, list) else 0
                                     move_name = move[1] if isinstance(move, list) and len(move) > 1 else ''
                                     
-                                    # İADE KONTROLÜ: Fatura numarası R ile başlıyor mu?
-                                    is_refund = move_name.startswith('R') if move_name else False
+                                    # İADE KONTROLÜ: 
+                                    # 1. Fatura numarası içinde "/R" geçiyor mu? (örn: MRKZ/2025/R123)
+                                    # 2. Parantez içinde "R" ile başlıyor mu? (örn: (ZHL2025R...))
+                                    # 3. move_type kontrolü (çift güvenlik)
+                                    is_refund = False
+                                    if move_name:
+                                        # "/R" kontrolü (MRKZ/2025/R123 formatı)
+                                        if '/R' in move_name.upper():
+                                            is_refund = True
+                                        # Parantez içi kontrol (ZHL2025R...)
+                                        elif '(' in move_name and 'R' in move_name.split('(')[1][:8]:  # Parantezden sonra ilk 8 karakter
+                                            is_refund = True
                                     
                                     # Ek kontrol: move_type de kontrol et (çift güvenlik)
                                     move_type = move_type_map.get(move_id, '')
@@ -680,6 +690,12 @@ jobs:
                                     # DEBUG: İlk 20 kaydı logla
                                     if processed_count <= 20:
                                         print(f"📝 Kayıt #{processed_count}: move_name={move_name}, is_refund={is_refund}, move_type={move_type}")
+                                    
+                                    # DORUK TEKİN için ERKEN DEBUG (partner bilgisi alınmadan önce)
+                                    partner = line.get('partner_id')
+                                    partner_name_early = partner[1] if isinstance(partner, list) and len(partner) > 1 else ''
+                                    if 'DORUK' in partner_name_early.upper():
+                                        print(f"🔍 ERKEN DORUK: move_name={move_name}, is_refund={is_refund}, move_type={move_type}")
                                     
                                     # Tarih - GERÇEK FATURA TARİHİ
                                     # account.move'dan invoice_date, yoksa account.move.line'dan date
@@ -772,9 +788,9 @@ jobs:
                                     
                                     # İADE FATURALARI İÇİN İŞARET KONTROLÜ
                                     if is_refund:
-                                        # DEBUG: İlk 5 out_refund kaydını logla (işaret değiştirmeden ÖNCE)
-                                        if refund_count < 5:
-                                            print(f"🔍 DEBUG İADE #{refund_count + 1} ÖNCE: move_name={move_name}, qty={qty}, usd={usd_amount}, partner={partner_name[:30] if len(partner_name) > 30 else partner_name}")
+                                        # DEBUG: İlk 10 out_refund kaydını logla (işaret değiştirmeden ÖNCE)
+                                        if refund_count < 10:
+                                            print(f"🔍 İADE #{refund_count + 1} ÖNCE: move={move_name}, move_type={move_type}, qty={qty}, usd={usd_amount:.2f}, partner={partner_name[:40]}")
                                         
                                         # İstatistik
                                         refund_count += 1
@@ -782,12 +798,14 @@ jobs:
                                         
                                         # KRİTİK: İADE FATURALARI HER ZAMAN NEGATİF OLMALI!
                                         # Yukarıda abs() aldık, şimdi negatif yap
+                                        usd_amount_before = usd_amount
+                                        qty_before = qty
                                         usd_amount = -abs(usd_amount)
                                         qty = -abs(qty)
                                         
                                         # DEBUG: İşaret değiştirdikten SONRA
-                                        if refund_count <= 5:
-                                            print(f"🔍 DEBUG İADE #{refund_count} SONRA: qty={qty}, usd={usd_amount}, is_refund={is_refund}")
+                                        if refund_count <= 10:
+                                            print(f"🔍 İADE #{refund_count} SONRA: qty={qty_before:.1f} → {qty:.1f}, usd={usd_amount_before:.2f} → {usd_amount:.2f}")
                                     else:
                                         # Normal satış faturaları için istatistik
                                         invoice_count += 1
@@ -852,9 +870,9 @@ jobs:
                                     processed_data['partners'][partner_id]['quantity'] += qty
                                     processed_data['partners'][partner_id]['usd_amount'] += usd_amount
                                     
-                                    # DEBUG: DORUK TEKİN için özel log (daha geniş arama)
+                                    # DEBUG: DORUK TEKİN için özel log (TOPLAMA SONRASI)
                                     if 'DORUK' in partner_name.upper():
-                                        print(f"💎 DORUK: partner={partner_name}, move={move_name}, is_refund={is_refund}, qty={qty}, usd={usd_amount}, toplam_usd={processed_data['partners'][partner_id]['usd_amount']}")
+                                        print(f"💎 DORUK SONUÇ: partner={partner_name}, move={move_name}, is_refund={is_refund}, move_type={move_type}, qty={qty}, usd={usd_amount:.2f}, yeni_toplam_qty={processed_data['partners'][partner_id]['quantity']}, yeni_toplam_usd={processed_data['partners'][partner_id]['usd_amount']:.2f}")
                                     
                                     # Satış Temsilcisi bazlı - SADECE USD VE MİKTAR
                                     if user_name not in processed_data['sales_persons']:
