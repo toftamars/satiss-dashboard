@@ -657,8 +657,13 @@ jobs:
                             invoice_count = 0
                             invoice_total_usd = 0
                             
+                            # İşleme sayacı (debug için)
+                            processed_count = 0
+                            
                             for line in all_data:
                                 try:
+                                    processed_count += 1
+                                    
                                     # ÖNCE move bilgisini al
                                     move = line.get('move_id')
                                     move_id = move[0] if isinstance(move, list) else 0
@@ -671,6 +676,10 @@ jobs:
                                     move_type = move_type_map.get(move_id, '')
                                     if move_type == 'out_refund':
                                         is_refund = True
+                                    
+                                    # DEBUG: İlk 20 kaydı logla
+                                    if processed_count <= 20:
+                                        print(f"📝 Kayıt #{processed_count}: move_name={move_name}, is_refund={is_refund}, move_type={move_type}")
                                     
                                     # Tarih - GERÇEK FATURA TARİHİ
                                     # account.move'dan invoice_date, yoksa account.move.line'dan date
