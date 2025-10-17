@@ -301,16 +301,16 @@ jobs:
                                         print(f"✅ Domain dönüştürüldü: {len(domain)} koşul")
                                     else:
                                         print("⚠️ 'ALL ZUHAL' filtresi bulunamadı! Temel filtre kullanılıyor...")
-                                        domain = [
-                                            ('state', 'not in', ('draft', 'cancel')),
-                                            ('move_type', '=', 'out_invoice')  # Sadece satış faturaları, iade yok
-                                        ]
+                                    domain = [
+                                        ('state', 'not in', ('draft', 'cancel')),
+                                        ('move_type', 'in', ('out_invoice', 'out_refund'))  # Satış ve iade faturaları
+                                    ]
                                 except Exception as e:
                                     print(f"⚠️ Filtre çekme hatası: {e}")
                                     print("📌 Temel filtre kullanılıyor...")
                                     domain = [
                                         ('move_id.state', '=', 'posted'),  # Sadece onaylanmış
-                                        ('move_id.move_type', '=', 'out_invoice'),  # Sadece satış faturaları
+                                        ('move_id.move_type', 'in', ('out_invoice', 'out_refund')),  # Satış ve iade faturaları
                                         ('display_type', '=', False)  # Başlık ve not satırları hariç
                                     ]
                                 
@@ -445,6 +445,7 @@ jobs:
                                 invoice_user_map = {}
                                 invoice_datetime_map = {}  # Fatura kesilme zamanı (saat için)
                                 invoice_date_map = {}  # Gerçek fatura tarihi
+                                move_type_map = {}  # Fatura tipi (iade kontrolü için)
                                 
                                 try:
                                     for i in range(0, len(move_ids), 5000):
@@ -454,7 +455,7 @@ jobs:
                                             db, uid_xmlrpc, password,
                                             'account.move', 'search_read',
                                             [[('id', 'in', batch_ids)]],
-                                            {'fields': ['id', 'invoice_user_id', 'user_id', 'create_date', 'invoice_date']}
+                                            {'fields': ['id', 'invoice_user_id', 'user_id', 'create_date', 'invoice_date', 'move_type']}
                                         )
                                         for move in batch_moves:
                                             move_id = move['id']
@@ -474,9 +475,14 @@ jobs:
                                             # Gerçek fatura tarihi
                                             if move.get('invoice_date'):
                                                 invoice_date_map[move_id] = move['invoice_date']
+                                            
+                                            # Fatura tipi (iade kontrolü için)
+                                            if move.get('move_type'):
+                                                move_type_map[move_id] = move['move_type']
                                     print(f"✅ {len(invoice_user_map)} fatura için satış temsilcisi eşleştirildi!")
                                     print(f"✅ {len(invoice_datetime_map)} fatura için tarih-saat bilgisi alındı!")
                                     print(f"✅ {len(invoice_date_map)} fatura için gerçek tarih alındı!")
+                                    print(f"✅ {len(move_type_map)} fatura için tip bilgisi alındı!")
                                 except Exception as e:
                                     print(f"⚠️ Satış temsilcisi + tarih çekme hatası: {e}")
                                     invoice_user_map = {}
@@ -757,6 +763,15 @@ jobs:
                                             usd_amount = price_subtotal / 34.5  # Ortalama kur
                                         else:
                                             usd_amount = 0
+                                    
+                                    # İADE FİYATLARI NEGATİF YAP
+                                    move_id_value = line.get('move_id')
+                                    move_id_int = move_id_value[0] if isinstance(move_id_value, list) else 0
+                                    move_type = move_type_map.get(move_id_int, '')
+                                    
+                                    if move_type == 'out_refund':
+                                        usd_amount = -abs(usd_amount)  # İade faturaları negatif
+                                        qty = -abs(qty)  # Miktar da negatif
                                     
                                     # Kategori bazlı toplama - SADECE USD VE MİKTAR
                                     if categ_name not in processed_data['categories']:

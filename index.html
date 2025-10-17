@@ -1859,7 +1859,7 @@
                                 <div style="font-size: 1.5em; font-weight: bold;" id="salespersonAvgTransaction">$0</div>
                             </div>
                             <div>
-                                <div style="opacity: 0.8; font-size: 0.9em;">📄 Fatura Adedi</div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">👥 Farklı Müşteri</div>
                                 <div style="font-size: 1.5em; font-weight: bold;" id="salespersonUniqueCustomers">0</div>
                             </div>
                             <div>
@@ -8347,8 +8347,8 @@
                 const topBrand = topBrands[0];
                 const brandPercent = (topBrand[1] / profile.totalSales * 100).toFixed(1);
                 insights.positive.push({
-                    title: `🏷️ En Başarılı Marka: ${topBrand[0]}`,
-                    description: `<span class="metric-highlight">%${brandPercent}</span> pay ile lider marka.`
+                    title: `🏷️ En Başarılı 3 Marka`,
+                    description: `${topBrands.slice(0, 3).map(b => `${b[0]} (%${(b[1]/profile.totalSales*100).toFixed(1)})`).join(', ')}`
                 });
             }
             
@@ -8356,8 +8356,8 @@
                 const topCat = topCategories[0];
                 const catPercent = (topCat[1] / profile.totalSales * 100).toFixed(1);
                 insights.positive.push({
-                    title: `📂 En Başarılı Kategori: ${topCat[0]}`,
-                    description: `<span class="metric-highlight">%${catPercent}</span> pay ile en çok satan kategori.`
+                    title: `📂 En Başarılı 3 Kategori`,
+                    description: `${topCategories.slice(0, 3).map(c => `${c[0]} (%${(c[1]/profile.totalSales*100).toFixed(1)})`).join(', ')}`
                 });
             }
             
@@ -8404,10 +8404,6 @@
                 return days[d];
             }).join(', ');
             
-            insights.neutral.push({
-                title: '🕐 Mağaza Çalışma Saatleri',
-                description: `<span class="metric-highlight">${storeHours.openHour}:00 - ${storeHours.closeHour}:00</span>${closedDayNames ? `<br>Kapalı: ${closedDayNames}` : '<br>7 gün açık'}`
-            });
             
             // Nötr
             if (topSP.length > 0) {
@@ -9609,7 +9605,7 @@
             document.getElementById('salespersonTotalQty').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('salespersonTransactionCount').textContent = transactionCount;
             document.getElementById('salespersonAvgTransaction').textContent = '$' + avgTransaction.toLocaleString('tr-TR', {minimumFractionDigits: 2});
-            document.getElementById('salespersonUniqueCustomers').textContent = transactionCount;
+            document.getElementById('salespersonUniqueCustomers').textContent = uniqueCustomers;
             document.getElementById('salespersonUniqueProducts').textContent = uniqueProducts;
             
             // Grafikleri render et
