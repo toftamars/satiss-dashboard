@@ -1891,7 +1891,7 @@
                     </div>
                     
                     <!-- Charts Grid -->
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 30px; margin-bottom: 30px;">
+                    <div id="salespersonBrandCategorySection" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 30px; margin-bottom: 30px;">
                         <div class="chart-container">
                             <h3 id="salespersonBrandChartTitle" style="text-align: center; margin-bottom: 20px;">🏷️ En Çok Sattığı Markalar (Top 10)</h3>
                             <canvas id="salespersonBrandChart"></canvas>
@@ -1903,7 +1903,7 @@
                     </div>
                     
                     <!-- Aylık Performans Trendi - Tam Genişlik -->
-                    <div style="margin-bottom: 40px;">
+                    <div id="salespersonMonthlySection" style="margin-bottom: 40px;">
                         <div class="chart-container" style="height: 400px;">
                             <h3 style="text-align: center; margin-bottom: 20px;">📈 Aylık Performans Trendi (Yıl Karşılaştırmalı)</h3>
                             <canvas id="salespersonMonthlyChart"></canvas>
@@ -1911,13 +1911,13 @@
                     </div>
                     
                     <!-- Top 20 Products -->
-                    <div style="margin-bottom: 40px;">
+                    <div id="salespersonTopProductsSection" style="margin-bottom: 40px;">
                         <h3 style="margin-bottom: 20px;">🎯 En Çok Sattığı Ürünler (Top 20)</h3>
                         <div id="salespersonTopProductsTable" style="overflow-x: auto;"></div>
                     </div>
                     
                     <!-- Bottom 10 Products -->
-                    <div style="margin-bottom: 40px;">
+                    <div id="salespersonBottomProductsSection" style="margin-bottom: 40px;">
                         <h3 style="margin-bottom: 20px;">⚠️ En Az Sattığı Ürünler (Bottom 10)</h3>
                         <div id="salespersonBottomProductsTable" style="overflow-x: auto;"></div>
                     </div>
@@ -8667,17 +8667,10 @@
             
             html += '</div>';
             
-            // AI analiz container'ını güncelle
-            const container = document.getElementById('multipleSalespersonsView');
-            if (container) {
-                // Eğer AI analiz bölümü yoksa ekle
-                let aiSection = container.querySelector('.ai-analysis-section');
-                if (!aiSection) {
-                    aiSection = document.createElement('div');
-                    aiSection.className = 'ai-analysis-section';
-                    container.appendChild(aiSection);
-                }
-                aiSection.innerHTML = html;
+            // AI analiz içeriğini doğrudan salespersonAIAnalysisContent div'ine yaz
+            const aiContent = document.getElementById('salespersonAIAnalysisContent');
+            if (aiContent) {
+                aiContent.innerHTML = html;
             }
         }
         
@@ -10559,6 +10552,12 @@
             document.getElementById('singleSalespersonView').style.display = 'block';
             document.getElementById('multipleSalespersonsView').style.display = 'none';
             
+            // Tek temsilci bölümlerini göster (çoklu karşılaştırmada gizlenmiş olabilir)
+            document.getElementById('salespersonBrandCategorySection').style.display = 'grid';
+            document.getElementById('salespersonMonthlySection').style.display = 'block';
+            document.getElementById('salespersonTopProductsSection').style.display = 'block';
+            document.getElementById('salespersonBottomProductsSection').style.display = 'block';
+            
             // Temsilci bilgilerini hesapla
             const salespersonName = salespersonData[0].sales_person;
             
@@ -10685,19 +10684,18 @@
             renderSalespersonComparisonCharts(salespersonsData);
             
             // Tek temsilci bölümlerini gizle (çoklu karşılaştırmada gereksiz)
-            const sectionsToHide = [
-                'salespersonBrandChart', 'salespersonCategoryChart',
-                'salespersonMonthlyChart', 'salespersonTopProductsTable',
-                'salespersonBottomProductsTable'
-            ];
-            sectionsToHide.forEach(id => {
-                const element = document.getElementById(id);
-                if (element && element.closest('.chart-container')) {
-                    element.closest('.chart-container').style.display = 'none';
-                }
-            });
+            document.getElementById('salespersonBrandCategorySection').style.display = 'none';
+            document.getElementById('salespersonMonthlySection').style.display = 'none';
+            document.getElementById('salespersonTopProductsSection').style.display = 'none';
+            document.getElementById('salespersonBottomProductsSection').style.display = 'none';
             
-            // AI Analiz (karşılaştırmalı) - SADECE BU GÖSTER
+            // AI Analiz içeriğini temizle ve karşılaştırmalı analizi göster
+            const aiPanel = document.getElementById('salespersonAIAnalysisPanel');
+            if (aiPanel) {
+                aiPanel.style.display = 'block';
+            }
+            
+            // Karşılaştırmalı AI analizi
             performMultipleSalespersonsAIAnalysis(salespersonsData);
         }
         
