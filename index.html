@@ -1543,6 +1543,15 @@
                             </div>
                         </div>
                         
+                        <!-- Store Filter -->
+                        <div style="margin-bottom: 15px;">
+                            <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">🏪 Mağaza (Opsiyonel)</label>
+                            <select id="productStoreFilter" 
+                                    style="width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1em;">
+                                <option value="">Tüm Mağazalar</option>
+                            </select>
+                        </div>
+                        
                         <!-- Date Range Filters -->
                         <div style="display: flex; gap: 10px; align-items: end;">
                             <div style="flex: 1;">
@@ -5988,6 +5997,21 @@
                 if (item.category_4) categorySet.add(item.category_4);
             });
             allCategories = Array.from(categorySet).sort();
+            
+            // Mağaza dropdown'ını doldur
+            const storeSet = new Set();
+            allData.forEach(item => {
+                if (item.store && item.store !== 'Analitik' && !item.store.toLowerCase().includes('eğitim')) {
+                    storeSet.add(item.store);
+                }
+            });
+            const storeFilter = document.getElementById('productStoreFilter');
+            if (storeFilter) {
+                storeFilter.innerHTML = '<option value="">Tüm Mağazalar</option>';
+                Array.from(storeSet).sort().forEach(store => {
+                    storeFilter.innerHTML += `<option value="${store}">${store}</option>`;
+                });
+            }
         }
         
         function showProductCategoryDropdown() {
