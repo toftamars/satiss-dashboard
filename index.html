@@ -2057,46 +2057,46 @@
                                 <div style="font-size: 1.5em; font-weight: bold;" id="storeUniqueProducts">0</div>
                             </div>
                         </div>
-                        
-                        <!-- Charts Grid -->
-                        <div id="storeBrandCategorySection" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 30px; margin-bottom: 30px;">
-                            <div class="chart-container">
-                                <h3 id="storeBrandChartTitle" style="text-align: center; margin-bottom: 20px;">🏷️ En Çok Satan Markalar (Top 10)</h3>
-                                <canvas id="storeBrandChart"></canvas>
-                            </div>
-                            <div class="chart-container">
-                                <h3 id="storeCategoryChartTitle" style="text-align: center; margin-bottom: 20px;">📂 En Çok Satan Kategoriler</h3>
-                                <canvas id="storeCategoryChart"></canvas>
-                            </div>
-                            <div class="chart-container">
-                                <h3 id="storeSalespersonChartTitle" style="text-align: center; margin-bottom: 20px;">👨‍💼 Satış Temsilcileri</h3>
-                                <canvas id="storeSalespersonChart"></canvas>
-                            </div>
-                            <div class="chart-container">
-                                <h3 id="storeMonthlyChartTitle" style="text-align: center; margin-bottom: 20px;">📈 Aylık Performans Trendi</h3>
-                                <canvas id="storeMonthlyChart"></canvas>
-                            </div>
-                        </div>
-                        
-                        <!-- Top 20 Products -->
-                        <div id="storeTopProductsSection" style="margin-bottom: 40px;">
-                            <h3 style="margin-bottom: 20px;">🎯 En Çok Satan Ürünler (Top 20)</h3>
-                            <div id="storeTopProductsTable" style="overflow-x: auto;"></div>
-                        </div>
-                        
-                        <!-- AI Store Analysis -->
-                        <div id="storeAIAnalysisPanel" style="margin: 40px 0;">
-                            <h3 style="margin-bottom: 20px;">🤖 AI Performans Analizi ve Öneriler</h3>
-                            <div id="storeAIAnalysisContent"></div>
-                        </div>
-                        
-                        <!-- Full Salesperson List -->
-                        <div id="storeFullSalespersonSection" style="margin: 40px 0;">
-                            <h3 style="margin-bottom: 20px;">👥 Tüm Satış Temsilcileri Detaylı Performans Listesi</h3>
-                            <div id="storeFullSalespersonTable" style="overflow-x: auto;"></div>
-                        </div>
                     </div>
                     <!-- End Single Store View -->
+                    
+                    <!-- Charts Grid (ORTAK - hem tek hem çoklu mağaza için) -->
+                    <div id="storeBrandCategorySection" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 30px; margin-bottom: 30px;">
+                        <div class="chart-container">
+                            <h3 id="storeBrandChartTitle" style="text-align: center; margin-bottom: 20px;">🏷️ En Çok Satan Markalar (Top 10)</h3>
+                            <canvas id="storeBrandChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 id="storeCategoryChartTitle" style="text-align: center; margin-bottom: 20px;">📂 En Çok Satan Kategoriler</h3>
+                            <canvas id="storeCategoryChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 id="storeSalespersonChartTitle" style="text-align: center; margin-bottom: 20px;">👨‍💼 Satış Temsilcileri</h3>
+                            <canvas id="storeSalespersonChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 id="storeMonthlyChartTitle" style="text-align: center; margin-bottom: 20px;">📈 Aylık Performans Trendi</h3>
+                            <canvas id="storeMonthlyChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Top 20 Products -->
+                    <div id="storeTopProductsSection" style="margin-bottom: 40px;">
+                        <h3 style="margin-bottom: 20px;">🎯 En Çok Satan Ürünler (Top 20)</h3>
+                        <div id="storeTopProductsTable" style="overflow-x: auto;"></div>
+                    </div>
+                    
+                    <!-- AI Store Analysis -->
+                    <div id="storeAIAnalysisPanel" style="margin: 40px 0;">
+                        <h3 style="margin-bottom: 20px;">🤖 AI Performans Analizi ve Öneriler</h3>
+                        <div id="storeAIAnalysisContent"></div>
+                    </div>
+                    
+                    <!-- Full Salesperson List -->
+                    <div id="storeFullSalespersonSection" style="margin: 40px 0;">
+                        <h3 style="margin-bottom: 20px;">👥 Tüm Satış Temsilcileri Detaylı Performans Listesi</h3>
+                        <div id="storeFullSalespersonTable" style="overflow-x: auto;"></div>
+                    </div>
                 </div>
                 <!-- End storeProfileContainer -->
                 
