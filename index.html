@@ -10587,6 +10587,15 @@
             
             // Karşılaştırma grafikleri
             renderSalespersonComparisonCharts(salespersonsData);
+            
+            // Aylık performans trendi (karşılaştırmalı)
+            renderMultipleSalespersonsMonthlyChart(salespersonsData);
+            
+            // En çok/az satan ürünler (her temsilci için)
+            renderMultipleSalespersonsTopBottomProducts(salespersonsData);
+            
+            // AI Analiz (karşılaştırmalı)
+            performMultipleSalespersonsAIAnalysis(salespersonsData);
         }
         
         function renderSalespersonBrandChart(data) {
