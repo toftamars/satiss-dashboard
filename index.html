@@ -9859,10 +9859,21 @@
             
             console.log('📅 Filtreler:', {yearFilter, monthFilter, dayFilter});
             
-            // Temsilci verilerini filtrele (fuzzy matching + dönem filtreleri)
-            let salespersonData = allData.filter(item => {
+            // Tek veya çoklu temsilci moduna göre işlem yap
+            if (salespersonsToSearch.length === 1) {
+                // TEK TEMSİLCİ MODU
+                renderSingleSalespersonView(salespersonsToSearch[0], yearFilter, monthFilter, dayFilter);
+            } else {
+                // ÇOKLU TEMSİLCİ KARŞILAŞTIRMA MODU
+                renderMultipleSalespersonsView(salespersonsToSearch, yearFilter, monthFilter, dayFilter);
+            }
+        }
+        
+        function renderSingleSalespersonView(searchQuery, yearFilter, monthFilter, dayFilter) {
+            // Temsilci verilerini filtrele
+            const salespersonData = allData.filter(item => {
                 // Temsilci adı kontrolü
-                if (!item.sales_person || !item.sales_person.toLowerCase().includes(searchQuery)) {
+                if (!item.sales_person || !item.sales_person.toLowerCase().includes(searchQuery.toLowerCase())) {
                     return false;
                 }
                 
@@ -9905,6 +9916,8 @@
             // Sonuçları göster
             document.getElementById('salespersonSearchNoResults').style.display = 'none';
             document.getElementById('salespersonProfileContainer').style.display = 'block';
+            document.getElementById('singleSalespersonView').style.display = 'block';
+            document.getElementById('multipleSalespersonsView').style.display = 'none';
             
             // Temsilci bilgilerini hesapla
             const salespersonName = salespersonData[0].sales_person;
@@ -9948,6 +9961,84 @@
                 uniqueCustomers,
                 uniqueProducts
             });
+        }
+        
+        function renderMultipleSalespersonsView(salespersons, yearFilter, monthFilter, dayFilter) {
+            // Her temsilci için veri topla
+            const salespersonsData = salespersons.map(spName => {
+                const data = allData.filter(item => {
+                    // Temsilci adı kontrolü
+                    if (!item.sales_person || item.sales_person !== spName) {
+                        return false;
+                    }
+                    
+                    // Analitik/Eğitim filtresi
+                    const store = (item.store || '').toLowerCase();
+                    if (store.includes('analitik') || store.includes('eğitim')) {
+                        return false;
+                    }
+                    
+                    // Tarih kontrolü
+                    if (!item.date) return false;
+                    
+                    // Yıl filtresi
+                    if (yearFilter.length > 0) {
+                        const itemYear = item.date.substring(0, 4);
+                        if (!yearFilter.includes(itemYear)) return false;
+                    }
+                    
+                    // Ay filtresi
+                    if (monthFilter.length > 0) {
+                        const itemMonth = item.date.substring(5, 7);
+                        if (!monthFilter.includes(itemMonth)) return false;
+                    }
+                    
+                    // Gün filtresi
+                    if (dayFilter.length > 0) {
+                        const itemDay = item.date.substring(8, 10);
+                        if (!dayFilter.includes(itemDay)) return false;
+                    }
+                    
+                    return true;
+                });
+                
+                const totalSales = data.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
+                const totalQty = data.reduce((sum, item) => sum + parseFloat(item.quantity || 0), 0);
+                const uniqueDates = new Set(data.map(item => item.date));
+                const transactionCount = uniqueDates.size;
+                const avgTransaction = totalSales / Math.max(transactionCount, 1);
+                const uniqueCustomers = new Set(data.map(item => item.partner)).size;
+                const uniqueProducts = new Set(data.map(item => item.product)).size;
+                
+                return {
+                    name: spName,
+                    data: data,
+                    totalSales,
+                    totalQty,
+                    transactionCount,
+                    avgTransaction,
+                    uniqueCustomers,
+                    uniqueProducts
+                };
+            }).filter(sp => sp.data.length > 0);
+            
+            if (salespersonsData.length === 0) {
+                document.getElementById('salespersonProfileContainer').style.display = 'none';
+                document.getElementById('salespersonSearchNoResults').style.display = 'block';
+                return;
+            }
+            
+            // Sonuçları göster
+            document.getElementById('salespersonSearchNoResults').style.display = 'none';
+            document.getElementById('salespersonProfileContainer').style.display = 'block';
+            document.getElementById('singleSalespersonView').style.display = 'none';
+            document.getElementById('multipleSalespersonsView').style.display = 'block';
+            
+            // Karşılaştırma tablosu oluştur
+            renderSalespersonComparisonTable(salespersonsData);
+            
+            // Karşılaştırma grafikleri
+            renderSalespersonComparisonCharts(salespersonsData);
         }
         
         function renderSalespersonBrandChart(data) {
@@ -10416,6 +10507,155 @@
             `;
             
             document.getElementById('salespersonBottomProductsTable').innerHTML = html;
+        }
+        
+        function renderSalespersonComparisonTable(salespersonsData) {
+            const container = document.getElementById('salespersonComparisonTable');
+            
+            let html = `
+                <table style="width: 100%; border-collapse: collapse; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                            <th style="padding: 15px; text-align: left;">Metrik</th>
+                            ${salespersonsData.map(sp => `<th style="padding: 15px; text-align: right;">👨‍💼 ${sp.name}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="background: white;">
+                            <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: 600;">💰 Toplam Satış</td>
+                            ${salespersonsData.map(sp => `<td style="padding: 12px; border-bottom: 1px solid #dee2e6; text-align: right;">$${sp.totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>`).join('')}
+                        </tr>
+                        <tr style="background: #f8f9fa;">
+                            <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: 600;">📦 Toplam Adet</td>
+                            ${salespersonsData.map(sp => `<td style="padding: 12px; border-bottom: 1px solid #dee2e6; text-align: right;">${sp.totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>`).join('')}
+                        </tr>
+                        <tr style="background: white;">
+                            <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: 600;">🛒 İşlem Sayısı</td>
+                            ${salespersonsData.map(sp => `<td style="padding: 12px; border-bottom: 1px solid #dee2e6; text-align: right;">${sp.transactionCount}</td>`).join('')}
+                        </tr>
+                        <tr style="background: #f8f9fa;">
+                            <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: 600;">📊 Ortalama İşlem</td>
+                            ${salespersonsData.map(sp => `<td style="padding: 12px; border-bottom: 1px solid #dee2e6; text-align: right;">$${sp.avgTransaction.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>`).join('')}
+                        </tr>
+                        <tr style="background: white;">
+                            <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: 600;">👥 Farklı Müşteri</td>
+                            ${salespersonsData.map(sp => `<td style="padding: 12px; border-bottom: 1px solid #dee2e6; text-align: right;">${sp.uniqueCustomers}</td>`).join('')}
+                        </tr>
+                        <tr style="background: #f8f9fa;">
+                            <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: 600;">🎯 Farklı Ürün</td>
+                            ${salespersonsData.map(sp => `<td style="padding: 12px; border-bottom: 1px solid #dee2e6; text-align: right;">${sp.uniqueProducts}</td>`).join('')}
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        function renderSalespersonComparisonCharts(salespersonsData) {
+            const names = salespersonsData.map(sp => sp.name);
+            const sales = salespersonsData.map(sp => sp.totalSales);
+            const quantities = salespersonsData.map(sp => sp.totalQty);
+            
+            const colors = [
+                'rgba(102, 126, 234, 0.7)',
+                'rgba(240, 147, 251, 0.7)',
+                'rgba(255, 159, 64, 0.7)'
+            ];
+            
+            const borderColors = [
+                'rgba(102, 126, 234, 1)',
+                'rgba(240, 147, 251, 1)',
+                'rgba(255, 159, 64, 1)'
+            ];
+            
+            // Satış karşılaştırma grafiği
+            const salesCtx = document.getElementById('comparisonSalesChart');
+            if (comparisonSalesChartInstance) {
+                comparisonSalesChartInstance.destroy();
+            }
+            
+            comparisonSalesChartInstance = new Chart(salesCtx, {
+                type: 'bar',
+                data: {
+                    labels: names,
+                    datasets: [{
+                        label: 'Toplam Satış ($)',
+                        data: sales,
+                        backgroundColor: colors,
+                        borderColor: borderColors,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return '$' + context.parsed.y.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + (value / 1000).toFixed(0) + 'K';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Adet karşılaştırma grafiği
+            const qtyCtx = document.getElementById('comparisonQtyChart');
+            if (comparisonQtyChartInstance) {
+                comparisonQtyChartInstance.destroy();
+            }
+            
+            comparisonQtyChartInstance = new Chart(qtyCtx, {
+                type: 'bar',
+                data: {
+                    labels: names,
+                    datasets: [{
+                        label: 'Toplam Adet',
+                        data: quantities,
+                        backgroundColor: colors,
+                        borderColor: borderColors,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' adet';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         }
         
         function performSalespersonAIAnalysis(data, profile) {
