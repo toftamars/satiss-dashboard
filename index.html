@@ -1893,11 +1893,11 @@
                     <!-- Charts Grid -->
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 30px; margin-bottom: 30px;">
                         <div class="chart-container">
-                            <h3 style="text-align: center; margin-bottom: 20px;">🏷️ En Çok Sattığı Markalar (Top 10)</h3>
+                            <h3 id="salespersonBrandChartTitle" style="text-align: center; margin-bottom: 20px;">🏷️ En Çok Sattığı Markalar (Top 10)</h3>
                             <canvas id="salespersonBrandChart"></canvas>
                         </div>
                         <div class="chart-container">
-                            <h3 style="text-align: center; margin-bottom: 20px;">📂 En Çok Sattığı Kategoriler</h3>
+                            <h3 id="salespersonCategoryChartTitle" style="text-align: center; margin-bottom: 20px;">📂 En Çok Sattığı Kategoriler</h3>
                             <canvas id="salespersonCategoryChart"></canvas>
                         </div>
                     </div>
@@ -10465,6 +10465,10 @@
             
             // Temsilci bilgilerini hesapla
             const salespersonName = salespersonData[0].sales_person;
+            
+            // Grafik başlıklarını güncelle
+            document.getElementById('salespersonBrandChartTitle').textContent = `🏷️ ${salespersonName} - En Çok Sattığı Markalar (Top 10)`;
+            document.getElementById('salespersonCategoryChartTitle').textContent = `📂 ${salespersonName} - En Çok Sattığı Kategoriler`;
             
             const totalSales = salespersonData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
             const totalQty = salespersonData.reduce((sum, item) => sum + parseFloat(item.quantity || 0), 0);
