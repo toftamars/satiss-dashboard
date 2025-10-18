@@ -1856,10 +1856,18 @@
                     </div>
                 </div>
                 
-                <!-- Search Input -->
+                <!-- Search Input with Multi-Select -->
                 <div style="max-width: 800px; margin: 0 auto 40px;">
+                    <!-- Selected Salespersons Tags -->
+                    <div id="selectedSalespersonsContainer" style="display: none; margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <span style="font-weight: 600; color: #667eea;">Seçili Temsilciler:</span>
+                            <div id="selectedSalespersonsTags" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                        </div>
+                    </div>
+                    
                     <div style="position: relative;">
-                        <input type="text" id="salespersonSearchInput" placeholder="Satış temsilcisi adı yazın... (örn: Mustafa Kılıç)" 
+                        <input type="text" id="salespersonSearchInput" placeholder="Satış temsilcisi adı yazın... (örn: Mustafa Kılıç, Kaan Poyraz)" 
                                style="width: 100%; padding: 20px 60px 20px 20px; font-size: 1.1em; border: 2px solid #667eea; border-radius: 15px; outline: none;"
                                oninput="showSalespersonSuggestions(this.value)"
                                onkeydown="handleSalespersonKeydown(event)"
@@ -1871,39 +1879,64 @@
                         <div id="salespersonSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #667eea; border-top: none; border-radius: 0 0 15px 15px; max-height: 300px; overflow-y: auto; display: none; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
                     </div>
                     <p style="text-align: center; color: #6c757d; margin-top: 10px; font-size: 0.9em;">
-                        💡 İpucu: Temsilci adının bir kısmını yazmak yeterli, listeden seçebilirsiniz. Filtre seçerseniz karşılaştırma yapabilirsiniz!
+                        💡 İpucu: Birden fazla temsilci seçerek karşılaştırmalı analiz yapabilirsiniz! (En fazla 3 temsilci)
                     </p>
                 </div>
                 
                 <!-- Results Container -->
                 <div id="salespersonProfileContainer" style="display: none;">
-                    <!-- Salesperson Profile Header -->
-                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; border-radius: 20px; margin-bottom: 30px;">
-                        <h2 style="margin: 0 0 20px 0; font-size: 2em;">👨‍💼 <span id="salespersonName">-</span></h2>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-                            <div>
-                                <div style="opacity: 0.8; font-size: 0.9em;">💰 Toplam Satış (KDV Hariç)</div>
-                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonTotalSales">$0</div>
+                    <!-- Single Salesperson View -->
+                    <div id="singleSalespersonView" style="display: none;">
+                        <!-- Salesperson Profile Header -->
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; border-radius: 20px; margin-bottom: 30px;">
+                            <h2 style="margin: 0 0 20px 0; font-size: 2em;">👨‍💼 <span id="salespersonName">-</span></h2>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                                <div>
+                                    <div style="opacity: 0.8; font-size: 0.9em;">💰 Toplam Satış (KDV Hariç)</div>
+                                    <div style="font-size: 1.5em; font-weight: bold;" id="salespersonTotalSales">$0</div>
+                                </div>
+                                <div>
+                                    <div style="opacity: 0.8; font-size: 0.9em;">📦 Toplam Adet</div>
+                                    <div style="font-size: 1.5em; font-weight: bold;" id="salespersonTotalQty">0</div>
+                                </div>
+                                <div>
+                                    <div style="opacity: 0.8; font-size: 0.9em;">🛒 İşlem Sayısı</div>
+                                    <div style="font-size: 1.5em; font-weight: bold;" id="salespersonTransactionCount">0</div>
+                                </div>
+                                <div>
+                                    <div style="opacity: 0.8; font-size: 0.9em;">📊 Ortalama İşlem</div>
+                                    <div style="font-size: 1.5em; font-weight: bold;" id="salespersonAvgTransaction">$0</div>
+                                </div>
+                                <div>
+                                    <div style="opacity: 0.8; font-size: 0.9em;">👥 Farklı Müşteri</div>
+                                    <div style="font-size: 1.5em; font-weight: bold;" id="salespersonUniqueCustomers">0</div>
+                                </div>
+                                <div>
+                                    <div style="opacity: 0.8; font-size: 0.9em;">🎯 Farklı Ürün</div>
+                                    <div style="font-size: 1.5em; font-weight: bold;" id="salespersonUniqueProducts">0</div>
+                                </div>
                             </div>
-                            <div>
-                                <div style="opacity: 0.8; font-size: 0.9em;">📦 Toplam Adet</div>
-                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonTotalQty">0</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Multiple Salespersons Comparison View -->
+                    <div id="multipleSalespersonsView" style="display: none;">
+                        <h2 style="margin: 0 0 30px 0; font-size: 2em; text-align: center;">📊 Satış Temsilcileri Karşılaştırmalı Analiz</h2>
+                        
+                        <!-- Comparison Table -->
+                        <div style="overflow-x: auto; margin-bottom: 40px;">
+                            <div id="salespersonComparisonTable"></div>
+                        </div>
+                        
+                        <!-- Comparison Charts -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 30px; margin-bottom: 30px;">
+                            <div class="chart-container">
+                                <h3 style="text-align: center; margin-bottom: 20px;">💰 Toplam Satış Karşılaştırması</h3>
+                                <canvas id="comparisonSalesChart"></canvas>
                             </div>
-                            <div>
-                                <div style="opacity: 0.8; font-size: 0.9em;">🛒 İşlem Sayısı</div>
-                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonTransactionCount">0</div>
-                            </div>
-                            <div>
-                                <div style="opacity: 0.8; font-size: 0.9em;">📊 Ortalama İşlem</div>
-                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonAvgTransaction">$0</div>
-                            </div>
-                            <div>
-                                <div style="opacity: 0.8; font-size: 0.9em;">👥 Farklı Müşteri</div>
-                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonUniqueCustomers">0</div>
-                            </div>
-                            <div>
-                                <div style="opacity: 0.8; font-size: 0.9em;">🎯 Farklı Ürün</div>
-                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonUniqueProducts">0</div>
+                            <div class="chart-container">
+                                <h3 style="text-align: center; margin-bottom: 20px;">📦 Ürün Adet Karşılaştırması</h3>
+                                <canvas id="comparisonQtyChart"></canvas>
                             </div>
                         </div>
                     </div>
@@ -7384,9 +7417,55 @@
         }
         
         function selectSalespersonSuggestion(name) {
-            document.getElementById('salespersonSearchInput').value = name;
+            // Çoklu seçim: temsilciyi listeye ekle
+            if (selectedSalespersons.length >= 3) {
+                alert('⚠️ En fazla 3 satış temsilcisi seçebilirsiniz!');
+                return;
+            }
+            
+            if (selectedSalespersons.includes(name)) {
+                alert('⚠️ Bu temsilci zaten seçili!');
+                return;
+            }
+            
+            selectedSalespersons.push(name);
+            updateSelectedSalespersonsTags();
+            document.getElementById('salespersonSearchInput').value = '';
             document.getElementById('salespersonSuggestions').style.display = 'none';
+            
+            // Otomatik arama yap
             searchSalespersonProfile();
+        }
+        
+        function updateSelectedSalespersonsTags() {
+            const container = document.getElementById('selectedSalespersonsContainer');
+            const tagsContainer = document.getElementById('selectedSalespersonsTags');
+            
+            if (selectedSalespersons.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'block';
+            tagsContainer.innerHTML = selectedSalespersons.map(name => `
+                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 20px; font-size: 0.9em;">
+                    <span>👨‍💼 ${name}</span>
+                    <button onclick="removeSalesperson('${name.replace(/'/g, "\\'")}'); event.stopPropagation();" 
+                            style="background: rgba(255,255,255,0.3); border: none; color: white; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8em;">
+                        ×
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        function removeSalesperson(name) {
+            selectedSalespersons = selectedSalespersons.filter(sp => sp !== name);
+            updateSelectedSalespersonsTags();
+            if (selectedSalespersons.length > 0) {
+                searchSalespersonProfile();
+            } else {
+                document.getElementById('salespersonProfileContainer').style.display = 'none';
+            }
         }
         
         function handleSalespersonKeydown(event) {
@@ -9686,6 +9765,11 @@
         let salespersonCategoryChartInstance = null;
         let salespersonStoreChartInstance = null;
         let salespersonMonthlyChartInstance = null;
+        let comparisonSalesChartInstance = null;
+        let comparisonQtyChartInstance = null;
+        
+        // Seçili satış temsilcileri array
+        let selectedSalespersons = [];
         
         // Satış temsilcisi filtrelerini doldur (checkbox yapısı)
         function populateSalespersonYearFilter() {
@@ -9749,14 +9833,21 @@
         }
         
         function searchSalespersonProfile() {
-            const searchQuery = document.getElementById('salespersonSearchInput').value.trim().toLowerCase();
+            // Seçili temsilciler varsa onları kullan, yoksa input'tan al
+            let salespersonsToSearch = [];
             
-            if (!searchQuery) {
-                alert('Lütfen bir satış temsilcisi adı girin');
-                return;
+            if (selectedSalespersons.length > 0) {
+                salespersonsToSearch = selectedSalespersons;
+            } else {
+                const searchQuery = document.getElementById('salespersonSearchInput').value.trim();
+                if (!searchQuery) {
+                    alert('Lütfen bir satış temsilcisi adı girin veya listeden seçin');
+                    return;
+                }
+                salespersonsToSearch = [searchQuery];
             }
             
-            console.log('🔍 Satış temsilcisi aranıyor:', searchQuery);
+            console.log('🔍 Satış temsilcileri aranıyor:', salespersonsToSearch);
             
             // Filtre değerlerini al (checkbox'lardan)
             const yearFilter = Array.from(document.querySelectorAll('#filterSalespersonYear input[type="checkbox"]:checked'))
