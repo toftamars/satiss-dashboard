@@ -1520,16 +1520,16 @@
                     <canvas id="hourlyChart"></canvas>
                 </div>
                 
-                <!-- Daily Chart -->
+                <!-- Monthly Trend -->
                 <div class="chart-container" style="margin: 30px 0;">
-                    <h3 style="text-align: center; margin-bottom: 20px;">📅 Günlük Trend (Haftalık)</h3>
-                    <canvas id="dailyChart"></canvas>
+                    <h3 style="text-align: center; margin-bottom: 20px;">📅 Aylık Trend</h3>
+                    <canvas id="monthlyTrendChart"></canvas>
                 </div>
                 
-                <!-- Heatmap -->
-                <div style="margin: 30px 0;">
-                    <h3 style="text-align: center; margin-bottom: 20px;">🔥 Gün x Saat Heatmap</h3>
-                    <div id="heatmapContainer" style="overflow-x: auto;"></div>
+                <!-- Yearly Trend -->
+                <div class="chart-container" style="margin: 30px 0;">
+                    <h3 style="text-align: center; margin-bottom: 20px;">📊 Yıllık Trend</h3>
+                    <canvas id="yearlyTrendChart"></canvas>
                 </div>
                 
                 <!-- Store Time Comparison -->
@@ -1584,18 +1584,57 @@
                 
                 <!-- Search Section -->
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; margin-bottom: 30px;">
-                    <h3 style="color: white; margin-bottom: 20px; text-align: center;">🔍 Ürün veya Marka Ara</h3>
-                    <div style="display: flex; gap: 15px; max-width: 800px; margin: 0 auto;">
-                        <input type="text" id="productSearchInput" placeholder="Örnek: KDP120R, Roland, Yamaha P-125..." 
-                               style="flex: 1; padding: 15px; border: none; border-radius: 10px; font-size: 1.1em;"
-                               onkeypress="if(event.key==='Enter') searchProduct()">
-                        <button onclick="searchProduct()" 
-                                style="padding: 15px 40px; background: #38ef7d; color: white; border: none; border-radius: 10px; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: all 0.3s;">
-                            🔍 Ara
-                        </button>
+                    <h3 style="color: white; margin-bottom: 20px; text-align: center;">🔍 Ürün, Marka veya Kategori Ara</h3>
+                    
+                    <!-- Filters Grid -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 1000px; margin: 0 auto 20px;">
+                        <!-- Search Input -->
+                        <div style="grid-column: 1 / -1;">
+                            <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">🔍 Ürün/Marka Ara</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="productSearchInput" placeholder="Örnek: KDP120R, Roland, Yamaha P-125..." 
+                                       style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 1em;"
+                                       onkeypress="if(event.key==='Enter') searchProduct()">
+                                <button onclick="searchProduct()" 
+                                        style="padding: 12px 30px; background: #38ef7d; color: white; border: none; border-radius: 8px; font-size: 1em; font-weight: bold; cursor: pointer;">
+                                    🔍 Ara
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Category Search -->
+                        <div style="position: relative;">
+                            <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">📁 Kategori Ara</label>
+                            <input type="text" id="productCategorySearch" placeholder="Kategori adı yazın..." 
+                                   style="width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1em;"
+                                   oninput="filterProductCategories()"
+                                   onfocus="showProductCategoryDropdown()"
+                                   onblur="setTimeout(() => hideProductCategoryDropdown(), 200)">
+                            <div id="productCategoryDropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border-radius: 8px; max-height: 300px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1000; margin-top: 5px;">
+                            </div>
+                        </div>
+                        
+                        <!-- Date Filters -->
+                        <div style="display: flex; gap: 10px;">
+                            <div style="flex: 1;">
+                                <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">📅 Yıl</label>
+                                <select id="productYearFilter" onchange="updateProductMonthFilter(); searchProduct()" 
+                                        style="width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1em;">
+                                    <option value="">Tümü</option>
+                                </select>
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">📆 Ay</label>
+                                <select id="productMonthFilter" onchange="searchProduct()" 
+                                        style="width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1em;">
+                                    <option value="">Tümü</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
+                    
                     <p style="text-align: center; margin-top: 15px; color: white; font-size: 0.95em; opacity: 0.9;">
-                        💡 <strong>İpucu:</strong> Ürün kodu (KDP120R), marka adı (Roland) veya ürün adı (Yamaha P-125) yazabilirsiniz
+                        💡 <strong>İpucu:</strong> Kategori seçmek zorunlu değil, istenirse sadece yıl veya ay bazlı analiz yapabilirsiniz
                     </p>
                 </div>
                 
@@ -2458,6 +2497,9 @@
                 // Satış temsilcisi ve mağaza yıl filtrelerini doldur
                 populateSalespersonYearFilter();
                 populateStoreYearFilter();
+                
+                // Ürün filtrelerini initialize et
+                initializeProductFilters();
                 
                 // Diğer yılları arka planda yükle
                 setTimeout(() => loadRemainingYears(latestYear), 2000);
@@ -4895,7 +4937,8 @@
 
         // ==================== TIME ANALYSIS ====================
         let hourlyChartInstance = null;
-        let dailyChartInstance = null;
+        let monthlyTrendChartInstance = null;
+        let yearlyTrendChartInstance = null;
         let storeTimeChartInstance = null;
         let categoryTimeChartInstance = null;
         let salesPersonTimeChartInstance = null;
@@ -4908,8 +4951,8 @@
             
             // Grafikleri render et
             renderHourlyChart();
-            renderDailyChart();
-            renderHeatmap();
+            renderMonthlyTrendChart();
+            renderYearlyTrendChart();
             
             // Filtreleri doldur
             populateTimeFilters();
@@ -5046,51 +5089,55 @@
             });
         }
         
-        function renderDailyChart() {
-            const ctx = document.getElementById('dailyChart');
+        function renderMonthlyTrendChart() {
+            const ctx = document.getElementById('monthlyTrendChart');
             if (!ctx) return;
             
-            const dayNames = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
-            const dayData = Array(7).fill(0);
-            const dayCount = Array(7).fill(0);
-            
+            // Aylık veriyi topla
+            const monthlyData = {};
             filteredData.forEach(item => {
-                const day = item.day_of_week || 0;
-                dayData[day] += parseFloat(item.usd_amount || 0);
-                dayCount[day] += 1;
+                if (!item.date) return;
+                const month = item.date.substring(0, 7); // YYYY-MM
+                if (!monthlyData[month]) {
+                    monthlyData[month] = 0;
+                }
+                monthlyData[month] += parseFloat(item.usd_amount || 0);
             });
             
-            if (dailyChartInstance) {
-                dailyChartInstance.destroy();
+            // Sırala ve formata et
+            const sortedMonths = Object.keys(monthlyData).sort();
+            const monthLabels = sortedMonths.map(m => {
+                const [year, month] = m.split('-');
+                const monthNames = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+                return `${monthNames[parseInt(month) - 1]} ${year}`;
+            });
+            const monthValues = sortedMonths.map(m => monthlyData[m]);
+            
+            if (monthlyTrendChartInstance) {
+                monthlyTrendChartInstance.destroy();
             }
             
-            dailyChartInstance = new Chart(ctx, {
-                type: 'line',
+            monthlyTrendChartInstance = new Chart(ctx, {
+                type: 'bar',
                 data: {
-                    labels: dayNames,
+                    labels: monthLabels,
                     datasets: [{
-                        label: 'Satış ($ - KDV Hariç)',
-                        data: dayData,
+                        label: 'Aylık Satış ($ - KDV Hariç)',
+                        data: monthValues,
+                        backgroundColor: 'rgba(102, 126, 234, 0.7)',
                         borderColor: 'rgba(102, 126, 234, 1)',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 6,
-                        pointHoverRadius: 8
+                        borderWidth: 2
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            display: true
-                        },
+                        legend: { display: true },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return `Satış: $${context.parsed.y.toLocaleString('tr-TR')} (${dayCount[context.dataIndex]} adet)`;
+                                    return `Satış: $${context.parsed.y.toLocaleString('tr-TR')}`;
                                 }
                             }
                         }
@@ -5100,7 +5147,7 @@
                             beginAtZero: true,
                             ticks: {
                                 callback: function(value) {
-                                    return '$' + value.toLocaleString('tr-TR');
+                                    return '$' + (value / 1000).toFixed(0) + 'K';
                                 }
                             }
                         }
@@ -5109,61 +5156,66 @@
             });
         }
         
-        function renderHeatmap() {
-            const container = document.getElementById('heatmapContainer');
-            if (!container) return;
+        function renderYearlyTrendChart() {
+            const ctx = document.getElementById('yearlyTrendChart');
+            if (!ctx) return;
             
-            const dayNames = ['Paz', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
-            const heatmapData = {};
-            
-            // Veriyi topla
-            for (let day = 0; day < 7; day++) {
-                heatmapData[day] = {};
-                for (let hour = 0; hour < 24; hour++) {
-                    heatmapData[day][hour] = 0;
-                }
-            }
-            
+            // Yıllık veriyi topla
+            const yearlyData = {};
             filteredData.forEach(item => {
-                const day = item.day_of_week || 0;
-                const hour = item.create_hour || 0;
-                heatmapData[day][hour] += parseFloat(item.usd_amount || 0);
+                if (!item.date) return;
+                const year = item.date.substring(0, 4); // YYYY
+                if (!yearlyData[year]) {
+                    yearlyData[year] = 0;
+                }
+                yearlyData[year] += parseFloat(item.usd_amount || 0);
             });
             
-            // Maksimum değeri bul (renk skalası için)
-            let maxValue = 0;
-            for (let day = 0; day < 7; day++) {
-                for (let hour = 0; hour < 24; hour++) {
-                    if (heatmapData[day][hour] > maxValue) {
-                        maxValue = heatmapData[day][hour];
+            // Sırala
+            const sortedYears = Object.keys(yearlyData).sort();
+            const yearValues = sortedYears.map(y => yearlyData[y]);
+            
+            if (yearlyTrendChartInstance) {
+                yearlyTrendChartInstance.destroy();
+            }
+            
+            yearlyTrendChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedYears,
+                    datasets: [{
+                        label: 'Yıllık Satış ($ - KDV Hariç)',
+                        data: yearValues,
+                        backgroundColor: 'rgba(118, 75, 162, 0.7)',
+                        borderColor: 'rgba(118, 75, 162, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Satış: $${context.parsed.y.toLocaleString('tr-TR')}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + (value / 1000000).toFixed(1) + 'M';
+                                }
+                            }
+                        }
                     }
                 }
-            }
-            
-            // HTML oluştur
-            let html = '<table style="border-collapse: collapse; margin: 0 auto;">';
-            html += '<tr><th style="padding: 8px; border: 1px solid #ddd;">Gün/Saat</th>';
-            for (let hour = 0; hour < 24; hour++) {
-                html += `<th style="padding: 8px; border: 1px solid #ddd; font-size: 0.8em;">${String(hour).padStart(2, '0')}</th>`;
-            }
-            html += '</tr>';
-            
-            for (let day = 0; day < 7; day++) {
-                html += `<tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: 600;">${dayNames[day]}</td>`;
-                for (let hour = 0; hour < 24; hour++) {
-                    const value = heatmapData[day][hour];
-                    const intensity = maxValue > 0 ? (value / maxValue) : 0;
-                    const color = `rgba(102, 126, 234, ${intensity})`;
-                    const textColor = intensity > 0.5 ? '#fff' : '#333';
-                    html += `<td style="padding: 8px; border: 1px solid #ddd; background: ${color}; color: ${textColor}; text-align: center; font-size: 0.8em;" title="$${value.toLocaleString('tr-TR')}">
-                        ${value > 0 ? '$' + (value / 1000).toFixed(1) + 'K' : '-'}
-                    </td>`;
-                }
-                html += '</tr>';
-            }
-            html += '</table>';
-            
-            container.innerHTML = html;
+            });
         }
         
         function populateTimeFilters() {
@@ -5562,23 +5614,148 @@
         let currentCustomerPurchaseSortColumn = 'date';
         let currentCustomerPurchaseSortDirection = 'desc';
         
-        function searchProduct() {
-            const searchTerm = document.getElementById('productSearchInput').value.trim();
+        // Kategori dropdown için
+        let allCategories = [];
+        
+        // Kategori dropdown fonksiyonları
+        function initializeProductFilters() {
+            // Tüm kategorileri topla
+            const categorySet = new Set();
+            allData.forEach(item => {
+                if (item.category_1) categorySet.add(item.category_1);
+                if (item.category_2) categorySet.add(item.category_2);
+                if (item.category_3) categorySet.add(item.category_3);
+            });
+            allCategories = Array.from(categorySet).sort();
             
-            if (!searchTerm) {
-                alert('⚠️ Lütfen bir ürün veya marka adı girin!');
+            // Yıl filtresi doldur
+            const years = new Set();
+            allData.forEach(item => {
+                if (item.date) years.add(item.date.substring(0, 4));
+            });
+            const yearFilter = document.getElementById('productYearFilter');
+            yearFilter.innerHTML = '<option value="">Tümü</option>';
+            Array.from(years).sort().forEach(year => {
+                yearFilter.innerHTML += `<option value="${year}">${year}</option>`;
+            });
+        }
+        
+        function showProductCategoryDropdown() {
+            filterProductCategories();
+            document.getElementById('productCategoryDropdown').style.display = 'block';
+        }
+        
+        function hideProductCategoryDropdown() {
+            document.getElementById('productCategoryDropdown').style.display = 'none';
+        }
+        
+        function filterProductCategories() {
+            const searchValue = document.getElementById('productCategorySearch').value.toLowerCase();
+            const dropdown = document.getElementById('productCategoryDropdown');
+            
+            const filtered = allCategories.filter(cat => 
+                cat.toLowerCase().includes(searchValue)
+            );
+            
+            if (filtered.length === 0) {
+                dropdown.innerHTML = '<div style="padding: 15px; text-align: center; color: #999;">Sonuç bulunamadı</div>';
+            } else {
+                dropdown.innerHTML = filtered.slice(0, 20).map(cat => `
+                    <div onclick="selectProductCategory('${cat.replace(/'/g, "\\'")}')" 
+                         style="padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; transition: all 0.2s;"
+                         onmouseover="this.style.background='#f5f5f5'"
+                         onmouseout="this.style.background='white'">
+                        📁 ${cat}
+                    </div>
+                `).join('');
+                
+                if (filtered.length > 20) {
+                    dropdown.innerHTML += '<div style="padding: 10px; text-align: center; color: #999; font-size: 0.9em;">+${filtered.length - 20} daha...</div>';
+                }
+            }
+            
+            dropdown.style.display = 'block';
+        }
+        
+        function selectProductCategory(category) {
+            document.getElementById('productCategorySearch').value = category;
+            document.getElementById('productCategorySearch').setAttribute('data-selected-category', category);
+            hideProductCategoryDropdown();
+            searchProduct();
+        }
+        
+        function updateProductMonthFilter() {
+            const year = document.getElementById('productYearFilter').value;
+            const monthFilter = document.getElementById('productMonthFilter');
+            
+            if (!year) {
+                monthFilter.innerHTML = '<option value="">Tümü</option>';
+                monthFilter.disabled = false;
                 return;
             }
             
-            console.log('🔍 Ürün/Marka aranıyor:', searchTerm);
+            // Seçili yıla ait ayları bul
+            const months = new Set();
+            allData.forEach(item => {
+                if (item.date && item.date.startsWith(year)) {
+                    months.add(item.date.substring(0, 7)); // YYYY-MM
+                }
+            });
             
-            // Arama (ürün adı, marka, veya ürün kodu)
+            monthFilter.innerHTML = '<option value="">Tümü</option>';
+            const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
+                              'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+            
+            Array.from(months).sort().forEach(month => {
+                const monthNum = parseInt(month.split('-')[1]);
+                monthFilter.innerHTML += `<option value="${month}">${monthNames[monthNum - 1]} ${year}</option>`;
+            });
+            monthFilter.disabled = false;
+        }
+        
+        function searchProduct() {
+            const searchTerm = document.getElementById('productSearchInput').value.trim();
+            const selectedCategory = document.getElementById('productCategorySearch').getAttribute('data-selected-category') || '';
+            const selectedYear = document.getElementById('productYearFilter').value;
+            const selectedMonth = document.getElementById('productMonthFilter').value;
+            
+            if (!searchTerm && !selectedCategory) {
+                alert('⚠️ Lütfen bir ürün/marka adı girin veya kategori seçin!');
+                return;
+            }
+            
+            console.log('🔍 Arama kriteri:', {searchTerm, selectedCategory, selectedYear, selectedMonth});
+            
+            // Arama (ürün adı, marka, kategori, veya ürün kodu)
             const searchLower = searchTerm.toLowerCase();
-            const results = allData.filter(item => {
+            let results = allData.filter(item => {
                 const product = (item.product || '').toLowerCase();
                 const brand = (item.brand || '').toLowerCase();
+                const category1 = (item.category_1 || '').toLowerCase();
+                const category2 = (item.category_2 || '').toLowerCase();
+                const category3 = (item.category_3 || '').toLowerCase();
                 
-                return product.includes(searchLower) || brand.includes(searchLower);
+                // Ürün/Marka filtresi
+                let matchesSearch = !searchTerm || product.includes(searchLower) || brand.includes(searchLower);
+                
+                // Kategori filtresi
+                let matchesCategory = !selectedCategory || 
+                    category1.includes(selectedCategory.toLowerCase()) || 
+                    category2.includes(selectedCategory.toLowerCase()) || 
+                    category3.includes(selectedCategory.toLowerCase());
+                
+                // Tarih filtreleri
+                let matchesDate = true;
+                if (item.date) {
+                    if (selectedYear && !item.date.startsWith(selectedYear)) {
+                        matchesDate = false;
+                    }
+                    if (selectedMonth && !item.date.startsWith(selectedMonth)) {
+                        matchesDate = false;
+                    }
+                }
+                
+                return matchesSearch && matchesCategory && matchesDate;
             });
             
             console.log('📊 Bulunan kayıt sayısı:', results.length);
@@ -5586,7 +5763,7 @@
             if (results.length === 0) {
                 // Sonuç yok
                 document.getElementById('productResultsContainer').style.display = 'none';
-                document.getElementById('productNoResults').style.display = 'block';
+                alert('❌ Arama kriterlerine uygun sonuç bulunamadı!');
                 return;
             }
             
@@ -5842,17 +6019,48 @@
         }
         
         function renderProductMonthlyChart(data) {
-            const monthlyData = {};
+            // Yıllara göre ayları grupla
+            const yearlyMonthlyData = {};
             data.forEach(item => {
                 if (!item.date) return;
-                const month = item.date.substring(0, 7); // YYYY-MM
-                if (!monthlyData[month]) monthlyData[month] = 0;
-                monthlyData[month] += parseFloat(item.usd_amount || 0);
+                const year = item.date.substring(0, 4);
+                const month = parseInt(item.date.substring(5, 7)); // Ay numarası (1-12)
+                
+                if (!yearlyMonthlyData[year]) yearlyMonthlyData[year] = {};
+                if (!yearlyMonthlyData[year][month]) yearlyMonthlyData[year][month] = 0;
+                yearlyMonthlyData[year][month] += parseFloat(item.usd_amount || 0);
             });
             
-            const sorted = Object.entries(monthlyData).sort((a, b) => a[0].localeCompare(b[0]));
-            const labels = sorted.map(item => item[0]);
-            const values = sorted.map(item => item[1]);
+            const years = Object.keys(yearlyMonthlyData).sort();
+            const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
+                          'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+            
+            // Her yıl için dataset oluştur
+            const colors = [
+                { bg: 'rgba(102, 126, 234, 0.2)', border: 'rgba(102, 126, 234, 1)' },
+                { bg: 'rgba(240, 147, 251, 0.2)', border: 'rgba(240, 147, 251, 1)' },
+                { bg: 'rgba(255, 159, 64, 0.2)', border: 'rgba(255, 159, 64, 1)' },
+                { bg: 'rgba(75, 192, 192, 0.2)', border: 'rgba(75, 192, 192, 1)' },
+                { bg: 'rgba(255, 99, 132, 0.2)', border: 'rgba(255, 99, 132, 1)' }
+            ];
+            
+            const datasets = years.map((year, index) => {
+                const monthData = Array(12).fill(0);
+                Object.keys(yearlyMonthlyData[year]).forEach(month => {
+                    monthData[parseInt(month) - 1] = yearlyMonthlyData[year][month];
+                });
+                
+                const color = colors[index % colors.length];
+                return {
+                    label: year,
+                    data: monthData,
+                    backgroundColor: color.bg,
+                    borderColor: color.border,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                };
+            });
             
             const ctx = document.getElementById('productMonthlyChart');
             if (!ctx) return;
@@ -5864,26 +6072,21 @@
             productMonthlyChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Aylık Satış (USD)',
-                        data: values,
-                        backgroundColor: 'rgba(240, 147, 251, 0.2)',
-                        borderColor: 'rgba(240, 147, 251, 1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4
-                    }]
+                    labels: months,
+                    datasets: datasets
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {display: true},
+                        legend: { 
+                            display: true,
+                            position: 'top'
+                        },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return '$' + context.parsed.y.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                    return context.dataset.label + ': $' + context.parsed.y.toLocaleString('tr-TR', {minimumFractionDigits: 2});
                                 }
                             }
                         }
@@ -5893,7 +6096,7 @@
                             beginAtZero: true,
                             ticks: {
                                 callback: function(value) {
-                                    return '$' + value.toLocaleString('tr-TR');
+                                    return '$' + (value / 1000).toFixed(0) + 'K';
                                 }
                             }
                         }
