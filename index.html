@@ -4278,12 +4278,48 @@
                 const bgColor = getPerformanceColor(store.percentage);
                 const textColor = 'white';
                 
-                html += `
-                    <div style="background: ${bgColor}; color: ${textColor}; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                        <h3 style="margin: 0 0 20px 0; font-size: 1.3em; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 10px;">
-                            🏪 ${store.name}
-                        </h3>
-                        
+                // İçerik belirleme
+                let contentHtml = '';
+                
+                if (store.percentage >= 130) {
+                    // %130 hedefi aşıldı
+                    contentHtml = `
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <div style="font-size: 3em; font-weight: bold; margin-bottom: 5px;">
+                                ${store.percentage.toFixed(1)}%
+                            </div>
+                            <div style="font-size: 0.9em; opacity: 0.9;">Gerçekleşme</div>
+                        </div>
+                        <div style="text-align: center; font-size: 1.8em; margin: 20px 0;">
+                            🏆 Tüm Hedefler Tamamlandı!
+                        </div>
+                    `;
+                } else if (store.percentage >= 100) {
+                    // %100 hedef gerçekleşti, %130 için bilgileri göster
+                    const remaining130 = (store.target * 1.3) - store.achieved;
+                    const dailyRequired130 = store.daysLeft > 0 ? remaining130 / store.daysLeft : 0;
+                    
+                    contentHtml = `
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <div style="font-size: 3em; font-weight: bold; margin-bottom: 5px;">
+                                ${store.percentage.toFixed(1)}%
+                            </div>
+                            <div style="font-size: 0.9em; opacity: 0.9;">Gerçekleşme</div>
+                        </div>
+                        <div style="text-align: center; font-size: 1.5em; margin: 15px 0; font-weight: bold;">
+                            ✅ Hedef Gerçekleşti!
+                        </div>
+                        <div style="font-size: 0.95em; opacity: 0.95; margin-top: 15px; padding-top: 15px; border-top: 2px solid rgba(255,255,255,0.3);">
+                            <div style="margin-bottom: 8px;">🎯 <strong>%130 Hedefi için:</strong></div>
+                            <div style="margin-bottom: 5px;">📊 Gerçekleşen: <strong>$${store.achieved.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</strong></div>
+                            <div style="margin-bottom: 5px;">📈 Kalan: <strong>$${remaining130.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</strong></div>
+                            <div style="margin-bottom: 5px;">📅 Kalan Gün: <strong>${store.daysLeft}</strong></div>
+                            <div>💰 Günlük Gerekli: <strong>$${dailyRequired130.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</strong></div>
+                        </div>
+                    `;
+                } else {
+                    // %100'ün altında - Tüm bilgileri göster
+                    contentHtml = `
                         <div style="text-align: center; margin-bottom: 20px;">
                             <div style="font-size: 3em; font-weight: bold; margin-bottom: 5px;">
                                 ${store.percentage.toFixed(1)}%
@@ -4312,6 +4348,15 @@
                                 <div style="font-size: 1.2em; font-weight: bold;">$${store.dailyRequired.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                             </div>
                         </div>
+                    `;
+                }
+                
+                html += `
+                    <div style="background: ${bgColor}; color: ${textColor}; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                        <h3 style="margin: 0 0 20px 0; font-size: 1.3em; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 10px;">
+                            🏪 ${store.name}
+                        </h3>
+                        ${contentHtml}
                     </div>
                 `;
             });
