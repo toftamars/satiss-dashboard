@@ -8091,9 +8091,9 @@
             // TEK VEYA ÇOKLU MÜŞTERİ MODU
             if (customersToSearch.length === 1) {
                 // TEK MÜŞTERİ - Mevcut görünüm
-                const searchQuery = customersToSearch[0].toLowerCase();
+                const searchQuery = customersToSearch[0]; // Orijinal ismi kullan (büyük/küçük harf korunmuş)
                 const customerData = allData.filter(item => 
-                    item.partner && item.partner.toLowerCase().includes(searchQuery)
+                    item.partner && item.partner.toLowerCase() === searchQuery.toLowerCase()
                 );
             
             if (customerData.length === 0) {
