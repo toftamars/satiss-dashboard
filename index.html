@@ -7623,7 +7623,9 @@
         // ==================== AUTOCOMPLETE FUNCTIONS ====================
         let customerSuggestionIndex = -1;
         let salespersonSuggestionIndex = -1;
+        let storeSuggestionIndex = -1;
         let selectedCustomers = []; // Seçili müşteriler
+        let selectedStores = []; // Seçili mağazalar
         
         function showCustomerSuggestions(query) {
             const suggestionsDiv = document.getElementById('customerSuggestions');
@@ -7998,9 +8000,58 @@
         }
         
         function selectStoreSuggestion(name) {
-            document.getElementById('storeSearchInput').value = name;
+            // Çoklu seçim: mağazayı listeye ekle
+            if (selectedStores.length >= 3) {
+                alert('⚠️ En fazla 3 mağaza seçebilirsiniz!');
+                return;
+            }
+            
+            if (selectedStores.includes(name)) {
+                alert('⚠️ Bu mağaza zaten seçili!');
+                return;
+            }
+            
+            selectedStores.push(name);
+            updateSelectedStoresTags();
+            document.getElementById('storeSearchInput').value = '';
             document.getElementById('storeSuggestions').style.display = 'none';
+            
+            // Otomatik arama yap
             searchStoreProfile();
+        }
+        
+        function updateSelectedStoresTags() {
+            const container = document.getElementById('selectedStoresContainer');
+            const tagsContainer = document.getElementById('selectedStoresTags');
+            
+            if (selectedStores.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'block';
+            tagsContainer.innerHTML = selectedStores.map((store, index) => `
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 15px; border-radius: 20px; display: flex; align-items: center; gap: 8px; font-size: 0.9em;">
+                    <span>🏪 ${store}</span>
+                    <button onclick="removeStore(${index})" 
+                            style="background: rgba(255,255,255,0.3); border: none; color: white; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8em;">
+                        ×
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        function removeStore(index) {
+            selectedStores.splice(index, 1);
+            updateSelectedStoresTags();
+            
+            // Eğer mağaza kalmadıysa sonuçları temizle
+            if (selectedStores.length === 0) {
+                document.getElementById('storeProfileContainer').style.display = 'none';
+            } else {
+                // Kalan mağazalarla yeniden arama yap
+                searchStoreProfile();
+            }
         }
         
         function handleStoreKeydown(event) {
@@ -8702,21 +8753,67 @@
         }
         
         function searchStoreProfile() {
-            const searchQuery = document.getElementById('storeSearchInput').value.trim();
-            if (!searchQuery) {
-                alert('Lütfen bir mağaza adı girin');
-                return;
+            // Seçili mağazalar varsa onları kullan, yoksa input'tan al
+            let storesToSearch = [];
+            
+            if (selectedStores.length > 0) {
+                storesToSearch = selectedStores;
+            } else {
+                const searchQuery = document.getElementById('storeSearchInput').value.trim();
+                if (!searchQuery) {
+                    alert('Lütfen bir mağaza adı girin veya listeden seçin');
+                    return;
+                }
+                
+                // Virgül ile ayrılmış isimleri ayır (case-insensitive arama için)
+                const searchTerms = searchQuery.split(',').map(s => s.trim().toLowerCase()).filter(s => s);
+                
+                if (searchTerms.length === 0) {
+                    alert('Lütfen geçerli bir mağaza adı girin');
+                    return;
+                }
+                
+                // Her arama terimini gerçek isimlerle eşleştir
+                const storeMap = {};
+                allData.forEach(item => {
+                    const name = item.store || '';
+                    if (name && !storeMap[name]) {
+                        storeMap[name] = name;
+                    }
+                });
+                
+                // Her arama terimi için en uygun eşleşmeyi bul
+                storesToSearch = [];
+                searchTerms.forEach(term => {
+                    const matches = Object.keys(storeMap).filter(name => 
+                        name.toLowerCase().includes(term)
+                    );
+                    
+                    if (matches.length > 0) {
+                        // İlk eşleşmeyi al (tam eşleşme varsa onu, yoksa kısmi eşleşmeyi)
+                        const exactMatch = matches.find(m => m.toLowerCase() === term);
+                        storesToSearch.push(exactMatch || matches[0]);
+                    }
+                });
+                
+                if (storesToSearch.length === 0) {
+                    alert('❌ Girilen isimlere uygun mağaza bulunamadı!');
+                    return;
+                }
+                
+                // Tekrar edenleri kaldır
+                storesToSearch = [...new Set(storesToSearch)];
+                
+                // En fazla 3 mağaza
+                if (storesToSearch.length > 3) {
+                    alert('⚠️ En fazla 3 mağaza arayabilirsiniz!');
+                    storesToSearch = storesToSearch.slice(0, 3);
+                }
             }
             
-            // Virgül ile ayrılmış mağaza isimlerini ayır (case-insensitive arama için)
-            const searchTerms = searchQuery.split(',').map(s => s.trim().toLowerCase()).filter(s => s);
+            console.log('🔍 Mağazalar aranıyor:', storesToSearch);
             
-            if (searchTerms.length === 0) {
-                alert('Lütfen geçerli bir mağaza adı girin');
-                return;
-            }
-            
-            // Filtre değerlerini al (checkbox'lardan)
+            // Filtre değerlerini al
             const yearFilter = Array.from(document.querySelectorAll('#filterStoreYear input[type="checkbox"]:checked'))
                 .map(cb => cb.value);
             const monthFilter = Array.from(document.querySelectorAll('#filterStoreMonth input[type="checkbox"]:checked'))
@@ -8724,21 +8821,51 @@
             const dayFilter = Array.from(document.querySelectorAll('#filterStoreDay input[type="checkbox"]:checked'))
                 .map(cb => cb.value);
             
-            console.log('📅 Mağaza Filtreleri:', {yearFilter, monthFilter, dayFilter});
-            
-            let storeData = allData.filter(item => {
-                if (!item.store) return false;
+            // TEK VEYA ÇOKLU MAĞAZA MODU
+            if (storesToSearch.length === 1) {
+                // TEK MAĞAZA - Mevcut görünüm
+                renderSingleStoreView(storesToSearch[0], yearFilter, monthFilter, dayFilter);
+            } else {
+                // ÇOKLU MAĞAZA - Karşılaştırma görünümü
+                renderMultipleStoresView(storesToSearch, yearFilter, monthFilter, dayFilter);
+            }
+        }
+        
+        function renderSingleStoreView(storeName, yearFilter, monthFilter, dayFilter) {
+            // Mağaza verilerini filtrele
+            const storeData = allData.filter(item => {
+                // Mağaza adı kontrolü (case-insensitive exact match)
+                if (!item.store || item.store.toLowerCase() !== storeName.toLowerCase()) {
+                    return false;
+                }
                 
-                // Herhangi bir arama terimiyle eşleşiyor mu? (case-insensitive)
-                const storeLower = item.store.toLowerCase();
-                const matchesAnySearch = searchTerms.some(term => storeLower.includes(term));
-                if (!matchesAnySearch) return false;
+                // Analitik/Eğitim filtresi
                 const store = (item.store || '').toLowerCase();
-                if (store.includes('analitik') || store.includes('eğitim')) return false;
+                if (store.includes('analitik') || store.includes('eğitim')) {
+                    return false;
+                }
+                
+                // Tarih kontrolü
                 if (!item.date) return false;
-                if (yearFilter.length > 0 && !yearFilter.includes(item.date.substring(0, 4))) return false;
-                if (monthFilter.length > 0 && !monthFilter.includes(item.date.substring(5, 7))) return false;
-                if (dayFilter.length > 0 && !dayFilter.includes(item.date.substring(8, 10))) return false;
+                
+                // Yıl filtresi
+                if (yearFilter.length > 0) {
+                    const itemYear = item.date.substring(0, 4);
+                    if (!yearFilter.includes(itemYear)) return false;
+                }
+                
+                // Ay filtresi
+                if (monthFilter.length > 0) {
+                    const itemMonth = item.date.substring(5, 7);
+                    if (!monthFilter.includes(itemMonth)) return false;
+                }
+                
+                // Gün filtresi
+                if (dayFilter.length > 0) {
+                    const itemDay = item.date.substring(8, 10);
+                    if (!dayFilter.includes(itemDay)) return false;
+                }
+                
                 return true;
             });
             
@@ -8748,10 +8875,19 @@
                 return;
             }
             
+            // Sonuçları göster
             document.getElementById('storeSearchNoResults').style.display = 'none';
             document.getElementById('storeProfileContainer').style.display = 'block';
+            document.getElementById('singleStoreView').style.display = 'block';
+            document.getElementById('multipleStoresView').style.display = 'none';
             
-            const storeName = storeData[0].store;
+            // Tek mağaza bölümlerini göster
+            document.getElementById('storeBrandCategorySection').style.display = 'grid';
+            document.getElementById('storeTopProductsSection').style.display = 'block';
+            document.getElementById('storeFullSalespersonSection').style.display = 'block';
+            
+            // Mağaza bilgilerini hesapla
+            const actualStoreName = storeData[0].store;
             const totalSales = storeData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
             const totalQty = storeData.reduce((sum, item) => sum + parseFloat(item.quantity || 0), 0);
             const transactionCount = new Set(storeData.map(item => item.date)).size;
@@ -8759,7 +8895,14 @@
             const uniqueCustomers = new Set(storeData.map(item => item.partner)).size;
             const uniqueProducts = new Set(storeData.map(item => item.product)).size;
             
-            document.getElementById('storeName').textContent = storeName;
+            // Grafik başlıklarını güncelle
+            document.getElementById('storeBrandChartTitle').textContent = `🏷️ ${actualStoreName} - En Çok Satan Markalar (Top 10)`;
+            document.getElementById('storeCategoryChartTitle').textContent = `📂 ${actualStoreName} - En Çok Satan Kategoriler`;
+            document.getElementById('storeSalespersonChartTitle').textContent = `👨‍💼 ${actualStoreName} - Satış Temsilcileri`;
+            document.getElementById('storeMonthlyChartTitle').textContent = `📈 ${actualStoreName} - Aylık Performans Trendi`;
+            
+            // UI güncelle
+            document.getElementById('storeName').textContent = actualStoreName;
             document.getElementById('storeTotalSales').textContent = '$' + totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('storeTotalQty').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('storeTransactionCount').textContent = uniqueCustomers;
@@ -8767,6 +8910,7 @@
             document.getElementById('storeUniqueCustomers').textContent = uniqueCustomers;
             document.getElementById('storeUniqueProducts').textContent = uniqueProducts;
             
+            // Grafikleri render et
             renderStoreBrandChart(storeData);
             renderStoreCategoryChart(storeData);
             renderStoreSalespersonChart(storeData);
@@ -8780,7 +8924,7 @@
             
             // AI analiz
             performStoreAIAnalysis(storeData, {
-                name: storeName,
+                name: actualStoreName,
                 totalSales,
                 totalQty,
                 transactionCount,
@@ -8790,6 +8934,98 @@
                 totalAllSales,
                 storeSalesPercentage
             });
+        }
+        
+        function renderMultipleStoresView(stores, yearFilter, monthFilter, dayFilter) {
+            // Her mağaza için veri topla
+            const storesData = stores.map(storeName => {
+                const data = allData.filter(item => {
+                    // Mağaza adı kontrolü
+                    if (!item.store || item.store.toLowerCase() !== storeName.toLowerCase()) {
+                        return false;
+                    }
+                    
+                    // Analitik/Eğitim filtresi
+                    const store = (item.store || '').toLowerCase();
+                    if (store.includes('analitik') || store.includes('eğitim')) {
+                        return false;
+                    }
+                    
+                    // Tarih kontrolü
+                    if (!item.date) return false;
+                    
+                    // Yıl filtresi
+                    if (yearFilter.length > 0) {
+                        const itemYear = item.date.substring(0, 4);
+                        if (!yearFilter.includes(itemYear)) return false;
+                    }
+                    
+                    // Ay filtresi
+                    if (monthFilter.length > 0) {
+                        const itemMonth = item.date.substring(5, 7);
+                        if (!monthFilter.includes(itemMonth)) return false;
+                    }
+                    
+                    // Gün filtresi
+                    if (dayFilter.length > 0) {
+                        const itemDay = item.date.substring(8, 10);
+                        if (!dayFilter.includes(itemDay)) return false;
+                    }
+                    
+                    return true;
+                });
+                
+                const totalSales = data.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
+                const totalQty = data.reduce((sum, item) => sum + parseFloat(item.quantity || 0), 0);
+                const uniqueDates = new Set(data.map(item => item.date));
+                const transactionCount = uniqueDates.size;
+                const avgTransaction = totalSales / Math.max(transactionCount, 1);
+                const uniqueCustomers = new Set(data.map(item => item.partner)).size;
+                const uniqueProducts = new Set(data.map(item => item.product)).size;
+                
+                return {
+                    name: storeName,
+                    data: data,
+                    totalSales,
+                    totalQty,
+                    transactionCount,
+                    avgTransaction,
+                    uniqueCustomers,
+                    uniqueProducts
+                };
+            }).filter(st => st.data.length > 0);
+            
+            if (storesData.length === 0) {
+                document.getElementById('storeProfileContainer').style.display = 'none';
+                document.getElementById('storeSearchNoResults').style.display = 'block';
+                return;
+            }
+            
+            // Sonuçları göster
+            document.getElementById('storeSearchNoResults').style.display = 'none';
+            document.getElementById('storeProfileContainer').style.display = 'block';
+            document.getElementById('singleStoreView').style.display = 'none';
+            document.getElementById('multipleStoresView').style.display = 'block';
+            
+            // Karşılaştırma tablosu oluştur
+            renderStoreComparisonTable(storesData);
+            
+            // Karşılaştırma grafikleri
+            renderStoreComparisonCharts(storesData);
+            
+            // Tek mağaza bölümlerini gizle (çoklu karşılaştırmada gereksiz)
+            document.getElementById('storeBrandCategorySection').style.display = 'none';
+            document.getElementById('storeTopProductsSection').style.display = 'none';
+            document.getElementById('storeFullSalespersonSection').style.display = 'none';
+            
+            // AI Analiz içeriğini temizle ve karşılaştırmalı analizi göster
+            const aiPanel = document.getElementById('storeAIAnalysisPanel');
+            if (aiPanel) {
+                aiPanel.style.display = 'block';
+            }
+            
+            // Karşılaştırmalı AI analizi
+            performMultipleStoresAIAnalysis(storesData);
         }
         
         function renderStoreBrandChart(data) {
