@@ -4122,31 +4122,76 @@
             
             // Her mağaza için hedef ve gerçekleşme hesapla
             const storesData = storesList.map(storeName => {
-                // Hedefi al (Google Sheets veya localStorage)
+                // Hedefi al (Esnek eşleştirme ile)
                 let target = 0;
+                
+                // Hedef anahtarı bul (tam eşleşme veya kısmi eşleşme)
+                function findTargetKey(targetObj, storeName) {
+                    if (!targetObj) return null;
+                    
+                    // Tam eşleşme
+                    if (targetObj[storeName]) return storeName;
+                    
+                    // Kısmi eşleşme (case-insensitive)
+                    const storeNameLower = storeName.toLowerCase();
+                    for (const key of Object.keys(targetObj)) {
+                        const keyLower = key.toLowerCase();
+                        // Eğer hedef anahtarı mağaza adını içeriyorsa veya tam tersi
+                        if (keyLower.includes(storeNameLower) || storeNameLower.includes(keyLower)) {
+                            return key;
+                        }
+                    }
+                    return null;
+                }
                 
                 if (month) {
                     // AYLIK HEDEF - Önce centralTargets (GitHub), sonra Google Sheets, sonra localStorage
-                    if (centralTargets.monthly[year] && centralTargets.monthly[year][storeName] && centralTargets.monthly[year][storeName][month]) {
-                        target = centralTargets.monthly[year][storeName][month];
-                    } else if (googleSheetsTargets.monthly[year] && googleSheetsTargets.monthly[year][storeName] && googleSheetsTargets.monthly[year][storeName][month]) {
-                        target = googleSheetsTargets.monthly[year][storeName][month];
-                    } else {
+                    if (centralTargets.monthly && centralTargets.monthly[year]) {
+                        const targetKey = findTargetKey(centralTargets.monthly[year], storeName);
+                        if (targetKey && centralTargets.monthly[year][targetKey][month]) {
+                            target = centralTargets.monthly[year][targetKey][month];
+                        }
+                    }
+                    
+                    if (target === 0 && googleSheetsTargets.monthly[year]) {
+                        const targetKey = findTargetKey(googleSheetsTargets.monthly[year], storeName);
+                        if (targetKey && googleSheetsTargets.monthly[year][targetKey][month]) {
+                            target = googleSheetsTargets.monthly[year][targetKey][month];
+                        }
+                    }
+                    
+                    if (target === 0) {
                         const localTargets = JSON.parse(localStorage.getItem('monthlyTargets') || '{}');
-                        if (localTargets[year] && localTargets[year][storeName] && localTargets[year][storeName][month]) {
-                            target = localTargets[year][storeName][month];
+                        if (localTargets[year]) {
+                            const targetKey = findTargetKey(localTargets[year], storeName);
+                            if (targetKey && localTargets[year][targetKey][month]) {
+                                target = localTargets[year][targetKey][month];
+                            }
                         }
                     }
                 } else {
                     // YILLIK HEDEF - Önce centralTargets (GitHub), sonra Google Sheets, sonra localStorage
-                    if (centralTargets.yearly[year] && centralTargets.yearly[year][storeName]) {
-                        target = centralTargets.yearly[year][storeName];
-                    } else if (googleSheetsTargets.yearly[year] && googleSheetsTargets.yearly[year][storeName]) {
-                        target = googleSheetsTargets.yearly[year][storeName];
-                    } else {
+                    if (centralTargets.yearly && centralTargets.yearly[year]) {
+                        const targetKey = findTargetKey(centralTargets.yearly[year], storeName);
+                        if (targetKey) {
+                            target = centralTargets.yearly[year][targetKey];
+                        }
+                    }
+                    
+                    if (target === 0 && googleSheetsTargets.yearly[year]) {
+                        const targetKey = findTargetKey(googleSheetsTargets.yearly[year], storeName);
+                        if (targetKey) {
+                            target = googleSheetsTargets.yearly[year][targetKey];
+                        }
+                    }
+                    
+                    if (target === 0) {
                         const localTargets = JSON.parse(localStorage.getItem('yearlyTargets') || '{}');
-                        if (localTargets[year] && localTargets[year][storeName]) {
-                            target = localTargets[year][storeName];
+                        if (localTargets[year]) {
+                            const targetKey = findTargetKey(localTargets[year], storeName);
+                            if (targetKey) {
+                                target = localTargets[year][targetKey];
+                            }
                         }
                     }
                 }
