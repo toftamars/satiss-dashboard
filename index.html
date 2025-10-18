@@ -4249,8 +4249,17 @@
         
         // Yıllık hedefi yükle
         function loadYearlyTarget() {
-            const year = document.getElementById('targetYear').value;
-            const store = document.getElementById('targetYearStore').value;
+            const yearElement = document.getElementById('targetYear');
+            const storeElement = document.getElementById('targetYearStore');
+            
+            // Eğer elementler yoksa (yeni hedef sistemi kullanılıyorsa), çık
+            if (!yearElement || !storeElement) {
+                console.log('ℹ️ Eski hedef sistemi elementleri bulunamadı, yeni sistem kullanılıyor');
+                return;
+            }
+            
+            const year = yearElement.value;
+            const store = storeElement.value;
             
             // Mağaza adını temizle (kodları kaldır)
             const cleanStoreName = store.replace(/\[.*?\]\s*/g, '').replace(/^.*?\s-\s/, '').trim();
@@ -4350,9 +4359,19 @@
         
         // Aylık hedefi yükle
         function loadMonthlyTarget() {
-            const year = document.getElementById('targetYear').value;
-            const month = document.getElementById('targetMonth').value;
-            const store = document.getElementById('targetMonthStore').value;
+            const yearElement = document.getElementById('targetYear');
+            const monthElement = document.getElementById('targetMonth');
+            const storeElement = document.getElementById('targetMonthStore');
+            
+            // Eğer elementler yoksa (yeni hedef sistemi kullanılıyorsa), çık
+            if (!yearElement || !monthElement || !storeElement) {
+                console.log('ℹ️ Eski hedef sistemi elementleri bulunamadı, yeni sistem kullanılıyor');
+                return;
+            }
+            
+            const year = yearElement.value;
+            const month = monthElement.value;
+            const store = storeElement.value;
             
             // Mağaza adını temizle (kodları kaldır)
             const cleanStoreName = store.replace(/\[.*?\]\s*/g, '').replace(/^.*?\s-\s/, '').trim();
@@ -5787,15 +5806,36 @@
         
         // Kategori dropdown için
         let allCategories = [];
+        let allCategoriesHierarchical = []; // Hiyerarşik kategori listesi
         
         // Kategori dropdown fonksiyonları
         function initializeProductFilters() {
-            // Tüm kategorileri topla
+            // Tüm kategorileri topla (hiyerarşik olarak)
+            const categoryMap = new Map();
+            allData.forEach(item => {
+                const cat1 = item.category_1 || '';
+                const cat2 = item.category_2 || '';
+                const cat3 = item.category_3 || '';
+                const cat4 = item.category_4 || '';
+                
+                // Hiyerarşik yapıyı oluştur
+                if (cat1 || cat2 || cat3 || cat4) {
+                    const hierarchy = [cat1, cat2, cat3, cat4].filter(c => c && c.trim()).join(' > ');
+                    if (hierarchy) {
+                        categoryMap.set(hierarchy, {cat1, cat2, cat3, cat4});
+                    }
+                }
+            });
+            
+            allCategoriesHierarchical = Array.from(categoryMap.keys()).sort();
+            
+            // Basit liste için de tüm kategorileri topla
             const categorySet = new Set();
             allData.forEach(item => {
                 if (item.category_1) categorySet.add(item.category_1);
                 if (item.category_2) categorySet.add(item.category_2);
                 if (item.category_3) categorySet.add(item.category_3);
+                if (item.category_4) categorySet.add(item.category_4);
             });
             allCategories = Array.from(categorySet).sort();
             
@@ -5824,24 +5864,34 @@
             const searchValue = document.getElementById('productCategorySearch').value.toLowerCase();
             const dropdown = document.getElementById('productCategoryDropdown');
             
-            const filtered = allCategories.filter(cat => 
+            // Hiyerarşik kategorilerde ara
+            const filtered = allCategoriesHierarchical.filter(cat => 
                 cat.toLowerCase().includes(searchValue)
             );
             
             if (filtered.length === 0) {
                 dropdown.innerHTML = '<div style="padding: 15px; text-align: center; color: #999;">Sonuç bulunamadı</div>';
             } else {
-                dropdown.innerHTML = filtered.slice(0, 20).map(cat => `
-                    <div onclick="selectProductCategory('${cat.replace(/'/g, "\\'")}')" 
-                         style="padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; transition: all 0.2s;"
-                         onmouseover="this.style.background='#f5f5f5'"
-                         onmouseout="this.style.background='white'">
-                        📁 ${cat}
-                    </div>
-                `).join('');
+                dropdown.innerHTML = filtered.slice(0, 20).map(cat => {
+                    // Kategori seviyelerini renklendir
+                    const parts = cat.split(' > ');
+                    const displayText = parts.map((part, idx) => {
+                        const colors = ['#667eea', '#764ba2', '#e74c3c', '#f39c12'];
+                        return `<span style="color: ${colors[idx % colors.length]}; font-weight: ${idx === 0 ? 'bold' : 'normal'};">${part}</span>`;
+                    }).join(' <span style="color: #999;">›</span> ');
+                    
+                    return `
+                        <div onclick="selectProductCategory('${cat.replace(/'/g, "\\'")}')" 
+                             style="padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; transition: all 0.2s;"
+                             onmouseover="this.style.background='#f5f5f5'"
+                             onmouseout="this.style.background='white'">
+                            📁 ${displayText}
+                        </div>
+                    `;
+                }).join('');
                 
                 if (filtered.length > 20) {
-                    dropdown.innerHTML += '<div style="padding: 10px; text-align: center; color: #999; font-size: 0.9em;">+${filtered.length - 20} daha...</div>';
+                    dropdown.innerHTML += '<div style="padding: 10px; text-align: center; color: #999; font-size: 0.9em;">+' + (filtered.length - 20) + ' daha...</div>';
                 }
             }
             
@@ -5909,11 +5959,26 @@
                 // Ürün/Marka filtresi
                 let matchesSearch = !searchTerm || product.includes(searchLower) || brand.includes(searchLower);
                 
-                // Kategori filtresi
-                let matchesCategory = !selectedCategory || 
-                    category1.includes(selectedCategory.toLowerCase()) || 
-                    category2.includes(selectedCategory.toLowerCase()) || 
-                    category3.includes(selectedCategory.toLowerCase());
+                // Kategori filtresi (hiyerarşik veya basit arama)
+                let matchesCategory = true;
+                if (selectedCategory) {
+                    const selectedLower = selectedCategory.toLowerCase();
+                    // Eğer hiyerarşik kategori seçildiyse (içinde '>' varsa)
+                    if (selectedCategory.includes(' > ')) {
+                        // Hiyerarşik yapıyı kontrol et
+                        const currentHierarchy = [item.category_1, item.category_2, item.category_3, item.category_4]
+                            .filter(c => c && c.trim())
+                            .join(' > ')
+                            .toLowerCase();
+                        matchesCategory = currentHierarchy.includes(selectedLower);
+                    } else {
+                        // Basit arama - herhangi bir kategori seviyesinde ara
+                        matchesCategory = category1.includes(selectedLower) || 
+                                        category2.includes(selectedLower) || 
+                                        category3.includes(selectedLower) ||
+                                        (item.category_4 || '').toLowerCase().includes(selectedLower);
+                    }
+                }
                 
                 // Tarih filtreleri
                 let matchesDate = true;
@@ -8263,9 +8328,17 @@
         }
         
         function searchStoreProfile() {
-            const searchQuery = document.getElementById('storeSearchInput').value.trim().toLowerCase();
+            const searchQuery = document.getElementById('storeSearchInput').value.trim();
             if (!searchQuery) {
                 alert('Lütfen bir mağaza adı girin');
+                return;
+            }
+            
+            // Virgül ile ayrılmış mağaza isimlerini ayır (case-insensitive arama için)
+            const searchTerms = searchQuery.split(',').map(s => s.trim().toLowerCase()).filter(s => s);
+            
+            if (searchTerms.length === 0) {
+                alert('Lütfen geçerli bir mağaza adı girin');
                 return;
             }
             
@@ -8280,7 +8353,12 @@
             console.log('📅 Mağaza Filtreleri:', {yearFilter, monthFilter, dayFilter});
             
             let storeData = allData.filter(item => {
-                if (!item.store || !item.store.toLowerCase().includes(searchQuery)) return false;
+                if (!item.store) return false;
+                
+                // Herhangi bir arama terimiyle eşleşiyor mu? (case-insensitive)
+                const storeLower = item.store.toLowerCase();
+                const matchesAnySearch = searchTerms.some(term => storeLower.includes(term));
+                if (!matchesAnySearch) return false;
                 const store = (item.store || '').toLowerCase();
                 if (store.includes('analitik') || store.includes('eğitim')) return false;
                 if (!item.date) return false;
@@ -9042,10 +9120,12 @@
             
             // Yıllık hedef mağaza dropdown
             const yearStoreSelect = document.getElementById('targetYearStore');
-            if (yearStoreSelect) {
+            const targetYearElement = document.getElementById('targetYear');
+            
+            if (yearStoreSelect && targetYearElement) {
                 // Mevcut seçimi koru (localStorage'dan gelecek)
                 const savedYearTargets = JSON.parse(localStorage.getItem('yearlyTargets') || '{}');
-                const currentYear = document.getElementById('targetYear').value;
+                const currentYear = targetYearElement.value;
                 const savedStoreForYear = savedYearTargets[currentYear] ? Object.keys(savedYearTargets[currentYear])[0] : 'TÜM MAĞAZALAR';
                 
                 yearStoreSelect.innerHTML = '<option value="TÜM MAĞAZALAR">🏢 Tüm Mağazalar</option>';
@@ -9982,7 +10062,55 @@
                     alert('Lütfen bir satış temsilcisi adı girin veya listeden seçin');
                     return;
                 }
-                salespersonsToSearch = [searchQuery];
+                
+                // Virgül ile ayrılmış isimleri ayır (case-insensitive arama için)
+                const searchTerms = searchQuery.split(',').map(s => s.trim().toLowerCase()).filter(s => s);
+                
+                if (searchTerms.length === 0) {
+                    alert('Lütfen geçerli bir satış temsilcisi adı girin');
+                    return;
+                }
+                
+                // Her arama terimini gerçek isimlerle eşleştir
+                const spMap = {};
+                allData.forEach(item => {
+                    const name = item.sales_person || '';
+                    const store = item.store || '';
+                    if (store.toLowerCase().includes('analitik') || store.toLowerCase().includes('eğitim')) {
+                        return;
+                    }
+                    if (name && !spMap[name]) {
+                        spMap[name] = name;
+                    }
+                });
+                
+                // Her arama terimi için en uygun eşleşmeyi bul
+                salespersonsToSearch = [];
+                searchTerms.forEach(term => {
+                    const matches = Object.keys(spMap).filter(name => 
+                        name.toLowerCase().includes(term)
+                    );
+                    
+                    if (matches.length > 0) {
+                        // İlk eşleşmeyi al (tam eşleşme varsa onu, yoksa kısmi eşleşmeyi)
+                        const exactMatch = matches.find(m => m.toLowerCase() === term);
+                        salespersonsToSearch.push(exactMatch || matches[0]);
+                    }
+                });
+                
+                if (salespersonsToSearch.length === 0) {
+                    alert('❌ Girilen isimlere uygun satış temsilcisi bulunamadı!');
+                    return;
+                }
+                
+                // Tekrar edenleri kaldır
+                salespersonsToSearch = [...new Set(salespersonsToSearch)];
+                
+                // En fazla 3 temsilci
+                if (salespersonsToSearch.length > 3) {
+                    alert('⚠️ En fazla 3 satış temsilcisi arayabilirsiniz!');
+                    salespersonsToSearch = salespersonsToSearch.slice(0, 3);
+                }
             }
             
             console.log('🔍 Satış temsilcileri aranıyor:', salespersonsToSearch);
