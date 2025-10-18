@@ -1116,7 +1116,7 @@
             <button class="tab" onclick="switchTab('city')">🌍 Şehir Analizi</button>
             <button class="tab" onclick="switchTab('stock')">📦 Stok Dağılım</button>
             <button class="tab" onclick="switchTab('time')">⏰ Zaman Analizi</button>
-            <button class="tab" onclick="switchTab('product')">🎸 Ürün Analizi</button>
+            <button class="tab" onclick="switchTab('product')">🎸 Ürün, Marka ve Kategori Analizi</button>
         </div>
 
         <!-- Sales Analysis Tab -->
@@ -1509,7 +1509,7 @@
         <!-- Product Analysis Tab -->
         <div id="productTab" class="tab-content">
             <div class="content">
-                <h2 style="margin-bottom: 20px;">🎸 Ürün / Marka Analizi</h2>
+                <h2 style="margin-bottom: 20px;">🎸 Ürün, Marka ve Kategori Analizi</h2>
                 
                 <!-- Search Section -->
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; margin-bottom: 30px;">
@@ -2421,10 +2421,34 @@
             }
         }
 
+        // Hedefleri yükle (GitHub'dan - Kalıcı çözüm)
+        let centralTargets = {yearly: {}, monthly: {}};
+        
+        async function loadCentralTargets() {
+            try {
+                console.log('🎯 Merkezi hedefler yükleniyor...');
+                const response = await fetch('targets.json?' + Date.now()); // Cache bypass
+                if (response.ok) {
+                    centralTargets = await response.json();
+                    console.log('✅ Merkezi hedefler yüklendi:', centralTargets);
+                    return true;
+                } else {
+                    console.warn('⚠️ targets.json yüklenemedi, varsayılan hedefler kullanılacak');
+                    return false;
+                }
+            } catch (error) {
+                console.error('❌ Hedef yükleme hatası:', error);
+                return false;
+            }
+        }
+        
         async function loadData() {
             try {
                 document.getElementById('dataStatus').innerHTML = '<span class="status-badge" style="background:#ffc107;color:#000;">⏳ Yükleniyor...</span>';
                 document.getElementById('tableContainer').innerHTML = '<div style="text-align:center;padding:50px;font-size:1.2em;">⏳ Veriler yükleniyor, lütfen bekleyin...</div>';
+                
+                // Hedefleri yükle (paralel olarak)
+                loadCentralTargets();
                 
                 // İlk olarak metadata'yı yükle
                 metadata = await loadMetadata();
@@ -4072,8 +4096,10 @@
                 let target = 0;
                 
                 if (month) {
-                    // AYLIK HEDEF
-                    if (googleSheetsTargets.monthly[year] && googleSheetsTargets.monthly[year][storeName] && googleSheetsTargets.monthly[year][storeName][month]) {
+                    // AYLIK HEDEF - Önce centralTargets (GitHub), sonra Google Sheets, sonra localStorage
+                    if (centralTargets.monthly[year] && centralTargets.monthly[year][storeName] && centralTargets.monthly[year][storeName][month]) {
+                        target = centralTargets.monthly[year][storeName][month];
+                    } else if (googleSheetsTargets.monthly[year] && googleSheetsTargets.monthly[year][storeName] && googleSheetsTargets.monthly[year][storeName][month]) {
                         target = googleSheetsTargets.monthly[year][storeName][month];
                     } else {
                         const localTargets = JSON.parse(localStorage.getItem('monthlyTargets') || '{}');
@@ -4082,8 +4108,10 @@
                         }
                     }
                 } else {
-                    // YILLIK HEDEF
-                    if (googleSheetsTargets.yearly[year] && googleSheetsTargets.yearly[year][storeName]) {
+                    // YILLIK HEDEF - Önce centralTargets (GitHub), sonra Google Sheets, sonra localStorage
+                    if (centralTargets.yearly[year] && centralTargets.yearly[year][storeName]) {
+                        target = centralTargets.yearly[year][storeName];
+                    } else if (googleSheetsTargets.yearly[year] && googleSheetsTargets.yearly[year][storeName]) {
                         target = googleSheetsTargets.yearly[year][storeName];
                     } else {
                         const localTargets = JSON.parse(localStorage.getItem('yearlyTargets') || '{}');
