@@ -5576,8 +5576,8 @@
                 storeSelect.innerHTML += `<option value="${store}">${store}</option>`;
             });
             
-            // Kategori filtresi
-            const categories = [...new Set(filteredData.map(item => item.category_1).filter(Boolean))];
+            // Kategori filtresi (sadece Kategori 1, ALL hariç)
+            const categories = [...new Set(filteredData.map(item => item.category_1).filter(c => c && c.toLowerCase() !== 'all'))].sort();
             const categorySelect = document.getElementById('categoryTimeFilter');
             categorySelect.innerHTML = '<option value="">Tüm Kategoriler</option>';
             categories.forEach(cat => {
