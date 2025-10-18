@@ -1252,68 +1252,24 @@
         <!-- Targets Tab -->
         <div id="targetsTab" class="tab-content">
             <div class="content">
-                <h2 style="margin-bottom: 20px;">🎯 Hedef Takip Sistemi</h2>
+                <h2 style="margin-bottom: 30px;">🎯 Hedef Takip Sistemi</h2>
                 
-                <div class="target-section">
-                    <h3>Yıllık Hedef</h3>
-                    <div class="target-grid">
-                        <div class="target-card">
-                            <h3>Hedef Belirle</h3>
-                            <input type="number" id="yearlyTarget" class="target-input" placeholder="Yıllık hedef (USD)">
-                            <label style="font-size: 0.9em; color: #6c757d;">Mağaza seçin:</label>
-                            <select id="targetYearStore" class="target-input" onchange="loadYearlyTarget()">
-                                <option value="TÜM MAĞAZALAR">🏢 Tüm Mağazalar</option>
-                            </select>
-                            <label style="font-size: 0.9em; color: #6c757d;">Yıl seçin:</label>
-                            <select id="targetYear" class="target-input" onchange="loadYearlyTarget()">
+                <!-- Filtreler -->
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; margin-bottom: 30px;">
+                    <h3 style="color: white; margin: 0 0 20px 0;">📅 Dönem Seçin</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; max-width: 600px;">
+                        <div>
+                            <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">Yıl</label>
+                            <select id="targetFilterYear" class="target-input" onchange="loadAllStoresTargets()" style="width: 100%;">
                                 <option value="2025">2025</option>
                                 <option value="2024">2024</option>
                                 <option value="2023">2023</option>
                             </select>
-                            <button onclick="saveYearlyTarget()" style="margin-top: 15px; padding: 12px 30px; background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1em;">
-                                💾 Kaydet
-                            </button>
                         </div>
-                        
-                        <div class="target-card">
-                            <h3>Gerçekleşme</h3>
-                            <div class="progress-bar">
-                                <div class="progress-fill" id="yearlyProgress" style="width: 0%">0%</div>
-                            </div>
-                            <div class="target-stats">
-                                <div class="target-stat">
-                                    <label>Gerçekleşen</label>
-                                    <value id="yearlyAchieved">$0</value>
-                                </div>
-                                <div class="target-stat">
-                                    <label>Kalan</label>
-                                    <value id="yearlyRemaining">$0</value>
-                                </div>
-                                <div class="target-stat">
-                                    <label>Kalan Gün</label>
-                                    <value id="yearlyDaysLeft">0</value>
-                                </div>
-                                <div class="target-stat">
-                                    <label>Günlük Gerekli</label>
-                                    <value id="yearlyDailyRequired">$0</value>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="target-section">
-                    <h3>Aylık Hedef</h3>
-                    <div class="target-grid">
-                        <div class="target-card">
-                            <h3>Hedef Belirle</h3>
-                            <input type="number" id="monthlyTarget" class="target-input" placeholder="Aylık hedef (USD)">
-                            <label style="font-size: 0.9em; color: #6c757d;">Mağaza seçin:</label>
-                            <select id="targetMonthStore" class="target-input" onchange="loadMonthlyTarget()">
-                                <option value="TÜM MAĞAZALAR">🏢 Tüm Mağazalar</option>
-                            </select>
-                            <label style="font-size: 0.9em; color: #6c757d;">Ay seçin:</label>
-                            <select id="targetMonth" class="target-input" onchange="loadMonthlyTarget()">
+                        <div>
+                            <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">Ay (Opsiyonel)</label>
+                            <select id="targetFilterMonth" class="target-input" onchange="loadAllStoresTargets()" style="width: 100%;">
+                                <option value="">Tüm Yıl</option>
                                 <option value="01">Ocak</option>
                                 <option value="02">Şubat</option>
                                 <option value="03">Mart</option>
@@ -1327,42 +1283,15 @@
                                 <option value="11">Kasım</option>
                                 <option value="12">Aralık</option>
                             </select>
-                            <button onclick="saveMonthlyTarget()" style="margin-top: 15px; padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1em;">
-                                💾 Kaydet
-                            </button>
-                        </div>
-                        
-                        <div class="target-card">
-                            <h3>Gerçekleşme</h3>
-                            <div class="progress-bar">
-                                <div class="progress-fill" id="monthlyProgress" style="width: 0%">0%</div>
-                            </div>
-                            <div class="target-stats">
-                                <div class="target-stat">
-                                    <label>Gerçekleşen</label>
-                                    <value id="monthlyAchieved">$0</value>
-                                </div>
-                                <div class="target-stat">
-                                    <label>Kalan</label>
-                                    <value id="monthlyRemaining">$0</value>
-                                </div>
-                                <div class="target-stat">
-                                    <label>Kalan Gün</label>
-                                    <value id="monthlyDaysLeft">0</value>
-                                </div>
-                                <div class="target-stat">
-                                    <label>Günlük Gerekli</label>
-                                    <value id="monthlyDailyRequired">$0</value>
-                                </div>
-                            </div>
                         </div>
                     </div>
+                    <p style="color: white; opacity: 0.9; margin-top: 15px; font-size: 0.95em;">
+                        💡 İpucu: Sadece yıl seçerseniz yıllık hedefler, yıl + ay seçerseniz aylık hedefler gösterilir
+                    </p>
                 </div>
                 
-                <!-- Target Chart -->
-                <div class="chart-container">
-                    <canvas id="targetChart"></canvas>
-                </div>
+                <!-- Tüm Mağazalar Hedef Listesi -->
+                <div id="allStoresTargetsContainer"></div>
             </div>
         </div>
         <!-- End Targets Tab -->
@@ -2028,10 +1957,18 @@
                     </div>
                 </div>
                 
-                <!-- Search Input -->
+                <!-- Search Input with Multi-Select -->
                 <div style="max-width: 800px; margin: 0 auto 40px;">
+                    <!-- Selected Stores Tags -->
+                    <div id="selectedStoresContainer" style="display: none; margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <span style="font-weight: 600; color: #667eea;">Seçili Mağazalar:</span>
+                            <div id="selectedStoresTags" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                        </div>
+                    </div>
+                    
                     <div style="position: relative;">
-                        <input type="text" id="storeSearchInput" placeholder="Mağaza adı yazın... (örn: Toptan)" 
+                        <input type="text" id="storeSearchInput" placeholder="Mağaza adı yazın... (örn: Toptan, Akasya)" 
                                style="width: 100%; padding: 20px 60px 20px 20px; font-size: 1.1em; border: 2px solid #667eea; border-radius: 15px; outline: none;"
                                oninput="showStoreSuggestions(this.value)"
                                onkeydown="handleStoreKeydown(event)"
@@ -2043,20 +1980,22 @@
                         <div id="storeSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #667eea; border-top: none; border-radius: 0 0 15px 15px; max-height: 300px; overflow-y: auto; display: none; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
                     </div>
                     <p style="text-align: center; color: #6c757d; margin-top: 10px; font-size: 0.9em;">
-                        💡 İpucu: Mağaza adının bir kısmını yazmak yeterli, listeden seçebilirsiniz. Filtre seçerseniz karşılaştırma yapabilirsiniz!
+                        💡 İpucu: Birden fazla mağaza seçerek karşılaştırmalı analiz yapabilirsiniz! (En fazla 3 mağaza)
                     </p>
                 </div>
                 
                 <!-- Results Container -->
                 <div id="storeProfileContainer" style="display: none;">
-                    <!-- Store Profile Header -->
-                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; border-radius: 20px; margin-bottom: 30px;">
-                        <h2 style="margin: 0 0 20px 0; font-size: 2em;">🏪 <span id="storeName">-</span></h2>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-                            <div>
-                                <div style="opacity: 0.8; font-size: 0.9em;">💰 Toplam Satış (KDV Hariç)</div>
-                                <div style="font-size: 1.5em; font-weight: bold;" id="storeTotalSales">$0</div>
-                            </div>
+                    <!-- Single Store View -->
+                    <div id="singleStoreView" style="display: none;">
+                        <!-- Store Profile Header -->
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; border-radius: 20px; margin-bottom: 30px;">
+                            <h2 style="margin: 0 0 20px 0; font-size: 2em;">🏪 <span id="storeName">-</span></h2>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                                <div>
+                                    <div style="opacity: 0.8; font-size: 0.9em;">💰 Toplam Satış (KDV Hariç)</div>
+                                    <div style="font-size: 1.5em; font-weight: bold;" id="storeTotalSales">$0</div>
+                                </div>
                             <div>
                                 <div style="opacity: 0.8; font-size: 0.9em;">📦 Toplam Adet</div>
                                 <div style="font-size: 1.5em; font-weight: bold;" id="storeTotalQty">0</div>
@@ -3879,7 +3818,7 @@
             
             // Tab'a göre özel işlemler
             if (tabName === 'targets') {
-                calculateTargets();
+                loadAllStoresTargets(); // Yeni hedef takip sistemi
             } else if (tabName === 'customers') {
                 analyzeCustomers();
             } else if (tabName === 'time') {
@@ -4107,6 +4046,177 @@
             // Bildirim
             const storeText = store === 'TÜM MAĞAZALAR' ? 'Tüm Mağazalar' : store;
             alert(`✅ ${year} yılı ${storeText} hedefi kaydedildi: $${target.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
+        }
+        
+        // Tüm mağazaların hedeflerini yükle ve göster (YENİ SİSTEM)
+        function loadAllStoresTargets() {
+            const year = document.getElementById('targetFilterYear').value;
+            const month = document.getElementById('targetFilterMonth').value;
+            const container = document.getElementById('allStoresTargetsContainer');
+            
+            console.log('📊 Tüm mağazalar hedef listesi yükleniyor:', {year, month});
+            
+            // Tüm mağazaları bul
+            const allStores = new Set();
+            allData.forEach(item => {
+                if (item.store && item.store !== 'Analitik' && !item.store.toLowerCase().includes('eğitim')) {
+                    allStores.add(item.store);
+                }
+            });
+            
+            const storesList = Array.from(allStores).sort();
+            
+            // Her mağaza için hedef ve gerçekleşme hesapla
+            const storesData = storesList.map(storeName => {
+                // Hedefi al (Google Sheets veya localStorage)
+                let target = 0;
+                
+                if (month) {
+                    // AYLIK HEDEF
+                    if (googleSheetsTargets.monthly[year] && googleSheetsTargets.monthly[year][storeName] && googleSheetsTargets.monthly[year][storeName][month]) {
+                        target = googleSheetsTargets.monthly[year][storeName][month];
+                    } else {
+                        const localTargets = JSON.parse(localStorage.getItem('monthlyTargets') || '{}');
+                        if (localTargets[year] && localTargets[year][storeName] && localTargets[year][storeName][month]) {
+                            target = localTargets[year][storeName][month];
+                        }
+                    }
+                } else {
+                    // YILLIK HEDEF
+                    if (googleSheetsTargets.yearly[year] && googleSheetsTargets.yearly[year][storeName]) {
+                        target = googleSheetsTargets.yearly[year][storeName];
+                    } else {
+                        const localTargets = JSON.parse(localStorage.getItem('yearlyTargets') || '{}');
+                        if (localTargets[year] && localTargets[year][storeName]) {
+                            target = localTargets[year][storeName];
+                        }
+                    }
+                }
+                
+                // Gerçekleşmeyi hesapla
+                const storeData = allData.filter(item => {
+                    if (item.store !== storeName) return false;
+                    if (!item.date) return false;
+                    
+                    if (month) {
+                        // Aylık: Belirli yıl ve ay
+                        return item.date.startsWith(`${year}-${month}`);
+                    } else {
+                        // Yıllık: Sadece yıl
+                        return item.date.startsWith(year);
+                    }
+                });
+                
+                const achieved = storeData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
+                const percentage = target > 0 ? (achieved / target * 100) : 0;
+                const remaining = target - achieved;
+                
+                // Kalan gün hesapla
+                const today = new Date();
+                let daysLeft = 0;
+                
+                if (month) {
+                    // Ayın son günü
+                    const lastDay = new Date(year, parseInt(month), 0);
+                    daysLeft = Math.max(0, Math.ceil((lastDay - today) / (1000 * 60 * 60 * 24)));
+                } else {
+                    // Yılın son günü
+                    const lastDay = new Date(year, 11, 31);
+                    daysLeft = Math.max(0, Math.ceil((lastDay - today) / (1000 * 60 * 60 * 24)));
+                }
+                
+                const dailyRequired = daysLeft > 0 ? remaining / daysLeft : 0;
+                
+                return {
+                    name: storeName,
+                    target,
+                    achieved,
+                    percentage,
+                    remaining,
+                    daysLeft,
+                    dailyRequired
+                };
+            }).filter(store => store.target > 0); // Sadece hedefi olanları göster
+            
+            // Yüzdeye göre sırala (yüksekten düşüğe)
+            storesData.sort((a, b) => b.percentage - a.percentage);
+            
+            // Renk belirleme fonksiyonu
+            function getPerformanceColor(percentage) {
+                if (percentage >= 130) return '#10b981'; // Yeşil - Parlak
+                if (percentage >= 100) return '#22c55e'; // Yeşil
+                if (percentage >= 85) return '#f59e0b'; // Turuncu
+                return '#ef4444'; // Kırmızı
+            }
+            
+            // HTML oluştur
+            let html = `
+                <div style="margin-bottom: 20px; text-align: center;">
+                    <h3 style="margin: 0; font-size: 1.5em;">
+                        ${month ? `${year} - ${['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'][parseInt(month) - 1]} Dönemi` : `${year} Yılı`} 
+                        Mağaza Hedef Durumları
+                    </h3>
+                    <p style="color: #6c757d; margin-top: 5px;">Toplam ${storesData.length} mağaza</p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px;">
+            `;
+            
+            storesData.forEach(store => {
+                const bgColor = getPerformanceColor(store.percentage);
+                const textColor = 'white';
+                
+                html += `
+                    <div style="background: ${bgColor}; color: ${textColor}; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                        <h3 style="margin: 0 0 20px 0; font-size: 1.3em; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 10px;">
+                            🏪 ${store.name}
+                        </h3>
+                        
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <div style="font-size: 3em; font-weight: bold; margin-bottom: 5px;">
+                                ${store.percentage.toFixed(1)}%
+                            </div>
+                            <div style="font-size: 0.9em; opacity: 0.9;">Gerçekleşme</div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                            <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px;">
+                                <div style="font-size: 0.85em; opacity: 0.9; margin-bottom: 5px;">Gerçekleşen</div>
+                                <div style="font-size: 1.2em; font-weight: bold;">$${store.achieved.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px;">
+                                <div style="font-size: 0.85em; opacity: 0.9; margin-bottom: 5px;">Kalan</div>
+                                <div style="font-size: 1.2em; font-weight: bold;">$${store.remaining.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px;">
+                                <div style="font-size: 0.85em; opacity: 0.9; margin-bottom: 5px;">Kalan Gün</div>
+                                <div style="font-size: 1.2em; font-weight: bold;">${store.daysLeft}</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px;">
+                                <div style="font-size: 0.85em; opacity: 0.9; margin-bottom: 5px;">Günlük Gerekli</div>
+                                <div style="font-size: 1.2em; font-weight: bold;">$${store.dailyRequired.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            if (storesData.length === 0) {
+                html = `
+                    <div style="text-align: center; padding: 60px; background: #f8f9fa; border-radius: 15px;">
+                        <div style="font-size: 4em; margin-bottom: 20px;">📊</div>
+                        <h3 style="color: #6c757d; margin-bottom: 10px;">Hedef Bulunamadı</h3>
+                        <p style="color: #adb5bd;">Seçili dönem için hiçbir mağazaya hedef tanımlanmamış</p>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
         }
         
         // Yıllık hedefi yükle
