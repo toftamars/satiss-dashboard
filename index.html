@@ -1543,27 +1543,29 @@
                             </div>
                         </div>
                         
-                        <!-- Date Filters -->
-                        <div style="display: flex; gap: 10px;">
+                        <!-- Date Range Filters -->
+                        <div style="display: flex; gap: 10px; align-items: end;">
                             <div style="flex: 1;">
-                                <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">📅 Yıl</label>
-                                <select id="productYearFilter" onchange="updateProductMonthFilter(); searchProduct()" 
-                                        style="width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1em;">
-                                    <option value="">Tümü</option>
-                                </select>
+                                <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">📅 Başlangıç Tarihi</label>
+                                <input type="date" id="productDateStart" 
+                                       style="width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1em;">
                             </div>
                             <div style="flex: 1;">
-                                <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">📆 Ay</label>
-                                <select id="productMonthFilter" onchange="searchProduct()" 
-                                        style="width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1em;">
-                                    <option value="">Tümü</option>
-                                </select>
+                                <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">📅 Bitiş Tarihi</label>
+                                <input type="date" id="productDateEnd" 
+                                       style="width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1em;">
+                            </div>
+                            <div>
+                                <button onclick="clearProductDateFilters()" 
+                                        style="padding: 12px 20px; background: rgba(255,255,255,0.2); color: white; border: 2px solid white; border-radius: 8px; cursor: pointer; font-size: 1em; white-space: nowrap;">
+                                    🔄 Temizle
+                                </button>
                             </div>
                         </div>
                     </div>
                     
                     <p style="text-align: center; margin-top: 15px; color: white; font-size: 0.95em; opacity: 0.9;">
-                        💡 <strong>İpucu:</strong> Kategori seçmek zorunlu değil, istenirse sadece yıl veya ay bazlı analiz yapabilirsiniz
+                        💡 <strong>İpucu:</strong> Tarih aralığı seçmek zorunlu değil, istenirse tüm dönem veya belirli tarih aralığı için analiz yapabilirsiniz
                     </p>
                 </div>
                 
@@ -2150,6 +2152,34 @@
         <div id="stockTab" class="tab-content">
             <div class="content">
                 <h2 style="margin-bottom: 30px;">📦 Stok Dağılım Analizi</h2>
+                
+                <!-- Tarih Filtresi -->
+                <div style="max-width: 1000px; margin: 0 auto 30px;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 15px; color: white;">
+                        <h3 style="margin-bottom: 15px;">📅 Tarih Aralığı Filtresi (Opsiyonel)</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 15px; align-items: end;">
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-size: 0.9em; opacity: 0.9;">Başlangıç Tarihi:</label>
+                                <input type="date" id="stockDateStart" 
+                                       style="width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 1em;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-size: 0.9em; opacity: 0.9;">Bitiş Tarihi:</label>
+                                <input type="date" id="stockDateEnd" 
+                                       style="width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 1em;">
+                            </div>
+                            <div>
+                                <button onclick="clearStockDateFilters()" 
+                                        style="padding: 10px 20px; background: rgba(255,255,255,0.2); color: white; border: 2px solid white; border-radius: 8px; cursor: pointer; font-size: 1em;">
+                                    🔄 Temizle
+                                </button>
+                            </div>
+                        </div>
+                        <p style="margin-top: 10px; font-size: 0.85em; opacity: 0.8;">
+                            💡 Tarih seçmezseniz tüm satış verileri kullanılır
+                        </p>
+                    </div>
+                </div>
                 
                 <!-- Stock Input Methods -->
                 <div style="max-width: 1000px; margin: 0 auto;">
@@ -5838,17 +5868,6 @@
                 if (item.category_4) categorySet.add(item.category_4);
             });
             allCategories = Array.from(categorySet).sort();
-            
-            // Yıl filtresi doldur
-            const years = new Set();
-            allData.forEach(item => {
-                if (item.date) years.add(item.date.substring(0, 4));
-            });
-            const yearFilter = document.getElementById('productYearFilter');
-            yearFilter.innerHTML = '<option value="">Tümü</option>';
-            Array.from(years).sort().forEach(year => {
-                yearFilter.innerHTML += `<option value="${year}">${year}</option>`;
-            });
         }
         
         function showProductCategoryDropdown() {
@@ -5905,47 +5924,24 @@
             searchProduct();
         }
         
-        function updateProductMonthFilter() {
-            const year = document.getElementById('productYearFilter').value;
-            const monthFilter = document.getElementById('productMonthFilter');
-            
-            if (!year) {
-                monthFilter.innerHTML = '<option value="">Tümü</option>';
-                monthFilter.disabled = false;
-                return;
-            }
-            
-            // Seçili yıla ait ayları bul
-            const months = new Set();
-            allData.forEach(item => {
-                if (item.date && item.date.startsWith(year)) {
-                    months.add(item.date.substring(0, 7)); // YYYY-MM
-                }
-            });
-            
-            monthFilter.innerHTML = '<option value="">Tümü</option>';
-            const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
-                              'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-            
-            Array.from(months).sort().forEach(month => {
-                const monthNum = parseInt(month.split('-')[1]);
-                monthFilter.innerHTML += `<option value="${month}">${monthNames[monthNum - 1]} ${year}</option>`;
-            });
-            monthFilter.disabled = false;
+        function clearProductDateFilters() {
+            document.getElementById('productDateStart').value = '';
+            document.getElementById('productDateEnd').value = '';
+            console.log('🔄 Ürün tarih filtreleri temizlendi');
         }
         
         function searchProduct() {
             const searchTerm = document.getElementById('productSearchInput').value.trim();
             const selectedCategory = document.getElementById('productCategorySearch').getAttribute('data-selected-category') || '';
-            const selectedYear = document.getElementById('productYearFilter').value;
-            const selectedMonth = document.getElementById('productMonthFilter').value;
+            const dateStart = document.getElementById('productDateStart').value;
+            const dateEnd = document.getElementById('productDateEnd').value;
             
             if (!searchTerm && !selectedCategory) {
                 alert('⚠️ Lütfen bir ürün/marka adı girin veya kategori seçin!');
                 return;
             }
             
-            console.log('🔍 Arama kriteri:', {searchTerm, selectedCategory, selectedYear, selectedMonth});
+            console.log('🔍 Arama kriteri:', {searchTerm, selectedCategory, dateStart, dateEnd});
             
             // Arama (ürün adı, marka, kategori, veya ürün kodu)
             const searchLower = searchTerm.toLowerCase();
@@ -5980,13 +5976,13 @@
                     }
                 }
                 
-                // Tarih filtreleri
+                // Tarih filtreleri (başlangıç-bitiş)
                 let matchesDate = true;
                 if (item.date) {
-                    if (selectedYear && !item.date.startsWith(selectedYear)) {
+                    if (dateStart && item.date < dateStart) {
                         matchesDate = false;
                     }
-                    if (selectedMonth && !item.date.startsWith(selectedMonth)) {
+                    if (dateEnd && item.date > dateEnd) {
                         matchesDate = false;
                     }
                 }
@@ -9861,13 +9857,27 @@
             
             console.log('🤖 AI stok dağılım analizi başlatılıyor...');
             
+            // Tarih filtrelerini al
+            const dateStart = document.getElementById('stockDateStart').value;
+            const dateEnd = document.getElementById('stockDateEnd').value;
+            
+            console.log('📅 Tarih Filtreleri:', {dateStart, dateEnd});
+            
             const recommendations = [];
             
             stockList.forEach(stockItem => {
-                // Bu ürün kodunu içeren satışları bul
-                const productSales = allData.filter(item => 
+                // Bu ürün kodunu içeren satışları bul (tarih filtresiyle)
+                let productSales = allData.filter(item => 
                     item.product && item.product.toLowerCase().includes(stockItem.product_code.toLowerCase())
                 );
+                
+                // Tarih filtresi uygula (opsiyonel)
+                if (dateStart) {
+                    productSales = productSales.filter(item => item.date >= dateStart);
+                }
+                if (dateEnd) {
+                    productSales = productSales.filter(item => item.date <= dateEnd);
+                }
                 
                 if (productSales.length === 0) {
                     recommendations.push({
@@ -9922,6 +9932,12 @@
             
             // Sonuçları göster
             renderStockDistributionResults(recommendations);
+        }
+        
+        function clearStockDateFilters() {
+            document.getElementById('stockDateStart').value = '';
+            document.getElementById('stockDateEnd').value = '';
+            console.log('🔄 Stok tarih filtreleri temizlendi');
         }
         
         function renderStockDistributionResults(recommendations) {
