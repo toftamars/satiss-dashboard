@@ -1649,7 +1649,7 @@
                 <!-- Search Input -->
                 <div style="max-width: 800px; margin: 0 auto 40px;">
                     <div style="position: relative;">
-                        <input type="text" id="customerSearchInput" placeholder="Müşteri adı yazın... (örn: Ahmet Yılmaz)" 
+                        <input type="text" id="customerSearchInput" placeholder="Müşteri adı yazın veya virgülle ayırarak çoklu arama yapın..." 
                                style="width: 100%; padding: 20px 60px 20px 20px; font-size: 1.1em; border: 2px solid #667eea; border-radius: 15px; outline: none;"
                                oninput="showCustomerSuggestions(this.value)"
                                onkeydown="handleCustomerKeydown(event)"
@@ -1660,8 +1660,17 @@
                         </button>
                         <div id="customerSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #667eea; border-top: none; border-radius: 0 0 15px 15px; max-height: 300px; overflow-y: auto; display: none; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
                     </div>
+                    
+                    <!-- Selected Customers Tags -->
+                    <div id="selectedCustomersContainer" style="display: none; margin-top: 15px;">
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border: 2px dashed #667eea;">
+                            <div style="font-weight: 600; color: #667eea; margin-bottom: 10px;">✅ Seçili Müşteriler (En fazla 3):</div>
+                            <div id="selectedCustomersTags" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
+                        </div>
+                    </div>
+                    
                     <p style="text-align: center; color: #6c757d; margin-top: 10px; font-size: 0.9em;">
-                        💡 İpucu: Müşteri adının bir kısmını yazmak yeterli, listeden seçebilirsiniz
+                        💡 İpucu: Listeden tıklayarak veya virgül ile ayırarak birden fazla müşteri seçebilir, karşılaştırabilirsiniz
                     </p>
                 </div>
                 
@@ -6410,9 +6419,14 @@
             data.forEach(item => {
                 const product = item.product || 'Bilinmiyor';
                 if (!productData[product]) {
+                    // Hiyerarşik kategori oluştur (ALL atlanır)
+                    const categoryParts = [item.category_1, item.category_2, item.category_3, item.category_4]
+                        .filter(c => c && c.trim() && c.toLowerCase() !== 'all');
+                    const categoryDisplay = categoryParts.length > 0 ? categoryParts.join(' › ') : 'Bilinmiyor';
+                    
                     productData[product] = {
                         brand: item.brand || 'Bilinmiyor',
-                        category: item.category_1 || 'Bilinmiyor',
+                        category: categoryDisplay,
                         sales: 0,
                         qty: 0,
                         count: 0
@@ -7492,10 +7506,15 @@
         // ==================== AUTOCOMPLETE FUNCTIONS ====================
         let customerSuggestionIndex = -1;
         let salespersonSuggestionIndex = -1;
+        let selectedCustomers = []; // Seçili müşteriler
         
         function showCustomerSuggestions(query) {
             const suggestionsDiv = document.getElementById('customerSuggestions');
-            query = query.trim().toLowerCase();
+            
+            // Virgülden sonraki son terimi al
+            const terms = query.split(',');
+            const lastTerm = terms[terms.length - 1].trim().toLowerCase();
+            query = lastTerm;
             
             if (query.length < 2) {
                 suggestionsDiv.style.display = 'none';
@@ -7553,9 +7572,58 @@
         }
         
         function selectCustomerSuggestion(name) {
-            document.getElementById('customerSearchInput').value = name;
+            // Çoklu seçim: müşteriyi listeye ekle
+            if (selectedCustomers.length >= 3) {
+                alert('⚠️ En fazla 3 müşteri seçebilirsiniz!');
+                return;
+            }
+            
+            if (selectedCustomers.includes(name)) {
+                alert('⚠️ Bu müşteri zaten seçili!');
+                return;
+            }
+            
+            selectedCustomers.push(name);
+            updateSelectedCustomersTags();
+            document.getElementById('customerSearchInput').value = '';
             document.getElementById('customerSuggestions').style.display = 'none';
+            
+            // Otomatik arama yap
             searchCustomerProfile();
+        }
+        
+        function updateSelectedCustomersTags() {
+            const container = document.getElementById('selectedCustomersContainer');
+            const tagsContainer = document.getElementById('selectedCustomersTags');
+            
+            if (selectedCustomers.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'block';
+            tagsContainer.innerHTML = selectedCustomers.map((customer, index) => `
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 15px; border-radius: 20px; display: flex; align-items: center; gap: 8px; font-size: 0.9em;">
+                    <span>👤 ${customer}</span>
+                    <button onclick="removeCustomer(${index})" 
+                            style="background: rgba(255,255,255,0.3); border: none; color: white; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8em;">
+                        ×
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        function removeCustomer(index) {
+            selectedCustomers.splice(index, 1);
+            updateSelectedCustomersTags();
+            
+            // Eğer müşteri kalmadıysa sonuçları temizle
+            if (selectedCustomers.length === 0) {
+                document.getElementById('customerProfileContainer').style.display = 'none';
+            } else {
+                // Kalan müşterilerle yeniden arama yap
+                searchCustomerProfile();
+            }
         }
         
         function handleCustomerKeydown(event) {
@@ -7870,19 +7938,73 @@
         });
         
         function searchCustomerProfile() {
-            const searchQuery = document.getElementById('customerSearchInput').value.trim().toLowerCase();
+            // Seçili müşteriler varsa onları kullan, yoksa input'tan al
+            let customersToSearch = [];
             
-            if (!searchQuery) {
-                alert('Lütfen bir müşteri adı girin');
-                return;
+            if (selectedCustomers.length > 0) {
+                customersToSearch = selectedCustomers;
+            } else {
+                const searchQuery = document.getElementById('customerSearchInput').value.trim();
+                if (!searchQuery) {
+                    alert('Lütfen bir müşteri adı girin veya listeden seçin');
+                    return;
+                }
+                
+                // Virgül ile ayrılmış isimleri ayır (case-insensitive arama için)
+                const searchTerms = searchQuery.split(',').map(s => s.trim().toLowerCase()).filter(s => s);
+                
+                if (searchTerms.length === 0) {
+                    alert('Lütfen geçerli bir müşteri adı girin');
+                    return;
+                }
+                
+                // Her arama terimini gerçek isimlerle eşleştir
+                const customerMap = {};
+                allData.forEach(item => {
+                    const name = item.partner || '';
+                    if (name && !customerMap[name]) {
+                        customerMap[name] = name;
+                    }
+                });
+                
+                // Her arama terimi için en uygun eşleşmeyi bul
+                customersToSearch = [];
+                searchTerms.forEach(term => {
+                    const matches = Object.keys(customerMap).filter(name => 
+                        name.toLowerCase().includes(term)
+                    );
+                    
+                    if (matches.length > 0) {
+                        // İlk eşleşmeyi al (tam eşleşme varsa onu, yoksa kısmi eşleşmeyi)
+                        const exactMatch = matches.find(m => m.toLowerCase() === term);
+                        customersToSearch.push(exactMatch || matches[0]);
+                    }
+                });
+                
+                if (customersToSearch.length === 0) {
+                    alert('❌ Girilen isimlere uygun müşteri bulunamadı!');
+                    return;
+                }
+                
+                // Tekrar edenleri kaldır
+                customersToSearch = [...new Set(customersToSearch)];
+                
+                // En fazla 3 müşteri
+                if (customersToSearch.length > 3) {
+                    alert('⚠️ En fazla 3 müşteri arayabilirsiniz!');
+                    customersToSearch = customersToSearch.slice(0, 3);
+                }
             }
             
-            console.log('🔍 Müşteri aranıyor:', searchQuery);
+            console.log('🔍 Müşteriler aranıyor:', customersToSearch);
             
-            // Müşteri verilerini filtrele (fuzzy matching)
-            const customerData = allData.filter(item => 
-                item.partner && item.partner.toLowerCase().includes(searchQuery)
-            );
+            // TEK VEYA ÇOKLU MÜŞTERİ MODU
+            if (customersToSearch.length === 1) {
+                // TEK MÜŞTERİ - Mevcut görünüm
+                const searchQuery = customersToSearch[0].toLowerCase();
+                const customerData = allData.filter(item => 
+                    item.partner && item.partner.toLowerCase().includes(searchQuery)
+                );
             
             if (customerData.length === 0) {
                 document.getElementById('customerProfileContainer').style.display = 'none';
@@ -10658,9 +10780,14 @@
             data.forEach(item => {
                 const product = item.product || 'Bilinmiyor';
                 if (!productData[product]) {
+                    // Hiyerarşik kategori oluştur (ALL atlanır)
+                    const categoryParts = [item.category_1, item.category_2, item.category_3, item.category_4]
+                        .filter(c => c && c.trim() && c.toLowerCase() !== 'all');
+                    const categoryDisplay = categoryParts.length > 0 ? categoryParts.join(' › ') : 'Bilinmiyor';
+                    
                     productData[product] = {
                         brand: item.brand || 'Bilinmiyor',
-                        category: item.category_1 || 'Bilinmiyor',
+                        category: categoryDisplay,
                         sales: 0,
                         qty: 0,
                         count: 0
@@ -10779,9 +10906,14 @@
             data.forEach(item => {
                 const product = item.product || 'Bilinmiyor';
                 if (!productData[product]) {
+                    // Hiyerarşik kategori oluştur (ALL atlanır)
+                    const categoryParts = [item.category_1, item.category_2, item.category_3, item.category_4]
+                        .filter(c => c && c.trim() && c.toLowerCase() !== 'all');
+                    const categoryDisplay = categoryParts.length > 0 ? categoryParts.join(' › ') : 'Bilinmiyor';
+                    
                     productData[product] = {
                         brand: item.brand || 'Bilinmiyor',
-                        category: item.category_1 || 'Bilinmiyor',
+                        category: categoryDisplay,
                         sales: 0,
                         qty: 0,
                         count: 0
