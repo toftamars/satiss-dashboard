@@ -8585,6 +8585,102 @@
             console.log('✅ Mağaza filtreleri temizlendi');
         }
         
+        // ÇOKLU SATIŞ TEMSİLCİSİ AI ANALİZİ
+        function performMultipleSalespersonsAIAnalysis(salespersonsData) {
+            console.log('🤖 Çoklu satış temsilcisi karşılaştırmalı AI analizi başlatılıyor...');
+            
+            const insights = {positive: [], negative: [], neutral: [], recommendations: []};
+            
+            // Temsilci isimlerini al
+            const names = salespersonsData.map(sp => sp.name).join(', ');
+            
+            insights.neutral.push(`🔍 ${salespersonsData.length} satış temsilcisi karşılaştırılıyor: ${names}`);
+            
+            // Satış performansı karşılaştırması
+            const sortedBySales = [...salespersonsData].sort((a, b) => b.totalSales - a.totalSales);
+            insights.positive.push(`🏆 En yüksek satış: <strong>${sortedBySales[0].name}</strong> - $${sortedBySales[0].totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
+            
+            if (sortedBySales.length > 1) {
+                const gap = sortedBySales[0].totalSales - sortedBySales[1].totalSales;
+                const gapPercent = (gap / sortedBySales[1].totalSales * 100).toFixed(1);
+                insights.neutral.push(`📊 1. ve 2. arasındaki fark: $${gap.toLocaleString('tr-TR', {minimumFractionDigits: 2})} (%${gapPercent})`);
+            }
+            
+            if (sortedBySales.length > 2) {
+                insights.negative.push(`⚠️ En düşük satış: <strong>${sortedBySales[sortedBySales.length - 1].name}</strong> - $${sortedBySales[sortedBySales.length - 1].totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
+            }
+            
+            // Miktar performansı
+            const sortedByQty = [...salespersonsData].sort((a, b) => b.totalQty - a.totalQty);
+            insights.positive.push(`📦 En yüksek adet: <strong>${sortedByQty[0].name}</strong> - ${sortedByQty[0].totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2})} adet`);
+            
+            // Ortalama işlem tutarı karşılaştırması
+            salespersonsData.forEach(sp => {
+                const avgPerCustomer = sp.totalSales / Math.max(sp.uniqueCustomers, 1);
+                if (avgPerCustomer > 5000) {
+                    insights.positive.push(`💰 <strong>${sp.name}</strong> müşteri başına yüksek ortalama: $${avgPerCustomer.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
+                } else if (avgPerCustomer < 1000) {
+                    insights.negative.push(`📉 <strong>${sp.name}</strong> müşteri başına düşük ortalama: $${avgPerCustomer.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
+                }
+            });
+            
+            // Öneriler
+            insights.recommendations.push(`🎯 <strong>${sortedBySales[0].name}</strong>'in stratejilerini diğer temsilcilerle paylaşın`);
+            
+            if (sortedBySales.length > 1) {
+                const lowPerformers = sortedBySales.slice(Math.ceil(sortedBySales.length / 2));
+                if (lowPerformers.length > 0) {
+                    insights.recommendations.push(`📚 ${lowPerformers.map(sp => sp.name).join(', ')} için ek eğitim ve mentorluk programı düşünün`);
+                }
+            }
+            
+            insights.recommendations.push(`🤝 Tüm temsilciler için ortak hedefler belirleyin ve takım çalışmasını teşvik edin`);
+            insights.recommendations.push(`📊 Aylık performans toplantıları düzenleyerek en iyi uygulamaları paylaşın`);
+            
+            // HTML oluştur
+            let html = '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; color: white; margin-bottom: 30px;">';
+            html += '<h3 style="margin: 0 0 20px 0; font-size: 1.8em;">🤖 Karşılaştırmalı AI Performans Analizi</h3>';
+            
+            if (insights.positive.length > 0) {
+                html += '<div style="margin-bottom: 20px;"><h4 style="color: #4ade80; margin-bottom: 10px;">✅ Güçlü Yönler:</h4><ul style="margin: 0; padding-left: 20px;">';
+                insights.positive.forEach(item => html += `<li style="margin-bottom: 8px;">${item}</li>`);
+                html += '</ul></div>';
+            }
+            
+            if (insights.negative.length > 0) {
+                html += '<div style="margin-bottom: 20px;"><h4 style="color: #fbbf24; margin-bottom: 10px;">⚠️ Gelişim Alanları:</h4><ul style="margin: 0; padding-left: 20px;">';
+                insights.negative.forEach(item => html += `<li style="margin-bottom: 8px;">${item}</li>`);
+                html += '</ul></div>';
+            }
+            
+            if (insights.neutral.length > 0) {
+                html += '<div style="margin-bottom: 20px;"><h4 style="color: #e0e7ff; margin-bottom: 10px;">📊 Genel Durum:</h4><ul style="margin: 0; padding-left: 20px;">';
+                insights.neutral.forEach(item => html += `<li style="margin-bottom: 8px;">${item}</li>`);
+                html += '</ul></div>';
+            }
+            
+            if (insights.recommendations.length > 0) {
+                html += '<div><h4 style="color: #a78bfa; margin-bottom: 10px;">💡 Öneriler:</h4><ul style="margin: 0; padding-left: 20px;">';
+                insights.recommendations.forEach(item => html += `<li style="margin-bottom: 8px;">${item}</li>`);
+                html += '</ul></div>';
+            }
+            
+            html += '</div>';
+            
+            // AI analiz container'ını güncelle
+            const container = document.getElementById('multipleSalespersonsView');
+            if (container) {
+                // Eğer AI analiz bölümü yoksa ekle
+                let aiSection = container.querySelector('.ai-analysis-section');
+                if (!aiSection) {
+                    aiSection = document.createElement('div');
+                    aiSection.className = 'ai-analysis-section';
+                    container.appendChild(aiSection);
+                }
+                aiSection.innerHTML = html;
+            }
+        }
+        
         function searchStoreProfile() {
             const searchQuery = document.getElementById('storeSearchInput').value.trim();
             if (!searchQuery) {
@@ -10588,13 +10684,20 @@
             // Karşılaştırma grafikleri
             renderSalespersonComparisonCharts(salespersonsData);
             
-            // Aylık performans trendi (karşılaştırmalı)
-            renderMultipleSalespersonsMonthlyChart(salespersonsData);
+            // Tek temsilci bölümlerini gizle (çoklu karşılaştırmada gereksiz)
+            const sectionsToHide = [
+                'salespersonBrandChart', 'salespersonCategoryChart',
+                'salespersonMonthlyChart', 'salespersonTopProductsTable',
+                'salespersonBottomProductsTable'
+            ];
+            sectionsToHide.forEach(id => {
+                const element = document.getElementById(id);
+                if (element && element.closest('.chart-container')) {
+                    element.closest('.chart-container').style.display = 'none';
+                }
+            });
             
-            // En çok/az satan ürünler (her temsilci için)
-            renderMultipleSalespersonsTopBottomProducts(salespersonsData);
-            
-            // AI Analiz (karşılaştırmalı)
+            // AI Analiz (karşılaştırmalı) - SADECE BU GÖSTER
             performMultipleSalespersonsAIAnalysis(salespersonsData);
         }
         
