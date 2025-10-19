@@ -5225,44 +5225,75 @@
             const ctx = document.getElementById('dashYearlyChart');
             if (!ctx) return;
             
-            // Yıllara göre grupla
-            const yearlyData = {};
+            // Yıl ve ay bazında grupla (karşılaştırma için)
+            const yearlyMonthlyData = {};
             allData.forEach(item => {
                 if (item.date) {
                     const year = item.date.substring(0, 4);
-                    if (!yearlyData[year]) yearlyData[year] = 0;
-                    yearlyData[year] += parseFloat(item.usd_amount || 0);
+                    const month = item.date.substring(5, 7);
+                    
+                    if (!yearlyMonthlyData[year]) yearlyMonthlyData[year] = {};
+                    if (!yearlyMonthlyData[year][month]) yearlyMonthlyData[year][month] = 0;
+                    yearlyMonthlyData[year][month] += parseFloat(item.usd_amount || 0);
                 }
             });
             
-            const sortedYears = Object.keys(yearlyData).sort();
-            const values = sortedYears.map(year => yearlyData[year]);
+            // Tüm ayları topla
+            const allMonthKeys = new Set();
+            Object.values(yearlyMonthlyData).forEach(yearData => {
+                Object.keys(yearData).forEach(month => allMonthKeys.add(month));
+            });
+            const sortedMonths = Array.from(allMonthKeys).sort();
+            
+            // Dataset oluştur (her yıl için)
+            const datasets = [];
+            const colors = [
+                {border: 'rgba(102, 126, 234, 1)', bg: 'rgba(102, 126, 234, 0.1)'},
+                {border: 'rgba(245, 87, 108, 1)', bg: 'rgba(245, 87, 108, 0.1)'},
+                {border: 'rgba(56, 239, 125, 1)', bg: 'rgba(56, 239, 125, 0.1)'},
+                {border: 'rgba(255, 206, 86, 1)', bg: 'rgba(255, 206, 86, 0.1)'}
+            ];
+            
+            Object.keys(yearlyMonthlyData).sort().forEach((year, idx) => {
+                const yearData = yearlyMonthlyData[year];
+                const values = sortedMonths.map(month => yearData[month] || 0);
+                const color = colors[idx % colors.length];
+                
+                datasets.push({
+                    label: `${year} Satışları`,
+                    data: values,
+                    borderColor: color.border,
+                    backgroundColor: color.bg,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                });
+            });
             
             if (dashYearlyChartInstance) {
                 dashYearlyChartInstance.destroy();
             }
             
+            // Ay isimlerini göster
+            const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
+                               'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+            const labels = sortedMonths.map(m => monthNames[parseInt(m) - 1]);
+            
             dashYearlyChartInstance = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
-                    labels: sortedYears,
-                    datasets: [{
-                        label: 'Yıllık Satış (USD)',
-                        data: values,
-                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
-                        borderColor: 'rgba(102, 126, 234, 1)',
-                        borderWidth: 2
-                    }]
+                    labels: labels,
+                    datasets: datasets
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: {
-                        legend: { display: true },
+                        legend: {display: true, position: 'top'},
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return 'Satış: $' + context.parsed.y.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                    return context.dataset.label + ': $' + context.parsed.y.toLocaleString('tr-TR', {minimumFractionDigits: 2});
                                 }
                             }
                         }
@@ -5292,7 +5323,7 @@
                 storeData[store] += parseFloat(item.usd_amount || 0);
             });
             
-            const top5 = Object.entries(storeData).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const top10 = Object.entries(storeData).sort((a, b) => b[1] - a[1]).slice(0, 10);
             
             if (dashTopStoresChartInstance) {
                 dashTopStoresChartInstance.destroy();
@@ -5301,10 +5332,10 @@
             dashTopStoresChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: top5.map(s => s[0]),
+                    labels: top10.map(s => s[0]),
                     datasets: [{
                         label: 'Satış (USD)',
-                        data: top5.map(s => s[1]),
+                        data: top10.map(s => s[1]),
                         backgroundColor: 'rgba(250, 112, 154, 0.8)'
                     }]
                 },
@@ -5313,7 +5344,23 @@
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: {
-                        legend: { display: false }
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Satış: $' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
                     }
                 }
             });
@@ -5330,7 +5377,7 @@
                 spData[sp] += parseFloat(item.usd_amount || 0);
             });
             
-            const top5 = Object.entries(spData).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const top10 = Object.entries(spData).sort((a, b) => b[1] - a[1]).slice(0, 10);
             
             if (dashTopSalespeopleChartInstance) {
                 dashTopSalespeopleChartInstance.destroy();
@@ -5339,10 +5386,10 @@
             dashTopSalespeopleChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: top5.map(s => s[0]),
+                    labels: top10.map(s => s[0]),
                     datasets: [{
                         label: 'Satış (USD)',
-                        data: top5.map(s => s[1]),
+                        data: top10.map(s => s[1]),
                         backgroundColor: 'rgba(67, 233, 123, 0.8)'
                     }]
                 },
@@ -5351,7 +5398,23 @@
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: {
-                        legend: { display: false }
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Satış: $' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
                     }
                 }
             });
@@ -8312,8 +8375,8 @@
                 return;
             }
             
-                // Virgül ile ayrılmış isimleri ayır (case-insensitive arama için)
-                const searchTerms = searchQuery.split(',').map(s => s.trim().toLowerCase()).filter(s => s);
+                // Virgül ile ayrılmış isimleri ayır (trim et ama case koru)
+                const searchTerms = searchQuery.split(',').map(s => s.trim()).filter(s => s);
                 
                 if (searchTerms.length === 0) {
                     alert('Lütfen geçerli bir müşteri adı girin');
@@ -8332,13 +8395,14 @@
                 // Her arama terimi için en uygun eşleşmeyi bul
                 customersToSearch = [];
                 searchTerms.forEach(term => {
+                    const termLower = term.toLowerCase(); // Lowercase sadece arama için
                     const matches = Object.keys(customerMap).filter(name => 
-                        name.toLowerCase().includes(term)
+                        name.toLowerCase().includes(termLower)
                     );
                     
                     if (matches.length > 0) {
                         // İlk eşleşmeyi al (tam eşleşme varsa onu, yoksa kısmi eşleşmeyi)
-                        const exactMatch = matches.find(m => m.toLowerCase() === term);
+                        const exactMatch = matches.find(m => m.toLowerCase() === termLower);
                         customersToSearch.push(exactMatch || matches[0]);
                     }
                 });
