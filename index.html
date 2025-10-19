@@ -1108,7 +1108,7 @@
 
         <!-- Tab Navigation -->
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('sales')">📊 Satış Analizi</button>
+            <button class="tab active" onclick="switchTab('dashboard')">🏠 Dashboard</button>
             <button class="tab" onclick="switchTab('targets')">🎯 Hedef Takip</button>
             <button class="tab" onclick="switchTab('customers')">👥 Müşteri Analizi</button>
             <button class="tab" onclick="switchTab('salesperson')">👨‍💼 Satış Temsilcisi</button>
@@ -1119,135 +1119,79 @@
             <button class="tab" onclick="switchTab('product')">🎸 Ürün, Marka ve Kategori Analizi</button>
         </div>
 
-        <!-- Sales Analysis Tab -->
-        <div id="salesTab" class="tab-content active">
-            <div class="search-section">
-                <div class="search-box">
-                    <input type="text" id="smartSearch" placeholder="🤖 AI Agent: Doğal dille sorun - Örnek: Akasya 2025 ekim Fender satışları" onkeypress="if(event.key==='Enter') applySmartSearch()">
-                    <button onclick="applySmartSearch()">🤖 AI Ara</button>
-                    <button class="voice-btn" id="voiceBtn" onclick="startVoiceSearch()" title="Sesli Arama">🎤</button>
-                    <button class="export-btn" onclick="exportToExcel()" title="Excel'e Aktar">📥 Excel</button>
+        <!-- Dashboard Tab -->
+        <div id="dashboardTab" class="tab-content active">
+            <div class="content">
+                <h2 style="margin-bottom: 30px; text-align: center;">🏠 Zuhal Müzik - Genel Dashboard</h2>
+                
+                <!-- Genel Özet Kartları -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px;">
+                    <div class="summary-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <h3>💰 Toplam Satış (KDV Hariç)</h3>
+                        <p id="dashTotalSales" style="color: white;">$0</p>
+                        <small style="opacity: 0.9;">Tüm zamanlar</small>
+                    </div>
+                    <div class="summary-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                        <h3>📦 Toplam Ürün Adedi</h3>
+                        <p id="dashTotalQty" style="color: white;">0</p>
+                        <small style="opacity: 0.9;">Satılan ürün sayısı</small>
+                    </div>
+                    <div class="summary-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                        <h3>👥 Toplam Müşteri</h3>
+                        <p id="dashTotalCustomers" style="color: white;">0</p>
+                        <small style="opacity: 0.9;">Aktif müşteri sayısı</small>
+                    </div>
+                    <div class="summary-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                        <h3>🎸 Farklı Ürün</h3>
+                        <p id="dashTotalProducts" style="color: white;">0</p>
+                        <small style="opacity: 0.9;">Ürün çeşidi</small>
+                    </div>
+                    <div class="summary-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
+                        <h3>🏪 Toplam Mağaza</h3>
+                        <p id="dashTotalStores" style="color: white;">0</p>
+                        <small style="opacity: 0.9;">Aktif mağaza sayısı</small>
+                    </div>
+                    <div class="summary-card" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: white;">
+                        <h3>👨‍💼 Satış Temsilcisi</h3>
+                        <p id="dashTotalSalespeople" style="color: white;">0</p>
+                        <small style="opacity: 0.9;">Aktif temsilci sayısı</small>
+                    </div>
                 </div>
-                <p style="text-align: center; margin-top: 10px; font-size: 0.9em; color: #6c757d;">
-                    💡 <strong>AI + Ses Destekli:</strong> Yazın veya 🎤 mikrofona tıklayıp konuşun
-                </p>
-            </div>
 
-        <div class="filters-section">
-            <div class="filters-grid">
-                <div class="filter-group">
-                    <label>Marka <span class="selected-count" id="countBrand"></span></label>
-                    <div class="filter-search-box">
-                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterBrand', this.value)">
-                    </div>
-                    <div class="checkbox-container" id="filterBrand"></div>
+                <!-- Yıllık Karşılaştırma -->
+                <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 40px;">
+                    <h3 style="margin-bottom: 20px;">📊 Yıllık Satış Karşılaştırması</h3>
+                    <canvas id="dashYearlyChart" style="max-height: 400px;"></canvas>
                 </div>
-                <div class="filter-group">
-                    <label>Kategori 1 <span class="selected-count" id="countCategory1"></span></label>
-                    <div class="filter-search-box">
-                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterCategory1', this.value)">
+
+                <!-- Top Performanslar -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px; margin-bottom: 40px;">
+                    <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <h3 style="margin-bottom: 20px;">🏆 Top 5 Mağaza (Bu Yıl)</h3>
+                        <canvas id="dashTopStoresChart"></canvas>
                     </div>
-                    <div class="checkbox-container" id="filterCategory1"></div>
-                </div>
-                <div class="filter-group">
-                    <label>Kategori 2 <span class="selected-count" id="countCategory2"></span></label>
-                    <div class="filter-search-box">
-                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterCategory2', this.value)">
+                    <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <h3 style="margin-bottom: 20px;">⭐ Top 5 Satış Temsilcisi (Bu Yıl)</h3>
+                        <canvas id="dashTopSalespeopleChart"></canvas>
                     </div>
-                    <div class="checkbox-container" id="filterCategory2"></div>
-                </div>
-                <div class="filter-group">
-                    <label>Kategori 3 <span class="selected-count" id="countCategory3"></span></label>
-                    <div class="filter-search-box">
-                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterCategory3', this.value)">
+                    <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <h3 style="margin-bottom: 20px;">🏷️ Top 5 Marka (Bu Yıl)</h3>
+                        <canvas id="dashTopBrandsChart"></canvas>
                     </div>
-                    <div class="checkbox-container" id="filterCategory3"></div>
-                </div>
-                <div class="filter-group">
-                    <label>Satis Temsilcisi <span class="selected-count" id="countSalesPerson"></span></label>
-                    <div class="filter-search-box">
-                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterSalesPerson', this.value)">
+                    <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <h3 style="margin-bottom: 20px;">📂 Top 5 Kategori (Bu Yıl)</h3>
+                        <canvas id="dashTopCategoriesChart"></canvas>
                     </div>
-                    <div class="checkbox-container" id="filterSalesPerson"></div>
                 </div>
-                <div class="filter-group">
-                    <label>Magaza <span class="selected-count" id="countStore"></span></label>
-                    <div class="filter-search-box">
-                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterStore', this.value)">
-                    </div>
-                    <div class="checkbox-container" id="filterStore"></div>
+
+                <!-- AI Dashboard Analizi -->
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; margin-bottom: 40px;">
+                    <h3 style="color: white; margin-bottom: 20px;">🤖 AI Dashboard Analizi</h3>
+                    <div id="dashAIAnalysis" style="background: white; padding: 20px; border-radius: 10px; line-height: 1.8;"></div>
                 </div>
-                <div class="filter-group">
-                    <label>Sehir <span class="selected-count" id="countCity"></span></label>
-                    <div class="filter-search-box">
-                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterCity', this.value)">
-                    </div>
-                    <div class="checkbox-container" id="filterCity"></div>
-                </div>
-                <div class="filter-group">
-                    <label>Yil <span class="selected-count" id="countYear"></span></label>
-                    <div class="filter-search-box">
-                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterYear', this.value)">
-                    </div>
-                    <div class="checkbox-container" id="filterYear"></div>
-                </div>
-                <div class="filter-group">
-                    <label>Ay <span class="selected-count" id="countMonth"></span></label>
-                    <div class="filter-search-box">
-                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterMonth', this.value)">
-                    </div>
-                    <div class="checkbox-container" id="filterMonth"></div>
-                </div>
-                <div class="filter-group">
-                    <label>Gun <span class="selected-count" id="countDay"></span></label>
-                    <div class="filter-search-box">
-                        <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterDay', this.value)">
-                    </div>
-                    <div class="checkbox-container" id="filterDay"></div>
-                </div>
-            </div>
-            <div class="filter-buttons">
-                <button class="btn-apply" onclick="applyFilters()">Filtrele</button>
-                <button class="btn-reset" onclick="resetFilters()">Sifirla</button>
             </div>
         </div>
-
-        <div class="content">
-            <!-- Debug Panel -->
-            <div id="debugPanel" style="background: #fff3cd; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: none;">
-                <h4 style="margin: 0 0 10px 0; color: #856404;">🔍 Debug Bilgileri</h4>
-                <div id="debugInfo" style="font-family: monospace; font-size: 0.9em; color: #856404;"></div>
-                <button onclick="document.getElementById('debugPanel').style.display='none'" style="margin-top: 10px; padding: 5px 10px; background: #856404; color: white; border: none; border-radius: 5px; cursor: pointer;">Kapat</button>
-            </div>
-            
-            <div class="summary-cards">
-                <div class="summary-card">
-                    <h3>Toplam Satis (USD - KDV Hariç)</h3>
-                    <p id="summaryUSD">$0</p>
-                </div>
-                <div class="summary-card">
-                    <h3>Toplam Urun Miktari</h3>
-                    <p id="summaryQuantity">0</p>
-                </div>
-                <div class="summary-card">
-                    <h3>Toplam Musteri</h3>
-                    <p id="summaryPartners">0</p>
-                </div>
-                <div class="summary-card">
-                    <h3>Toplam Urun</h3>
-                    <p id="summaryProducts">0</p>
-                </div>
-            </div>
-
-            <!-- AI Analysis Panel -->
-            <div id="aiAnalysisPanel" style="display: none;"></div>
-
-            <div id="tableContainer">
-                <div class="loading">📊 Veriler yukleniyor...</div>
-            </div>
-        </div>
-        </div>
-        <!-- End Sales Tab -->
+        <!-- End Dashboard Tab -->
 
         <!-- Targets Tab -->
         <div id="targetsTab" class="tab-content">
@@ -2128,30 +2072,30 @@
                 <!-- City Results Container -->
                 <div id="cityAnalysisContainer" style="display: none;">
                     <!-- City Summary Cards -->
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px;">
                         <div class="summary-card">
-                            <h3>💰 Toplam Satış (KDV Hariç)</h3>
-                            <p id="cityTotalSales">$0</p>
-                        </div>
-                        <div class="summary-card">
-                            <h3>📦 Toplam Adet</h3>
-                            <p id="cityTotalQty">0</p>
+                            <h3 style="font-size: 1em; margin-bottom: 10px;">💰 Toplam Satış (KDV Hariç)</h3>
+                            <p id="cityTotalSales" style="font-size: 1.8em; font-weight: bold;">$0</p>
                         </div>
                         <div class="summary-card">
-                            <h3>👥 Müşteri Sayısı</h3>
-                            <p id="cityCustomerCount">0</p>
+                            <h3 style="font-size: 1em; margin-bottom: 10px;">📦 Toplam Adet</h3>
+                            <p id="cityTotalQty" style="font-size: 1.8em; font-weight: bold;">0</p>
                         </div>
                         <div class="summary-card">
-                            <h3>📊 Ortalama Sepet</h3>
-                            <p id="cityAvgBasket">$0</p>
+                            <h3 style="font-size: 1em; margin-bottom: 10px;">👥 Müşteri Sayısı</h3>
+                            <p id="cityCustomerCount" style="font-size: 1.8em; font-weight: bold;">0</p>
                         </div>
-                        <div class="summary-card" style="background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%); color: white;">
-                            <h3>👤 En Çok Satış Yapan İlk 5 Temsilci</h3>
-                            <div id="cityTopSalespersons" style="color: white; font-size: 0.9em;"></div>
+                        <div class="summary-card">
+                            <h3 style="font-size: 1em; margin-bottom: 10px;">📊 Ortalama Sepet</h3>
+                            <p id="cityAvgBasket" style="font-size: 1.8em; font-weight: bold;">$0</p>
                         </div>
-                        <div class="summary-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                            <h3>🏪 En Çok Satış Yapan İlk 5 Mağaza</h3>
-                            <div id="cityTopStores" style="color: white; font-size: 0.9em;"></div>
+                        <div class="summary-card" style="background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%); color: white; grid-column: span 1;">
+                            <h3 style="font-size: 0.95em; margin-bottom: 10px;">👤 Top 5 Temsilci</h3>
+                            <div id="cityTopSalespersons" style="color: white; font-size: 0.85em; line-height: 1.6; max-height: 120px; overflow-y: auto;"></div>
+                        </div>
+                        <div class="summary-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; grid-column: span 1;">
+                            <h3 style="font-size: 0.95em; margin-bottom: 10px;">🏪 Top 5 Mağaza</h3>
+                            <div id="cityTopStores" style="color: white; font-size: 0.85em; line-height: 1.6; max-height: 120px; overflow-y: auto;"></div>
                         </div>
                     </div>
                     
@@ -3838,7 +3782,7 @@
             
             // İlgili tab butonunu aktif et
             const tabButtons = {
-                'sales': 0,
+                'dashboard': 0,
                 'targets': 1,
                 'customers': 2,
                 'salesperson': 3,
@@ -3853,7 +3797,9 @@
             }
             
             // Tab'a göre özel işlemler
-            if (tabName === 'targets') {
+            if (tabName === 'dashboard') {
+                loadDashboard();
+            } else if (tabName === 'targets') {
                 loadAllStoresTargets(); // Yeni hedef takip sistemi
             } else if (tabName === 'customers') {
                 analyzeCustomers();
@@ -5194,6 +5140,325 @@
             return insights;
         }
 
+        // ==================== DASHBOARD ====================
+        let dashYearlyChartInstance = null;
+        let dashTopStoresChartInstance = null;
+        let dashTopSalespeopleChartInstance = null;
+        let dashTopBrandsChartInstance = null;
+        let dashTopCategoriesChartInstance = null;
+
+        function loadDashboard() {
+            console.log('🏠 Dashboard yükleniyor...');
+            
+            if (!allData || allData.length === 0) {
+                console.warn('⚠️ Veri yok, dashboard yüklenemedi');
+                return;
+            }
+            
+            // Genel istatistikler
+            const totalSales = allData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
+            const totalQty = allData.reduce((sum, item) => sum + parseFloat(item.quantity || 0), 0);
+            const uniqueCustomers = new Set(allData.map(item => item.partner).filter(Boolean)).size;
+            const uniqueProducts = new Set(allData.map(item => item.product).filter(Boolean)).size;
+            const uniqueStores = new Set(allData.map(item => item.store).filter(Boolean)).size;
+            const uniqueSalespeople = new Set(allData.map(item => item.sales_person).filter(Boolean)).size;
+            
+            // UI güncelle
+            document.getElementById('dashTotalSales').textContent = '$' + totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            document.getElementById('dashTotalQty').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 0});
+            document.getElementById('dashTotalCustomers').textContent = uniqueCustomers.toLocaleString('tr-TR');
+            document.getElementById('dashTotalProducts').textContent = uniqueProducts.toLocaleString('tr-TR');
+            document.getElementById('dashTotalStores').textContent = uniqueStores.toLocaleString('tr-TR');
+            document.getElementById('dashTotalSalespeople').textContent = uniqueSalespeople.toLocaleString('tr-TR');
+            
+            // Yıllık karşılaştırma
+            renderDashYearlyChart();
+            
+            // Top performanslar (bu yıl)
+            const currentYear = new Date().getFullYear().toString();
+            const thisYearData = allData.filter(item => item.date && item.date.startsWith(currentYear));
+            
+            renderDashTopStoresChart(thisYearData);
+            renderDashTopSalespeopleChart(thisYearData);
+            renderDashTopBrandsChart(thisYearData);
+            renderDashTopCategoriesChart(thisYearData);
+            
+            // AI Analizi
+            performDashboardAIAnalysis();
+        }
+
+        function renderDashYearlyChart() {
+            const ctx = document.getElementById('dashYearlyChart');
+            if (!ctx) return;
+            
+            // Yıllara göre grupla
+            const yearlyData = {};
+            allData.forEach(item => {
+                if (item.date) {
+                    const year = item.date.substring(0, 4);
+                    if (!yearlyData[year]) yearlyData[year] = 0;
+                    yearlyData[year] += parseFloat(item.usd_amount || 0);
+                }
+            });
+            
+            const sortedYears = Object.keys(yearlyData).sort();
+            const values = sortedYears.map(year => yearlyData[year]);
+            
+            if (dashYearlyChartInstance) {
+                dashYearlyChartInstance.destroy();
+            }
+            
+            dashYearlyChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedYears,
+                    datasets: [{
+                        label: 'Yıllık Satış (USD)',
+                        data: values,
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: true },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Satış: $' + context.parsed.y.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderDashTopStoresChart(data) {
+            const ctx = document.getElementById('dashTopStoresChart');
+            if (!ctx) return;
+            
+            const storeData = {};
+            data.forEach(item => {
+                const store = item.store || 'Bilinmiyor';
+                if (!storeData[store]) storeData[store] = 0;
+                storeData[store] += parseFloat(item.usd_amount || 0);
+            });
+            
+            const top5 = Object.entries(storeData).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            
+            if (dashTopStoresChartInstance) {
+                dashTopStoresChartInstance.destroy();
+            }
+            
+            dashTopStoresChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: top5.map(s => s[0]),
+                    datasets: [{
+                        label: 'Satış (USD)',
+                        data: top5.map(s => s[1]),
+                        backgroundColor: 'rgba(250, 112, 154, 0.8)'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function renderDashTopSalespeopleChart(data) {
+            const ctx = document.getElementById('dashTopSalespeopleChart');
+            if (!ctx) return;
+            
+            const spData = {};
+            data.forEach(item => {
+                const sp = item.sales_person || 'Bilinmiyor';
+                if (!spData[sp]) spData[sp] = 0;
+                spData[sp] += parseFloat(item.usd_amount || 0);
+            });
+            
+            const top5 = Object.entries(spData).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            
+            if (dashTopSalespeopleChartInstance) {
+                dashTopSalespeopleChartInstance.destroy();
+            }
+            
+            dashTopSalespeopleChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: top5.map(s => s[0]),
+                    datasets: [{
+                        label: 'Satış (USD)',
+                        data: top5.map(s => s[1]),
+                        backgroundColor: 'rgba(67, 233, 123, 0.8)'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function renderDashTopBrandsChart(data) {
+            const ctx = document.getElementById('dashTopBrandsChart');
+            if (!ctx) return;
+            
+            const brandData = {};
+            data.forEach(item => {
+                const brand = item.brand || 'Bilinmiyor';
+                if (!brandData[brand]) brandData[brand] = 0;
+                brandData[brand] += parseFloat(item.usd_amount || 0);
+            });
+            
+            const top5 = Object.entries(brandData).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            
+            if (dashTopBrandsChartInstance) {
+                dashTopBrandsChartInstance.destroy();
+            }
+            
+            dashTopBrandsChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: top5.map(s => s[0]),
+                    datasets: [{
+                        data: top5.map(s => s[1]),
+                        backgroundColor: [
+                            'rgba(102, 126, 234, 0.8)',
+                            'rgba(118, 75, 162, 0.8)',
+                            'rgba(240, 147, 251, 0.8)',
+                            'rgba(245, 87, 108, 0.8)',
+                            'rgba(79, 172, 254, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: true, position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        function renderDashTopCategoriesChart(data) {
+            const ctx = document.getElementById('dashTopCategoriesChart');
+            if (!ctx) return;
+            
+            const catData = {};
+            data.forEach(item => {
+                const cat = item.category_1 || 'Bilinmiyor';
+                if (cat.toLowerCase() === 'all') return; // ALL'ı atla
+                if (!catData[cat]) catData[cat] = 0;
+                catData[cat] += parseFloat(item.usd_amount || 0);
+            });
+            
+            const top5 = Object.entries(catData).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            
+            if (dashTopCategoriesChartInstance) {
+                dashTopCategoriesChartInstance.destroy();
+            }
+            
+            dashTopCategoriesChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: top5.map(s => s[0]),
+                    datasets: [{
+                        data: top5.map(s => s[1]),
+                        backgroundColor: [
+                            'rgba(67, 233, 123, 0.8)',
+                            'rgba(56, 249, 215, 0.8)',
+                            'rgba(79, 172, 254, 0.8)',
+                            'rgba(0, 242, 254, 0.8)',
+                            'rgba(102, 126, 234, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: true, position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        function performDashboardAIAnalysis() {
+            const currentYear = new Date().getFullYear();
+            const thisYearData = allData.filter(item => item.date && item.date.startsWith(currentYear.toString()));
+            const totalSalesThisYear = thisYearData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
+            
+            // En iyi mağaza
+            const storeData = {};
+            thisYearData.forEach(item => {
+                const store = item.store || 'Bilinmiyor';
+                if (!storeData[store]) storeData[store] = 0;
+                storeData[store] += parseFloat(item.usd_amount || 0);
+            });
+            const topStore = Object.entries(storeData).sort((a, b) => b[1] - a[1])[0];
+            
+            // En iyi temsilci
+            const spData = {};
+            thisYearData.forEach(item => {
+                const sp = item.sales_person || 'Bilinmiyor';
+                if (!spData[sp]) spData[sp] = 0;
+                spData[sp] += parseFloat(item.usd_amount || 0);
+            });
+            const topSP = Object.entries(spData).sort((a, b) => b[1] - a[1])[0];
+            
+            // En iyi marka
+            const brandData = {};
+            thisYearData.forEach(item => {
+                const brand = item.brand || 'Bilinmiyor';
+                if (!brandData[brand]) brandData[brand] = 0;
+                brandData[brand] += parseFloat(item.usd_amount || 0);
+            });
+            const topBrand = Object.entries(brandData).sort((a, b) => b[1] - a[1])[0];
+            
+            const analysis = `
+                <h4 style="margin-bottom: 15px; color: #667eea;">📊 ${currentYear} Yılı Genel Değerlendirme</h4>
+                <p><strong>💰 Bu Yıl Toplam Satış:</strong> $${totalSalesThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</p>
+                <p><strong>🏆 En İyi Mağaza:</strong> ${topStore ? topStore[0] : 'N/A'} - $${topStore ? topStore[1].toLocaleString('tr-TR', {minimumFractionDigits: 2}) : '0'}</p>
+                <p><strong>⭐ En İyi Temsilci:</strong> ${topSP ? topSP[0] : 'N/A'} - $${topSP ? topSP[1].toLocaleString('tr-TR', {minimumFractionDigits: 2}) : '0'}</p>
+                <p><strong>🏷️ En İyi Marka:</strong> ${topBrand ? topBrand[0] : 'N/A'} - $${topBrand ? topBrand[1].toLocaleString('tr-TR', {minimumFractionDigits: 2}) : '0'}</p>
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+                <h4 style="margin-bottom: 15px; color: #667eea;">💡 AI Önerileri</h4>
+                <ul style="line-height: 2;">
+                    <li>✅ <strong>${topStore ? topStore[0] : 'En iyi mağaza'}</strong> performansı diğer mağazalara örnek alınabilir.</li>
+                    <li>✅ <strong>${topSP ? topSP[0] : 'En iyi temsilci'}</strong>'nin satış teknikleri ekip ile paylaşılabilir.</li>
+                    <li>✅ <strong>${topBrand ? topBrand[0] : 'En iyi marka'}</strong> ürünlerine stok ve promosyon önceliği verilebilir.</li>
+                    <li>⚠️ Performansı düşük mağazalar için aksiyon planı oluşturulmalı.</li>
+                    <li>⚠️ Yıl sonuna kadar hedeflere ulaşmak için aylık performans takibi yapılmalı.</li>
+                </ul>
+            `;
+            
+            document.getElementById('dashAIAnalysis').innerHTML = analysis;
+        }
 
         // ==================== TIME ANALYSIS ====================
         let hourlyChartInstance = null;
@@ -6032,13 +6297,19 @@
                     }
                 }
                 
-                // Tarih filtreleri (başlangıç-bitiş)
+                // Tarih filtreleri (başlangıç-bitiş) - FIX: Tarih karşılaştırması düzeltildi
                 let matchesDate = true;
-                if (item.date) {
-                    if (dateStart && item.date < dateStart) {
-                        matchesDate = false;
-                    }
-                    if (dateEnd && item.date > dateEnd) {
+                if (dateStart || dateEnd) {
+                    if (item.date) {
+                        // Tarihleri karşılaştır (YYYY-MM-DD formatında)
+                        if (dateStart && item.date < dateStart) {
+                            matchesDate = false;
+                        }
+                        if (dateEnd && item.date > dateEnd) {
+                            matchesDate = false;
+                        }
+                    } else {
+                        // Eğer item.date yoksa, tarih filtresi varken bu kaydı dışla
                         matchesDate = false;
                     }
                 }
