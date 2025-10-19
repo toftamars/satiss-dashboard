@@ -4135,13 +4135,7 @@
                         }
                     }
                     
-                    if (target === 0 && googleSheetsTargets.monthly[year]) {
-                        const targetKey = findTargetKey(googleSheetsTargets.monthly[year], storeName);
-                        if (targetKey && googleSheetsTargets.monthly[year][targetKey][month]) {
-                            target = googleSheetsTargets.monthly[year][targetKey][month];
-                        }
-                    }
-                    
+                    // Google Sheets kaldırıldı - sadece localStorage fallback
                     if (target === 0) {
                         const localTargets = JSON.parse(localStorage.getItem('monthlyTargets') || '{}');
                         if (localTargets[year]) {
@@ -4160,13 +4154,7 @@
                         }
                     }
                     
-                    if (target === 0 && googleSheetsTargets.yearly[year]) {
-                        const targetKey = findTargetKey(googleSheetsTargets.yearly[year], storeName);
-                        if (targetKey) {
-                            target = googleSheetsTargets.yearly[year][targetKey];
-                        }
-                    }
-                    
+                    // Google Sheets kaldırıldı - sadece localStorage fallback
                     if (target === 0) {
                         const localTargets = JSON.parse(localStorage.getItem('yearlyTargets') || '{}');
                         if (localTargets[year]) {
@@ -4387,24 +4375,8 @@
             // Mağaza adını temizle (kodları kaldır)
             const cleanStoreName = store.replace(/\[.*?\]\s*/g, '').replace(/^.*?\s-\s/, '').trim();
             
-            // Önce Google Sheets'ten (kısmi eşleşme ile), yoksa localStorage'dan
+            // Google Sheets kaldırıldı - sadece localStorage fallback
             let yearlyTarget = null;
-            if (googleSheetsTargets.yearly[year]) {
-                // Tam eşleşme veya kısmi eşleşme dene
-                yearlyTarget = googleSheetsTargets.yearly[year][cleanStoreName] || 
-                              googleSheetsTargets.yearly[year][store];
-                
-                // Hala bulunamadıysa, içeren mağaza ara
-                if (!yearlyTarget) {
-                    for (const [sheetStore, targetValue] of Object.entries(googleSheetsTargets.yearly[year])) {
-                        if (cleanStoreName.toLowerCase().includes(sheetStore.toLowerCase()) || 
-                            sheetStore.toLowerCase().includes(cleanStoreName.toLowerCase())) {
-                            yearlyTarget = targetValue;
-                            break;
-                        }
-                    }
-                }
-            }
             
             // localStorage fallback
             if (!yearlyTarget) {
@@ -4499,29 +4471,11 @@
             // Mağaza adını temizle (kodları kaldır)
             const cleanStoreName = store.replace(/\[.*?\]\s*/g, '').replace(/^.*?\s-\s/, '').trim();
             
-            // Önce Google Sheets'ten (kısmi eşleşme ile), yoksa localStorage'dan
-            let googleTarget = null;
-            if (googleSheetsTargets.monthly[year]?.[month]) {
-                // Tam eşleşme veya kısmi eşleşme dene
-                googleTarget = googleSheetsTargets.monthly[year][month][cleanStoreName] || 
-                               googleSheetsTargets.monthly[year][month][store];
-                
-                // Hala bulunamadıysa, içeren mağaza ara
-                if (!googleTarget) {
-                    for (const [sheetStore, targetValue] of Object.entries(googleSheetsTargets.monthly[year][month])) {
-                        if (cleanStoreName.toLowerCase().includes(sheetStore.toLowerCase()) || 
-                            sheetStore.toLowerCase().includes(cleanStoreName.toLowerCase())) {
-                            googleTarget = targetValue;
-                            break;
-                        }
-                    }
-                }
-            }
-            
+            // Google Sheets kaldırıldı - sadece localStorage fallback
             const localTarget = JSON.parse(localStorage.getItem('monthlyTargets') || '{}')[year]?.[store]?.[month];
-            const target = googleTarget || localTarget;
+            const target = localTarget;
             
-            console.log('📊 loadMonthlyTarget çağrıldı:', {year, month, store, googleTarget, localTarget});
+            console.log('📊 loadMonthlyTarget çağrıldı:', {year, month, store, localTarget});
             
             // Hedef inputunu temizle
             const targetInput = document.getElementById('monthlyTarget');
@@ -4530,8 +4484,7 @@
             // Eğer bu mağaza ve ay için hedef varsa doldur
             if (target) {
                 targetInput.value = target;
-                const source = googleTarget ? 'Google Sheets' : 'localStorage';
-                console.log(`✅ Aylık hedef yüklendi (${source}):`, target);
+                console.log(`✅ Aylık hedef yüklendi (localStorage):`, target);
             } else {
                 console.log('⚠️ Bu mağaza ve ay için kaydedilmiş hedef yok');
             }
@@ -4554,13 +4507,7 @@
             let yearlyTarget = parseFloat(document.getElementById('yearlyTarget').value) || 0;
             let monthlyTarget = parseFloat(document.getElementById('monthlyTarget').value) || 0;
             
-            // Eğer input boşsa Google Sheets'ten yükle
-            if (yearlyTarget === 0 && googleSheetsTargets.yearly[targetYear]) {
-                yearlyTarget = googleSheetsTargets.yearly[targetYear][yearStore] || 0;
-            }
-            if (monthlyTarget === 0 && googleSheetsTargets.monthly[targetYear]?.[targetMonth]) {
-                monthlyTarget = googleSheetsTargets.monthly[targetYear][targetMonth][monthStore] || 0;
-            }
+            // Google Sheets kaldırıldı - hedefler targets.json'dan veya localStorage'dan geliyor
             
             // Yıllık hesaplama - HER ZAMAN gerçekleşmeyi göster (hedef olsun/olmasın)
             const yearlyData = allData.filter(item => {
