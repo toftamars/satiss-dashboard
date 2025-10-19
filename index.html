@@ -1161,7 +1161,17 @@
 
                 <!-- Yıllık Karşılaştırma -->
                 <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 40px;">
-                    <h3 style="margin-bottom: 20px;">📊 Yıllık Satış Karşılaştırması</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0;">📊 Yıllık Satış Karşılaştırması</h3>
+                        <div style="display: flex; gap: 10px;">
+                            <button id="dashYearlyMetricSales" onclick="changeDashYearlyMetric('sales')" style="padding: 8px 20px; border: 2px solid #667eea; background: #667eea; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                                💰 Satış (USD)
+                            </button>
+                            <button id="dashYearlyMetricQty" onclick="changeDashYearlyMetric('qty')" style="padding: 8px 20px; border: 2px solid #667eea; background: white; color: #667eea; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                                📦 Miktar
+                            </button>
+                        </div>
+                    </div>
                     <canvas id="dashYearlyChart" style="max-height: 400px;"></canvas>
             </div>
             
@@ -5288,39 +5298,75 @@
             performDashboardAIAnalysis();
         }
 
+        let dashYearlyMetricType = 'sales'; // Default: satış
+        let dashYearlyDataCache = null; // Veriyi cache'le
+
+        function changeDashYearlyMetric(type) {
+            dashYearlyMetricType = type;
+            
+            // Buton stillerini güncelle
+            const salesBtn = document.getElementById('dashYearlyMetricSales');
+            const qtyBtn = document.getElementById('dashYearlyMetricQty');
+            
+            if (type === 'sales') {
+                salesBtn.style.background = '#667eea';
+                salesBtn.style.color = 'white';
+                qtyBtn.style.background = 'white';
+                qtyBtn.style.color = '#667eea';
+            } else {
+                salesBtn.style.background = 'white';
+                salesBtn.style.color = '#667eea';
+                qtyBtn.style.background = '#667eea';
+                qtyBtn.style.color = 'white';
+            }
+            
+            // Grafiği yeniden çiz
+            renderDashYearlyChart();
+        }
+
         function renderDashYearlyChart() {
             const ctx = document.getElementById('dashYearlyChart');
             if (!ctx) return;
             
-            // Yıl ve ay bazında grupla (hem satış hem miktar için)
-            const yearlyMonthlyData = {};
-            const yearlyMonthlyQty = {};
+            // İlk çalıştırmada veriyi hazırla
+            if (!dashYearlyDataCache) {
+                const yearlyMonthlyData = {};
+                const yearlyMonthlyQty = {};
+                
+                allData.forEach(item => {
+                    if (item.date) {
+                        const year = item.date.substring(0, 4);
+                        const month = item.date.substring(5, 7);
+                        
+                        // Satış tutarı
+                        if (!yearlyMonthlyData[year]) yearlyMonthlyData[year] = {};
+                        if (!yearlyMonthlyData[year][month]) yearlyMonthlyData[year][month] = 0;
+                        yearlyMonthlyData[year][month] += parseFloat(item.usd_amount || 0);
+                        
+                        // Miktar
+                        if (!yearlyMonthlyQty[year]) yearlyMonthlyQty[year] = {};
+                        if (!yearlyMonthlyQty[year][month]) yearlyMonthlyQty[year][month] = 0;
+                        yearlyMonthlyQty[year][month] += parseFloat(item.quantity || 0);
+                    }
+                });
+                
+                // Tüm ayları topla
+                const allMonthKeys = new Set();
+                Object.values(yearlyMonthlyData).forEach(yearData => {
+                    Object.keys(yearData).forEach(month => allMonthKeys.add(month));
+                });
+                
+                dashYearlyDataCache = {
+                    sales: yearlyMonthlyData,
+                    qty: yearlyMonthlyQty,
+                    months: Array.from(allMonthKeys).sort()
+                };
+            }
             
-            allData.forEach(item => {
-                if (item.date) {
-                    const year = item.date.substring(0, 4);
-                    const month = item.date.substring(5, 7);
-                    
-                    // Satış tutarı
-                    if (!yearlyMonthlyData[year]) yearlyMonthlyData[year] = {};
-                    if (!yearlyMonthlyData[year][month]) yearlyMonthlyData[year][month] = 0;
-                    yearlyMonthlyData[year][month] += parseFloat(item.usd_amount || 0);
-                    
-                    // Miktar
-                    if (!yearlyMonthlyQty[year]) yearlyMonthlyQty[year] = {};
-                    if (!yearlyMonthlyQty[year][month]) yearlyMonthlyQty[year][month] = 0;
-                    yearlyMonthlyQty[year][month] += parseFloat(item.quantity || 0);
-                }
-            });
+            const sortedMonths = dashYearlyDataCache.months;
+            const sourceData = dashYearlyMetricType === 'sales' ? dashYearlyDataCache.sales : dashYearlyDataCache.qty;
             
-            // Tüm ayları topla
-            const allMonthKeys = new Set();
-            Object.values(yearlyMonthlyData).forEach(yearData => {
-                Object.keys(yearData).forEach(month => allMonthKeys.add(month));
-            });
-            const sortedMonths = Array.from(allMonthKeys).sort();
-            
-            // Dataset oluştur (her yıl için - satış + miktar)
+            // Dataset oluştur (seçilen metriğe göre)
             const datasets = [];
             const colors = [
                 {border: 'rgba(102, 126, 234, 1)', bg: 'rgba(102, 126, 234, 0.1)'},
@@ -5328,47 +5374,20 @@
                 {border: 'rgba(56, 239, 125, 1)', bg: 'rgba(56, 239, 125, 0.1)'},
                 {border: 'rgba(255, 206, 86, 1)', bg: 'rgba(255, 206, 86, 0.1)'}
             ];
-            const qtyColors = [
-                {border: 'rgba(255, 159, 64, 1)', bg: 'rgba(255, 159, 64, 0.1)'},
-                {border: 'rgba(153, 102, 255, 1)', bg: 'rgba(153, 102, 255, 0.1)'},
-                {border: 'rgba(255, 99, 132, 1)', bg: 'rgba(255, 99, 132, 0.1)'},
-                {border: 'rgba(54, 162, 235, 1)', bg: 'rgba(54, 162, 235, 0.1)'}
-            ];
             
-            // Satış datasetleri
-            Object.keys(yearlyMonthlyData).sort().forEach((year, idx) => {
-                const yearData = yearlyMonthlyData[year];
+            Object.keys(sourceData).sort().forEach((year, idx) => {
+                const yearData = sourceData[year];
                 const values = sortedMonths.map(month => yearData[month] || 0);
                 const color = colors[idx % colors.length];
                 
                 datasets.push({
-                    label: `${year} Satış (USD)`,
+                    label: `${year}`,
                     data: values,
                     borderColor: color.border,
                     backgroundColor: color.bg,
                     borderWidth: 3,
                     fill: true,
-                    tension: 0.4,
-                    yAxisID: 'y'
-                });
-            });
-            
-            // Miktar datasetleri
-            Object.keys(yearlyMonthlyQty).sort().forEach((year, idx) => {
-                const yearQty = yearlyMonthlyQty[year];
-                const values = sortedMonths.map(month => yearQty[month] || 0);
-                const color = qtyColors[idx % qtyColors.length];
-                
-                datasets.push({
-                    label: `${year} Miktar`,
-                    data: values,
-                    borderColor: color.border,
-                    backgroundColor: color.bg,
-                    borderWidth: 3,
-                    fill: false,
-                    tension: 0.4,
-                    yAxisID: 'y1',
-                    borderDash: [5, 5]
+                    tension: 0.4
                 });
             });
             
@@ -5380,6 +5399,11 @@
             const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
                                'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
             const labels = sortedMonths.map(m => monthNames[parseInt(m) - 1]);
+            
+            // Y ekseni ayarları
+            const isSales = dashYearlyMetricType === 'sales';
+            const yAxisLabel = isSales ? 'Satış (USD - KDV Hariç)' : 'Miktar (Adet)';
+            const yAxisColor = isSales ? 'rgba(102, 126, 234, 1)' : 'rgba(255, 159, 64, 1)';
             
             dashYearlyChartInstance = new Chart(ctx, {
                 type: 'line',
@@ -5399,10 +5423,10 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    if (context.dataset.label.includes('Miktar')) {
-                                        return context.dataset.label + ': ' + context.parsed.y.toLocaleString('tr-TR', {minimumFractionDigits: 0}) + ' adet';
-                                    } else {
+                                    if (isSales) {
                                         return context.dataset.label + ': $' + context.parsed.y.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                    } else {
+                                        return context.dataset.label + ': ' + context.parsed.y.toLocaleString('tr-TR', {minimumFractionDigits: 0}) + ' adet';
                                     }
                                 }
                             }
@@ -5410,14 +5434,11 @@
                     },
                     scales: {
                         y: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                text: 'Satış (USD - KDV Hariç)',
-                                color: 'rgba(102, 126, 234, 1)',
+                                text: yAxisLabel,
+                                color: yAxisColor,
                                 font: {
                                     weight: 'bold',
                                     size: 12
@@ -5425,31 +5446,12 @@
                             },
                             ticks: {
                                 callback: function(value) {
-                                    return '$' + value.toLocaleString('tr-TR');
+                                    if (isSales) {
+                                        return '$' + value.toLocaleString('tr-TR');
+                                    } else {
+                                        return value.toLocaleString('tr-TR') + ' adet';
+                                    }
                                 }
-                            }
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Miktar (Adet)',
-                                color: 'rgba(255, 159, 64, 1)',
-                                font: {
-                                    weight: 'bold',
-                                    size: 12
-                                }
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    return value.toLocaleString('tr-TR') + ' adet';
-                                }
-                            },
-                            grid: {
-                                drawOnChartArea: false,
                             }
                         }
                     }
