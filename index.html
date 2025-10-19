@@ -1812,12 +1812,16 @@
                                 <div style="font-size: 1.5em; font-weight: bold;" id="salespersonTotalQty">0</div>
                             </div>
                             <div>
-                                <div style="opacity: 0.8; font-size: 0.9em;">🛒 İşlem Sayısı</div>
-                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonTransactionCount">0</div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">🛒 Fatura Sayısı</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonInvoiceCount">0</div>
                             </div>
                             <div>
-                                <div style="opacity: 0.8; font-size: 0.9em;">📊 Ortalama İşlem</div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">📊 Günlük Ort. Satış</div>
                                 <div style="font-size: 1.5em; font-weight: bold;" id="salespersonAvgTransaction">$0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">🛒 Sepet Ortalaması</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonAvgBasket">$0</div>
                             </div>
                             <div>
                                 <div style="opacity: 0.8; font-size: 0.9em;">👥 Farklı Müşteri</div>
@@ -2015,12 +2019,16 @@
                                 <div style="font-size: 1.5em; font-weight: bold;" id="storeTotalQty">0</div>
                             </div>
                             <div>
-                                <div style="opacity: 0.8; font-size: 0.9em;">👥 Farklı Müşteri</div>
-                                <div style="font-size: 1.5em; font-weight: bold;" id="storeTransactionCount">0</div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">🛒 Fatura Sayısı</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="storeInvoiceCount">0</div>
                             </div>
                             <div>
-                                <div style="opacity: 0.8; font-size: 0.9em;">📊 Ortalama İşlem</div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">📊 Günlük Ort. Satış</div>
                                 <div style="font-size: 1.5em; font-weight: bold;" id="storeAvgTransaction">$0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">🛒 Sepet Ortalaması</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="storeAvgBasket">$0</div>
                             </div>
                             <div>
                                 <div style="opacity: 0.8; font-size: 0.9em;">👥 Farklı Müşteri</div>
@@ -2092,7 +2100,7 @@
                 
                 <!-- City Selection & Date Filters -->
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; margin-bottom: 40px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: end;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 20px; align-items: end;">
                         <div>
                             <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">📍 Şehir Seçin</label>
                             <select id="citySelect" onchange="analyzeCityPerformance()" 
@@ -2109,6 +2117,12 @@
                             <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">📅 Bitiş Tarihi</label>
                             <input type="date" id="cityDateEnd" onchange="analyzeCityPerformance()"
                                    style="width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 1em;">
+                        </div>
+                        <div>
+                            <button onclick="clearCityFilters()" 
+                                    style="padding: 15px 30px; background: white; color: #667eea; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                                🗑️ Temizle
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -9628,8 +9642,10 @@
             const actualStoreName = storeData[0].store;
             const totalSales = storeData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
             const totalQty = storeData.reduce((sum, item) => sum + parseFloat(item.quantity || 0), 0);
-            const transactionCount = new Set(storeData.map(item => item.date)).size;
-            const avgTransaction = totalSales / Math.max(transactionCount, 1);
+            const transactionCount = new Set(storeData.map(item => item.date)).size; // Satış yapılan gün sayısı
+            const invoiceCount = new Set(storeData.map(item => item.move_name)).size; // Fatura sayısı
+            const avgTransaction = totalSales / Math.max(transactionCount, 1); // Günlük ortalama
+            const avgBasket = totalSales / Math.max(invoiceCount, 1); // Sepet ortalaması (fatura başına)
             const uniqueCustomers = new Set(storeData.map(item => item.partner)).size;
             const uniqueProducts = new Set(storeData.map(item => item.product)).size;
             
@@ -9643,8 +9659,9 @@
             document.getElementById('storeName').textContent = actualStoreName;
             document.getElementById('storeTotalSales').textContent = '$' + totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('storeTotalQty').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2});
-            document.getElementById('storeTransactionCount').textContent = uniqueCustomers;
+            document.getElementById('storeInvoiceCount').textContent = invoiceCount;
             document.getElementById('storeAvgTransaction').textContent = '$' + avgTransaction.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            document.getElementById('storeAvgBasket').textContent = '$' + avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('storeUniqueCustomers').textContent = uniqueCustomers;
             document.getElementById('storeUniqueProducts').textContent = uniqueProducts;
             
@@ -9716,14 +9733,18 @@
                 const totalSales = data.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
                 const totalQty = data.reduce((sum, item) => sum + parseFloat(item.quantity || 0), 0);
                 const uniqueDates = new Set(data.map(item => item.date));
-                const transactionCount = uniqueDates.size;
-                const avgTransaction = totalSales / Math.max(transactionCount, 1);
+                const transactionCount = uniqueDates.size; // Satış yapılan gün sayısı
+                const invoiceCount = new Set(data.map(item => item.move_name)).size; // Fatura sayısı
+                const avgTransaction = totalSales / Math.max(transactionCount, 1); // Günlük ortalama
+                const avgBasket = totalSales / Math.max(invoiceCount, 1); // Sepet ortalaması
                 const uniqueCustomers = new Set(data.map(item => item.partner)).size;
                 const uniqueProducts = new Set(data.map(item => item.product)).size;
                 
                 return {
                     name: storeName,
                     data: data,
+                    invoiceCount: invoiceCount,
+                    avgBasket: avgBasket,
                     totalSales,
                     totalQty,
                     transactionCount,
@@ -9790,12 +9811,16 @@
                             ${storesData.map(st => `<td style="padding: 12px; border-bottom: 1px solid #dee2e6; text-align: right;">${st.totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>`).join('')}
                         </tr>
                         <tr style="background: white;">
-                            <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: 600;">🛒 İşlem Sayısı</td>
-                            ${storesData.map(st => `<td style="padding: 12px; border-bottom: 1px solid #dee2e6; text-align: right;">${st.transactionCount}</td>`).join('')}
+                            <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: 600;">🛒 Fatura Sayısı</td>
+                            ${storesData.map(st => `<td style="padding: 12px; border-bottom: 1px solid #dee2e6; text-align: right;">${st.invoiceCount}</td>`).join('')}
                         </tr>
                         <tr style="background: #f8f9fa;">
-                            <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: 600;">📊 Ortalama İşlem</td>
+                            <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: 600;">📊 Günlük Ort. Satış</td>
                             ${storesData.map(st => `<td style="padding: 12px; border-bottom: 1px solid #dee2e6; text-align: right;">$${st.avgTransaction.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>`).join('')}
+                        </tr>
+                        <tr style="background: white;">
+                            <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: 600;">🛒 Sepet Ortalaması</td>
+                            ${storesData.map(st => `<td style="padding: 12px; border-bottom: 1px solid #dee2e6; text-align: right;">$${st.avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>`).join('')}
                         </tr>
                         <tr style="background: white;">
                             <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: 600;">👥 Farklı Müşteri</td>
@@ -10896,6 +10921,14 @@
             console.log('✅ Hedef takip mağaza dropdownları dolduruldu:', stores.size, 'mağaza');
         }
         
+        function clearCityFilters() {
+            document.getElementById('citySelect').value = '';
+            document.getElementById('cityDateStart').value = '';
+            document.getElementById('cityDateEnd').value = '';
+            document.getElementById('cityAnalysisContainer').style.display = 'none';
+            console.log('🗑️ Şehir filtreleri temizlendi');
+        }
+        
         function analyzeCityPerformance() {
             const selectedCity = document.getElementById('citySelect').value;
             const dateStart = document.getElementById('cityDateStart').value;
@@ -11960,8 +11993,10 @@
             const totalSales = salespersonData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
             const totalQty = salespersonData.reduce((sum, item) => sum + parseFloat(item.quantity || 0), 0);
             const uniqueDates = new Set(salespersonData.map(item => item.date));
-            const transactionCount = uniqueDates.size;
-            const avgTransaction = totalSales / Math.max(transactionCount, 1);
+            const transactionCount = uniqueDates.size; // Satış yapılan gün sayısı
+            const invoiceCount = new Set(salespersonData.map(item => item.move_name)).size; // Fatura sayısı
+            const avgTransaction = totalSales / Math.max(transactionCount, 1); // Günlük ortalama
+            const avgBasket = totalSales / Math.max(invoiceCount, 1); // Sepet ortalaması
             const uniqueCustomers = new Set(salespersonData.map(item => item.partner)).size;
             const uniqueProducts = new Set(salespersonData.map(item => item.product)).size;
             
@@ -11969,8 +12004,9 @@
             document.getElementById('salespersonName').textContent = salespersonName;
             document.getElementById('salespersonTotalSales').textContent = '$' + totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('salespersonTotalQty').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2});
-            document.getElementById('salespersonTransactionCount').textContent = transactionCount;
+            document.getElementById('salespersonInvoiceCount').textContent = invoiceCount;
             document.getElementById('salespersonAvgTransaction').textContent = '$' + avgTransaction.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            document.getElementById('salespersonAvgBasket').textContent = '$' + avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('salespersonUniqueCustomers').textContent = uniqueCustomers;
             document.getElementById('salespersonUniqueProducts').textContent = uniqueProducts;
             
@@ -12040,14 +12076,18 @@
                 const totalSales = data.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
                 const totalQty = data.reduce((sum, item) => sum + parseFloat(item.quantity || 0), 0);
                 const uniqueDates = new Set(data.map(item => item.date));
-                const transactionCount = uniqueDates.size;
-                const avgTransaction = totalSales / Math.max(transactionCount, 1);
+                const transactionCount = uniqueDates.size; // Satış yapılan gün sayısı
+                const invoiceCount = new Set(data.map(item => item.move_name)).size; // Fatura sayısı
+                const avgTransaction = totalSales / Math.max(transactionCount, 1); // Günlük ortalama
+                const avgBasket = totalSales / Math.max(invoiceCount, 1); // Sepet ortalaması
                 const uniqueCustomers = new Set(data.map(item => item.partner)).size;
                 const uniqueProducts = new Set(data.map(item => item.product)).size;
                 
                 return {
                     name: spName,
                     data: data,
+                    invoiceCount: invoiceCount,
+                    avgBasket: avgBasket,
                     totalSales,
                     totalQty,
                     transactionCount,
@@ -12590,12 +12630,16 @@
                             ${salespersonsData.map(sp => `<td style="padding: 12px; border-bottom: 1px solid #dee2e6; text-align: right;">${sp.totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>`).join('')}
                         </tr>
                         <tr style="background: white;">
-                            <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: 600;">🛒 İşlem Sayısı</td>
-                            ${salespersonsData.map(sp => `<td style="padding: 12px; border-bottom: 1px solid #dee2e6; text-align: right;">${sp.transactionCount}</td>`).join('')}
+                            <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: 600;">🛒 Fatura Sayısı</td>
+                            ${salespersonsData.map(sp => `<td style="padding: 12px; border-bottom: 1px solid #dee2e6; text-align: right;">${sp.invoiceCount}</td>`).join('')}
                         </tr>
                         <tr style="background: #f8f9fa;">
-                            <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: 600;">📊 Ortalama İşlem</td>
+                            <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: 600;">📊 Günlük Ort. Satış</td>
                             ${salespersonsData.map(sp => `<td style="padding: 12px; border-bottom: 1px solid #dee2e6; text-align: right;">$${sp.avgTransaction.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>`).join('')}
+                        </tr>
+                        <tr style="background: white;">
+                            <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: 600;">🛒 Sepet Ortalaması</td>
+                            ${salespersonsData.map(sp => `<td style="padding: 12px; border-bottom: 1px solid #dee2e6; text-align: right;">$${sp.avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>`).join('')}
                         </tr>
                         <tr style="background: white;">
                             <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: 600;">👥 Farklı Müşteri</td>
