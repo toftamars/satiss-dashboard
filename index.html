@@ -2258,7 +2258,8 @@
         // İndirim ürünlerini tespit eden yardımcı fonksiyon
         function isDiscountProduct(item) {
             const productName = (item.product || '').toLowerCase();
-            return productName.includes('indirim') || 
+            return productName.includes('[disc]') ||
+                   productName.includes('indirim') || 
                    productName.includes('discount') ||
                    productName.includes('toplam tutarda indirim');
         }
