@@ -5779,10 +5779,16 @@
                 dashTopProductsChartInstance.destroy();
             }
             
+            // Ürün isimlerini kısalt (max 40 karakter)
+            const shortLabels = top10.map(s => {
+                const name = s[0];
+                return name.length > 40 ? name.substring(0, 37) + '...' : name;
+            });
+            
             dashTopProductsChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: top10.map(s => s[0]),
+                    labels: shortLabels,
                     datasets: [{
                         label: 'Satış (USD)',
                         data: top10.map(s => s[1]),
@@ -5797,6 +5803,10 @@
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
+                                title: function(context) {
+                                    // Tooltip'te tam ürün adını göster
+                                    return top10[context[0].dataIndex][0];
+                                },
                                 label: function(context) {
                                     const percentage = ((context.parsed.x / total) * 100).toFixed(1);
                                     return 'Satış: $' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' (' + percentage + '%)';
@@ -5809,6 +5819,14 @@
                             ticks: {
                                 callback: function(value) {
                                     return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                autoSkip: false,
+                                font: {
+                                    size: 11
                                 }
                             }
                         }
