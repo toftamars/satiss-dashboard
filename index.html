@@ -9655,7 +9655,12 @@
         
         function renderStoreComparisonCategoryCharts(storesData) {
             const container = document.getElementById('storeComparisonCategoryCharts');
-            if (!container) return;
+            if (!container) {
+                console.error('❌ storeComparisonCategoryCharts container bulunamadı!');
+                return;
+            }
+            
+            console.log('📊 Kategori karşılaştırması başlatılıyor...', storesData.length, 'mağaza');
             
             // Her mağaza için kategori verisi hazırla
             let html = '';
@@ -9671,6 +9676,18 @@
             storesData.forEach((store, idx) => {
                 // Kategori 1 verilerini topla
                 const categoryData = {};
+                console.log(`   🏪 ${store.name}: ${store.data.length} kayıt`);
+                
+                // İlk birkaç kayıtta category_1 var mı kontrol et
+                if (store.data.length > 0) {
+                    const sample = store.data[0];
+                    console.log(`      Örnek veri:`, {
+                        category_1: sample.category_1,
+                        category_2: sample.category_2,
+                        product: sample.product
+                    });
+                }
+                
                 store.data.forEach(item => {
                     const cat1 = item.category_1 || '';
                     // ALL, Analitik, Eğitim, Bilinmiyor, boş değerleri atla
@@ -9684,6 +9701,8 @@
                     if (!categoryData[cat1]) categoryData[cat1] = 0;
                     categoryData[cat1] += parseFloat(item.usd_amount || 0);
                 });
+                
+                console.log(`      Kategori sayısı: ${Object.keys(categoryData).length}`);
                 
                 // En yüksek 10 kategoriyi al
                 const sorted = Object.entries(categoryData)
@@ -9773,7 +9792,7 @@
         }
         
         function performMultipleStoresAIAnalysis(storesData) {
-            console.log('🤖 Çoklu mağaza karşılaştırmalı AI analizi başlatılıyor...');
+            console.log('🤖 Çoklu mağaza karşılaştırmalı AI analizi başlatılıyor...', storesData);
 
             const insights = {positive: [], negative: [], neutral: [], recommendations: []};
 
@@ -9856,6 +9875,9 @@
             const aiContent = document.getElementById('storeAIAnalysisContent');
             if (aiContent) {
                 aiContent.innerHTML = html;
+                console.log('✅ AI analizi HTML eklendi');
+            } else {
+                console.error('❌ storeAIAnalysisContent bulunamadı!');
             }
         }
         
