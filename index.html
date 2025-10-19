@@ -9728,8 +9728,10 @@
                 }
                 
                 store.data.forEach(item => {
-                    // Kategori 1, yoksa Kategori 2, yoksa Kategori 3 kullan
-                    let cat = item.category_1 || item.category_2 || item.category_3 || 'Diğer';
+                    // Eğer category_1 "All" ise category_2 kullan, değilse category_1
+                    let cat = (item.category_1 && item.category_1.toLowerCase() !== 'all') 
+                        ? item.category_1 
+                        : (item.category_2 || item.category_3 || 'Diğer');
                     
                     // Sadece Analitik/Eğitim atla, diğerlerini al
                     if (cat.toLowerCase().includes('analitik') || cat.toLowerCase().includes('eğitim')) {
@@ -9766,8 +9768,10 @@
             storesData.forEach((store, idx) => {
                 const categoryData = {};
                 store.data.forEach(item => {
-                    // Kategori 1, yoksa Kategori 2, yoksa Kategori 3 kullan
-                    let cat = item.category_1 || item.category_2 || item.category_3 || 'Diğer';
+                    // Eğer category_1 "All" ise category_2 kullan, değilse category_1
+                    let cat = (item.category_1 && item.category_1.toLowerCase() !== 'all') 
+                        ? item.category_1 
+                        : (item.category_2 || item.category_3 || 'Diğer');
                     
                     // Sadece Analitik/Eğitim atla, diğerlerini al
                     if (cat.toLowerCase().includes('analitik') || cat.toLowerCase().includes('eğitim')) {
