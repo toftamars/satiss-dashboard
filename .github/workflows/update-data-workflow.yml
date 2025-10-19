@@ -517,7 +517,7 @@ jobs:
                                             db, uid_xmlrpc, password,
                                             'product.product', 'search_read',
                                             [[('id', 'in', batch_ids)]],
-                                            {'fields': ['id', 'categ_id', 'product_brand_id', 'product_tmpl_id']}
+                                            {'fields': ['id', 'categ_id', 'product_brand_id', 'product_tmpl_id'], 'context': {'active_test': False}}
                                         )
                                         products.extend(batch_products)
                                     print(f"✅ Toplam {len(products)} ürün çekildi!")
