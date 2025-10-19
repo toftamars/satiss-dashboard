@@ -1081,8 +1081,69 @@
         }
     </style>
 </head>
-<body>
-    <div class="container">
+    <body>
+        <!-- Loading Screen -->
+        <div id="loadingScreen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white;">
+            <div style="text-align: center;">
+                <!-- Animated Icon -->
+                <div id="loadingIcon" style="font-size: 4em; margin-bottom: 20px; animation: pulse 2s infinite;">📊</div>
+                <h1 style="margin: 0 0 10px 0; font-size: 2.5em; animation: fadeInUp 1s ease;">Odoo ERP Dashboard</h1>
+                <p style="margin: 0 0 30px 0; font-size: 1.2em; opacity: 0.9; animation: fadeInUp 1s ease 0.2s both;">Veriler yükleniyor...</p>
+                
+                <!-- Progress Bar -->
+                <div style="width: 400px; height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; margin: 0 auto 15px; overflow: hidden; animation: fadeInUp 1s ease 0.4s both;">
+                    <div id="progressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%); border-radius: 4px; transition: width 0.3s ease; position: relative;">
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%); animation: shimmer 2s infinite;"></div>
+                    </div>
+                </div>
+                
+                <!-- Progress Text -->
+                <div id="progressText" style="font-size: 1.1em; font-weight: 600; margin-bottom: 20px; animation: fadeInUp 1s ease 0.6s both;">0%</div>
+                
+                <!-- Loading Steps -->
+                <div id="loadingSteps" style="font-size: 0.9em; opacity: 0.8; animation: fadeInUp 1s ease 0.8s both;">
+                    <div id="step1" style="margin-bottom: 8px; transition: all 0.3s ease;">🔄 Sayfa başlatılıyor...</div>
+                    <div id="step2" style="display: none; margin-bottom: 8px; transition: all 0.3s ease;">📊 Veri dosyaları yükleniyor...</div>
+                    <div id="step3" style="display: none; margin-bottom: 8px; transition: all 0.3s ease;">🎯 Hedefler yükleniyor...</div>
+                    <div id="step4" style="display: none; margin-bottom: 8px; transition: all 0.3s ease;">✅ Hazırlanıyor...</div>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+            }
+            
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            @keyframes shimmer {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(100%); }
+            }
+            
+            #loadingScreen .loading-step {
+                opacity: 0.5;
+                transition: opacity 0.3s ease;
+            }
+            
+            #loadingScreen .loading-step.active {
+                opacity: 1;
+                color: #4ade80;
+            }
+        </style>
+
+        <div class="container" style="display: none;" id="mainContainer">
         <div class="header">
             <h1>📊 Satis Analizi Dashboard</h1>
             <p>Odoo ERP - Gercek Zamanli Veri Analizi</p>
@@ -13309,8 +13370,82 @@
             }
         }
         
+        // Loading System
+        let loadingProgress = 0;
+        let loadingSteps = [
+            { id: 'step1', text: '🔄 Sayfa başlatılıyor...', progress: 10 },
+            { id: 'step2', text: '📊 Veri dosyaları yükleniyor...', progress: 40 },
+            { id: 'step3', text: '🎯 Hedefler yükleniyor...', progress: 70 },
+            { id: 'step4', text: '✅ Hazırlanıyor...', progress: 100 }
+        ];
+        
+        function updateLoadingProgress(stepIndex, customProgress = null) {
+            const step = loadingSteps[stepIndex];
+            const progress = customProgress !== null ? customProgress : step.progress;
+            
+            // Progress bar güncelle
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressText').textContent = Math.round(progress) + '%';
+            
+            // Step göster/gizle ve aktif step'i vurgula
+            loadingSteps.forEach((s, index) => {
+                const stepElement = document.getElementById(s.id);
+                if (stepElement) {
+                    if (index <= stepIndex) {
+                        stepElement.style.display = 'block';
+                        if (index === stepIndex) {
+                            stepElement.style.opacity = '1';
+                            stepElement.style.color = '#4ade80';
+                            stepElement.style.transform = 'scale(1.05)';
+                        } else {
+                            stepElement.style.opacity = '0.7';
+                            stepElement.style.color = 'white';
+                            stepElement.style.transform = 'scale(1)';
+                        }
+                    } else {
+                        stepElement.style.display = 'none';
+                    }
+                }
+            });
+            
+            // Eğer %100'e ulaştıysak loading'i gizle
+            if (progress >= 100) {
+                setTimeout(() => {
+                    document.getElementById('loadingScreen').style.opacity = '0';
+                    document.getElementById('loadingScreen').style.transition = 'opacity 0.5s ease';
+                    setTimeout(() => {
+                        document.getElementById('loadingScreen').style.display = 'none';
+                        document.getElementById('mainContainer').style.display = 'block';
+                    }, 500);
+                }, 500);
+            }
+        }
+        
+        function simulateLoading() {
+            // Step 1: Sayfa başlatılıyor
+            updateLoadingProgress(0);
+            
+            setTimeout(() => {
+                // Step 2: Veri dosyaları yükleniyor
+                updateLoadingProgress(1);
+                
+                setTimeout(() => {
+                    // Step 3: Hedefler yükleniyor
+                    updateLoadingProgress(2);
+                    
+                    setTimeout(() => {
+                        // Step 4: Hazırlanıyor
+                        updateLoadingProgress(3);
+                    }, 800);
+                }, 1200);
+            }, 600);
+        }
+
         // Sayfa yüklendiğinde ve tab değiştiğinde çalıştır
         document.addEventListener('DOMContentLoaded', function() {
+            // Loading'i başlat
+            simulateLoading();
+            
             initMobileTableScrollHint();
             
             // Tab değişimlerinde de çalıştır
