@@ -4127,10 +4127,10 @@
         // Tüm mağazaların hedeflerini yükle ve göster (YENİ SİSTEM)
         function loadAllStoresTargets() {
             const year = document.getElementById('targetFilterYear').value;
-            const month = document.getElementById('targetFilterMonth').value;
+            const month = document.getElementById('targetFilterMonth').value || ''; // Boş string'i garantile
             const container = document.getElementById('allStoresTargetsContainer');
             
-            console.log('📊 Tüm mağazalar hedef listesi yükleniyor:', {year, month});
+            console.log('📊 Tüm mağazalar hedef listesi yükleniyor:', {year, month, monthType: typeof month, monthLength: month.length});
             
             // Tüm mağazaları bul
             const allStores = new Set();
