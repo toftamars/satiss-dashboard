@@ -1107,6 +1107,12 @@
                     <div id="step3" style="display: none; margin-bottom: 8px; transition: all 0.3s ease;">🎯 Hedefler yükleniyor...</div>
                     <div id="step4" style="display: none; margin-bottom: 8px; transition: all 0.3s ease;">✅ Hazırlanıyor...</div>
                 </div>
+                
+                <!-- Loading Footer -->
+                <div style="position: absolute; bottom: 20px; right: 20px; background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 20px; font-size: 0.8em; color: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);">
+                    <span style="opacity: 0.7;">Geliştirici:</span> 
+                    <span style="font-weight: 600;">Tofta</span>
+                </div>
             </div>
         </div>
 
@@ -2537,6 +2543,11 @@
                 if (response.ok) {
                     centralTargets = await response.json();
                     console.log('✅ Merkezi hedefler yüklendi:', centralTargets);
+                    
+                    // Loading progress'i güncelle
+                    dataLoadProgress.targets = true;
+                    checkLoadingComplete();
+                    
                     return true;
                 } else {
                     console.warn('⚠️ targets.json yüklenemedi, varsayılan hedefler kullanılacak');
@@ -2550,6 +2561,10 @@
 
         async function loadData() {
             try {
+                // Loading progress'i güncelle
+                dataLoadProgress.dataFiles = true;
+                checkLoadingComplete();
+                
                 document.getElementById('dataStatus').innerHTML = '<span class="status-badge" style="background:#ffc107;color:#000;">⏳ Yükleniyor...</span>';
                 // tableContainer artık Dashboard'da yok, null check ekledik
                 const tableContainer = document.getElementById('tableContainer');
@@ -13421,30 +13436,94 @@
             }
         }
         
-        function simulateLoading() {
-            // Step 1: Sayfa başlatılıyor
-            updateLoadingProgress(0);
+        // Gerçek veri yükleme takibi
+        let dataLoadProgress = {
+            pageInit: false,
+            dataFiles: false,
+            targets: false,
+            ready: false
+        };
+        
+        function checkLoadingComplete() {
+            let progress = 0;
+            if (dataLoadProgress.pageInit) progress += 25;
+            if (dataLoadProgress.dataFiles) progress += 50;
+            if (dataLoadProgress.targets) progress += 20;
+            if (dataLoadProgress.ready) progress += 5;
             
-            setTimeout(() => {
-                // Step 2: Veri dosyaları yükleniyor
-                updateLoadingProgress(1);
+            // Progress'i güncelle
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressText').textContent = Math.round(progress) + '%';
+            
+            // Step'leri güncelle
+            if (dataLoadProgress.pageInit) {
+                document.getElementById('step1').style.display = 'block';
+                document.getElementById('step1').style.opacity = '1';
+                document.getElementById('step1').style.color = '#4ade80';
+            }
+            
+            if (dataLoadProgress.dataFiles) {
+                document.getElementById('step2').style.display = 'block';
+                document.getElementById('step2').style.opacity = '1';
+                document.getElementById('step2').style.color = '#4ade80';
+            }
+            
+            if (dataLoadProgress.targets) {
+                document.getElementById('step3').style.display = 'block';
+                document.getElementById('step3').style.opacity = '1';
+                document.getElementById('step3').style.color = '#4ade80';
+            }
+            
+            if (dataLoadProgress.ready) {
+                document.getElementById('step4').style.display = 'block';
+                document.getElementById('step4').style.opacity = '1';
+                document.getElementById('step4').style.color = '#4ade80';
                 
+                // %100'e ulaştıysak loading'i gizle
                 setTimeout(() => {
-                    // Step 3: Hedefler yükleniyor
-                    updateLoadingProgress(2);
-                    
+                    document.getElementById('loadingScreen').style.opacity = '0';
+                    document.getElementById('loadingScreen').style.transition = 'opacity 0.5s ease';
                     setTimeout(() => {
-                        // Step 4: Hazırlanıyor
-                        updateLoadingProgress(3);
-                    }, 800);
-                }, 1200);
-            }, 600);
+                        document.getElementById('loadingScreen').style.display = 'none';
+                        document.getElementById('mainContainer').style.display = 'block';
+                    }, 500);
+                }, 500);
+            }
+        }
+        
+        function startRealLoading() {
+            // Step 1: Sayfa başlatılıyor
+            dataLoadProgress.pageInit = true;
+            checkLoadingComplete();
+            
+            // Veri yükleme işlemini başlat
+            loadDataWithProgress();
+        }
+        
+        function loadDataWithProgress() {
+            // Step 2: Veri dosyaları yükleniyor
+            setTimeout(() => {
+                dataLoadProgress.dataFiles = true;
+                checkLoadingComplete();
+                
+                // Step 3: Hedefler yükleniyor
+                setTimeout(() => {
+                    dataLoadProgress.targets = true;
+                    checkLoadingComplete();
+                    
+                    // Step 4: Hazırlanıyor
+                    setTimeout(() => {
+                        dataLoadProgress.ready = true;
+                        checkLoadingComplete();
+                    }, 300);
+                }, 500);
+            }, 1000);
         }
 
         // Sayfa yüklendiğinde ve tab değiştiğinde çalıştır
         document.addEventListener('DOMContentLoaded', function() {
-            // Loading'i başlat
-            simulateLoading();
+            // Gerçek loading'i başlat
+            startRealLoading();
             
             initMobileTableScrollHint();
             
