@@ -5533,9 +5533,15 @@
             
             const catData = {};
             data.forEach(item => {
-                const cat = item.category_1 || '';
-                // ALL ve boş değerleri atla
-                if (!cat || cat.toLowerCase() === 'all' || cat.toLowerCase() === 'bilinmiyor') return;
+                // Eğer category_1 "All" ise category_2 kullan, değilse category_1
+                let cat = (item.category_1 && item.category_1.toLowerCase() !== 'all') 
+                    ? item.category_1 
+                    : (item.category_2 || item.category_3 || 'Diğer');
+                
+                // Boş değerleri ve Analitik/Eğitim atla
+                if (!cat || cat.toLowerCase() === 'bilinmiyor') return;
+                if (cat.toLowerCase().includes('analitik') || cat.toLowerCase().includes('eğitim')) return;
+                
                 if (!catData[cat]) catData[cat] = 0;
                 catData[cat] += parseFloat(item.usd_amount || 0);
             });
@@ -9702,16 +9708,8 @@
             
             console.log('📊 Kategori karşılaştırması başlatılıyor...', storesData.length, 'mağaza');
             
-            // Her mağaza için kategori verisi hazırla
+            // Her mağaza için metrik kartları oluştur
             let html = '';
-            const colors = [
-                'rgba(102, 126, 234, 0.7)',
-                'rgba(240, 147, 251, 0.7)',
-                'rgba(255, 159, 64, 0.7)',
-                'rgba(56, 239, 125, 0.7)',
-                'rgba(245, 87, 108, 0.7)',
-                'rgba(78, 205, 196, 0.7)'
-            ];
             
             storesData.forEach((store, idx) => {
                 // Kategori 1 verilerini topla
@@ -9751,85 +9749,63 @@
                 
                 if (sorted.length === 0) return;
                 
-                // Canvas ID oluştur
-                const canvasId = `storeCompCat${idx}`;
+                // Toplam satış hesapla
+                const totalSales = sorted.reduce((sum, item) => sum + item[1], 0);
                 
-                // HTML ekle
+                // Mağaza kartı başlığı
                 html += `
-                    <div class="chart-container">
-                        <h4 style="text-align: center; margin-bottom: 15px;">🏪 ${store.name}</h4>
-                        <canvas id="${canvasId}" style="max-height: 300px;"></canvas>
+                    <div style="background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <h4 style="text-align: center; margin-bottom: 20px; color: #667eea; font-size: 1.3em;">🏪 ${store.name}</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                `;
+                
+                // Her kategori için metrik kartı
+                sorted.forEach((item, catIdx) => {
+                    const categoryName = item[0];
+                    const categoryValue = item[1];
+                    const percentage = ((categoryValue / totalSales) * 100).toFixed(1);
+                    
+                    // Kategori ikonu belirleme
+                    let icon = '📂';
+                    if (categoryName.toLowerCase().includes('gitar')) icon = '🎸';
+                    else if (categoryName.toLowerCase().includes('klavye') || categoryName.toLowerCase().includes('piyano')) icon = '🎹';
+                    else if (categoryName.toLowerCase().includes('davul') || categoryName.toLowerCase().includes('bateri')) icon = '🥁';
+                    else if (categoryName.toLowerCase().includes('ses') || categoryName.toLowerCase().includes('mikrofon')) icon = '🎤';
+                    else if (categoryName.toLowerCase().includes('kulaklık') || categoryName.toLowerCase().includes('hoparlör')) icon = '🔊';
+                    else if (categoryName.toLowerCase().includes('yazılım') || categoryName.toLowerCase().includes('software')) icon = '💿';
+                    
+                    // Gradient renk belirleme (sıralamaya göre)
+                    const gradients = [
+                        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                        'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                        'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                        'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                        'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
+                        'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+                        'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+                        'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+                        'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)'
+                    ];
+                    const gradient = gradients[catIdx % gradients.length];
+                    
+                    html += `
+                        <div style="background: ${gradient}; color: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                            <div style="font-size: 2em; margin-bottom: 10px; text-align: center;">${icon}</div>
+                            <div style="font-size: 0.85em; opacity: 0.95; margin-bottom: 8px; text-align: center; font-weight: 600;">${categoryName}</div>
+                            <div style="font-size: 1.4em; font-weight: bold; text-align: center; margin-bottom: 5px;">$${categoryValue.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                            <div style="font-size: 0.9em; opacity: 0.9; text-align: center;">${percentage}%</div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                        </div>
                     </div>
                 `;
             });
             
             container.innerHTML = html;
-            
-            // Grafikleri oluştur
-            storesData.forEach((store, idx) => {
-                const categoryData = {};
-                store.data.forEach(item => {
-                    // Eğer category_1 "All" ise category_2 kullan, değilse category_1
-                    let cat = (item.category_1 && item.category_1.toLowerCase() !== 'all') 
-                        ? item.category_1 
-                        : (item.category_2 || item.category_3 || 'Diğer');
-                    
-                    // Sadece Analitik/Eğitim atla, diğerlerini al
-                    if (cat.toLowerCase().includes('analitik') || cat.toLowerCase().includes('eğitim')) {
-                        return;
-                    }
-                    if (!categoryData[cat]) categoryData[cat] = 0;
-                    categoryData[cat] += parseFloat(item.usd_amount || 0);
-                });
-                
-                const sorted = Object.entries(categoryData)
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 10);
-                
-                if (sorted.length === 0) return;
-                
-                const canvasId = `storeCompCat${idx}`;
-                const ctx = document.getElementById(canvasId);
-                if (!ctx) return;
-                
-                new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: sorted.map(item => item[0]),
-                        datasets: [{
-                            data: sorted.map(item => item[1]),
-                            backgroundColor: colors,
-                            borderWidth: 2,
-                            borderColor: '#fff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: 'bottom',
-                                labels: {
-                                    padding: 10,
-                                    font: {size: 11}
-                                }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        const label = context.label || '';
-                                        const value = context.parsed || 0;
-                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                        const percentage = ((value / total) * 100).toFixed(1);
-                                        return `${label}: $${value.toLocaleString('tr-TR', {minimumFractionDigits: 2})} (${percentage}%)`;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            });
         }
         
         function performMultipleStoresAIAnalysis(storesData) {
