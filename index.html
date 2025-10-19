@@ -1135,7 +1135,7 @@
                         <h3>📦 Toplam Ürün Adedi</h3>
                         <p id="dashTotalQty" style="color: white;">0</p>
                         <small style="opacity: 0.9;">Satılan ürün sayısı</small>
-                    </div>
+                </div>
                     <div class="summary-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
                         <h3>👥 Toplam Müşteri</h3>
                         <p id="dashTotalCustomers" style="color: white;">0</p>
@@ -1145,7 +1145,7 @@
                         <h3>🎸 Farklı Ürün</h3>
                         <p id="dashTotalProducts" style="color: white;">0</p>
                         <small style="opacity: 0.9;">Ürün çeşidi</small>
-                    </div>
+                </div>
                     <div class="summary-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
                         <h3>🏪 Toplam Mağaza</h3>
                         <p id="dashTotalStores" style="color: white;">0</p>
@@ -1155,41 +1155,41 @@
                         <h3>👨‍💼 Satış Temsilcisi</h3>
                         <p id="dashTotalSalespeople" style="color: white;">0</p>
                         <small style="opacity: 0.9;">Aktif temsilci sayısı</small>
-                    </div>
-                </div>
+            </div>
+        </div>
 
                 <!-- Yıllık Karşılaştırma -->
                 <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 40px;">
                     <h3 style="margin-bottom: 20px;">📊 Yıllık Satış Karşılaştırması</h3>
                     <canvas id="dashYearlyChart" style="max-height: 400px;"></canvas>
-                </div>
-
+            </div>
+            
                 <!-- Top Performanslar -->
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px; margin-bottom: 40px;">
                     <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
                         <h3 style="margin-bottom: 20px;">🏆 Top 5 Mağaza (Bu Yıl)</h3>
                         <canvas id="dashTopStoresChart"></canvas>
-                    </div>
+                </div>
                     <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
                         <h3 style="margin-bottom: 20px;">⭐ Top 5 Satış Temsilcisi (Bu Yıl)</h3>
                         <canvas id="dashTopSalespeopleChart"></canvas>
-                    </div>
+                </div>
                     <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
                         <h3 style="margin-bottom: 20px;">🏷️ Top 5 Marka (Bu Yıl)</h3>
                         <canvas id="dashTopBrandsChart"></canvas>
-                    </div>
+                </div>
                     <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
                         <h3 style="margin-bottom: 20px;">📂 Top 5 Kategori (Bu Yıl)</h3>
                         <canvas id="dashTopCategoriesChart"></canvas>
-                    </div>
                 </div>
+            </div>
 
                 <!-- AI Dashboard Analizi -->
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; margin-bottom: 40px;">
                     <h3 style="color: white; margin-bottom: 20px;">🤖 AI Dashboard Analizi</h3>
                     <div id="dashAIAnalysis" style="background: white; padding: 20px; border-radius: 10px; line-height: 1.8;"></div>
-                </div>
             </div>
+        </div>
         </div>
         <!-- End Dashboard Tab -->
 
@@ -1228,7 +1228,7 @@
                                 <option value="12">Aralık</option>
                             </select>
                         </div>
-                    </div>
+                            </div>
                     <p style="color: white; opacity: 0.9; margin-top: 15px; font-size: 0.95em;">
                         💡 İpucu: Sadece yıl seçerseniz yıllık hedefler, yıl + ay seçerseniz aylık hedefler gösterilir
                     </p>
@@ -1465,14 +1465,14 @@
                         <div style="grid-column: 1 / -1;">
                             <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">🔍 Ürün/Marka Ara</label>
                             <div style="display: flex; gap: 10px;">
-                                <input type="text" id="productSearchInput" placeholder="Örnek: KDP120R, Roland, Yamaha P-125..." 
+                        <input type="text" id="productSearchInput" placeholder="Örnek: KDP120R, Roland, Yamaha P-125..." 
                                        style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 1em;"
-                                       onkeypress="if(event.key==='Enter') searchProduct()">
-                                <button onclick="searchProduct()" 
+                               onkeypress="if(event.key==='Enter') searchProduct()">
+                        <button onclick="searchProduct()" 
                                         style="padding: 12px 30px; background: #38ef7d; color: white; border: none; border-radius: 8px; font-size: 1em; font-weight: bold; cursor: pointer;">
-                                    🔍 Ara
-                                </button>
-                            </div>
+                            🔍 Ara
+                        </button>
+                    </div>
                         </div>
                         
                         <!-- Category Search -->
@@ -1780,33 +1780,33 @@
                 <div id="salespersonProfileContainer" style="display: none;">
                     <!-- Single Salesperson View -->
                     <div id="singleSalespersonView" style="display: none;">
-                        <!-- Salesperson Profile Header -->
-                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; border-radius: 20px; margin-bottom: 30px;">
-                            <h2 style="margin: 0 0 20px 0; font-size: 2em;">👨‍💼 <span id="salespersonName">-</span></h2>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-                                <div>
-                                    <div style="opacity: 0.8; font-size: 0.9em;">💰 Toplam Satış (KDV Hariç)</div>
-                                    <div style="font-size: 1.5em; font-weight: bold;" id="salespersonTotalSales">$0</div>
-                                </div>
-                                <div>
-                                    <div style="opacity: 0.8; font-size: 0.9em;">📦 Toplam Adet</div>
-                                    <div style="font-size: 1.5em; font-weight: bold;" id="salespersonTotalQty">0</div>
-                                </div>
-                                <div>
-                                    <div style="opacity: 0.8; font-size: 0.9em;">🛒 İşlem Sayısı</div>
-                                    <div style="font-size: 1.5em; font-weight: bold;" id="salespersonTransactionCount">0</div>
-                                </div>
-                                <div>
-                                    <div style="opacity: 0.8; font-size: 0.9em;">📊 Ortalama İşlem</div>
-                                    <div style="font-size: 1.5em; font-weight: bold;" id="salespersonAvgTransaction">$0</div>
-                                </div>
-                                <div>
-                                    <div style="opacity: 0.8; font-size: 0.9em;">👥 Farklı Müşteri</div>
-                                    <div style="font-size: 1.5em; font-weight: bold;" id="salespersonUniqueCustomers">0</div>
-                                </div>
-                                <div>
-                                    <div style="opacity: 0.8; font-size: 0.9em;">🎯 Farklı Ürün</div>
-                                    <div style="font-size: 1.5em; font-weight: bold;" id="salespersonUniqueProducts">0</div>
+                    <!-- Salesperson Profile Header -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; border-radius: 20px; margin-bottom: 30px;">
+                        <h2 style="margin: 0 0 20px 0; font-size: 2em;">👨‍💼 <span id="salespersonName">-</span></h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">💰 Toplam Satış (KDV Hariç)</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonTotalSales">$0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">📦 Toplam Adet</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonTotalQty">0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">🛒 İşlem Sayısı</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonTransactionCount">0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">📊 Ortalama İşlem</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonAvgTransaction">$0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">👥 Farklı Müşteri</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonUniqueCustomers">0</div>
+                            </div>
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">🎯 Farklı Ürün</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="salespersonUniqueProducts">0</div>
                                 </div>
                             </div>
                         </div>
@@ -1822,8 +1822,8 @@
                         </div>
                         
                         <!-- Comparison Charts -->
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 30px; margin-bottom: 30px;">
-                            <div class="chart-container">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 30px; margin-bottom: 30px;">
+                        <div class="chart-container">
                                 <h3 style="text-align: center; margin-bottom: 20px;">💰 Toplam Satış Karşılaştırması</h3>
                                 <canvas id="comparisonSalesChart"></canvas>
                             </div>
@@ -1972,14 +1972,14 @@
                     
                     <!-- Single Store View -->
                     <div id="singleStoreView" style="display: none;">
-                        <!-- Store Profile Header -->
-                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; border-radius: 20px; margin-bottom: 30px;">
-                            <h2 style="margin: 0 0 20px 0; font-size: 2em;">🏪 <span id="storeName">-</span></h2>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-                                <div>
-                                    <div style="opacity: 0.8; font-size: 0.9em;">💰 Toplam Satış (KDV Hariç)</div>
-                                    <div style="font-size: 1.5em; font-weight: bold;" id="storeTotalSales">$0</div>
-                                </div>
+                    <!-- Store Profile Header -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; border-radius: 20px; margin-bottom: 30px;">
+                        <h2 style="margin: 0 0 20px 0; font-size: 2em;">🏪 <span id="storeName">-</span></h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                            <div>
+                                <div style="opacity: 0.8; font-size: 0.9em;">💰 Toplam Satış (KDV Hariç)</div>
+                                <div style="font-size: 1.5em; font-weight: bold;" id="storeTotalSales">$0</div>
+                            </div>
                             <div>
                                 <div style="opacity: 0.8; font-size: 0.9em;">📦 Toplam Adet</div>
                                 <div style="font-size: 1.5em; font-weight: bold;" id="storeTotalQty">0</div>
@@ -2050,8 +2050,8 @@
                     <h3 style="color: #6c757d; margin-bottom: 10px;">Mağaza Bulunamadı</h3>
                     <p style="color: #adb5bd;">Lütfen farklı bir isim deneyin</p>
                 </div>
+                </div>
             </div>
-        </div>
         </div>
         <!-- End Store Analysis Tab -->
 
@@ -2395,11 +2395,15 @@
                 return false;
             }
         }
-        
+
         async function loadData() {
             try {
                 document.getElementById('dataStatus').innerHTML = '<span class="status-badge" style="background:#ffc107;color:#000;">⏳ Yükleniyor...</span>';
-                document.getElementById('tableContainer').innerHTML = '<div style="text-align:center;padding:50px;font-size:1.2em;">⏳ Veriler yükleniyor, lütfen bekleyin...</div>';
+                // tableContainer artık Dashboard'da yok, null check ekledik
+                const tableContainer = document.getElementById('tableContainer');
+                if (tableContainer) {
+                    tableContainer.innerHTML = '<div style="text-align:center;padding:50px;font-size:1.2em;">⏳ Veriler yükleniyor, lütfen bekleyin...</div>';
+                }
                 
                 // Hedefleri yükle (paralel olarak)
                 loadCentralTargets();
@@ -2449,13 +2453,20 @@
                 // Ürün filtrelerini initialize et
                 initializeProductFilters();
                 
+                // Dashboard'ı yükle
+                loadDashboard();
+                
                 // Diğer yılları arka planda yükle
                 setTimeout(() => loadRemainingYears(latestYear), 2000);
                 
             } catch (error) {
                 console.error('Error loading data:', error);
                 document.getElementById('dataStatus').innerHTML = '<span class="status-badge status-error">❌ Hata</span>';
-                document.getElementById('tableContainer').innerHTML = '<div class="error">❌ Veri yüklenirken hata oluştu!<br><small>' + error.message + '</small></div>';
+                // tableContainer null check
+                const tableContainerError = document.getElementById('tableContainer');
+                if (tableContainerError) {
+                    tableContainerError.innerHTML = '<div class="error">❌ Veri yüklenirken hata oluştu!<br><small>' + error.message + '</small></div>';
+                }
             }
         }
 
@@ -3510,6 +3521,11 @@
         
         function renderTable() {
             const container = document.getElementById('tableContainer');
+            
+            // tableContainer yoksa (Dashboard sekmesinde), çık
+            if (!container) {
+                return;
+            }
             
             if (filteredData.length === 0) {
                 container.innerHTML = '<div class="loading">⚠️ Filtreye uygun veri bulunamadi.</div>';
@@ -8273,11 +8289,11 @@
                 customersToSearch = selectedCustomers;
             } else {
                 const searchQuery = document.getElementById('customerSearchInput').value.trim();
-                if (!searchQuery) {
+            if (!searchQuery) {
                     alert('Lütfen bir müşteri adı girin veya listeden seçin');
-                    return;
-                }
-                
+                return;
+            }
+            
                 // Virgül ile ayrılmış isimleri ayır (case-insensitive arama için)
                 const searchTerms = searchQuery.split(',').map(s => s.trim().toLowerCase()).filter(s => s);
                 
@@ -8330,9 +8346,9 @@
             if (customersToSearch.length === 1) {
                 // TEK MÜŞTERİ - Mevcut görünüm
                 const searchQuery = customersToSearch[0]; // Orijinal ismi kullan (büyük/küçük harf korunmuş)
-                const customerData = allData.filter(item => 
+            const customerData = allData.filter(item => 
                     item.partner && item.partner.toLowerCase() === searchQuery.toLowerCase()
-                );
+            );
             
             if (customerData.length === 0) {
                 document.getElementById('customerProfileContainer').style.display = 'none';
@@ -8920,11 +8936,11 @@
                 storesToSearch = selectedStores;
             } else {
                 const searchQuery = document.getElementById('storeSearchInput').value.trim();
-                if (!searchQuery) {
+            if (!searchQuery) {
                     alert('Lütfen bir mağaza adı girin veya listeden seçin');
-                    return;
-                }
-                
+                return;
+            }
+            
                 // Virgül ile ayrılmış isimleri ayır (case-insensitive arama için)
                 const searchTerms = searchQuery.split(',').map(s => s.trim().toLowerCase()).filter(s => s);
                 
@@ -11089,11 +11105,11 @@
                 salespersonsToSearch = selectedSalespersons;
             } else {
                 const searchQuery = document.getElementById('salespersonSearchInput').value.trim();
-                if (!searchQuery) {
+            if (!searchQuery) {
                     alert('Lütfen bir satış temsilcisi adı girin veya listeden seçin');
-                    return;
-                }
-                
+                return;
+            }
+            
                 // Virgül ile ayrılmış isimleri ayır (case-insensitive arama için)
                 const searchTerms = searchQuery.split(',').map(s => s.trim().toLowerCase()).filter(s => s);
                 
