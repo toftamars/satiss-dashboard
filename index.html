@@ -2258,20 +2258,26 @@
         // İndirim ürünlerini tespit eden yardımcı fonksiyon
         function isDiscountProduct(item) {
             const productName = (item.product || '').toLowerCase();
-            return productName.includes('indirim') || 
-                   productName.includes('discount') ||
-                   productName.includes('toplam tutarda indirim');
+            // SADECE [DISC] İndirim ürünü
+            return productName.includes('[disc]') && productName.includes('indirim');
         }
         
-        // İndirim ürünlerinin tutarını negatif yapan fonksiyon
+        // Saleable kategori kontrolü
+        function isSaleableCategory(item) {
+            const category1 = (item.category_1 || '').toLowerCase();
+            return category1 === 'saleable';
+        }
+        
+        // İndirim ve Saleable ürünlerinin tutarını negatif yapan fonksiyon
         function applyDiscountLogic(item) {
-            if (isDiscountProduct(item)) {
-                // İndirim ürünleri için tutar negatif, miktar pozitif
+            // [DISC] İndirim veya Saleable kategorisi
+            if (isDiscountProduct(item) || isSaleableCategory(item)) {
+                // Tutar negatif, miktar pozitif
                 return {
                     ...item,
                     usd_amount: -Math.abs(parseFloat(item.usd_amount || 0)),
                     quantity: Math.abs(parseFloat(item.quantity || 0)),
-                    _isDiscount: true  // İndirim işareti ekle (filtreleme için)
+                    _isDiscount: true  // İşareti ekle (filtreleme için)
                 };
             }
             return item;
