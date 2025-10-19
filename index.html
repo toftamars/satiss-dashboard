@@ -5463,6 +5463,7 @@
             });
             
             const top10 = Object.entries(storeData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const total = top10.reduce((sum, item) => sum + item[1], 0);
             
             if (dashTopStoresChartInstance) {
                 dashTopStoresChartInstance.destroy();
@@ -5487,7 +5488,8 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return 'Satış: $' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                    const percentage = ((context.parsed.x / total) * 100).toFixed(1);
+                                    return 'Satış: $' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' (' + percentage + '%)';
                                 }
                             }
                         }
@@ -5517,6 +5519,7 @@
             });
             
             const top10 = Object.entries(spData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const total = top10.reduce((sum, item) => sum + item[1], 0);
             
             if (dashTopSalespeopleChartInstance) {
                 dashTopSalespeopleChartInstance.destroy();
@@ -5541,7 +5544,8 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return 'Satış: $' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                    const percentage = ((context.parsed.x / total) * 100).toFixed(1);
+                                    return 'Satış: $' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + ' (' + percentage + '%)';
                                 }
                             }
                         }
