@@ -4,11 +4,11 @@
     "2024",
     "2025"
   ],
-  "total_records": 392,
+  "total_records": 149444,
   "files": [
     "data-2023.json.gz",
     "data-2024.json.gz",
     "data-2025.json.gz"
   ],
-  "last_update": "2025-10-19 18:19:15"
+  "last_update": "2025-10-19 18:34:31"
 }
