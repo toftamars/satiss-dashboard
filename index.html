@@ -2292,9 +2292,7 @@
         let metadata = null;
         let loadedYears = new Set();
         
-        // Google Sheets Hedefler
-        const GOOGLE_SHEETS_ID = '1LKfQjUkcDcTxaSt9SjjMRnrWWQV1BSC1_jgPUzIQ9Gk';
-        let googleSheetsTargets = {yearly: {}, monthly: {}};
+        // Hedefler artık targets.json'dan yükleniyor (Google Sheets kaldırıldı)
         
         // MAĞAZA ÇALIŞMA SAATLERİ VE KAPALILIKLARI
         const STORE_WORKING_HOURS = {
@@ -2347,66 +2345,7 @@
             return true; // Çalışma saatleri içinde
         }
         
-        async function loadTargetsFromGoogleSheets() {
-            try {
-                console.log('🎯 Hedefler yükleniyor...');
-                
-                // GitHub repo'dan CSV çek (CORS sorunu yok)
-                const csvUrl = 'https://raw.githubusercontent.com/toftamars/satiss-dashboard/main/targets.csv';
-                
-                const response = await fetch(csvUrl);
-                
-                if (!response.ok) {
-                    console.warn(`⚠️ Hedefler yüklenemedi (HTTP ${response.status}), localStorage kullanılacak`);
-                    console.log('URL:', csvUrl);
-                    console.log('Response:', response);
-                    return;
-                }
-                
-                const csvText = await response.text();
-                const lines = csvText.trim().split('\n');
-                
-                // İlk satır başlık, atla
-                for (let i = 1; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    if (!line) continue;
-                    
-                    // CSV parse (virgülle ayrılmış, tırnak işaretlerini temizle)
-                    const values = line.split(',').map(v => v.replace(/"/g, '').trim());
-                    const [type, year, month, store, target] = values;
-                    
-                    if (type === 'yearly') {
-                        if (!googleSheetsTargets.yearly[year]) {
-                            googleSheetsTargets.yearly[year] = {};
-                        }
-                        googleSheetsTargets.yearly[year][store] = parseFloat(target);
-                    } else if (type === 'monthly') {
-                        if (!googleSheetsTargets.monthly[year]) {
-                            googleSheetsTargets.monthly[year] = {};
-                        }
-                        if (!googleSheetsTargets.monthly[year][month]) {
-                            googleSheetsTargets.monthly[year][month] = {};
-                        }
-                        googleSheetsTargets.monthly[year][month][store] = parseFloat(target);
-                    }
-                }
-                
-                console.log('✅ Google Sheets hedefleri yüklendi:', googleSheetsTargets);
-                
-                // localStorage'a da kaydet (offline erişim için)
-                localStorage.setItem('cachedTargets', JSON.stringify(googleSheetsTargets));
-                
-            } catch (error) {
-                console.error('❌ Google Sheets yükleme hatası:', error);
-                
-                // Hata durumunda cache'den yükle
-                const cached = localStorage.getItem('cachedTargets');
-                if (cached) {
-                    googleSheetsTargets = JSON.parse(cached);
-                    console.log('📦 Cache\'den hedefler yüklendi');
-                }
-            }
-        }
+        // Google Sheets fonksiyonu kaldırıldı - artık targets.json kullanılıyor
 
         // GZIP Decompression ve Yıl Yükleme Fonksiyonları
         async function loadMetadata() {
@@ -2555,9 +2494,7 @@
                 // Hedef takip mağaza dropdown'larını doldur ve hedefleri yükle
                 populateTargetStoreDropdowns();
                 
-                // Google Sheets'ten hedefleri yükle
-                await loadTargetsFromGoogleSheets();
-                
+                // Hedefler targets.json'dan otomatik yükleniyor (Google Sheets kaldırıldı)
                 loadYearlyTarget();
                 loadMonthlyTarget();
                 
