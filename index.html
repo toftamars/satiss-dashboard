@@ -1982,6 +1982,11 @@
                             <h3 style="text-align: center; margin-bottom: 30px;">📂 Mağaza Bazında Kategori Karşılaştırması (Kategori 1)</h3>
                             <div id="storeComparisonCategoryCharts" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 30px;"></div>
                         </div>
+                        
+                        <!-- AI Comparison Analysis -->
+                        <div id="multipleStoresAIPanel" style="margin: 40px 0;">
+                            <div id="multipleStoresAIContent"></div>
+                        </div>
                     </div>
                     
                     <!-- Single Store View -->
@@ -9871,13 +9876,19 @@
 
             html += '</div>';
 
-            // AI analiz içeriğini doğrudan storeAIAnalysisContent div'ine yaz
+            // Çoklu mağaza karşılaştırması için özel div'e yaz
+            const multipleAIContent = document.getElementById('multipleStoresAIContent');
+            if (multipleAIContent) {
+                multipleAIContent.innerHTML = html;
+                console.log('✅ Çoklu mağaza AI analizi HTML eklendi');
+            } else {
+                console.error('❌ multipleStoresAIContent bulunamadı!');
+            }
+            
+            // Eski tek mağaza div'ini de güncelle (fallback)
             const aiContent = document.getElementById('storeAIAnalysisContent');
             if (aiContent) {
                 aiContent.innerHTML = html;
-                console.log('✅ AI analizi HTML eklendi');
-            } else {
-                console.error('❌ storeAIAnalysisContent bulunamadı!');
             }
         }
         
