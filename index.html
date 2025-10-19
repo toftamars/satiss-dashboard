@@ -9939,7 +9939,7 @@
                                 👥 Farklı Müşteri <span style="font-size: 0.8em;">▼</span>
                             </th>
                             <th style="padding: 15px; text-align: right; cursor: pointer;" onclick="sortStoreSpTable(5)">
-                                📊 Ortalama Fatura <span style="font-size: 0.8em;">▼</span>
+                                🛒 Sepet Ortalaması <span style="font-size: 0.8em;">▼</span>
                             </th>
                             <th style="padding: 15px; text-align: right;">
                                 📈 Pay (%)
@@ -10022,7 +10022,7 @@
                 } else if (column === 4) { // Farklı Müşteri
                     valA = parseInt(cellsA[4].textContent.replace(/[^0-9]/g, ''));
                     valB = parseInt(cellsB[4].textContent.replace(/[^0-9]/g, ''));
-                } else if (column === 5) { // Ortalama Fatura
+                } else if (column === 5) { // Sepet Ortalaması
                     valA = parseFloat(cellsA[5].textContent.replace(/[^0-9,.-]/g, '').replace(',', '.'));
                     valB = parseFloat(cellsB[5].textContent.replace(/[^0-9,.-]/g, '').replace(',', '.'));
                 }
