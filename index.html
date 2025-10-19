@@ -4206,12 +4206,10 @@
                     // AYLIK HEDEF - Önce centralTargets (GitHub), sonra Google Sheets, sonra localStorage
                     if (centralTargets.monthly && centralTargets.monthly[year]) {
                         const targetKey = findTargetKey(centralTargets.monthly[year], cleanStoreName);
-                        console.log(`🔍 Mağaza: "${storeName}" → Temiz: "${cleanStoreName}" → Hedef Anahtarı: "${targetKey}"`);
+                        // console.log(`🔍 Mağaza: "${storeName}" → Temiz: "${cleanStoreName}" → Hedef Anahtarı: "${targetKey}"`);
                         if (targetKey && centralTargets.monthly[year][targetKey] && centralTargets.monthly[year][targetKey][month]) {
                             target = centralTargets.monthly[year][targetKey][month];
-                            console.log(`✅ Hedef bulundu: $${target}`);
-                        } else {
-                            console.warn(`⚠️ Hedef bulunamadı!`, {targetKey, hasMonthlyData: !!centralTargets.monthly[year][targetKey], hasMonth: centralTargets.monthly[year][targetKey]?.[month]});
+                            // console.log(`✅ Hedef bulundu: $${target}`);
                         }
                     }
                     
@@ -4303,6 +4301,8 @@
             
             // Önce hedefli, sonra hedefsiz mağazalar
             const sortedStoresData = [...storesWithTarget, ...storesWithoutTarget];
+            
+            console.log(`📊 Toplam ${storesData.length} mağaza, ${storesWithTarget.length} hedefli, ${storesWithoutTarget.length} hedefsiz`);
             
             // Renk belirleme fonksiyonu
             function getPerformanceColor(percentage) {
