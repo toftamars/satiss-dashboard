@@ -5328,43 +5328,35 @@
             const ctx = document.getElementById('dashYearlyChart');
             if (!ctx) return;
             
-            // İlk çalıştırmada veriyi hazırla
-            if (!dashYearlyDataCache) {
-                const yearlyMonthlyData = {};
-                const yearlyMonthlyQty = {};
-                
-                allData.forEach(item => {
-                    if (item.date) {
-                        const year = item.date.substring(0, 4);
-                        const month = item.date.substring(5, 7);
-                        
-                        // Satış tutarı
-                        if (!yearlyMonthlyData[year]) yearlyMonthlyData[year] = {};
-                        if (!yearlyMonthlyData[year][month]) yearlyMonthlyData[year][month] = 0;
-                        yearlyMonthlyData[year][month] += parseFloat(item.usd_amount || 0);
-                        
-                        // Miktar
-                        if (!yearlyMonthlyQty[year]) yearlyMonthlyQty[year] = {};
-                        if (!yearlyMonthlyQty[year][month]) yearlyMonthlyQty[year][month] = 0;
-                        yearlyMonthlyQty[year][month] += parseFloat(item.quantity || 0);
-                    }
-                });
-                
-                // Tüm ayları topla
-                const allMonthKeys = new Set();
-                Object.values(yearlyMonthlyData).forEach(yearData => {
-                    Object.keys(yearData).forEach(month => allMonthKeys.add(month));
-                });
-                
-                dashYearlyDataCache = {
-                    sales: yearlyMonthlyData,
-                    qty: yearlyMonthlyQty,
-                    months: Array.from(allMonthKeys).sort()
-                };
-            }
+            // Veriyi her zaman yeniden hesapla (cache sorununu önlemek için)
+            const yearlyMonthlyData = {};
+            const yearlyMonthlyQty = {};
             
-            const sortedMonths = dashYearlyDataCache.months;
-            const sourceData = dashYearlyMetricType === 'sales' ? dashYearlyDataCache.sales : dashYearlyDataCache.qty;
+            allData.forEach(item => {
+                if (item.date) {
+                    const year = item.date.substring(0, 4);
+                    const month = item.date.substring(5, 7);
+                    
+                    // Satış tutarı
+                    if (!yearlyMonthlyData[year]) yearlyMonthlyData[year] = {};
+                    if (!yearlyMonthlyData[year][month]) yearlyMonthlyData[year][month] = 0;
+                    yearlyMonthlyData[year][month] += parseFloat(item.usd_amount || 0);
+                    
+                    // Miktar
+                    if (!yearlyMonthlyQty[year]) yearlyMonthlyQty[year] = {};
+                    if (!yearlyMonthlyQty[year][month]) yearlyMonthlyQty[year][month] = 0;
+                    yearlyMonthlyQty[year][month] += parseFloat(item.quantity || 0);
+                }
+            });
+            
+            // Tüm ayları topla
+            const allMonthKeys = new Set();
+            Object.values(yearlyMonthlyData).forEach(yearData => {
+                Object.keys(yearData).forEach(month => allMonthKeys.add(month));
+            });
+            
+            const sortedMonths = Array.from(allMonthKeys).sort();
+            const sourceData = dashYearlyMetricType === 'sales' ? yearlyMonthlyData : yearlyMonthlyQty;
             
             // Dataset oluştur (seçilen metriğe göre)
             const datasets = [];
