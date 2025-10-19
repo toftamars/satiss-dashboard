@@ -3890,8 +3890,12 @@
             
             // Seçilen tab'ı aktif et
             const selectedTab = document.getElementById(tabName + 'Tab');
+            console.log('🔍 Aranan tab ID:', tabName + 'Tab', '| Bulundu mu?', selectedTab ? 'EVET' : 'HAYIR');
             if (selectedTab) {
                 selectedTab.classList.add('active');
+                console.log('✅ Tab aktif edildi:', tabName + 'Tab');
+            } else {
+                console.error('❌ Tab bulunamadı:', tabName + 'Tab');
             }
             
             // İlgili tab butonunu aktif et
