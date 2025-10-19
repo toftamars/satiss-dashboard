@@ -7749,6 +7749,11 @@
                 data = lastCustomerPurchaseData;
             }
             
+            // İndirim ürünlerini filtrele (tablolarda gösterme)
+            if (data) {
+                data = data.filter(item => !item._isDiscount);
+            }
+            
             if (!data || data.length === 0) {
                 document.getElementById('customerPurchaseHistoryMain').innerHTML = '<p style="text-align: center; padding: 20px;">Veri bulunamadı</p>';
                 return;
