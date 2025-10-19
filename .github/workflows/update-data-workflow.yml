@@ -262,6 +262,12 @@ jobs:
                                     
                                     # display_type ekle
                                     converted_domain.append(('display_type', '=', False))
+                                    
+                                    # ÖNEMLİ: SADECE POSTED (Onaylanmış) FATURALARI ÇEK
+                                    # Taslak (draft) ve iptal (cancel) faturaları HARİÇ TUT
+                                    converted_domain.append(('move_id.state', '=', 'posted'))
+                                    print("🔒 State filtresi eklendi: SADECE posted (onaylanmış) faturalar")
+                                    
                                     domain = converted_domain
                                     print(f"✅ Domain dönüştürüldü: {len(domain)} koşul")
                                     
