@@ -6,6 +6,15 @@ on:
   # schedule:
   #   - cron: '0 23 * * *'  # Otomatik çalışma kapatıldı
   workflow_dispatch:  # SADECE MANUEL ÇALIŞTIRMA - Kullanıcı kontrol eder
+    inputs:
+      data_mode:
+        description: 'Veri Çekme Modu'
+        required: true
+        default: 'fast'
+        type: choice
+        options:
+          - fast
+          - full
 
 jobs:
   update-data:
@@ -32,6 +41,7 @@ jobs:
         ODOO_URL: ${{ secrets.ODOO_URL }}
         ODOO_USERNAME: ${{ secrets.ODOO_USERNAME }}
         ODOO_API_KEY: ${{ secrets.ODOO_API_KEY }}
+        DATA_MODE: ${{ github.event.inputs.data_mode || 'fast' }}
       run: |
         python3 << 'EOF'
         import os
@@ -53,11 +63,25 @@ jobs:
         username = os.environ['ODOO_USERNAME']
         password = os.environ['ODOO_API_KEY']
         db = "erp.zuhalmuzik.com"
+        data_mode = os.environ.get('DATA_MODE', 'fast')
         
         print(f"🔌 URL: {url}")
         print(f"🗄️ Database: {db}")
         print(f"👤 Username: {username}")
         print(f"🔐 Password: {'*' * len(password)}")
+        print(f"⚡ Data Mode: {data_mode.upper()}")
+        
+        # Tarih filtresi belirleme
+        if data_mode == 'full':
+            date_filter = '2020-01-01'
+            print(f"📅 Tarih Aralığı: 2020-01-01'den itibaren TÜM VERİLER (~40 dk)")
+        else:  # fast mode
+            date_filter = '2024-01-01'
+            print(f"📅 Tarih Aralığı: 2024-01-01'den itibaren (~2-3 dk)")
+        
+        # Batch boyutu
+        batch_size = 10000
+        print(f"📦 Batch Boyutu: {batch_size:,} kayıt/batch")
         
         try:
             session = requests.Session()
@@ -268,6 +292,10 @@ jobs:
                                     converted_domain.append(('move_id.state', '=', 'posted'))
                                     print("🔒 State filtresi eklendi: SADECE posted (onaylanmış) faturalar")
                                     
+                                    # TARİH FİLTRESİ EKLE (FAST/FULL MODE)
+                                    converted_domain.append(('move_id.invoice_date', '>=', date_filter))
+                                    print(f"📅 Tarih filtresi eklendi: {date_filter} ve sonrası")
+                                    
                                     domain = converted_domain
                                     print(f"✅ Domain dönüştürüldü: {len(domain)} koşul")
                                     
@@ -359,9 +387,10 @@ jobs:
                                 usd_rate_map = {}  # KUR bilgisi için yeni map
                                 try:
                                     # account.invoice.report'tan USD tutarlarını, state_id ve usd_rate'i batch olarak çek
-                                    for i in range(0, len(line_ids), 5000):
-                                        batch_ids = line_ids[i:i+5000]
-                                        print(f"   💵 USD + Şehir + KUR batch {i//5000 + 1}: {len(batch_ids)} kayıt...")
+                                    usd_batch_size = 10000
+                                    for i in range(0, len(line_ids), usd_batch_size):
+                                        batch_ids = line_ids[i:i+usd_batch_size]
+                                        print(f"   💵 USD + Şehir + KUR batch {i//usd_batch_size + 1}: {len(batch_ids)} kayıt...")
                                         
                                         # account.invoice.report'tan price_usd_subtotal, state_id ve usd_rate çek
                                         usd_batch = models.execute_kw(
@@ -413,7 +442,7 @@ jobs:
                                 # Satış temsilcileri ve KUR bilgilerini çek (account.move'dan)
                                 print(f"\n👤 Satış temsilcileri ve KUR bilgileri çekiliyor...")
                                 move_ids = list(set([line.get('move_id')[0] for line in all_data if line.get('move_id') and isinstance(line.get('move_id'), list)]))
-                                print(f"📦 {len(move_ids)} fatura başlığı için satış temsilcisi ve kur çekiliyor (5000'erlik batch)...")
+                                print(f"📦 {len(move_ids)} fatura başlığı için satış temsilcisi ve kur çekiliyor (10000'erlik batch)...")
                                 
                                 invoice_user_map = {}
                                 invoice_datetime_map = {}  # Fatura kesilme zamanı (saat için)
@@ -422,9 +451,10 @@ jobs:
                                 invoice_currency_rate_map = {}  # Fatura kuru (USD hesabı için)
                                 
                                 try:
-                                    for i in range(0, len(move_ids), 5000):
-                                        batch_ids = move_ids[i:i+5000]
-                                        print(f"   📦 Fatura batch {i//5000 + 1}: {len(batch_ids)} fatura...")
+                                    move_batch_size = 10000
+                                    for i in range(0, len(move_ids), move_batch_size):
+                                        batch_ids = move_ids[i:i+move_batch_size]
+                                        print(f"   📦 Fatura batch {i//move_batch_size + 1}: {len(batch_ids)} fatura...")
                                         batch_moves = models.execute_kw(
                                             db, uid_xmlrpc, password,
                                             'account.move', 'search_read',
@@ -508,11 +538,12 @@ jobs:
                             if product_ids and models:  # TÜM ÜRÜNLER
                                 try:
                                     # Ürünleri BATCH çek - TÜM ÜRÜNLER (kategori + marka)
-                                    print(f"📦 {len(product_ids)} ürün çekiliyor (5000'erlik batch)...")
+                                    product_batch_size = 10000
+                                    print(f"📦 {len(product_ids)} ürün çekiliyor (10000'erlik batch)...")
                                     products = []
-                                    for i in range(0, len(product_ids), 5000):
-                                        batch_ids = product_ids[i:i+5000]
-                                        print(f"   📦 Ürün batch {i//5000 + 1}: {len(batch_ids)} ürün...")
+                                    for i in range(0, len(product_ids), product_batch_size):
+                                        batch_ids = product_ids[i:i+product_batch_size]
+                                        print(f"   📦 Ürün batch {i//product_batch_size + 1}: {len(batch_ids)} ürün...")
                                         batch_products = models.execute_kw(
                                             db, uid_xmlrpc, password,
                                             'product.product', 'search_read',
@@ -593,12 +624,13 @@ jobs:
                             print(f"\n🏙️ Partner şehir bilgileri çekiliyor (TÜM PARTNER: {len(partner_ids)})...")
                             if partner_ids and models:
                                 try:
-                                    # Partnerleri BATCH çek (5000'erlik)
-                                    print(f"📦 {len(partner_ids)} partner çekiliyor (5000'erlik batch)...")
+                                    # Partnerleri BATCH çek (10000'erlik)
+                                    partner_batch_size = 10000
+                                    print(f"📦 {len(partner_ids)} partner çekiliyor (10000'erlik batch)...")
                                     partners = []
-                                    for i in range(0, len(partner_ids), 5000):
-                                        batch_ids = partner_ids[i:i+5000]
-                                        print(f"   📦 Partner batch {i//5000 + 1}: {len(batch_ids)} partner...")
+                                    for i in range(0, len(partner_ids), partner_batch_size):
+                                        batch_ids = partner_ids[i:i+partner_batch_size]
+                                        print(f"   📦 Partner batch {i//partner_batch_size + 1}: {len(batch_ids)} partner...")
                                         batch_partners = models.execute_kw(
                                             db, uid_xmlrpc, password,
                                             'res.partner', 'search_read',
