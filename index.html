@@ -2250,6 +2250,14 @@
         let metadata = null;
         let loadedYears = new Set();
         
+        // İndirim ürünlerini filtreleyen yardımcı fonksiyon
+        function isDiscountProduct(item) {
+            const productName = (item.product || '').toLowerCase();
+            return productName.includes('indirim') || 
+                   productName.includes('discount') ||
+                   productName.includes('toplam tutarda indirim');
+        }
+        
         // Hedefler artık targets.json'dan yükleniyor (Google Sheets kaldırıldı)
         
         // MAĞAZA ÇALIŞMA SAATLERİ VE KAPALILIKLARI
@@ -2433,9 +2441,13 @@
                 const latestYear = metadata.years[metadata.years.length - 1];
                 const latestData = await loadYearData(latestYear);
                 
-                // İlk veriyi yükle
-                allData = latestData.details || [];
+                // İlk veriyi yükle ve indirim ürünlerini filtrele
+                const rawData = latestData.details || [];
+                const discountProducts = rawData.filter(item => isDiscountProduct(item));
+                allData = rawData.filter(item => !isDiscountProduct(item));
                 filteredData = [...allData];
+                
+                console.log(`🚫 ${discountProducts.length} indirim ürünü filtrelendi (toplam: ${rawData.length} → ${allData.length})`);
                 
                 // Update info cards
                 document.getElementById('dataStatus').innerHTML = `<span class="status-badge status-success">✅ ${latestYear}</span>`;
@@ -2495,10 +2507,15 @@
                 try {
                     const yearData = await loadYearData(year);
                     
-                    // Verileri birleştir
+                    // Verileri birleştir ve indirim ürünlerini filtrele
                     if (yearData.details && Array.isArray(yearData.details)) {
-                        allData = [...allData, ...yearData.details];
+                        const yearRawData = yearData.details;
+                        const yearDiscountCount = yearRawData.filter(item => isDiscountProduct(item)).length;
+                        const filteredYearData = yearRawData.filter(item => !isDiscountProduct(item));
+                        allData = [...allData, ...filteredYearData];
                         filteredData = [...allData];
+                        
+                        console.log(`🚫 ${year}: ${yearDiscountCount} indirim ürünü filtrelendi (${yearRawData.length} → ${filteredYearData.length})`);
                         
                         // Filtreleri ve tabloyu güncelle
                         populateFilters();
