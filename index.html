@@ -2255,12 +2255,25 @@
         let metadata = null;
         let loadedYears = new Set();
         
-        // İndirim ürünlerini filtreleyen yardımcı fonksiyon
+        // İndirim ürünlerini tespit eden yardımcı fonksiyon
         function isDiscountProduct(item) {
             const productName = (item.product || '').toLowerCase();
             return productName.includes('indirim') || 
                    productName.includes('discount') ||
                    productName.includes('toplam tutarda indirim');
+        }
+        
+        // İndirim ürünlerinin tutarını negatif yapan fonksiyon
+        function applyDiscountLogic(item) {
+            if (isDiscountProduct(item)) {
+                // İndirim ürünleri için tutar ve miktarı negatif yap
+                return {
+                    ...item,
+                    usd_amount: -Math.abs(parseFloat(item.usd_amount || 0)),
+                    quantity: -Math.abs(parseFloat(item.quantity || 0))
+                };
+            }
+            return item;
         }
         
         // Hedefler artık targets.json'dan yükleniyor (Google Sheets kaldırıldı)
@@ -2446,13 +2459,15 @@
                 const latestYear = metadata.years[metadata.years.length - 1];
                 const latestData = await loadYearData(latestYear);
                 
-                // İlk veriyi yükle ve indirim ürünlerini filtrele
+                // İlk veriyi yükle ve indirim ürünlerini negatif yap
                 const rawData = latestData.details || [];
                 const discountProducts = rawData.filter(item => isDiscountProduct(item));
-                allData = rawData.filter(item => !isDiscountProduct(item));
+                
+                // Tüm verileri işle - indirim ürünleri negatif olarak
+                allData = rawData.map(item => applyDiscountLogic(item));
                 filteredData = [...allData];
                 
-                console.log(`🚫 ${discountProducts.length} indirim ürünü filtrelendi (toplam: ${rawData.length} → ${allData.length})`);
+                console.log(`💰 ${discountProducts.length} indirim ürünü negatif değer olarak işlendi (toplam kayıt: ${rawData.length})`);
                 
                 // Update info cards
                 document.getElementById('dataStatus').innerHTML = `<span class="status-badge status-success">✅ ${latestYear}</span>`;
@@ -2512,15 +2527,17 @@
                 try {
                     const yearData = await loadYearData(year);
                     
-                    // Verileri birleştir ve indirim ürünlerini filtrele
+                    // Verileri birleştir ve indirim ürünlerini negatif yap
                     if (yearData.details && Array.isArray(yearData.details)) {
                         const yearRawData = yearData.details;
                         const yearDiscountCount = yearRawData.filter(item => isDiscountProduct(item)).length;
-                        const filteredYearData = yearRawData.filter(item => !isDiscountProduct(item));
-                        allData = [...allData, ...filteredYearData];
+                        
+                        // Tüm verileri işle - indirim ürünleri negatif olarak
+                        const processedYearData = yearRawData.map(item => applyDiscountLogic(item));
+                        allData = [...allData, ...processedYearData];
                         filteredData = [...allData];
                         
-                        console.log(`🚫 ${year}: ${yearDiscountCount} indirim ürünü filtrelendi (${yearRawData.length} → ${filteredYearData.length})`);
+                        console.log(`💰 ${year}: ${yearDiscountCount} indirim ürünü negatif değer olarak işlendi (toplam: ${yearRawData.length})`);
                         
                         // Filtreleri ve tabloyu güncelle
                         populateFilters();
