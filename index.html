@@ -5431,7 +5431,7 @@
                 brandData[brand] += parseFloat(item.usd_amount || 0);
             });
             
-            const top5 = Object.entries(brandData).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const top10 = Object.entries(brandData).sort((a, b) => b[1] - a[1]).slice(0, 10);
             
             if (dashTopBrandsChartInstance) {
                 dashTopBrandsChartInstance.destroy();
@@ -5440,15 +5440,20 @@
             dashTopBrandsChartInstance = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: top5.map(s => s[0]),
+                    labels: top10.map(s => s[0]),
                     datasets: [{
-                        data: top5.map(s => s[1]),
+                        data: top10.map(s => s[1]),
                         backgroundColor: [
                             'rgba(102, 126, 234, 0.8)',
                             'rgba(118, 75, 162, 0.8)',
                             'rgba(240, 147, 251, 0.8)',
                             'rgba(245, 87, 108, 0.8)',
-                            'rgba(79, 172, 254, 0.8)'
+                            'rgba(79, 172, 254, 0.8)',
+                            'rgba(67, 233, 123, 0.8)',
+                            'rgba(56, 249, 215, 0.8)',
+                            'rgba(250, 112, 154, 0.8)',
+                            'rgba(254, 224, 101, 0.8)',
+                            'rgba(0, 242, 254, 0.8)'
                         ]
                     }]
                 },
@@ -5456,7 +5461,14 @@
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: {
-                        legend: { display: true, position: 'bottom' }
+                        legend: { display: true, position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': $' + context.parsed.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                }
+                            }
+                        }
                     }
                 }
             });
@@ -5468,13 +5480,14 @@
             
             const catData = {};
             data.forEach(item => {
-                const cat = item.category_1 || 'Bilinmiyor';
-                if (cat.toLowerCase() === 'all') return; // ALL'ı atla
+                const cat = item.category_1 || '';
+                // ALL ve boş değerleri atla
+                if (!cat || cat.toLowerCase() === 'all' || cat.toLowerCase() === 'bilinmiyor') return;
                 if (!catData[cat]) catData[cat] = 0;
                 catData[cat] += parseFloat(item.usd_amount || 0);
             });
             
-            const top5 = Object.entries(catData).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const top10 = Object.entries(catData).sort((a, b) => b[1] - a[1]).slice(0, 10);
             
             if (dashTopCategoriesChartInstance) {
                 dashTopCategoriesChartInstance.destroy();
@@ -5483,15 +5496,20 @@
             dashTopCategoriesChartInstance = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: top5.map(s => s[0]),
+                    labels: top10.map(s => s[0]),
                     datasets: [{
-                        data: top5.map(s => s[1]),
+                        data: top10.map(s => s[1]),
                         backgroundColor: [
                             'rgba(67, 233, 123, 0.8)',
                             'rgba(56, 249, 215, 0.8)',
                             'rgba(79, 172, 254, 0.8)',
                             'rgba(0, 242, 254, 0.8)',
-                            'rgba(102, 126, 234, 0.8)'
+                            'rgba(102, 126, 234, 0.8)',
+                            'rgba(118, 75, 162, 0.8)',
+                            'rgba(240, 147, 251, 0.8)',
+                            'rgba(245, 87, 108, 0.8)',
+                            'rgba(250, 112, 154, 0.8)',
+                            'rgba(254, 224, 101, 0.8)'
                         ]
                     }]
                 },
@@ -5499,7 +5517,122 @@
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: {
-                        legend: { display: true, position: 'bottom' }
+                        legend: { display: true, position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': $' + context.parsed.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderDashTopCitiesChart(data) {
+            const ctx = document.getElementById('dashTopCitiesChart');
+            if (!ctx) return;
+            
+            const cityData = {};
+            data.forEach(item => {
+                const city = item.city || 'Bilinmiyor';
+                if (!cityData[city]) cityData[city] = 0;
+                cityData[city] += parseFloat(item.usd_amount || 0);
+            });
+            
+            const top10 = Object.entries(cityData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            
+            if (dashTopCitiesChartInstance) {
+                dashTopCitiesChartInstance.destroy();
+            }
+            
+            dashTopCitiesChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: top10.map(s => s[0]),
+                    datasets: [{
+                        label: 'Satış (USD)',
+                        data: top10.map(s => s[1]),
+                        backgroundColor: 'rgba(79, 172, 254, 0.8)'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Satış: $' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderDashTopProductsChart(data) {
+            const ctx = document.getElementById('dashTopProductsChart');
+            if (!ctx) return;
+            
+            const productData = {};
+            data.forEach(item => {
+                const product = item.product || 'Bilinmiyor';
+                if (!productData[product]) productData[product] = 0;
+                productData[product] += parseFloat(item.usd_amount || 0);
+            });
+            
+            const top10 = Object.entries(productData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            
+            if (dashTopProductsChartInstance) {
+                dashTopProductsChartInstance.destroy();
+            }
+            
+            dashTopProductsChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: top10.map(s => s[0]),
+                    datasets: [{
+                        label: 'Satış (USD)',
+                        data: top10.map(s => s[1]),
+                        backgroundColor: 'rgba(240, 147, 251, 0.8)'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Satış: $' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
                     }
                 }
             });
@@ -5507,51 +5640,110 @@
 
         function performDashboardAIAnalysis() {
             const currentYear = new Date().getFullYear();
+            const lastYear = currentYear - 1;
             const thisYearData = allData.filter(item => item.date && item.date.startsWith(currentYear.toString()));
-            const totalSalesThisYear = thisYearData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
+            const lastYearData = allData.filter(item => item.date && item.date.startsWith(lastYear.toString()));
             
-            // En iyi mağaza
+            const totalSalesThisYear = thisYearData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
+            const totalSalesLastYear = lastYearData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
+            const yearGrowth = lastYearData.length > 0 ? ((totalSalesThisYear - totalSalesLastYear) / totalSalesLastYear * 100) : 0;
+            
+            // En iyi ve en düşük performans
             const storeData = {};
             thisYearData.forEach(item => {
                 const store = item.store || 'Bilinmiyor';
                 if (!storeData[store]) storeData[store] = 0;
                 storeData[store] += parseFloat(item.usd_amount || 0);
             });
-            const topStore = Object.entries(storeData).sort((a, b) => b[1] - a[1])[0];
+            const sortedStores = Object.entries(storeData).sort((a, b) => b[1] - a[1]);
+            const topStore = sortedStores[0];
+            const weakStore = sortedStores[sortedStores.length - 1];
             
-            // En iyi temsilci
+            // Temsilciler
             const spData = {};
             thisYearData.forEach(item => {
                 const sp = item.sales_person || 'Bilinmiyor';
                 if (!spData[sp]) spData[sp] = 0;
                 spData[sp] += parseFloat(item.usd_amount || 0);
             });
-            const topSP = Object.entries(spData).sort((a, b) => b[1] - a[1])[0];
+            const sortedSP = Object.entries(spData).sort((a, b) => b[1] - a[1]);
+            const topSP = sortedSP[0];
             
-            // En iyi marka
+            // Markalar
             const brandData = {};
             thisYearData.forEach(item => {
                 const brand = item.brand || 'Bilinmiyor';
                 if (!brandData[brand]) brandData[brand] = 0;
                 brandData[brand] += parseFloat(item.usd_amount || 0);
             });
-            const topBrand = Object.entries(brandData).sort((a, b) => b[1] - a[1])[0];
+            const sortedBrands = Object.entries(brandData).sort((a, b) => b[1] - a[1]);
+            const topBrand = sortedBrands[0];
+            const top3Brands = sortedBrands.slice(0, 3);
+            const brandConcentration = (top3Brands.reduce((sum, b) => sum + b[1], 0) / totalSalesThisYear * 100);
+            
+            // Aylık trend
+            const monthlyData = {};
+            thisYearData.forEach(item => {
+                const month = item.date.substring(5, 7);
+                if (!monthlyData[month]) monthlyData[month] = 0;
+                monthlyData[month] += parseFloat(item.usd_amount || 0);
+            });
+            const months = Object.keys(monthlyData).sort();
+            const lastMonth = months[months.length - 1];
+            const prevMonth = months[months.length - 2];
+            const monthGrowth = prevMonth ? ((monthlyData[lastMonth] - monthlyData[prevMonth]) / monthlyData[prevMonth] * 100) : 0;
+            
+            // Müşteri analizi
+            const uniqueCustomers = new Set(thisYearData.map(item => item.partner)).size;
+            const avgOrderValue = totalSalesThisYear / thisYearData.length;
             
             const analysis = `
-                <h4 style="margin-bottom: 15px; color: #667eea;">📊 ${currentYear} Yılı Genel Değerlendirme</h4>
-                <p><strong>💰 Bu Yıl Toplam Satış:</strong> $${totalSalesThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</p>
-                <p><strong>🏆 En İyi Mağaza:</strong> ${topStore ? topStore[0] : 'N/A'} - $${topStore ? topStore[1].toLocaleString('tr-TR', {minimumFractionDigits: 2}) : '0'}</p>
-                <p><strong>⭐ En İyi Temsilci:</strong> ${topSP ? topSP[0] : 'N/A'} - $${topSP ? topSP[1].toLocaleString('tr-TR', {minimumFractionDigits: 2}) : '0'}</p>
-                <p><strong>🏷️ En İyi Marka:</strong> ${topBrand ? topBrand[0] : 'N/A'} - $${topBrand ? topBrand[1].toLocaleString('tr-TR', {minimumFractionDigits: 2}) : '0'}</p>
-                <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
-                <h4 style="margin-bottom: 15px; color: #667eea;">💡 AI Önerileri</h4>
-                <ul style="line-height: 2;">
-                    <li>✅ <strong>${topStore ? topStore[0] : 'En iyi mağaza'}</strong> performansı diğer mağazalara örnek alınabilir.</li>
-                    <li>✅ <strong>${topSP ? topSP[0] : 'En iyi temsilci'}</strong>'nin satış teknikleri ekip ile paylaşılabilir.</li>
-                    <li>✅ <strong>${topBrand ? topBrand[0] : 'En iyi marka'}</strong> ürünlerine stok ve promosyon önceliği verilebilir.</li>
-                    <li>⚠️ Performansı düşük mağazalar için aksiyon planı oluşturulmalı.</li>
-                    <li>⚠️ Yıl sonuna kadar hedeflere ulaşmak için aylık performans takibi yapılmalı.</li>
-                </ul>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <div>
+                        <h4 style="margin-bottom: 15px; color: #38ef7d;">✅ Olumlu Tespitler</h4>
+                        <ul style="line-height: 2.2; margin: 0;">
+                            ${yearGrowth > 0 ? `<li><strong>📈 Yıllık Büyüme:</strong> ${Math.abs(yearGrowth).toFixed(1)}% artış ($${totalSalesLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} → $${totalSalesThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})})</li>` : ''}
+                            ${monthGrowth > 0 ? `<li><strong>📊 Son Ay Trendi:</strong> ${Math.abs(monthGrowth).toFixed(1)}% pozitif momentum</li>` : ''}
+                            <li><strong>🏆 En İyi Mağaza:</strong> ${topStore ? topStore[0] : 'N/A'} ($${topStore ? topStore[1].toLocaleString('tr-TR', {minimumFractionDigits: 0}) : '0'})</li>
+                            <li><strong>⭐ En İyi Temsilci:</strong> ${topSP ? topSP[0] : 'N/A'} ($${topSP ? topSP[1].toLocaleString('tr-TR', {minimumFractionDigits: 0}) : '0'})</li>
+                            <li><strong>🏷️ Lider Marka:</strong> ${topBrand ? topBrand[0] : 'N/A'} ($${topBrand ? topBrand[1].toLocaleString('tr-TR', {minimumFractionDigits: 0}) : '0'})</li>
+                            <li><strong>💰 Ortalama Sipariş:</strong> $${avgOrderValue.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</li>
+                            <li><strong>👥 Aktif Müşteri:</strong> ${uniqueCustomers.toLocaleString('tr-TR')} farklı müşteri</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 15px; color: #f5576c;">⚠️ Dikkat Noktaları</h4>
+                        <ul style="line-height: 2.2; margin: 0;">
+                            ${yearGrowth < 0 ? `<li><strong>📉 Yıllık Düşüş:</strong> ${Math.abs(yearGrowth).toFixed(1)}% azalış - Acil aksiyon gerekli!</li>` : ''}
+                            ${monthGrowth < 0 ? `<li><strong>⚠️ Son Ay Trendi:</strong> ${Math.abs(monthGrowth).toFixed(1)}% düşüş tespit edildi</li>` : ''}
+                            <li><strong>🎯 Marka Yoğunlaşması:</strong> Top 3 marka toplam satışın %${brandConcentration.toFixed(1)}'ini oluşturuyor ${brandConcentration > 60 ? '(Risk yüksek!)' : ''}</li>
+                            ${weakStore ? `<li><strong>📊 Düşük Performans:</strong> ${weakStore[0]} mağazası desteklenmeli ($${weakStore[1].toLocaleString('tr-TR', {minimumFractionDigits: 0})})</li>` : ''}
+                            <li><strong>🔄 Müşteri Sadakati:</strong> Müşteri başına ortalama sipariş sayısı artırılmalı</li>
+                        </ul>
+                    </div>
+                </div>
+                <hr style="margin: 25px 0; border: none; border-top: 2px solid #667eea;">
+                <h4 style="margin-bottom: 15px; color: #667eea;">💡 Stratejik Öneriler</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 4px solid #38ef7d;">
+                        <strong>🎯 Kısa Vadeli (1-3 ay)</strong>
+                        <ul style="margin: 10px 0 0 0; line-height: 2;">
+                            <li>${topStore ? topStore[0] : 'En iyi mağaza'}'nın başarı faktörlerini diğer mağazalara uygulayın</li>
+                            <li>${topSP ? topSP[0] : 'En iyi temsilci'}'nin tekniklerini ekiple paylaşın</li>
+                            <li>${topBrand ? topBrand[0] : 'En iyi marka'} için özel kampanyalar düzenleyin</li>
+                            ${monthGrowth < 0 ? '<li>Düşük performans gösteren aylık satış sebeplerini analiz edin</li>' : ''}
+                        </ul>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 4px solid #667eea;">
+                        <strong>🚀 Uzun Vadeli (3-12 ay)</strong>
+                        <ul style="margin: 10px 0 0 0; line-height: 2;">
+                            <li>Marka çeşitliliğini artırarak risk dağılımı yapın</li>
+                            <li>Düşük performanslı mağazalar için kapsamlı iyileştirme planı</li>
+                            <li>Müşteri sadakat programı ile tekrar alım oranını %20 artırın</li>
+                            <li>Dijital satış kanallarını güçlendirin</li>
+                        </ul>
+                    </div>
+                </div>
             `;
             
             document.getElementById('dashAIAnalysis').innerHTML = analysis;
