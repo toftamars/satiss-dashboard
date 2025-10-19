@@ -748,32 +748,34 @@ jobs:
                                     # Sayısal değerler - SADECE USD VE MİKTAR
                                     qty = float(line.get('quantity', 0))
                                     
-                                    # USD tutar - HİBRİT YÖNTEM (3 Katmanlı Fallback)
+                                    # USD tutar - HİBRİT YÖNTEM (4 Katmanlı Fallback - Currency Öncelikli)
                                     line_id = line.get('id')
-                                    price_subtotal = abs(float(line.get('price_subtotal', 0)))  # TL tutar (mutlak değer)
+                                    price_subtotal = abs(float(line.get('price_subtotal', 0)))  # Tutar (mutlak değer)
                                     
-                                    # 1. ÖNCELİK: account.invoice.report'tan usd_rate ve USD tutarı kullan
-                                    if line_id in usd_rate_map and usd_rate_map[line_id] > 0:
+                                    # ÖNCELİK 1: Currency kontrolü (USD fatura mı TL fatura mı?)
+                                    currency = line.get('currency_id')
+                                    currency_code = currency[1] if isinstance(currency, list) and len(currency) > 1 else ''
+                                    
+                                    if 'USD' in currency_code.upper():
+                                        # USD FATURA - Kura bölme! Direkt al
+                                        usd_amount = price_subtotal
+                                        print(f"      💵 USD Fatura tespit edildi: {move_name} - ${usd_amount:.2f}")
+                                    # ÖNCELİK 2: TL fatura için usd_rate kullan
+                                    elif line_id in usd_rate_map and usd_rate_map[line_id] > 0:
                                         # Satır bazında kur varsa kullan (en doğru!)
                                         usd_rate = usd_rate_map[line_id]
                                         usd_amount = price_subtotal / usd_rate
                                     elif line_id in usd_amount_map and usd_amount_map[line_id] != 0:
                                         # Doğrudan USD tutarı varsa kullan
                                         usd_amount = abs(usd_amount_map[line_id])
-                                    # 2. FALLBACK: account.move'dan fatura kuru
+                                    # ÖNCELİK 3: account.move'dan fatura kuru
                                     elif move_id in invoice_currency_rate_map and invoice_currency_rate_map[move_id] > 0:
                                         currency_rate = invoice_currency_rate_map[move_id]
                                         usd_amount = price_subtotal / currency_rate
-                                    # 3. SON ÇARE: Currency kontrolü
+                                    # SON ÇARE: Ortalama kur
                                     else:
-                                        currency = line.get('currency_id')
-                                        currency_code = currency[1] if isinstance(currency, list) and len(currency) > 1 else ''
-                                        
-                                        if 'USD' in currency_code.upper():
-                                            usd_amount = price_subtotal
-                                        else:
-                                            # Son çare: ortalama kur
-                                            usd_amount = price_subtotal / 34.5
+                                        # Son çare: ortalama kur (TL için)
+                                        usd_amount = price_subtotal / 34.5
                                     
                                     # HER ZAMAN POZİTİF OLARAK AL (move_type'a göre sonra işaret belirleyeceğiz)
                                     usd_amount = abs(usd_amount)
