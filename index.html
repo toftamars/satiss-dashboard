@@ -3502,10 +3502,16 @@
             
             console.log('Ozet:', {totalUSD, totalQty, uniquePartners, uniqueProducts});
             
-            document.getElementById('summaryUSD').textContent = '$' + totalUSD.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            document.getElementById('summaryQuantity').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            document.getElementById('summaryPartners').textContent = uniquePartners.toLocaleString('tr-TR');
-            document.getElementById('summaryProducts').textContent = uniqueProducts.toLocaleString('tr-TR');
+            // Eski Sales sekmesi elementleri - null check
+            const summaryUSD = document.getElementById('summaryUSD');
+            const summaryQuantity = document.getElementById('summaryQuantity');
+            const summaryPartners = document.getElementById('summaryPartners');
+            const summaryProducts = document.getElementById('summaryProducts');
+            
+            if (summaryUSD) summaryUSD.textContent = '$' + totalUSD.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            if (summaryQuantity) summaryQuantity.textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            if (summaryPartners) summaryPartners.textContent = uniquePartners.toLocaleString('tr-TR');
+            if (summaryProducts) summaryProducts.textContent = uniqueProducts.toLocaleString('tr-TR');
             
             // AI Analiz yap
             if (filteredData.length > 0) {
