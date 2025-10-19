@@ -4442,8 +4442,15 @@
             }
             
             console.log(`📊 HTML oluşturuldu, container bulundu: ${!!container}, HTML uzunluğu: ${html.length}`);
-            container.innerHTML = html;
-            console.log(`✅ HTML container'a yazıldı!`);
+            console.log(`📊 HTML başlangıcı:`, html.substring(0, 200));
+            
+            try {
+                container.innerHTML = html;
+                console.log(`✅ HTML container'a yazıldı!`);
+            } catch (error) {
+                console.error(`❌ HTML yazma hatası:`, error);
+                console.log(`❌ Hatalı HTML:`, html.substring(0, 500));
+            }
         }
         
         // Yıllık hedefi yükle
