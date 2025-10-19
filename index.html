@@ -2258,26 +2258,20 @@
         // İndirim ürünlerini tespit eden yardımcı fonksiyon
         function isDiscountProduct(item) {
             const productName = (item.product || '').toLowerCase();
-            // SADECE [DISC] İndirim ürünü
-            return productName.includes('[disc]') && productName.includes('indirim');
+            return productName.includes('indirim') || 
+                   productName.includes('discount') ||
+                   productName.includes('toplam tutarda indirim');
         }
         
-        // Saleable kategori kontrolü
-        function isSaleableCategory(item) {
-            const category1 = (item.category_1 || '').toLowerCase();
-            return category1 === 'saleable';
-        }
-        
-        // İndirim ve Saleable ürünlerinin tutarını negatif yapan fonksiyon
+        // İndirim ürünlerinin tutarını negatif yapan fonksiyon
         function applyDiscountLogic(item) {
-            // [DISC] İndirim veya Saleable kategorisi
-            if (isDiscountProduct(item) || isSaleableCategory(item)) {
-                // Tutar negatif, miktar pozitif
+            if (isDiscountProduct(item)) {
+                // İndirim ürünleri için tutar negatif, miktar pozitif
                 return {
                     ...item,
                     usd_amount: -Math.abs(parseFloat(item.usd_amount || 0)),
                     quantity: Math.abs(parseFloat(item.quantity || 0)),
-                    _isDiscount: true  // İşareti ekle (filtreleme için)
+                    _isDiscount: true  // İndirim işareti ekle (filtreleme için)
                 };
             }
             return item;
@@ -9734,17 +9728,19 @@
                 }
                 
                 store.data.forEach(item => {
-                    const cat1 = item.category_1 || '';
+                    // Kategori 1, yoksa Kategori 2 kullan
+                    let cat = item.category_1 || item.category_2 || '';
+                    
                     // ALL, Analitik, Eğitim, Bilinmiyor, boş değerleri atla
-                    if (!cat1 || 
-                        cat1.toLowerCase() === 'all' || 
-                        cat1.toLowerCase() === 'bilinmiyor' ||
-                        cat1.toLowerCase().includes('analitik') || 
-                        cat1.toLowerCase().includes('eğitim')) {
+                    if (!cat || 
+                        cat.toLowerCase() === 'all' || 
+                        cat.toLowerCase() === 'bilinmiyor' ||
+                        cat.toLowerCase().includes('analitik') || 
+                        cat.toLowerCase().includes('eğitim')) {
                         return;
                     }
-                    if (!categoryData[cat1]) categoryData[cat1] = 0;
-                    categoryData[cat1] += parseFloat(item.usd_amount || 0);
+                    if (!categoryData[cat]) categoryData[cat] = 0;
+                    categoryData[cat] += parseFloat(item.usd_amount || 0);
                 });
                 
                 console.log(`      Kategori sayısı: ${Object.keys(categoryData).length}`);
@@ -9774,16 +9770,18 @@
             storesData.forEach((store, idx) => {
                 const categoryData = {};
                 store.data.forEach(item => {
-                    const cat1 = item.category_1 || '';
-                    if (!cat1 || 
-                        cat1.toLowerCase() === 'all' || 
-                        cat1.toLowerCase() === 'bilinmiyor' ||
-                        cat1.toLowerCase().includes('analitik') || 
-                        cat1.toLowerCase().includes('eğitim')) {
+                    // Kategori 1, yoksa Kategori 2 kullan
+                    let cat = item.category_1 || item.category_2 || '';
+                    
+                    if (!cat || 
+                        cat.toLowerCase() === 'all' || 
+                        cat.toLowerCase() === 'bilinmiyor' ||
+                        cat.toLowerCase().includes('analitik') || 
+                        cat.toLowerCase().includes('eğitim')) {
                         return;
                     }
-                    if (!categoryData[cat1]) categoryData[cat1] = 0;
-                    categoryData[cat1] += parseFloat(item.usd_amount || 0);
+                    if (!categoryData[cat]) categoryData[cat] = 0;
+                    categoryData[cat] += parseFloat(item.usd_amount || 0);
                 });
                 
                 const sorted = Object.entries(categoryData)
