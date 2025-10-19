@@ -2090,13 +2090,27 @@
             <div class="content">
                 <h2 style="margin-bottom: 30px;">🌍 Şehir Bazlı Satış Analizi</h2>
                 
-                <!-- City Selection -->
-                <div style="max-width: 600px; margin: 0 auto 40px;">
-                    <label style="display: block; margin-bottom: 10px; font-weight: bold; font-size: 1.1em;">📍 Şehir Seçin:</label>
-                    <select id="citySelect" onchange="analyzeCityPerformance()" 
-                            style="width: 100%; padding: 15px; font-size: 1.1em; border: 2px solid #667eea; border-radius: 10px; outline: none;">
-                        <option value="">-- Şehir Seçin --</option>
-                    </select>
+                <!-- City Selection & Date Filters -->
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; margin-bottom: 40px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: end;">
+                        <div>
+                            <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">📍 Şehir Seçin</label>
+                            <select id="citySelect" onchange="analyzeCityPerformance()" 
+                                    style="width: 100%; padding: 15px; font-size: 1.1em; border: none; border-radius: 10px; outline: none;">
+                                <option value="">-- Şehir Seçin --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">📅 Başlangıç Tarihi</label>
+                            <input type="date" id="cityDateStart" onchange="analyzeCityPerformance()"
+                                   style="width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 1em;">
+                        </div>
+                        <div>
+                            <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">📅 Bitiş Tarihi</label>
+                            <input type="date" id="cityDateEnd" onchange="analyzeCityPerformance()"
+                                   style="width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 1em;">
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- City Results Container -->
@@ -10884,16 +10898,26 @@
         
         function analyzeCityPerformance() {
             const selectedCity = document.getElementById('citySelect').value;
+            const dateStart = document.getElementById('cityDateStart').value;
+            const dateEnd = document.getElementById('cityDateEnd').value;
             
             if (!selectedCity) {
                 document.getElementById('cityAnalysisContainer').style.display = 'none';
                 return;
             }
             
-            console.log('🌍 Şehir analizi:', selectedCity);
+            console.log('🌍 Şehir analizi:', selectedCity, 'Tarih:', dateStart, '-', dateEnd);
             
-            // Şehir verilerini filtrele
-            const cityData = allData.filter(item => item.city === selectedCity);
+            // Şehir verilerini filtrele (şehir + tarih)
+            const cityData = allData.filter(item => {
+                if (item.city !== selectedCity) return false;
+                
+                // Tarih filtresi
+                if (dateStart && item.date < dateStart) return false;
+                if (dateEnd && item.date > dateEnd) return false;
+                
+                return true;
+            });
             
             if (cityData.length === 0) {
                 alert('Bu şehir için veri bulunamadı');
