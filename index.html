@@ -4144,6 +4144,9 @@
             
             // Her mağaza için hedef ve gerçekleşme hesapla
             const storesData = storesList.map(storeName => {
+                // Mağaza adından [ID] prefix'ini temizle
+                const cleanStoreName = storeName.replace(/^\[\d+\]\s*/, ''); // "[1101404] " gibi prefix'leri kaldır
+                
                 // Hedefi al (Esnek eşleştirme ile)
                 let target = 0;
                 
@@ -4151,7 +4154,7 @@
                 function findTargetKey(targetObj, storeName) {
                     if (!targetObj) return null;
                     
-                    // Tam eşleşme
+                    // Tam eşleşme (temiz isimle)
                     if (targetObj[storeName]) return storeName;
                     
                     // Kısmi eşleşme (case-insensitive)
@@ -4169,8 +4172,8 @@
                 if (month) {
                     // AYLIK HEDEF - Önce centralTargets (GitHub), sonra Google Sheets, sonra localStorage
                     if (centralTargets.monthly && centralTargets.monthly[year]) {
-                        const targetKey = findTargetKey(centralTargets.monthly[year], storeName);
-                        console.log(`🔍 Mağaza: "${storeName}" → Hedef Anahtarı: "${targetKey}"`);
+                        const targetKey = findTargetKey(centralTargets.monthly[year], cleanStoreName);
+                        console.log(`🔍 Mağaza: "${storeName}" → Temiz: "${cleanStoreName}" → Hedef Anahtarı: "${targetKey}"`);
                         if (targetKey && centralTargets.monthly[year][targetKey] && centralTargets.monthly[year][targetKey][month]) {
                             target = centralTargets.monthly[year][targetKey][month];
                             console.log(`✅ Hedef bulundu: $${target}`);
@@ -4183,7 +4186,7 @@
                     if (target === 0) {
                         const localTargets = JSON.parse(localStorage.getItem('monthlyTargets') || '{}');
                         if (localTargets[year]) {
-                            const targetKey = findTargetKey(localTargets[year], storeName);
+                            const targetKey = findTargetKey(localTargets[year], cleanStoreName);
                             if (targetKey && localTargets[year][targetKey][month]) {
                                 target = localTargets[year][targetKey][month];
                             }
@@ -4192,7 +4195,7 @@
                 } else {
                     // YILLIK HEDEF - Önce centralTargets (GitHub), sonra Google Sheets, sonra localStorage
                     if (centralTargets.yearly && centralTargets.yearly[year]) {
-                        const targetKey = findTargetKey(centralTargets.yearly[year], storeName);
+                        const targetKey = findTargetKey(centralTargets.yearly[year], cleanStoreName);
                         if (targetKey) {
                             target = centralTargets.yearly[year][targetKey];
                         }
@@ -4202,7 +4205,7 @@
                     if (target === 0) {
                         const localTargets = JSON.parse(localStorage.getItem('yearlyTargets') || '{}');
                         if (localTargets[year]) {
-                            const targetKey = findTargetKey(localTargets[year], storeName);
+                            const targetKey = findTargetKey(localTargets[year], cleanStoreName);
                             if (targetKey) {
                                 target = localTargets[year][targetKey];
                             }
