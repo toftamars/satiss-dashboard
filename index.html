@@ -1125,38 +1125,38 @@
                 <h2 style="margin-bottom: 30px; text-align: center;">🏠 Zuhal Müzik - Genel Dashboard</h2>
                 
                 <!-- Genel Özet Kartları -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px;">
-                    <div class="summary-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                        <h3>💰 Toplam Satış (KDV Hariç)</h3>
-                        <p id="dashTotalSales" style="color: white;">$0</p>
-                        <small style="opacity: 0.9;">Tüm zamanlar</small>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 40px;">
+                    <div class="summary-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px;">
+                        <h3 style="font-size: 0.95em; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">💰 Toplam Satış</h3>
+                        <p id="dashTotalSales" style="color: white; font-size: 1.6em; font-weight: bold; margin: 10px 0; word-break: break-all;">$0</p>
+                        <small style="opacity: 0.9; font-size: 0.85em;">KDV Hariç - Tüm zamanlar</small>
                     </div>
-                    <div class="summary-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
-                        <h3>📦 Toplam Ürün Adedi</h3>
-                        <p id="dashTotalQty" style="color: white;">0</p>
-                        <small style="opacity: 0.9;">Satılan ürün sayısı</small>
+                    <div class="summary-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px;">
+                        <h3 style="font-size: 0.95em; margin-bottom: 10px;">📦 Toplam Ürün</h3>
+                        <p id="dashTotalQty" style="color: white; font-size: 1.6em; font-weight: bold; margin: 10px 0;">0</p>
+                        <small style="opacity: 0.9; font-size: 0.85em;">Satılan ürün adedi</small>
+                    </div>
+                    <div class="summary-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px;">
+                        <h3 style="font-size: 0.95em; margin-bottom: 10px;">👥 Müşteri</h3>
+                        <p id="dashTotalCustomers" style="color: white; font-size: 1.6em; font-weight: bold; margin: 10px 0;">0</p>
+                        <small style="opacity: 0.9; font-size: 0.85em;">Aktif müşteri sayısı</small>
+                    </div>
+                    <div class="summary-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 20px;">
+                        <h3 style="font-size: 0.95em; margin-bottom: 10px;">🎸 Farklı Ürün</h3>
+                        <p id="dashTotalProducts" style="color: white; font-size: 1.6em; font-weight: bold; margin: 10px 0;">0</p>
+                        <small style="opacity: 0.9; font-size: 0.85em;">Ürün çeşidi</small>
+                    </div>
+                    <div class="summary-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 20px;">
+                        <h3 style="font-size: 0.95em; margin-bottom: 10px;">🏪 Mağaza</h3>
+                        <p id="dashTotalStores" style="color: white; font-size: 1.6em; font-weight: bold; margin: 10px 0;">0</p>
+                        <small style="opacity: 0.9; font-size: 0.85em;">Aktif mağaza sayısı</small>
+                    </div>
+                    <div class="summary-card" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: white; padding: 20px;">
+                        <h3 style="font-size: 0.95em; margin-bottom: 10px;">👨‍💼 Temsilci</h3>
+                        <p id="dashTotalSalespeople" style="color: white; font-size: 1.6em; font-weight: bold; margin: 10px 0;">0</p>
+                        <small style="opacity: 0.9; font-size: 0.85em;">Aktif temsilci sayısı</small>
+                    </div>
                 </div>
-                    <div class="summary-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
-                        <h3>👥 Toplam Müşteri</h3>
-                        <p id="dashTotalCustomers" style="color: white;">0</p>
-                        <small style="opacity: 0.9;">Aktif müşteri sayısı</small>
-                    </div>
-                    <div class="summary-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
-                        <h3>🎸 Farklı Ürün</h3>
-                        <p id="dashTotalProducts" style="color: white;">0</p>
-                        <small style="opacity: 0.9;">Ürün çeşidi</small>
-                </div>
-                    <div class="summary-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
-                        <h3>🏪 Toplam Mağaza</h3>
-                        <p id="dashTotalStores" style="color: white;">0</p>
-                        <small style="opacity: 0.9;">Aktif mağaza sayısı</small>
-                    </div>
-                    <div class="summary-card" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: white;">
-                        <h3>👨‍💼 Satış Temsilcisi</h3>
-                        <p id="dashTotalSalespeople" style="color: white;">0</p>
-                        <small style="opacity: 0.9;">Aktif temsilci sayısı</small>
-            </div>
-        </div>
 
                 <!-- Yıllık Karşılaştırma -->
                 <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 40px;">
@@ -1167,22 +1167,30 @@
                 <!-- Top Performanslar -->
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px; margin-bottom: 40px;">
                     <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                        <h3 style="margin-bottom: 20px;">🏆 Top 5 Mağaza (Bu Yıl)</h3>
+                        <h3 style="margin-bottom: 20px;">🏆 Top 10 Mağaza (Bu Yıl)</h3>
                         <canvas id="dashTopStoresChart"></canvas>
-                </div>
+                    </div>
                     <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                        <h3 style="margin-bottom: 20px;">⭐ Top 5 Satış Temsilcisi (Bu Yıl)</h3>
+                        <h3 style="margin-bottom: 20px;">⭐ Top 10 Satış Temsilcisi (Bu Yıl)</h3>
                         <canvas id="dashTopSalespeopleChart"></canvas>
-                </div>
+                    </div>
                     <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                        <h3 style="margin-bottom: 20px;">🏷️ Top 5 Marka (Bu Yıl)</h3>
+                        <h3 style="margin-bottom: 20px;">🏷️ Top 10 Marka (Bu Yıl)</h3>
                         <canvas id="dashTopBrandsChart"></canvas>
-                </div>
+                    </div>
                     <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                        <h3 style="margin-bottom: 20px;">📂 Top 5 Kategori (Bu Yıl)</h3>
+                        <h3 style="margin-bottom: 20px;">📂 Top 10 Kategori (Bu Yıl)</h3>
                         <canvas id="dashTopCategoriesChart"></canvas>
+                    </div>
+                    <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <h3 style="margin-bottom: 20px;">🌍 Top 10 Şehir (Bu Yıl)</h3>
+                        <canvas id="dashTopCitiesChart"></canvas>
+                    </div>
+                    <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <h3 style="margin-bottom: 20px;">🎸 Top 10 Ürün (Bu Yıl)</h3>
+                        <canvas id="dashTopProductsChart"></canvas>
+                    </div>
                 </div>
-            </div>
 
                 <!-- AI Dashboard Analizi -->
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; margin-bottom: 40px;">
@@ -5168,6 +5176,8 @@
         let dashTopSalespeopleChartInstance = null;
         let dashTopBrandsChartInstance = null;
         let dashTopCategoriesChartInstance = null;
+        let dashTopCitiesChartInstance = null;
+        let dashTopProductsChartInstance = null;
 
         function loadDashboard() {
             console.log('🏠 Dashboard yükleniyor...');
@@ -5204,6 +5214,8 @@
             renderDashTopSalespeopleChart(thisYearData);
             renderDashTopBrandsChart(thisYearData);
             renderDashTopCategoriesChart(thisYearData);
+            renderDashTopCitiesChart(thisYearData);
+            renderDashTopProductsChart(thisYearData);
             
             // AI Analizi
             performDashboardAIAnalysis();
