@@ -1558,7 +1558,7 @@
                             <p id="productUniqueCount">0</p>
                         </div>
                         <div class="summary-card">
-                            <h3>Ortalama Fiyat</h3>
+                            <h3>Sepet Ortalaması</h3>
                             <p id="productAvgPrice">$0</p>
                         </div>
                     </div>
@@ -4441,7 +4441,9 @@
                 `;
             }
             
+            console.log(`📊 HTML oluşturuldu, container bulundu: ${!!container}, HTML uzunluğu: ${html.length}`);
             container.innerHTML = html;
+            console.log(`✅ HTML container'a yazıldı!`);
         }
         
         // Yıllık hedefi yükle
@@ -7375,7 +7377,7 @@
                                 İşlem${getSortIcon('count')}
                             </th>
                             <th onclick="renderProductDetailTable(null, 'avgPrice')" style="padding: 15px; text-align: right; border-bottom: 2px solid #ddd; cursor: pointer; user-select: none;" title="Sıralamak için tıklayın">
-                                Ort. Fiyat${getSortIcon('avgPrice')}
+                                Sepet Ort.${getSortIcon('avgPrice')}
                             </th>
                         </tr>
                     </thead>
@@ -7390,7 +7392,7 @@
             displayData.forEach((item, index) => {
                 const product = item[0];
                 const stats = item[1];
-                const avgPrice = stats.sales / Math.max(stats.qty, 1);
+                const avgBasket = stats.sales / Math.max(stats.count, 1); // Sepet ortalaması = Toplam Satış / Fatura Sayısı
                 
                 html += `
                     <tr style="border-bottom: 1px solid #eee; ${index % 2 === 0 ? 'background: #f8f9fa;' : ''}">
@@ -7401,7 +7403,7 @@
                         <td style="padding: 12px; text-align: right; color: #38ef7d; font-weight: bold;">$${stats.sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
                         <td style="padding: 12px; text-align: right;">${stats.qty.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
                         <td style="padding: 12px; text-align: right;">${stats.count}</td>
-                        <td style="padding: 12px; text-align: right;">$${avgPrice.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                        <td style="padding: 12px; text-align: right;">$${avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
                     </tr>
                 `;
             });
