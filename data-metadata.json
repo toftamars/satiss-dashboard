@@ -1,14 +1,12 @@
 {
   "years": [
-    "2023",
     "2024",
     "2025"
   ],
-  "total_records": 967515,
+  "total_records": 710703,
   "files": [
-    "data-2023.json.gz",
     "data-2024.json.gz",
     "data-2025.json.gz"
   ],
-  "last_update": "2025-10-19 22:39:21"
+  "last_update": "2025-10-19 23:30:28"
 }
