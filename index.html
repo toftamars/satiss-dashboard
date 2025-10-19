@@ -9477,11 +9477,14 @@
             document.getElementById('storeTopProductsSection').style.display = 'none';
             document.getElementById('storeFullSalespersonSection').style.display = 'none';
             
-            // AI Analiz panelini gizle (çoklu mağaza karşılaştırmasında AI analizi yok)
+            // AI Analiz panelini göster ve karşılaştırmalı analizi yap
             const aiPanel = document.getElementById('storeAIAnalysisPanel');
             if (aiPanel) {
-                aiPanel.style.display = 'none';
+                aiPanel.style.display = 'block';
             }
+            
+            // Karşılaştırmalı AI analizi
+            performMultipleStoresAIAnalysis(storesData);
         }
         
         function renderStoreComparisonTable(storesData) {
