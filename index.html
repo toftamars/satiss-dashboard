@@ -2255,11 +2255,12 @@
         let metadata = null;
         let loadedYears = new Set();
         
-        // [DISC] İndirim özel ürünü tespit eden fonksiyon
+        // İndirim ürünlerini tespit eden yardımcı fonksiyon
         function isDiscountProduct(item) {
             const productName = (item.product || '').toLowerCase();
-            // Sadece [DISC] İndirim ürünü
-            return productName.includes('[disc]') && productName.includes('indirim');
+            return productName.includes('indirim') || 
+                   productName.includes('discount') ||
+                   productName.includes('toplam tutarda indirim');
         }
         
         // İndirim ürünlerinin tutarını negatif yapan fonksiyon
