@@ -2553,8 +2553,14 @@
                         document.getElementById('dataStatus').innerHTML = `<span class="status-badge status-success">✅ ${loadedYearsList}</span>`;
                         document.getElementById('totalRecords').textContent = allData.length.toLocaleString('tr-TR');
                         
-                        let totalUSD = allData.reduce((sum, item) => sum + (parseFloat(item.usd_amount) || 0), 0);
+                        // Toplam USD'yi güncelle
+                        const totalUSD = allData.reduce((sum, item) => sum + (parseFloat(item.usd_amount) || 0), 0);
                         document.getElementById('totalUSD').textContent = '$' + totalUSD.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        
+                        // Dashboard'ı güncelle (eğer Dashboard sekmesi açıksa)
+                        if (document.getElementById('dashboardTab').style.display !== 'none') {
+                            loadDashboard();
+                        }
                     }
                     
                 } catch (error) {
