@@ -5779,10 +5779,20 @@
                 dashTopProductsChartInstance.destroy();
             }
             
-            // Ürün isimlerini kısalt (max 40 karakter)
+            // Ürün isimlerini temizle ve kısalt
             const shortLabels = top10.map(s => {
-                const name = s[0];
-                return name.length > 40 ? name.substring(0, 37) + '...' : name;
+                let name = s[0];
+                
+                // Başındaki kodları temizle (örn: "[1R] ", "201R] ", "'PEP] ")
+                name = name.replace(/^[\[\(]?[A-Z0-9']+[\]\)]?\s*/g, '');
+                
+                // Sonundaki gereksiz açıklamaları kısalt (örn: "Dijital Piyano" -> "Piyano")
+                name = name.replace(/\s+Dijital\s+Piyano/gi, ' Piyano');
+                name = name.replace(/\s+Kuyruklu\s+Piyano/gi, ' K.Piyano');
+                name = name.replace(/\s+M\/PEP\s+/gi, ' ');
+                
+                // Max 35 karakter
+                return name.length > 35 ? name.substring(0, 32) + '...' : name;
             });
             
             dashTopProductsChartInstance = new Chart(ctx, {
@@ -5879,25 +5889,52 @@
             const top3Brands = sortedBrands.slice(0, 3);
             const brandConcentration = (top3Brands.reduce((sum, b) => sum + b[1], 0) / totalSalesThisYear * 100);
             
-            // Aylık trend - BU YIL vs GEÇENYıL AYNI AY karşılaştırması
+            // Aylık trend - GÜNLÜK ORTALAMA bazında karşılaştırma (ay henüz bitmemiş olabilir)
             const monthlyDataThisYear = {};
             const monthlyDataLastYear = {};
+            const monthlyDaysThisYear = {};
+            const monthlyDaysLastYear = {};
+            
             thisYearData.forEach(item => {
                 const month = item.date.substring(5, 7);
-                if (!monthlyDataThisYear[month]) monthlyDataThisYear[month] = 0;
+                const day = item.date.substring(8, 10);
+                if (!monthlyDataThisYear[month]) {
+                    monthlyDataThisYear[month] = 0;
+                    monthlyDaysThisYear[month] = new Set();
+                }
                 monthlyDataThisYear[month] += parseFloat(item.usd_amount || 0);
+                monthlyDaysThisYear[month].add(day);
             });
+            
             lastYearData.forEach(item => {
                 const month = item.date.substring(5, 7);
-                if (!monthlyDataLastYear[month]) monthlyDataLastYear[month] = 0;
+                const day = item.date.substring(8, 10);
+                if (!monthlyDataLastYear[month]) {
+                    monthlyDataLastYear[month] = 0;
+                    monthlyDaysLastYear[month] = new Set();
+                }
                 monthlyDataLastYear[month] += parseFloat(item.usd_amount || 0);
+                monthlyDaysLastYear[month].add(day);
             });
             
             const months = Object.keys(monthlyDataThisYear).sort();
             const lastMonth = months[months.length - 1];
             const lastMonthThisYear = monthlyDataThisYear[lastMonth] || 0;
             const lastMonthLastYear = monthlyDataLastYear[lastMonth] || 0;
-            const monthGrowth = lastMonthLastYear > 0 ? ((lastMonthThisYear - lastMonthLastYear) / lastMonthLastYear * 100) : 0;
+            const daysThisYear = monthlyDaysThisYear[lastMonth] ? monthlyDaysThisYear[lastMonth].size : 1;
+            const daysLastYear = monthlyDaysLastYear[lastMonth] ? monthlyDaysLastYear[lastMonth].size : 1;
+            
+            // GÜNLÜK ORTALAMA hesapla
+            const dailyAvgThisYear = lastMonthThisYear / daysThisYear;
+            const dailyAvgLastYear = lastMonthLastYear / daysLastYear;
+            const monthGrowth = dailyAvgLastYear > 0 ? ((dailyAvgThisYear - dailyAvgLastYear) / dailyAvgLastYear * 100) : 0;
+            
+            // Ay tamamlanma durumu
+            const today = new Date();
+            const currentDay = today.getDate();
+            const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
+            const isCurrentMonth = (lastMonth === currentMonth);
+            const monthCompletionRate = isCurrentMonth ? ((currentDay / 30) * 100).toFixed(0) : 100;
             
             // Müşteri analizi
             const uniqueCustomers = new Set(thisYearData.map(item => item.partner)).size;
@@ -5913,7 +5950,7 @@
                         <h4 style="margin-bottom: 15px; color: #38ef7d;">✅ Olumlu Tespitler</h4>
                         <ul style="line-height: 2.2; margin: 0;">
                             ${yearGrowth > 0 ? `<li><strong>📈 Yıllık Büyüme (${currentYear} vs ${lastYear}):</strong> %${Math.abs(yearGrowth).toFixed(1)} artış<br><span style="font-size: 0.9em; color: #666;">💵 ${lastYear}: $${totalSalesLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} → ${currentYear}: $${totalSalesThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</span></li>` : ''}
-                            ${monthGrowth > 0 ? `<li><strong>📊 ${lastMonthName} Ayı Trendi (${currentYear} vs ${lastYear}):</strong> %${Math.abs(monthGrowth).toFixed(1)} artış<br><span style="font-size: 0.9em; color: #666;">💵 ${lastMonthName} ${lastYear}: $${lastMonthLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} → ${lastMonthName} ${currentYear}: $${lastMonthThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</span></li>` : ''}
+                            ${monthGrowth > 0 ? `<li><strong>📊 ${lastMonthName} Ayı İvme (Günlük Ort. ${currentYear} vs ${lastYear}):</strong> %${Math.abs(monthGrowth).toFixed(1)} artış ${isCurrentMonth ? `<span style="color: #667eea;">(⏱️ Ay %${monthCompletionRate} tamamlandı)</span>` : ''}<br><span style="font-size: 0.9em; color: #666;">📅 ${lastMonthName} ${lastYear}: ${daysLastYear} gün, günlük ort. $${dailyAvgLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}<br>📅 ${lastMonthName} ${currentYear}: ${daysThisYear} gün, günlük ort. $${dailyAvgThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</span></li>` : ''}
                             <li><strong>🏆 En İyi 3 Mağaza (${currentYear}):</strong><br>
                                 ${top3Stores.map((s, i) => `<span style="font-size: 0.9em;">${i+1}. ${s[0]}: $${s[1].toLocaleString('tr-TR', {minimumFractionDigits: 0})} (%${(s[1]/totalSalesThisYear*100).toFixed(1)})</span>`).join('<br>')}
                             </li>
@@ -5929,7 +5966,7 @@
                         <h4 style="margin-bottom: 15px; color: #f5576c;">⚠️ Dikkat Noktaları</h4>
                         <ul style="line-height: 2.2; margin: 0;">
                             ${yearGrowth < 0 ? `<li><strong>📉 Yıllık Düşüş (${currentYear} vs ${lastYear}):</strong> %${Math.abs(yearGrowth).toFixed(1)} azalış - Acil aksiyon gerekli!<br><span style="font-size: 0.9em; color: #666;">💵 ${lastYear}: $${totalSalesLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} → ${currentYear}: $${totalSalesThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</span></li>` : ''}
-                            ${monthGrowth < 0 ? `<li><strong>⚠️ ${lastMonthName} Ayı Trendi (${currentYear} ${lastMonthName} vs ${lastYear} ${lastMonthName}):</strong> %${Math.abs(monthGrowth).toFixed(1)} düşüş<br><span style="font-size: 0.9em; color: #666;">💵 ${lastMonthName} ${lastYear}: $${lastMonthLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} → ${lastMonthName} ${currentYear}: $${lastMonthThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</span></li>` : ''}
+                            ${monthGrowth < 0 ? `<li><strong>⚠️ ${lastMonthName} Ayı İvme (Günlük Ort. ${currentYear} vs ${lastYear}):</strong> %${Math.abs(monthGrowth).toFixed(1)} düşüş ${isCurrentMonth ? `<span style="color: #f5576c;">(⏱️ Ay %${monthCompletionRate} tamamlandı - İvme negatif)</span>` : ''}<br><span style="font-size: 0.9em; color: #666;">📅 ${lastMonthName} ${lastYear}: ${daysLastYear} gün, günlük ort. $${dailyAvgLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}<br>📅 ${lastMonthName} ${currentYear}: ${daysThisYear} gün, günlük ort. $${dailyAvgThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}<br><span style="color: #f5576c;">💡 Bu ivmeyle ay sonunda tahmini: $${(dailyAvgThisYear * 30).toLocaleString('tr-TR', {minimumFractionDigits: 0})} (geçen yıl: $${lastMonthLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})})</span></span></li>` : ''}
                             <li><strong>🎯 Marka Yoğunlaşması:</strong> Top 3 marka (${top3Brands.map(b => b[0]).join(', ')}) toplam ${currentYear} satışının %${brandConcentration.toFixed(1)}'ini oluşturuyor ${brandConcentration > 60 ? '<span style="color: #f5576c;">(⚠️ Risk yüksek! Çeşitlilik az)</span>' : '<span style="color: #38ef7d;">(✓ Dengeli dağılım)</span>'}</li>
                             ${weakStore ? `<li><strong>📊 En Düşük Performans (${currentYear}):</strong> ${weakStore[0]} mağazası ($${weakStore[1].toLocaleString('tr-TR', {minimumFractionDigits: 0})}) - Toplam satışın sadece %${(weakStore[1]/totalSalesThisYear*100).toFixed(2)}'i</li>` : ''}
                             <li><strong>🔄 Müşteri Analizi:</strong> ${uniqueCustomers} müşteriden toplam $${totalSalesThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} satış = Müşteri başı $${(totalSalesThisYear/uniqueCustomers).toLocaleString('tr-TR', {minimumFractionDigits: 0})}</li>
