@@ -1484,7 +1484,7 @@
                         <div style="grid-column: 1 / -1;">
                             <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">🔍 Ürün/Marka Ara</label>
                             <div style="display: flex; gap: 10px;">
-                        <input type="text" id="productSearchInput" placeholder="Örnek: KDP120R, Roland, Yamaha P-125..." 
+                        <input type="text" id="productSearchInput" placeholder="Örnek: KDP120R, Roland, Fender..." 
                                        style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 1em;"
                                onkeypress="if(event.key==='Enter') searchProduct()">
                         <button onclick="searchProduct()" 
@@ -1995,6 +1995,11 @@
                         <!-- Category Comparison by Store -->
                         <div id="storeComparisonCategorySection" style="margin: 40px 0;">
                             <h3 style="text-align: center; margin-bottom: 30px;">📂 Mağaza Bazında Kategori Karşılaştırması (Kategori 1)</h3>
+                            
+                            <!-- Category Comparison Table -->
+                            <div id="storeCategoryComparisonTableContainer" style="margin-bottom: 40px; overflow-x: auto;"></div>
+                            
+                            <!-- Category Charts -->
                             <div id="storeComparisonCategoryCharts" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 30px;"></div>
                         </div>
                         
@@ -9943,6 +9948,103 @@
             });
         }
         
+        // Kategori Karşılaştırma Tablosu
+        function renderStoreCategoryComparisonTable(storesData) {
+            const tableContainer = document.getElementById('storeCategoryComparisonTableContainer');
+            if (!tableContainer) return;
+            
+            // Her mağaza için kategori verilerini topla
+            const storesCategories = storesData.map(store => {
+                const categoryData = {};
+                
+                store.data.forEach(item => {
+                    // Eğer category_1 "All" ise category_2 kullan, değilse category_1
+                    let cat = (item.category_1 && item.category_1.toLowerCase() !== 'all') 
+                        ? item.category_1 
+                        : (item.category_2 || item.category_3 || 'Diğer');
+                    
+                    // Sadece Analitik/Eğitim atla, diğerlerini al
+                    if (cat.toLowerCase().includes('analitik') || cat.toLowerCase().includes('eğitim')) {
+                        return;
+                    }
+                    if (!categoryData[cat]) categoryData[cat] = 0;
+                    categoryData[cat] += parseFloat(item.usd_amount || 0);
+                });
+                
+                // En yüksek 10 kategoriyi al
+                const sorted = Object.entries(categoryData)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 10);
+                
+                return {
+                    name: store.name,
+                    categories: sorted,
+                    totalSales: sorted.reduce((sum, item) => sum + item[1], 0)
+                };
+            });
+            
+            // Tüm benzersiz kategorileri topla (en az bir mağazada top 10'da olan)
+            const allCategories = new Set();
+            storesCategories.forEach(store => {
+                store.categories.forEach(([cat, _]) => allCategories.add(cat));
+            });
+            
+            // Tablo HTML'i oluştur
+            let html = `
+                <table style="width: 100%; border-collapse: collapse; box-shadow: 0 2px 10px rgba(0,0,0,0.1); background: white; border-radius: 10px; overflow: hidden;">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                            <th style="padding: 20px; text-align: left; font-size: 1.1em; position: sticky; left: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 10;">📂 Kategori</th>
+            `;
+            
+            // Mağaza başlıklarını ekle
+            storesCategories.forEach(store => {
+                html += `<th style="padding: 20px; text-align: center; font-size: 1.1em; min-width: 150px;">🏪 ${store.name}</th>`;
+            });
+            
+            html += `</tr></thead><tbody>`;
+            
+            // Her kategori için satır oluştur
+            Array.from(allCategories).sort().forEach((category, idx) => {
+                const rowBg = idx % 2 === 0 ? '#f8f9fa' : 'white';
+                html += `<tr style="background: ${rowBg}; border-bottom: 1px solid #e9ecef;">`;
+                html += `<td style="padding: 15px; font-weight: 600; position: sticky; left: 0; background: ${rowBg}; z-index: 5;">${category}</td>`;
+                
+                // Her mağaza için bu kategorinin değerini göster
+                storesCategories.forEach(store => {
+                    const categoryItem = store.categories.find(([cat, _]) => cat === category);
+                    if (categoryItem) {
+                        const value = categoryItem[1];
+                        const percentage = ((value / store.totalSales) * 100).toFixed(1);
+                        html += `
+                            <td style="padding: 15px; text-align: center;">
+                                <div style="font-weight: bold; color: #667eea; font-size: 1.1em;">$${value.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                <div style="color: #6c757d; font-size: 0.9em; margin-top: 5px;">${percentage}%</div>
+                            </td>
+                        `;
+                    } else {
+                        html += `<td style="padding: 15px; text-align: center; color: #adb5bd;">-</td>`;
+                    }
+                });
+                
+                html += `</tr>`;
+            });
+            
+            // Toplam satır ekle
+            html += `
+                <tr style="background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%); color: white; font-weight: bold;">
+                    <td style="padding: 20px; font-size: 1.1em; position: sticky; left: 0; background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%); z-index: 10;">💰 TOPLAM</td>
+            `;
+            
+            storesCategories.forEach(store => {
+                html += `<td style="padding: 20px; text-align: center; font-size: 1.2em;">$${store.totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>`;
+            });
+            
+            html += `</tr></tbody></table>`;
+            
+            tableContainer.innerHTML = html;
+        }
+        
         function renderStoreComparisonCategoryCharts(storesData) {
             const container = document.getElementById('storeComparisonCategoryCharts');
             if (!container) {
@@ -9951,6 +10053,9 @@
             }
             
             console.log('📊 Kategori karşılaştırması başlatılıyor...', storesData.length, 'mağaza');
+            
+            // ÖNCE TABLO OLUŞTUR
+            renderStoreCategoryComparisonTable(storesData);
             
             // Her mağaza için metrik kartları oluştur
             let html = '';
