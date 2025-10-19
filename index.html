@@ -7382,7 +7382,12 @@
                     <tbody>
             `;
             
-            currentProductData.forEach((item, index) => {
+            // Sadece ilk 30 ürünü göster (veri tasarrufu + performans)
+            const displayLimit = 30;
+            const displayData = currentProductData.slice(0, displayLimit);
+            const hasMore = currentProductData.length > displayLimit;
+            
+            displayData.forEach((item, index) => {
                 const product = item[0];
                 const stats = item[1];
                 const avgPrice = stats.sales / Math.max(stats.qty, 1);
@@ -7400,6 +7405,17 @@
                     </tr>
                 `;
             });
+            
+            // Daha fazla ürün varsa bilgilendirme satırı ekle
+            if (hasMore) {
+                html += `
+                    <tr style="background: #fffbeb; border-top: 2px solid #fbbf24;">
+                        <td colspan="8" style="padding: 15px; text-align: center; color: #92400e; font-weight: 600;">
+                            ℹ️ İlk ${displayLimit} ürün gösteriliyor (Toplam: ${currentProductData.length} ürün). Daha fazlası için filtreleri daraltabilirsiniz.
+                        </td>
+                    </tr>
+                `;
+            }
             
             html += `
                     </tbody>
@@ -7497,11 +7513,16 @@
             }
             
             if (topPersons.length > 0) {
-                const topPerson = topPersons[0];
-                const personShare = (topPerson[1].sales / totalSales * 100).toFixed(1);
+                // İlk 5 temsilciyi listele
+                const top5Persons = topPersons.slice(0, Math.min(5, topPersons.length));
+                const personsText = top5Persons.map((p, idx) => {
+                    const share = (p[1].sales / totalSales * 100).toFixed(1);
+                    return `${idx + 1}. ${p[0]} (%${share}, $${p[1].sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})})`;
+                }).join(' | ');
+                
                 insights.positive.push({
-                    title: `👤 ${topPerson[0]} Başarılı Temsilci`,
-                    description: `${topPerson[0]} toplam satışın %${personShare}'ini gerçekleştirdi ($${topPerson[1].sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} / ${topPerson[1].qty.toLocaleString('tr-TR', {minimumFractionDigits: 2})} adet). Bu temsilci bu ürün/marka konusunda uzman.`
+                    title: `👤 En Başarılı 5 Temsilci`,
+                    description: personsText
                 });
             }
             
@@ -7512,27 +7533,66 @@
             });
             
             if (topBrands.length > 0) {
+                // Markaların yüzdelerini hesapla
+                const brandsWithPercent = topBrands.map(b => {
+                    const percent = (b[1].sales / totalSales * 100).toFixed(1);
+                    return `${b[0]} (%${percent})`;
+                }).join(', ');
+                
                 insights.neutral.push({
                     title: `🏷️ Marka Dağılımı`,
-                    description: `En çok satan markalar: ${topBrands.map(b => b[0]).join(', ')}. Bu markalar toplam satışın büyük kısmını oluşturuyor.`
+                    description: `En çok satan markalar: ${brandsWithPercent}. Bu markalar toplam satışın büyük kısmını oluşturuyor.`
                 });
             }
             
             if (topCategories.length > 0) {
-                insights.neutral.push({
-                    title: `📂 Kategori Dağılımı`,
-                    description: `En çok satan kategoriler: ${topCategories.map(c => c[0]).join(', ')}. Bu kategorilerde yoğunlaşma var.`
+                // category_2 kullan (All yerine gerçek kategoriler)
+                const categoryData2 = {};
+                data.forEach(item => {
+                    const category = item.category_2 || 'Bilinmiyor';
+                    // All, Analitik, Eğitim kategorilerini atla
+                    if (category.toLowerCase() === 'all' || 
+                        category.toLowerCase() === 'bilinmiyor' ||
+                        category.toLowerCase().includes('analitik') || 
+                        category.toLowerCase().includes('eğitim')) {
+                        return;
+                    }
+                    if (!categoryData2[category]) categoryData2[category] = {sales: 0, qty: 0};
+                    categoryData2[category].sales += parseFloat(item.usd_amount || 0);
+                    categoryData2[category].qty += parseFloat(item.quantity || 0);
                 });
+                const topCategories2 = Object.entries(categoryData2).sort((a, b) => b[1].sales - a[1].sales).slice(0, 3);
+                
+                if (topCategories2.length > 0) {
+                    const catsWithPercent = topCategories2.map(c => {
+                        const percent = (c[1].sales / totalSales * 100).toFixed(1);
+                        return `${c[0]} (%${percent})`;
+                    }).join(', ');
+                    
+                    insights.neutral.push({
+                        title: `📂 Kategori Dağılımı`,
+                        description: `En çok satan kategoriler: ${catsWithPercent}. Bu kategorilerde yoğunlaşma var.`
+                    });
+                }
             }
             
             // Negatif içgörüler (Fırsatlar)
             if (topStores.length > 1) {
-                const secondStore = topStores[1];
-                const gap = ((topStores[0][1].sales - secondStore[1].sales) / secondStore[1].sales * 100).toFixed(1);
-                if (gap > 50) {
+                const leader = topStores[0];
+                const second = topStores[1];
+                const leaderSales = leader[1].sales;
+                const secondSales = second[1].sales;
+                const gapAmount = leaderSales - secondSales;
+                const gapPercent = ((gapAmount / secondSales) * 100).toFixed(1);
+                
+                // Mağaza sayısı
+                const totalStores = Object.keys(storeData).length;
+                const leaderShare = ((leaderSales / totalSales) * 100).toFixed(1);
+                
+                if (gapPercent > 30) { // Eşik %30'a düşürüldü (daha hassas uyarı)
                     insights.negative.push({
-                        title: `⚠️ Mağazalar Arası Dengesizlik`,
-                        description: `${topStores[0][0]} ile ${secondStore[0]} arasında %${gap} satış farkı var. Diğer mağazalarda potansiyel artış fırsatı mevcut.`
+                        title: `⚠️ Mağazalar Arası Performans Farkı`,
+                        description: `${leader[0]} mağazası toplam ${totalStores} mağaza içinde lider (%${leaderShare} pay). ${second[0]} mağazasından $${gapAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2})} (%${gapPercent}) daha fazla satış yapıyor. Diğer mağazalarda stok, teşhir, personel eğitimi ve pazarlama açısından iyileştirme potansiyeli var.`
                     });
                 }
             }
