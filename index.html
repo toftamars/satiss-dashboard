@@ -4170,8 +4170,12 @@
                     // AYLIK HEDEF - Önce centralTargets (GitHub), sonra Google Sheets, sonra localStorage
                     if (centralTargets.monthly && centralTargets.monthly[year]) {
                         const targetKey = findTargetKey(centralTargets.monthly[year], storeName);
-                        if (targetKey && centralTargets.monthly[year][targetKey][month]) {
+                        console.log(`🔍 Mağaza: "${storeName}" → Hedef Anahtarı: "${targetKey}"`);
+                        if (targetKey && centralTargets.monthly[year][targetKey] && centralTargets.monthly[year][targetKey][month]) {
                             target = centralTargets.monthly[year][targetKey][month];
+                            console.log(`✅ Hedef bulundu: $${target}`);
+                        } else {
+                            console.warn(`⚠️ Hedef bulunamadı!`, {targetKey, hasMonthlyData: !!centralTargets.monthly[year][targetKey], hasMonth: centralTargets.monthly[year][targetKey]?.[month]});
                         }
                     }
                     
