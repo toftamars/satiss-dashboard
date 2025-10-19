@@ -1999,8 +1999,8 @@
                             <!-- Category Comparison Table -->
                             <div id="storeCategoryComparisonTableContainer" style="margin-bottom: 40px; overflow-x: auto;"></div>
                             
-                            <!-- Category Charts -->
-                            <div id="storeComparisonCategoryCharts" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 30px;"></div>
+                            <!-- Category Charts (GİZLENDİ - Metrik tablo yeterli) -->
+                            <div id="storeComparisonCategoryCharts" style="display: none;"></div>
                         </div>
                         
                         <!-- AI Comparison Analysis -->
@@ -10057,7 +10057,10 @@
             // ÖNCE TABLO OLUŞTUR
             renderStoreCategoryComparisonTable(storesData);
             
-            // Her mağaza için metrik kartları oluştur
+            // Her mağaza için metrik kartları oluştur (YORUM: Renkli kartlar gizli, sadece tablo kullanılıyor)
+            // Performans için renkli kartlar devre dışı bırakıldı
+            return; // Renkli kartları render etme
+            
             let html = '';
             
             storesData.forEach((store, idx) => {
@@ -10160,52 +10163,109 @@
         function performMultipleStoresAIAnalysis(storesData) {
             console.log('🤖 Çoklu mağaza karşılaştırmalı AI analizi başlatılıyor...', storesData);
 
-            const insights = {positive: [], negative: [], neutral: [], recommendations: []};
+            const insights = {positive: [], negative: [], neutral: [], recommendations: [], categories: []};
 
             // Mağaza isimlerini al
             const names = storesData.map(st => st.name).join(', ');
 
-            insights.neutral.push(`🔍 ${storesData.length} mağaza karşılaştırılıyor: ${names}`);
+            insights.neutral.push(`🔍 <strong>${storesData.length} Mağaza Detaylı Karşılaştırma:</strong> ${names}`);
 
-            // Satış performansı karşılaştırması
+            // === SATIŞ PERFORMANSI ANALİZİ ===
             const sortedBySales = [...storesData].sort((a, b) => b.totalSales - a.totalSales);
-            insights.positive.push(`🏆 En yüksek satış: <strong>${sortedBySales[0].name}</strong> - $${sortedBySales[0].totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
+            const totalAllSales = sortedBySales.reduce((sum, st) => sum + st.totalSales, 0);
+            const avgSales = totalAllSales / sortedBySales.length;
+            
+            insights.positive.push(`🏆 <strong>Satış Lideri:</strong> ${sortedBySales[0].name} - $${sortedBySales[0].totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} (Toplam satışın %${((sortedBySales[0].totalSales / totalAllSales) * 100).toFixed(1)}'i)`);
 
             if (sortedBySales.length > 1) {
                 const gap = sortedBySales[0].totalSales - sortedBySales[1].totalSales;
                 const gapPercent = (gap / sortedBySales[1].totalSales * 100).toFixed(1);
-                insights.neutral.push(`📊 1. ve 2. arasındaki fark: $${gap.toLocaleString('tr-TR', {minimumFractionDigits: 2})} (%${gapPercent})`);
+                insights.neutral.push(`📊 <strong>Lider Farkı:</strong> 1. sıradaki mağaza 2. sıradan $${gap.toLocaleString('tr-TR', {minimumFractionDigits: 2})} (%${gapPercent}) daha fazla satış yapıyor`);
+                
+                // Ortalama altı performans
+                const belowAvg = sortedBySales.filter(st => st.totalSales < avgSales);
+                if (belowAvg.length > 0) {
+                    insights.negative.push(`⚠️ <strong>Ortalama Altı Performans:</strong> ${belowAvg.map(st => st.name).join(', ')} ortalama satışın ($${avgSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}) altında`);
+                }
             }
 
             if (sortedBySales.length > 2) {
-                insights.negative.push(`⚠️ En düşük satış: <strong>${sortedBySales[sortedBySales.length - 1].name}</strong> - $${sortedBySales[sortedBySales.length - 1].totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
+                const lastStore = sortedBySales[sortedBySales.length - 1];
+                const gapToLeader = sortedBySales[0].totalSales - lastStore.totalSales;
+                insights.negative.push(`📉 <strong>En Düşük Performans:</strong> ${lastStore.name} - $${lastStore.totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} (Liderden %${((gapToLeader / sortedBySales[0].totalSales) * 100).toFixed(1)} daha az)`);
             }
 
-            // Miktar performansı
+            // === MİKTAR & SEPETAnalizi ===
             const sortedByQty = [...storesData].sort((a, b) => b.totalQty - a.totalQty);
-            insights.positive.push(`📦 En yüksek adet: <strong>${sortedByQty[0].name}</strong> - ${sortedByQty[0].totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2})} adet`);
+            const sortedByBasket = [...storesData].sort((a, b) => b.avgBasket - a.avgBasket);
+            
+            insights.positive.push(`📦 <strong>En Yüksek Adet Satışı:</strong> ${sortedByQty[0].name} - ${sortedByQty[0].totalQty.toLocaleString('tr-TR')} adet`);
+            insights.positive.push(`🛒 <strong>En Yüksek Sepet Ortalaması:</strong> ${sortedByBasket[0].name} - $${sortedByBasket[0].avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2})}/fatura`);
+            
+            // Düşük sepet ortalaması uyarısı
+            const lowBasket = storesData.filter(st => st.avgBasket < 100);
+            if (lowBasket.length > 0) {
+                insights.negative.push(`⚠️ <strong>Düşük Sepet Ortalaması:</strong> ${lowBasket.map(st => `${st.name} ($${st.avgBasket.toFixed(2)})`).join(', ')} - Cross-selling fırsatı var`);
+            }
 
-            // Ortalama işlem tutarı karşılaştırması
-            storesData.forEach(st => {
-                if (st.avgTransaction > 500) {
-                    insights.positive.push(`💰 <strong>${st.name}</strong> yüksek ortalama işlem tutarı: $${st.avgTransaction.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
-                } else if (st.avgTransaction < 200) {
-                    insights.negative.push(`📉 <strong>${st.name}</strong> düşük ortalama işlem tutarı: $${st.avgTransaction.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
+            // === KATEGORİ ANALİZİ ===
+            const categoryAnalysis = {};
+            storesData.forEach(store => {
+                store.data.forEach(item => {
+                    let cat = (item.category_1 && item.category_1.toLowerCase() !== 'all') 
+                        ? item.category_1 
+                        : (item.category_2 || item.category_3 || 'Diğer');
+                    
+                    if (cat.toLowerCase().includes('analitik') || cat.toLowerCase().includes('eğitim')) return;
+                    
+                    if (!categoryAnalysis[cat]) {
+                        categoryAnalysis[cat] = {};
+                    }
+                    if (!categoryAnalysis[cat][store.name]) {
+                        categoryAnalysis[cat][store.name] = 0;
+                    }
+                    categoryAnalysis[cat][store.name] += parseFloat(item.usd_amount || 0);
+                });
+            });
+            
+            // Her kategori için lider mağazayı bul
+            Object.entries(categoryAnalysis).forEach(([category, stores]) => {
+                const sortedStores = Object.entries(stores).sort((a, b) => b[1] - a[1]);
+                if (sortedStores.length > 0 && sortedStores[0][1] > 1000) { // Sadece anlamlı kategoriler
+                    const leader = sortedStores[0];
+                    const total = sortedStores.reduce((sum, [_, val]) => sum + val, 0);
+                    const percentage = ((leader[1] / total) * 100).toFixed(1);
+                    insights.categories.push(`📂 <strong>${category}:</strong> ${leader[0]} lider ($${leader[1].toLocaleString('tr-TR', {minimumFractionDigits: 2})}, %${percentage})`);
                 }
             });
 
-            // Öneriler
-            insights.recommendations.push(`🎯 <strong>${sortedBySales[0].name}</strong>'in başarı faktörlerini diğer mağazalarla paylaşın`);
+            // === ÖNERİLER ===
+            insights.recommendations.push(`🎯 <strong>${sortedBySales[0].name}</strong> en iyi uygulamalarını (satış teknikleri, ürün yerleşimi, müşteri hizmetleri) diğer mağazalarla paylaşmalı`);
+            
+            // Sepet ortalaması düşük mağazalar için
+            if (lowBasket.length > 0) {
+                insights.recommendations.push(`🛒 ${lowBasket.map(st => st.name).join(', ')} için <strong>cross-selling ve up-selling eğitimleri</strong> düzenleyin - Sepet ortalamasını artırma potansiyeli yüksek`);
+            }
+            
+            // Kategori bazlı öneriler
+            const topCategories = Object.entries(categoryAnalysis)
+                .map(([cat, stores]) => [cat, Object.values(stores).reduce((a, b) => a + b, 0)])
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3);
+            
+            if (topCategories.length > 0) {
+                insights.recommendations.push(`📊 <strong>En çok satan 3 kategori:</strong> ${topCategories.map(([cat, _]) => cat).join(', ')} - Bu kategorilerde stok ve teşhir optimizasyonu yapın`);
+            }
 
             if (sortedBySales.length > 1) {
                 const lowPerformers = sortedBySales.slice(Math.ceil(sortedBySales.length / 2));
                 if (lowPerformers.length > 0) {
-                    insights.recommendations.push(`📚 ${lowPerformers.map(st => st.name).join(', ')} için operasyonel iyileştirme planları yapın`);
+                    insights.recommendations.push(`📚 <strong>${lowPerformers.map(st => st.name).join(', ')}</strong> için: Trafik analizi, personel verimliliği, ürün çeşitliliği ve fiyatlandırma stratejilerini gözden geçirin`);
                 }
             }
 
-            insights.recommendations.push(`🤝 Mağazalar arası best practice paylaşım toplantıları düzenleyin`);
-            insights.recommendations.push(`📊 Müşteri memnuniyeti anketleri ile performans farklılıklarını analiz edin`);
+            insights.recommendations.push(`🤝 <strong>Aylık Performans Toplantıları:</strong> Mağaza müdürleri arası best practice paylaşımı ve sorun çözme workshopları düzenleyin`);
+            insights.recommendations.push(`📊 <strong>Müşteri Geri Bildirimleri:</strong> Her mağaza için NPS (Net Promoter Score) ve müşteri memnuniyeti anketleri yaparak performans farklılıklarının nedenlerini analiz edin`);
 
             // HTML oluştur
             let html = '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; color: white; margin-bottom: 30px;">';
@@ -10229,8 +10289,14 @@
                 html += '</ul></div>';
             }
 
+            if (insights.categories.length > 0) {
+                html += '<div style="margin-bottom: 20px;"><h4 style="color: #fcd34d; margin-bottom: 10px;">📂 Kategori Liderlikleri:</h4><ul style="margin: 0; padding-left: 20px;">';
+                insights.categories.forEach(item => html += `<li style="margin-bottom: 8px;">${item}</li>`);
+                html += '</ul></div>';
+            }
+
             if (insights.recommendations.length > 0) {
-                html += '<div><h4 style="color: #a78bfa; margin-bottom: 10px;">💡 Öneriler:</h4><ul style="margin: 0; padding-left: 20px;">';
+                html += '<div><h4 style="color: #a78bfa; margin-bottom: 10px;">💡 Stratejik Öneriler:</h4><ul style="margin: 0; padding-left: 20px;">';
                 insights.recommendations.forEach(item => html += `<li style="margin-bottom: 8px;">${item}</li>`);
                 html += '</ul></div>';
             }
