@@ -4256,31 +4256,20 @@
                     daysLeft,
                     dailyRequired
                 };
-            }).filter(store => store.target > 0); // Sadece hedefi olanları göster
+            }); // TÜM mağazaları göster (hedef olsun olmasın)
             
-            // Özel kategorileri ayır
-            const specialCategories = [
-                'Online - Online Satış',
-                'Toptan - Toptan Satış',
-                'Merkezi - Merkezi Satış',
-                'Kurumsal - Kurumsal Satış',
-                'Perakende - Outlet'
-            ];
+            // Hedefsiz mağazaları ayır (en alta koyacağız)
+            const storesWithTarget = storesData.filter(store => store.target > 0);
+            const storesWithoutTarget = storesData.filter(store => store.target === 0);
             
-            // Perakende mağazaları ve özel kategorileri ayır
-            const retailStores = storesData.filter(store => 
-                !specialCategories.some(cat => store.name.includes(cat.split(' - ')[1]))
-            );
-            const specialStores = storesData.filter(store => 
-                specialCategories.some(cat => store.name.includes(cat.split(' - ')[1]))
-            );
+            // Hedefli mağazaları yüzdeye göre sırala
+            storesWithTarget.sort((a, b) => b.percentage - a.percentage);
             
-            // Her grubu kendi içinde yüzdeye göre sırala
-            retailStores.sort((a, b) => b.percentage - a.percentage);
-            specialStores.sort((a, b) => b.percentage - a.percentage);
+            // Hedefsiz mağazaları alfabetik sırala
+            storesWithoutTarget.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
             
-            // Önce Perakende, sonra Özel kategoriler
-            const sortedStoresData = [...retailStores, ...specialStores];
+            // Önce hedefli, sonra hedefsiz mağazalar
+            const sortedStoresData = [...storesWithTarget, ...storesWithoutTarget];
             
             // Renk belirleme fonksiyonu
             function getPerformanceColor(percentage) {
@@ -4304,6 +4293,23 @@
             `;
             
             sortedStoresData.forEach(store => {
+                // Hedefsiz mağazalar için özel görünüm
+                if (store.target === 0) {
+                    html += `
+                        <div class="storeCard" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); color: white; opacity: 0.7;">
+                            <h3 style="margin: 0 0 15px 0; font-size: 1.5em; color: white;">${store.name}</h3>
+                            <div style="text-align: center; padding: 40px 0;">
+                                <div style="font-size: 3em; margin-bottom: 10px;">📊</div>
+                                <div style="font-size: 1.1em; opacity: 0.9; margin-bottom: 10px;">Hedef Tanımlanmamış</div>
+                                <div style="font-size: 1.3em; font-weight: 600; margin-top: 15px;">
+                                    Gerçekleşme: $${store.achieved.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                
                 const bgColor = getPerformanceColor(store.percentage);
                 const textColor = 'white';
                 
