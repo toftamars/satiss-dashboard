@@ -333,7 +333,7 @@ jobs:
                                 
                                 while True:
                                     batch_count += 1
-                                    print(f"📦 Batch {batch_count}: {offset} - {offset + batch_size} arası çekiliyor...")
+                                    print(f"📦 Batch {batch_count}: Offset {offset} | Limit {batch_size} (Toplam: {offset}-{offset + batch_size})")
                                     
                                     try:
                                         batch_data = models.execute_kw(
