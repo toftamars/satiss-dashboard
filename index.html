@@ -2758,8 +2758,6 @@
         }
         
         function applyChannelFilter() {
-            console.log('🏢 Kanal filtresi uygulanıyor...', activeChannels);
-            
             // Tümü seçiliyse tüm veriyi kullan
             if (activeChannels.all) {
                 allData = [...baseData];
@@ -2813,15 +2811,11 @@
             
             filteredData = [...allData];
             
-            console.log(`✅ Filtrelendi: ${allData.length.toLocaleString('tr-TR')} kayıt`);
-            
             // TÜM SAYFA YENİDEN HESAPLANIYOR!
             updateAfterChannelFilter();
         }
         
         function updateAfterChannelFilter() {
-            console.log('🔄 Tüm sayfa yeniden hesaplanıyor...');
-            
             // Info kartlarını güncelle
             document.getElementById('totalRecords').textContent = allData.length.toLocaleString('tr-TR');
             const totalUSD = allData.reduce((sum, item) => sum + (parseFloat(item.usd_amount) || 0), 0);
@@ -2835,12 +2829,10 @@
             loadDashboard();
             
             // Müşteri analizini yenile
-            if (document.getElementById('customersTab').style.display !== 'none') {
-                loadCustomers();
-            }
+            analyzeCustomers();
             
-            // Diğer sekmeleri yenile (açıksa)
-            // Her sekme kendi verilerini allData'dan çekiyor, otomatik güncellenecek
+            // Hedef takibini yenile
+            loadAllStoresTargets();
         }
 
         async function loadData() {
