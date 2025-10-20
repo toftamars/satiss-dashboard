@@ -1521,7 +1521,7 @@
                     </div>
                 </div>
                 
-                <h3 style="margin: 30px 0 20px 0;">🏆 Top 10 Müşteri</h3>
+                <h3 style="margin: 30px 0 20px 0;">🏆 Top 20 Müşteri</h3>
                 <div class="customer-grid" id="topCustomersGrid">
                     <!-- Dinamik olarak doldurulacak -->
                 </div>
@@ -4972,8 +4972,8 @@
             document.getElementById('avgOrderValue').textContent = '$' + avgOrderValue.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('maxOrderValue').textContent = '$' + maxOrderValue.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             
-            // Top 10 müşteri kartları
-            renderTopCustomers(customers.slice(0, 10));
+            // Top 20 müşteri kartları (otomatik göster)
+            renderTopCustomers(customers.slice(0, 20));
             
             // Grafikler
             renderCustomerCityChart(customers);
@@ -8207,7 +8207,7 @@
         function renderCustomerCategoryChartMain(data) {
             const categoryData = {};
             data.forEach(item => {
-                const category = item.category_1 || 'Bilinmiyor';
+                const category = item.category_2 || item.category_1 || 'Bilinmiyor';
                 if (!categoryData[category]) categoryData[category] = 0;
                 categoryData[category] += parseFloat(item.usd_amount || 0);
             });
@@ -8396,8 +8396,8 @@
                 brandData[brand].qty += parseFloat(item.quantity || 0);
                 brandData[brand].count += 1;
                 
-                // Kategori
-                const category = item.category_1 || 'Bilinmiyor';
+                // Kategori (category_2 öncelikli)
+                const category = item.category_2 || item.category_1 || 'Bilinmiyor';
                 if (!categoryData[category]) categoryData[category] = {sales: 0, qty: 0};
                 categoryData[category].sales += parseFloat(item.usd_amount || 0);
                 categoryData[category].qty += parseFloat(item.quantity || 0);
@@ -9314,7 +9314,7 @@
         function renderCustomerCategoryChart(data) {
             const categoryData = {};
             data.forEach(item => {
-                const category = item.category_1 || 'Bilinmiyor';
+                const category = item.category_2 || item.category_1 || 'Bilinmiyor';
                 if (!categoryData[category]) categoryData[category] = {sales: 0, qty: 0};
                 categoryData[category].sales += parseFloat(item.usd_amount || 0);
                 categoryData[category].qty += parseFloat(item.quantity || 0);
@@ -11171,15 +11171,9 @@
                 }
             }
             
-            if (timeSlots.length > 1) {
-                const weakSlot = timeSlots[timeSlots.length - 1];
-                const weakPercent = ((weakSlot.value / profile.totalSales) * 100).toFixed(1);
-                insights.recommendations.push({
-                    icon: '🎯',
-                    title: 'Zayıf Saat Dilimini Güçlendir',
-                    description: `${weakSlot.name} sadece %${weakPercent} ciro yapıyor. Mağaza çalışma saatleri (${storeHours.openHour}:00-${storeHours.closeHour}:00) içinde bu saatlerde özel indirimler veya etkinlikler düzenleyin.`
-                });
-            }
+            // Zayıf saat dilimi önerisi kaldırıldı - mağazalar 20:00-22:00 kapanıyor
+            // Perakende mağazalar: Tünel, Mavibahçe, Kızılay, İzmir: 20:00
+            // Diğer perakende mağazalar: 22:00
             
             insights.recommendations.push({
                 icon: '🎯',
