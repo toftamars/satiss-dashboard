@@ -507,10 +507,23 @@
             return secret;
         }
 
-        // Device fingerprint
+        // Device fingerprint (must match index.html)
         function generateDeviceFingerprint() {
-            const nav = navigator;
-            return btoa(nav.userAgent + nav.language + screen.width + screen.height);
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillText('Device fingerprint', 2, 2);
+            
+            const fingerprint = [
+                navigator.userAgent,
+                navigator.language,
+                screen.width + 'x' + screen.height,
+                new Date().getTimezoneOffset(),
+                canvas.toDataURL()
+            ].join('|');
+            
+            return CryptoJS.SHA256(fingerprint).toString();
         }
 
         // Create encrypted session
