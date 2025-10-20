@@ -13824,8 +13824,9 @@
         // Çıkış fonksiyonu
         function logout() {
             if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
-                localStorage.removeItem('session');
-                window.location.href = 'auth.html';
+                sessionStorage.removeItem('session');
+                localStorage.removeItem('session'); // Eski session'ları da temizle
+                window.location.href = 'auth-advanced.html';
             }
         }
 
