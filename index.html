@@ -1256,27 +1256,27 @@
             <h3 style="color: white; margin: 0 0 15px 0; font-size: 1.3em;">🏢 Satış Kanalı Filtresi</h3>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
                 <label style="background: rgba(255,255,255,0.15); padding: 12px 15px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; transition: all 0.3s; color: white; font-weight: 500;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-                    <input type="checkbox" id="channelAll" checked onchange="handleChannelFilter()" style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
+                    <input type="checkbox" id="channelAll" checked onchange="handleChannelFilter('channelAll')" style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
                     <span>✨ Tümü (19 Kanal)</span>
                 </label>
                 <label style="background: rgba(255,255,255,0.15); padding: 12px 15px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; transition: all 0.3s; color: white; font-weight: 500;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-                    <input type="checkbox" id="channelRetail" onchange="handleChannelFilter()" style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
+                    <input type="checkbox" id="channelRetail" onchange="handleChannelFilter('channelRetail')" style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
                     <span>🏪 Perakende (14)</span>
                 </label>
                 <label style="background: rgba(255,255,255,0.15); padding: 12px 15px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; transition: all 0.3s; color: white; font-weight: 500;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-                    <input type="checkbox" id="channelWholesale" onchange="handleChannelFilter()" style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
+                    <input type="checkbox" id="channelWholesale" onchange="handleChannelFilter('channelWholesale')" style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
                     <span>📦 Toptan Satış</span>
                 </label>
                 <label style="background: rgba(255,255,255,0.15); padding: 12px 15px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; transition: all 0.3s; color: white; font-weight: 500;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-                    <input type="checkbox" id="channelOnline" onchange="handleChannelFilter()" style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
+                    <input type="checkbox" id="channelOnline" onchange="handleChannelFilter('channelOnline')" style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
                     <span>🌐 Online Satış</span>
                 </label>
                 <label style="background: rgba(255,255,255,0.15); padding: 12px 15px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; transition: all 0.3s; color: white; font-weight: 500;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-                    <input type="checkbox" id="channelCorporate" onchange="handleChannelFilter()" style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
+                    <input type="checkbox" id="channelCorporate" onchange="handleChannelFilter('channelCorporate')" style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
                     <span>🏢 Kurumsal Satış</span>
                 </label>
                 <label style="background: rgba(255,255,255,0.15); padding: 12px 15px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; transition: all 0.3s; color: white; font-weight: 500;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-                    <input type="checkbox" id="channelCentral" onchange="handleChannelFilter()" style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
+                    <input type="checkbox" id="channelCentral" onchange="handleChannelFilter('channelCentral')" style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
                     <span>🏛️ Merkezi Satış</span>
                 </label>
             </div>
@@ -2718,8 +2718,8 @@
         }
 
         // Global Kanal Filtresi Fonksiyonu (window scope'una ekle)
-        window.handleChannelFilter = function() {
-            console.log('🔄 handleChannelFilter çağrıldı');
+        window.handleChannelFilter = function(clickedId) {
+            console.log('🔄 handleChannelFilter çağrıldı, tıklanan:', clickedId);
             console.log('📊 baseData boyutu:', baseData.length);
             console.log('📊 allData boyutu:', allData.length);
             
@@ -2732,16 +2732,17 @@
             
             console.log('✅ Checkbox durumları:', {channelAll, channelRetail, channelWholesale, channelOnline, channelCorporate, channelCentral});
             
-            // Tümü seçiliyse diğerlerini kapat
-            if (channelAll) {
+            // Eğer Tümü tıklandıysa, diğerlerini kapat
+            if (clickedId === 'channelAll' && channelAll) {
                 document.getElementById('channelRetail').checked = false;
                 document.getElementById('channelWholesale').checked = false;
                 document.getElementById('channelOnline').checked = false;
                 document.getElementById('channelCorporate').checked = false;
                 document.getElementById('channelCentral').checked = false;
                 activeChannels = {all: true, retail: false, wholesale: false, online: false, corporate: false, central: false};
-            } else {
-                // Diğerleri seçiliyse Tümü'yü kapat
+            }
+            // Eğer diğer bir kanal tıklandıysa, Tümü'yü kapat
+            else if (clickedId !== 'channelAll' && (channelRetail || channelWholesale || channelOnline || channelCorporate || channelCentral)) {
                 document.getElementById('channelAll').checked = false;
                 activeChannels = {
                     all: false,
@@ -2752,11 +2753,15 @@
                     central: channelCentral
                 };
             }
-            
             // Hiçbiri seçili değilse Tümü'yü aktif et
-            if (!channelAll && !channelRetail && !channelWholesale && !channelOnline && !channelCorporate && !channelCentral) {
+            else if (!channelAll && !channelRetail && !channelWholesale && !channelOnline && !channelCorporate && !channelCentral) {
                 document.getElementById('channelAll').checked = true;
-                activeChannels.all = true;
+                activeChannels = {all: true, retail: false, wholesale: false, online: false, corporate: false, central: false};
+            }
+            // Sadece Tümü kapatıldıysa hiçbir şey yapma (diğerleri zaten kapalı)
+            else if (clickedId === 'channelAll' && !channelAll) {
+                document.getElementById('channelAll').checked = true;
+                activeChannels = {all: true, retail: false, wholesale: false, online: false, corporate: false, central: false};
             }
             
             // Veriyi filtrele
