@@ -2719,12 +2719,18 @@
 
         // Global Kanal Filtresi Fonksiyonu
         function handleChannelFilter() {
+            console.log('🔄 handleChannelFilter çağrıldı');
+            console.log('📊 baseData boyutu:', baseData.length);
+            console.log('📊 allData boyutu:', allData.length);
+            
             const channelAll = document.getElementById('channelAll').checked;
             const channelRetail = document.getElementById('channelRetail').checked;
             const channelWholesale = document.getElementById('channelWholesale').checked;
             const channelOnline = document.getElementById('channelOnline').checked;
             const channelCorporate = document.getElementById('channelCorporate').checked;
             const channelCentral = document.getElementById('channelCentral').checked;
+            
+            console.log('✅ Checkbox durumları:', {channelAll, channelRetail, channelWholesale, channelOnline, channelCorporate, channelCentral});
             
             // Tümü seçiliyse diğerlerini kapat
             if (channelAll) {
@@ -2758,9 +2764,14 @@
         }
         
         function applyChannelFilter() {
+            console.log('🏢 applyChannelFilter başladı');
+            console.log('📊 activeChannels:', activeChannels);
+            console.log('📊 baseData uzunluk:', baseData.length);
+            
             // Tümü seçiliyse tüm veriyi kullan
             if (activeChannels.all) {
                 allData = [...baseData];
+                console.log('✅ Tümü seçili, allData uzunluk:', allData.length);
                 document.getElementById('channelFilterInfo').textContent = '📊 Aktif: Tüm Kanallar (19)';
             } else {
                 // Seçili kanallara göre filtrele
