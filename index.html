@@ -2786,10 +2786,8 @@
                         const totalUSD = allData.reduce((sum, item) => sum + (parseFloat(item.usd_amount) || 0), 0);
                         document.getElementById('totalUSD').textContent = '$' + totalUSD.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                         
-                        // Dashboard'ı güncelle (eğer Dashboard sekmesi açıksa)
-                        if (document.getElementById('dashboardTab').style.display !== 'none') {
-                            loadDashboard();
-                        }
+                        // Dashboard'ı güncelle - sadece grafikleri yenile, veri yükleme yapma
+                        // loadDashboard() çağırmıyoruz çünkü zaten veriler yüklü
                     }
                     
                 } catch (error) {
