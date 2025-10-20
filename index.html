@@ -2900,12 +2900,8 @@
                 updateSummary();
                 renderTable();
                 
-                // Hedef takip mağaza dropdown'larını doldur ve hedefleri yükle
-                populateTargetStoreDropdowns();
-                
-                // Hedefler targets.json'dan otomatik yükleniyor (Google Sheets kaldırıldı)
-                loadYearlyTarget();
-                loadMonthlyTarget();
+                // YENİ HEDEF SİSTEMİ: loadAllStoresTargets() kullanılıyor
+                // Eski hedef sistemi (loadYearlyTarget, loadMonthlyTarget) kaldırıldı
                 
                 // Satış temsilcisi ve mağaza yıl filtrelerini doldur
                 populateSalespersonYearFilter();
