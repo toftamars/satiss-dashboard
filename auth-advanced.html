@@ -60,14 +60,6 @@
             font-size: 14px;
         }
 
-        .auth-method {
-            display: none;
-        }
-
-        .auth-method.active {
-            display: block;
-        }
-
         .pin-input {
             width: 100%;
             padding: 15px;
@@ -197,6 +189,7 @@
             font-size: 12px;
             color: #667eea;
             margin-top: 5px;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -206,73 +199,71 @@
         <h1>Zuhal Müzik Raporlama</h1>
         <p>🔐 Google Authenticator ile güvenli giriş</p>
 
-        <!-- 2FA Method -->
-        <div id="2faMethod" class="auth-method active">
-            <!-- Setup Section -->
-            <div id="setupSection">
-                <div class="setup-instructions">
-                    <strong>📱 İlk Kurulum:</strong>
-                    <ol>
-                        <li>Google Authenticator uygulamasını indirin</li>
-                        <li>QR kodu tarayın veya kodu manuel girin</li>
-                        <li>Uygulama 6 haneli kod üretecek</li>
-                        <li>Kodu aşağıya girin ve doğrulayın</li>
-                    </ol>
-                </div>
-
-                <div class="qr-section">
-                    <div class="qr-code" id="qrCode"></div>
-                    <div class="secret-key" id="secretKey"></div>
-                </div>
-
-                <div class="error-message" id="setupError">
-                    ❌ Hatalı kod! Lütfen tekrar deneyin.
-                </div>
-
-                <div class="success-message" id="setupSuccess">
-                    ✅ Google Authenticator başarıyla kuruldu!
-                </div>
-
-                <input 
-                    type="text" 
-                    id="setupCodeInput" 
-                    class="pin-input" 
-                    placeholder="000000" 
-                    maxlength="6"
-                >
-
-                <button class="btn-login" onclick="verifySetup()">
-                    ✅ Kurulumu Tamamla
-                </button>
+        <!-- Setup Section -->
+        <div id="setupSection">
+            <div class="setup-instructions">
+                <strong>📱 İlk Kurulum:</strong>
+                <ol>
+                    <li>Google Authenticator uygulamasını indirin</li>
+                    <li>QR kodu tarayın veya kodu manuel girin</li>
+                    <li>Uygulama 6 haneli kod üretecek</li>
+                    <li>Kodu aşağıya girin ve doğrulayın</li>
+                </ol>
             </div>
 
-            <!-- Login Section -->
-            <div id="loginSection" style="display: none;">
-                <p>Google Authenticator kodunuzu girin</p>
-
-                <div class="error-message" id="loginError">
-                    ❌ Hatalı kod! Lütfen tekrar deneyin.
-                </div>
-
-                <input 
-                    type="text" 
-                    id="loginCodeInput" 
-                    class="pin-input" 
-                    placeholder="000000" 
-                    maxlength="6"
-                    autofocus
-                >
-
-                <div class="timer" id="timer">⏱️ Kod yenilenme süresi: 30s</div>
-
-                <button class="btn-login" onclick="verify2FA()">
-                    🔓 Kod ile Giriş Yap
-                </button>
-
-                <button class="btn-login btn-secondary" onclick="reset2FA()">
-                    🔄 QR Kodu Sıfırla
-                </button>
+            <div class="qr-section">
+                <div class="qr-code" id="qrCode"></div>
+                <div class="secret-key" id="secretKey"></div>
             </div>
+
+            <div class="error-message" id="setupError">
+                ❌ Hatalı kod! Lütfen tekrar deneyin.
+            </div>
+
+            <div class="success-message" id="setupSuccess">
+                ✅ Google Authenticator başarıyla kuruldu!
+            </div>
+
+            <input 
+                type="text" 
+                id="setupCodeInput" 
+                class="pin-input" 
+                placeholder="000000" 
+                maxlength="6"
+                autofocus
+            >
+
+            <button class="btn-login" onclick="verifySetup()">
+                ✅ Kurulumu Tamamla
+            </button>
+        </div>
+
+        <!-- Login Section -->
+        <div id="loginSection" style="display: none;">
+            <p>Google Authenticator kodunuzu girin</p>
+
+            <div class="error-message" id="loginError">
+                ❌ Hatalı kod! Lütfen tekrar deneyin.
+            </div>
+
+            <input 
+                type="text" 
+                id="loginCodeInput" 
+                class="pin-input" 
+                placeholder="000000" 
+                maxlength="6"
+                autofocus
+            >
+
+            <div class="timer" id="timer">⏱️ Kod yenilenme süresi: 30s</div>
+
+            <button class="btn-login" onclick="verify2FA()">
+                🔓 Kod ile Giriş Yap
+            </button>
+
+            <button class="btn-login btn-secondary" onclick="reset2FA()">
+                🔄 QR Kodu Sıfırla
+            </button>
         </div>
 
         <div class="footer">
@@ -284,13 +275,76 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <!-- QRCode.js for QR generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- TOTP library (client-side) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/otpauth/9.1.4/otpauth.umd.min.js"></script>
+    <!-- jsSHA for TOTP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/3.3.1/sha1.js"></script>
     
     <script>
-        let totpInstance = null;
+        console.log('🚀 Auth sayfası yüklendi');
+        
+        let currentSecret = null;
 
-        // Device fingerprint oluştur
+        // Base32 decode function
+        function base32Decode(base32) {
+            const base32chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+            let bits = '';
+            let bytes = [];
+            
+            base32 = base32.replace(/=+$/, '');
+            
+            for (let i = 0; i < base32.length; i++) {
+                const val = base32chars.indexOf(base32.charAt(i).toUpperCase());
+                bits += val.toString(2).padStart(5, '0');
+            }
+            
+            for (let i = 0; i + 8 <= bits.length; i += 8) {
+                bytes.push(parseInt(bits.substr(i, 8), 2));
+            }
+            
+            return new Uint8Array(bytes);
+        }
+
+        // Generate TOTP code
+        function generateTOTP(secret) {
+            try {
+                const epoch = Math.floor(Date.now() / 1000);
+                const timeCounter = Math.floor(epoch / 30);
+                
+                const key = base32Decode(secret);
+                const timeBytes = new ArrayBuffer(8);
+                const timeView = new DataView(timeBytes);
+                timeView.setUint32(4, timeCounter);
+                
+                const shaObj = new jsSHA("SHA-1", "ARRAYBUFFER");
+                shaObj.setHMACKey(key, "UINT8ARRAY");
+                shaObj.update(timeBytes);
+                const hmac = new Uint8Array(shaObj.getHMAC("UINT8ARRAY"));
+                
+                const offset = hmac[19] & 0xf;
+                const code = ((hmac[offset] & 0x7f) << 24) |
+                            ((hmac[offset + 1] & 0xff) << 16) |
+                            ((hmac[offset + 2] & 0xff) << 8) |
+                            (hmac[offset + 3] & 0xff);
+                
+                const otp = (code % 1000000).toString().padStart(6, '0');
+                console.log('✅ TOTP oluşturuldu:', otp);
+                return otp;
+            } catch(error) {
+                console.error('❌ TOTP oluşturma hatası:', error);
+                return null;
+            }
+        }
+
+        // Generate random secret
+        function generateRandomSecret() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+            let secret = '';
+            for (let i = 0; i < 32; i++) {
+                secret += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return secret;
+        }
+
+        // Device fingerprint
         function generateDeviceFingerprint() {
             const nav = navigator;
             return btoa(nav.userAgent + nav.language + screen.width + screen.height);
@@ -311,60 +365,48 @@
                 }
             };
 
-            console.log('Session Data:', sessionData);
-
             const key = 'zuhal-muzik-secret-key-2024';
             const encryptedSession = CryptoJS.AES.encrypt(JSON.stringify(sessionData), key).toString();
             localStorage.setItem('session', encryptedSession);
             
             console.log('✅ Session kaydedildi, yönlendiriliyor...');
-            console.log('Encrypted session:', encryptedSession.substring(0, 50) + '...');
             
-            // Kısa gecikme ekle, sonra yönlendir
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 500);
         }
 
-        // 2FA Setup - sayfa yüklendiğinde otomatik başlat
+        // Check setup status
         function checkSetupStatus() {
+            console.log('🔍 Setup durumu kontrol ediliyor...');
             const secret = localStorage.getItem('2fa_secret');
             const isSetup = localStorage.getItem('2fa_setup_complete');
 
             if (isSetup === 'true' && secret) {
+                console.log('✅ 2FA zaten kurulu, login ekranı gösteriliyor');
+                currentSecret = secret;
                 document.getElementById('setupSection').style.display = 'none';
                 document.getElementById('loginSection').style.display = 'block';
-                totpInstance = new OTPAuth.TOTP({
-                    issuer: 'Zuhal Müzik',
-                    label: 'Raporlama',
-                    algorithm: 'SHA1',
-                    digits: 6,
-                    period: 30,
-                    secret: secret
-                });
+                document.getElementById('loginCodeInput').focus();
                 startTimer();
             } else {
+                console.log('📱 2FA kurulumu başlatılıyor...');
                 generate2FASetup();
             }
         }
 
+        // Generate 2FA setup
         function generate2FASetup() {
-            // Generate random secret
-            const secret = OTPAuth.Secret.fromBase32(generateRandomSecret());
-            localStorage.setItem('2fa_secret', secret.base32);
-
-            // Create TOTP instance
-            totpInstance = new OTPAuth.TOTP({
-                issuer: 'Zuhal Müzik',
-                label: 'Raporlama',
-                algorithm: 'SHA1',
-                digits: 6,
-                period: 30,
-                secret: secret
-            });
+            currentSecret = generateRandomSecret();
+            localStorage.setItem('2fa_secret', currentSecret);
+            console.log('🔑 Secret oluşturuldu:', currentSecret);
 
             // Generate QR Code
-            const otpauthURL = totpInstance.toString();
+            const issuer = 'Zuhal Müzik';
+            const label = 'Raporlama';
+            const otpauthURL = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(label)}?secret=${currentSecret}&issuer=${encodeURIComponent(issuer)}`;
+            
+            console.log('📱 QR kod oluşturuluyor...');
             document.getElementById('qrCode').innerHTML = '';
             new QRCode(document.getElementById('qrCode'), {
                 text: otpauthURL,
@@ -372,17 +414,8 @@
                 height: 200
             });
 
-            // Display secret key
-            document.getElementById('secretKey').textContent = secret.base32;
-        }
-
-        function generateRandomSecret() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-            let secret = '';
-            for (let i = 0; i < 32; i++) {
-                secret += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return secret;
+            document.getElementById('secretKey').textContent = currentSecret;
+            console.log('✅ QR kod hazır');
         }
 
         // Verify setup
@@ -392,16 +425,20 @@
 
         function verifySetup() {
             const code = document.getElementById('setupCodeInput').value;
-            const expectedCode = totpInstance.generate();
+            const expectedCode = generateTOTP(currentSecret);
+            
+            console.log('🔍 Kurulum doğrulanıyor... Girilen:', code, 'Beklenen:', expectedCode);
 
             if (code === expectedCode) {
+                console.log('✅ Kod doğru, kurulum tamamlanıyor');
                 localStorage.setItem('2fa_setup_complete', 'true');
                 document.getElementById('setupSuccess').classList.add('show');
                 setTimeout(() => {
                     document.getElementById('setupSuccess').classList.remove('show');
                     checkSetupStatus();
-                }, 2000);
+                }, 1500);
             } else {
+                console.log('❌ Kod yanlış');
                 document.getElementById('setupError').classList.add('show');
                 document.getElementById('setupCodeInput').value = '';
                 setTimeout(() => document.getElementById('setupError').classList.remove('show'), 2000);
@@ -415,11 +452,15 @@
 
         function verify2FA() {
             const code = document.getElementById('loginCodeInput').value;
-            const expectedCode = totpInstance.generate();
+            const expectedCode = generateTOTP(currentSecret);
+
+            console.log('🔍 Giriş doğrulanıyor... Girilen:', code, 'Beklenen:', expectedCode);
 
             if (code === expectedCode) {
+                console.log('✅ Kod doğru, giriş yapılıyor');
                 createSession();
             } else {
+                console.log('❌ Kod yanlış');
                 document.getElementById('loginError').classList.add('show');
                 document.getElementById('loginCodeInput').value = '';
                 setTimeout(() => document.getElementById('loginError').classList.remove('show'), 2000);
@@ -429,6 +470,7 @@
         // Reset 2FA
         function reset2FA() {
             if (confirm('Google Authenticator kurulumunu sıfırlamak istediğinize emin misiniz?')) {
+                console.log('🔄 2FA sıfırlanıyor...');
                 localStorage.removeItem('2fa_secret');
                 localStorage.removeItem('2fa_setup_complete');
                 checkSetupStatus();
@@ -446,10 +488,25 @@
             setInterval(updateTimer, 1000);
         }
 
-        // Auto-start 2FA on load
+        // Auto-start on load
         window.addEventListener('load', function() {
+            console.log('✅ Sayfa tamamen yüklendi');
             checkSetupStatus();
         });
+
+        // Fallback - kütüphaneler yüklenmediyse uyar
+        setTimeout(() => {
+            if (typeof jsSHA === 'undefined') {
+                console.error('❌ jsSHA kütüphanesi yüklenemedi!');
+                alert('Güvenlik kütüphaneleri yüklenemedi. Lütfen sayfayı yenileyin.');
+            }
+            if (typeof QRCode === 'undefined') {
+                console.error('❌ QRCode kütüphanesi yüklenemedi!');
+            }
+            if (typeof CryptoJS === 'undefined') {
+                console.error('❌ CryptoJS kütüphanesi yüklenemedi!');
+            }
+        }, 2000);
     </script>
 </body>
 </html>
