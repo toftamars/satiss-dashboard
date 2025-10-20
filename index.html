@@ -2576,6 +2576,12 @@
         }
 
         async function loadYearData(year) {
+            // Çift yükleme önleme kontrolü
+            if (loadedYears.has(year)) {
+                console.log(`⏭️ ${year} zaten yüklü, atlanıyor...`);
+                return null;
+            }
+            
             try {
                 console.log(`📦 ${year} yükleniyor...`);
                 
@@ -2756,6 +2762,11 @@
                 
                 try {
                     const yearData = await loadYearData(year);
+                    
+                    // Eğer yıl zaten yüklüyse (null döndü), atla
+                    if (!yearData) {
+                        continue;
+                    }
                     
                     // Verileri birleştir ve indirim ürünlerini negatif yap
                     if (yearData.details && Array.isArray(yearData.details)) {
