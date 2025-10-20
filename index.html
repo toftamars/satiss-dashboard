@@ -2583,6 +2583,9 @@
                 return null;
             }
             
+            // Hemen ekle - race condition önleme
+            loadedYears.add(year);
+            
             try {
                 console.log(`📦 ${year} yükleniyor...`);
                 
@@ -2634,7 +2637,7 @@
                 
                 console.log(`✅ ${year} yüklendi: ${yearData.details?.length || 0} kayıt`);
                 
-                loadedYears.add(year);
+                // loadedYears.add(year) zaten fonksiyon başında yapıldı
                 return yearData;
                 
             } catch (error) {
