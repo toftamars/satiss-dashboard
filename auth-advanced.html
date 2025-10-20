@@ -60,7 +60,35 @@
             font-size: 14px;
         }
 
-        .pin-input {
+        .input-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #555;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            font-size: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .code-input {
             width: 100%;
             padding: 15px;
             font-size: 24px;
@@ -72,7 +100,7 @@
             transition: all 0.3s;
         }
 
-        .pin-input:focus {
+        .code-input:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -99,7 +127,7 @@
             padding: 12px;
             border-radius: 8px;
             font-family: 'Courier New', monospace;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             margin: 10px 0;
             word-break: break-all;
@@ -134,6 +162,7 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s;
+            margin-bottom: 10px;
         }
 
         .btn-login:hover {
@@ -147,10 +176,16 @@
 
         .btn-secondary {
             background: #6c757d;
-            margin-top: 10px;
         }
 
-        .error-message, .success-message {
+        .btn-link {
+            background: transparent;
+            color: #667eea;
+            text-decoration: underline;
+            font-size: 13px;
+        }
+
+        .error-message, .success-message, .info-message {
             padding: 12px;
             border-radius: 8px;
             margin-bottom: 20px;
@@ -168,7 +203,12 @@
             color: #155724;
         }
 
-        .error-message.show, .success-message.show {
+        .info-message {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .error-message.show, .success-message.show, .info-message.show {
             display: block;
             animation: shake 0.5s;
         }
@@ -191,16 +231,75 @@
             margin-top: 5px;
             font-weight: bold;
         }
+
+        .welcome-user {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
     <div class="auth-container">
         <div class="logo">🎵</div>
         <h1>Zuhal Müzik Raporlama</h1>
-        <p>🔐 Google Authenticator ile güvenli giriş</p>
 
-        <!-- Setup Section -->
-        <div id="setupSection">
+        <!-- Screen 1: Login with Username/Password -->
+        <div id="loginScreen" class="screen active">
+            <p>Kullanıcı adı ve şifrenizle giriş yapın</p>
+
+            <div class="error-message" id="loginError">
+                ❌ Kullanıcı adı veya şifre hatalı!
+            </div>
+
+            <div class="input-group">
+                <label>👤 Kullanıcı Adı</label>
+                <input 
+                    type="text" 
+                    id="usernameInput" 
+                    class="form-input" 
+                    placeholder="Kullanıcı adınız"
+                    autofocus
+                >
+            </div>
+
+            <div class="input-group">
+                <label>🔒 Şifre</label>
+                <input 
+                    type="password" 
+                    id="passwordInput" 
+                    class="form-input" 
+                    placeholder="Şifreniz"
+                >
+            </div>
+
+            <button class="btn-login" onclick="loginStep1()">
+                🔓 İleri
+            </button>
+
+            <button class="btn-login btn-link" onclick="showForgotPassword()">
+                ❓ Şifremi Unuttum
+            </button>
+        </div>
+
+        <!-- Screen 2: 2FA Setup -->
+        <div id="setupScreen" class="screen">
+            <div class="welcome-user" id="welcomeSetup"></div>
+            
+            <p>🔐 Google Authenticator ile hesabınızı güvence altına alın</p>
+
             <div class="setup-instructions">
                 <strong>📱 İlk Kurulum:</strong>
                 <ol>
@@ -227,42 +326,77 @@
             <input 
                 type="text" 
                 id="setupCodeInput" 
-                class="pin-input" 
+                class="code-input" 
                 placeholder="000000" 
                 maxlength="6"
-                autofocus
             >
 
             <button class="btn-login" onclick="verifySetup()">
-                ✅ Kurulumu Tamamla
+                ✅ Kurulumu Tamamla ve Giriş Yap
             </button>
         </div>
 
-        <!-- Login Section -->
-        <div id="loginSection" style="display: none;">
+        <!-- Screen 3: 2FA Login -->
+        <div id="authScreen" class="screen">
+            <div class="welcome-user" id="welcomeAuth"></div>
+            
             <p>Google Authenticator kodunuzu girin</p>
 
-            <div class="error-message" id="loginError">
+            <div class="error-message" id="authError">
                 ❌ Hatalı kod! Lütfen tekrar deneyin.
             </div>
 
             <input 
                 type="text" 
-                id="loginCodeInput" 
-                class="pin-input" 
+                id="authCodeInput" 
+                class="code-input" 
                 placeholder="000000" 
                 maxlength="6"
-                autofocus
             >
 
             <div class="timer" id="timer">⏱️ Kod yenilenme süresi: 30s</div>
 
             <button class="btn-login" onclick="verify2FA()">
-                🔓 Kod ile Giriş Yap
+                🔓 Giriş Yap
             </button>
 
             <button class="btn-login btn-secondary" onclick="reset2FA()">
                 🔄 QR Kodu Sıfırla
+            </button>
+
+            <button class="btn-login btn-link" onclick="backToLogin()">
+                ← Farklı Hesap
+            </button>
+        </div>
+
+        <!-- Screen 4: Forgot Password -->
+        <div id="forgotScreen" class="screen">
+            <p>📧 Şifre sıfırlama talebi</p>
+
+            <div class="info-message" id="forgotInfo">
+                💡 Email adresinizi girin, şifre sıfırlama bağlantısı gönderilecek.
+            </div>
+
+            <div class="success-message" id="forgotSuccess">
+                ✅ Şifre sıfırlama talebi alındı! Email kayıtlı ise bildirim gönderilecek.
+            </div>
+
+            <div class="input-group">
+                <label>📧 Email Adresi</label>
+                <input 
+                    type="email" 
+                    id="forgotEmailInput" 
+                    class="form-input" 
+                    placeholder="ornek@email.com"
+                >
+            </div>
+
+            <button class="btn-login" onclick="sendPasswordReset()">
+                📤 Şifre Sıfırlama Gönder
+            </button>
+
+            <button class="btn-login btn-link" onclick="backToLogin()">
+                ← Giriş Ekranına Dön
             </button>
         </div>
 
@@ -281,6 +415,36 @@
     <script>
         console.log('🚀 Auth sayfası yüklendi');
         
+        // Kullanıcı veritabanı
+        const USERS = {
+            'anilemre': {
+                password: 'Bjk1903*',
+                name: 'Anil Emre',
+                email: ''
+            },
+            'alisungurlu': {
+                password: 'Bjk1903*',
+                name: 'Ali Sungurlu',
+                email: ''
+            },
+            'furkan': {
+                password: 'Bjk1903*',
+                name: 'Furkan',
+                email: ''
+            },
+            'tofta': {
+                password: 'Bjk1903*',
+                name: 'Tofta',
+                email: ''
+            },
+            'gokhanisilay': {
+                password: 'Bjk1903*',
+                name: 'Gokhan Isilay',
+                email: ''
+            }
+        };
+
+        let currentUser = null;
         let currentSecret = null;
 
         // Base32 decode function
@@ -326,7 +490,6 @@
                             (hmac[offset + 3] & 0xff);
                 
                 const otp = (code % 1000000).toString().padStart(6, '0');
-                console.log('✅ TOTP oluşturuldu:', otp);
                 return otp;
             } catch(error) {
                 console.error('❌ TOTP oluşturma hatası:', error);
@@ -352,10 +515,11 @@
 
         // Create encrypted session
         function createSession() {
-            console.log('🔐 Session oluşturuluyor...');
+            console.log('🔐 Session oluşturuluyor:', currentUser);
             
             const sessionData = {
-                username: 'admin',
+                username: currentUser,
+                name: USERS[currentUser].name,
                 loginTime: Date.now(),
                 deviceFingerprint: generateDeviceFingerprint(),
                 deviceInfo: {
@@ -376,34 +540,79 @@
             }, 500);
         }
 
-        // Check setup status
-        function checkSetupStatus() {
-            console.log('🔍 Setup durumu kontrol ediliyor...');
-            const secret = localStorage.getItem('2fa_secret');
-            const isSetup = localStorage.getItem('2fa_setup_complete');
+        // Switch screens
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            
+            // Focus first input
+            setTimeout(() => {
+                const firstInput = document.querySelector(`#${screenId} input`);
+                if (firstInput) firstInput.focus();
+            }, 100);
+        }
+
+        // Step 1: Login with username/password
+        document.getElementById('usernameInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('passwordInput').focus();
+            }
+        });
+
+        document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') loginStep1();
+        });
+
+        function loginStep1() {
+            const username = document.getElementById('usernameInput').value.trim().toLowerCase();
+            const password = document.getElementById('passwordInput').value;
+
+            console.log('🔍 Giriş denemesi:', username);
+
+            if (!USERS[username]) {
+                console.log('❌ Kullanıcı bulunamadı');
+                document.getElementById('loginError').classList.add('show');
+                setTimeout(() => document.getElementById('loginError').classList.remove('show'), 2000);
+                return;
+            }
+
+            if (USERS[username].password !== password) {
+                console.log('❌ Şifre yanlış');
+                document.getElementById('loginError').classList.add('show');
+                setTimeout(() => document.getElementById('loginError').classList.remove('show'), 2000);
+                return;
+            }
+
+            console.log('✅ Kullanıcı adı ve şifre doğru');
+            currentUser = username;
+
+            // Check if 2FA is set up
+            const secret = localStorage.getItem(`2fa_secret_${username}`);
+            const isSetup = localStorage.getItem(`2fa_setup_${username}`);
 
             if (isSetup === 'true' && secret) {
-                console.log('✅ 2FA zaten kurulu, login ekranı gösteriliyor');
+                console.log('✅ 2FA kurulu, auth ekranına geçiliyor');
                 currentSecret = secret;
-                document.getElementById('setupSection').style.display = 'none';
-                document.getElementById('loginSection').style.display = 'block';
-                document.getElementById('loginCodeInput').focus();
+                document.getElementById('welcomeAuth').textContent = `👋 Hoşgeldin ${USERS[username].name}!`;
+                showScreen('authScreen');
                 startTimer();
             } else {
-                console.log('📱 2FA kurulumu başlatılıyor...');
+                console.log('📱 2FA kurulumu gerekli, setup ekranına geçiliyor');
                 generate2FASetup();
+                document.getElementById('welcomeSetup').textContent = `👋 Hoşgeldin ${USERS[username].name}!`;
+                showScreen('setupScreen');
             }
         }
 
         // Generate 2FA setup
         function generate2FASetup() {
             currentSecret = generateRandomSecret();
-            localStorage.setItem('2fa_secret', currentSecret);
-            console.log('🔑 Secret oluşturuldu:', currentSecret);
+            localStorage.setItem(`2fa_secret_${currentUser}`, currentSecret);
+            console.log('🔑 Secret oluşturuldu:', currentUser);
 
             // Generate QR Code
             const issuer = 'Zuhal Müzik';
-            const label = 'Raporlama';
+            const label = `${USERS[currentUser].name} (${currentUser})`;
             const otpauthURL = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(label)}?secret=${currentSecret}&issuer=${encodeURIComponent(issuer)}`;
             
             console.log('📱 QR kod oluşturuluyor...');
@@ -431,11 +640,20 @@
 
             if (code === expectedCode) {
                 console.log('✅ Kod doğru, kurulum tamamlanıyor');
-                localStorage.setItem('2fa_setup_complete', 'true');
+                localStorage.setItem(`2fa_setup_${currentUser}`, 'true');
+                
+                // Ask for email if not set
+                const email = prompt(`📧 Email adresinizi girin (Şifre sıfırlama için):\n\n(İsterseniz boş bırakabilirsiniz)`);
+                if (email && email.trim()) {
+                    localStorage.setItem(`email_${currentUser}`, email.trim());
+                    USERS[currentUser].email = email.trim();
+                    console.log('✅ Email kaydedildi:', email);
+                }
+                
                 document.getElementById('setupSuccess').classList.add('show');
                 setTimeout(() => {
                     document.getElementById('setupSuccess').classList.remove('show');
-                    checkSetupStatus();
+                    createSession();
                 }, 1500);
             } else {
                 console.log('❌ Kod yanlış');
@@ -445,13 +663,13 @@
             }
         }
 
-        // Verify login
-        document.getElementById('loginCodeInput').addEventListener('keypress', function(e) {
+        // Verify 2FA login
+        document.getElementById('authCodeInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') verify2FA();
         });
 
         function verify2FA() {
-            const code = document.getElementById('loginCodeInput').value;
+            const code = document.getElementById('authCodeInput').value;
             const expectedCode = generateTOTP(currentSecret);
 
             console.log('🔍 Giriş doğrulanıyor... Girilen:', code, 'Beklenen:', expectedCode);
@@ -461,20 +679,72 @@
                 createSession();
             } else {
                 console.log('❌ Kod yanlış');
-                document.getElementById('loginError').classList.add('show');
-                document.getElementById('loginCodeInput').value = '';
-                setTimeout(() => document.getElementById('loginError').classList.remove('show'), 2000);
+                document.getElementById('authError').classList.add('show');
+                document.getElementById('authCodeInput').value = '';
+                setTimeout(() => document.getElementById('authError').classList.remove('show'), 2000);
             }
         }
 
         // Reset 2FA
         function reset2FA() {
-            if (confirm('Google Authenticator kurulumunu sıfırlamak istediğinize emin misiniz?')) {
-                console.log('🔄 2FA sıfırlanıyor...');
-                localStorage.removeItem('2fa_secret');
-                localStorage.removeItem('2fa_setup_complete');
-                checkSetupStatus();
+            if (confirm('Google Authenticator kurulumunu sıfırlamak istediğinize emin misiniz?\n\nYeni QR kod alacaksınız.')) {
+                console.log('🔄 2FA sıfırlanıyor:', currentUser);
+                localStorage.removeItem(`2fa_secret_${currentUser}`);
+                localStorage.removeItem(`2fa_setup_${currentUser}`);
+                generate2FASetup();
+                showScreen('setupScreen');
             }
+        }
+
+        // Forgot password
+        function showForgotPassword() {
+            document.getElementById('forgotInfo').classList.add('show');
+            showScreen('forgotScreen');
+        }
+
+        function sendPasswordReset() {
+            const email = document.getElementById('forgotEmailInput').value.trim();
+            
+            if (!email) {
+                alert('❌ Lütfen email adresinizi girin!');
+                return;
+            }
+
+            console.log('📧 Şifre sıfırlama talebi:', email);
+            
+            // Check if email exists in any user
+            let found = false;
+            for (let username in USERS) {
+                const savedEmail = localStorage.getItem(`email_${username}`);
+                if (savedEmail === email) {
+                    found = true;
+                    console.log('✅ Email bulundu:', username);
+                    
+                    // TODO: Send email with reset link
+                    // For now, just show in console
+                    console.log('📤 Şifre sıfırlama bağlantısı gönderilecek:', email);
+                    console.log('🔑 Geçici şifre: Bjk1903*');
+                    break;
+                }
+            }
+
+            document.getElementById('forgotInfo').classList.remove('show');
+            document.getElementById('forgotSuccess').classList.add('show');
+            document.getElementById('forgotEmailInput').value = '';
+            
+            setTimeout(() => {
+                document.getElementById('forgotSuccess').classList.remove('show');
+                backToLogin();
+            }, 3000);
+        }
+
+        // Back to login
+        function backToLogin() {
+            currentUser = null;
+            currentSecret = null;
+            document.getElementById('usernameInput').value = '';
+            document.getElementById('passwordInput').value = '';
+            showScreen('loginScreen');
         }
 
         // Timer countdown
@@ -482,31 +752,42 @@
             function updateTimer() {
                 const now = Math.floor(Date.now() / 1000);
                 const remaining = 30 - (now % 30);
-                document.getElementById('timer').textContent = `⏱️ Kod yenilenme süresi: ${remaining}s`;
+                const timerEl = document.getElementById('timer');
+                if (timerEl) {
+                    timerEl.textContent = `⏱️ Kod yenilenme süresi: ${remaining}s`;
+                }
             }
             updateTimer();
             setInterval(updateTimer, 1000);
         }
 
-        // Auto-start on load
+        // Load saved emails on startup
         window.addEventListener('load', function() {
-            console.log('✅ Sayfa tamamen yüklendi');
-            checkSetupStatus();
+            console.log('✅ Sayfa yüklendi');
+            
+            // Load emails from localStorage
+            for (let username in USERS) {
+                const savedEmail = localStorage.getItem(`email_${username}`);
+                if (savedEmail) {
+                    USERS[username].email = savedEmail;
+                }
+            }
+            
+            console.log('👥 Kullanıcılar:', Object.keys(USERS).join(', '));
         });
 
-        // Fallback - kütüphaneler yüklenmediyse uyar
-        setTimeout(() => {
-            if (typeof jsSHA === 'undefined') {
-                console.error('❌ jsSHA kütüphanesi yüklenemedi!');
-                alert('Güvenlik kütüphaneleri yüklenemedi. Lütfen sayfayı yenileyin.');
+        // Global password change function (for console use)
+        window.changePassword = function(username, newPassword) {
+            if (!USERS[username]) {
+                console.error('❌ Kullanıcı bulunamadı:', username);
+                return false;
             }
-            if (typeof QRCode === 'undefined') {
-                console.error('❌ QRCode kütüphanesi yüklenemedi!');
-            }
-            if (typeof CryptoJS === 'undefined') {
-                console.error('❌ CryptoJS kütüphanesi yüklenemedi!');
-            }
-        }, 2000);
+            
+            USERS[username].password = newPassword;
+            console.log('✅ Şifre değiştirildi:', username);
+            console.log('⚠️ Not: Sayfa yenilendiğinde eski şifre geri gelecek. Kalıcı değişiklik için kod düzenlemesi gerekli.');
+            return true;
+        };
     </script>
 </body>
 </html>
