@@ -2717,8 +2717,8 @@
             }
         }
 
-        // Global Kanal Filtresi Fonksiyonu
-        function handleChannelFilter() {
+        // Global Kanal Filtresi Fonksiyonu (window scope'una ekle)
+        window.handleChannelFilter = function() {
             console.log('🔄 handleChannelFilter çağrıldı');
             console.log('📊 baseData boyutu:', baseData.length);
             console.log('📊 allData boyutu:', allData.length);
@@ -2761,7 +2761,7 @@
             
             // Veriyi filtrele
             applyChannelFilter();
-        }
+        };
         
         function applyChannelFilter() {
             console.log('🏢 applyChannelFilter başladı');
