@@ -60,33 +60,6 @@
             font-size: 14px;
         }
 
-        .auth-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-        }
-
-        .tab {
-            flex: 1;
-            padding: 12px;
-            background: #f5f5f5;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .tab.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .tab:hover:not(.active) {
-            background: #e0e0e0;
-        }
-
         .auth-method {
             display: none;
         }
@@ -231,36 +204,10 @@
     <div class="auth-container">
         <div class="logo">🎵</div>
         <h1>Zuhal Müzik Raporlama</h1>
-        <p>Güvenli giriş için yönteminizi seçin</p>
-
-        <!-- Tabs -->
-        <div class="auth-tabs">
-            <button class="tab active" onclick="switchTab('pin')">📱 PIN Kodu</button>
-            <button class="tab" onclick="switchTab('2fa')">🔐 Google Auth</button>
-        </div>
-
-        <!-- PIN Method -->
-        <div id="pinMethod" class="auth-method active">
-            <div class="error-message" id="pinError">
-                ❌ Hatalı PIN kodu! Lütfen tekrar deneyin.
-            </div>
-
-            <input 
-                type="password" 
-                id="pinInput" 
-                class="pin-input" 
-                placeholder="••••" 
-                maxlength="4"
-                autofocus
-            >
-
-            <button class="btn-login" onclick="checkPin()">
-                🔓 PIN ile Giriş Yap
-            </button>
-        </div>
+        <p>🔐 Google Authenticator ile güvenli giriş</p>
 
         <!-- 2FA Method -->
-        <div id="2faMethod" class="auth-method">
+        <div id="2faMethod" class="auth-method active">
             <!-- Setup Section -->
             <div id="setupSection">
                 <div class="setup-instructions">
@@ -341,8 +288,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/otpauth/9.1.4/otpauth.umd.min.js"></script>
     
     <script>
-        // ✅ BASIT PIN KODU: 1234
-        const CORRECT_PIN = '1234';
         let totpInstance = null;
 
         // Device fingerprint oluştur
@@ -381,47 +326,7 @@
             }, 500);
         }
 
-        // Tab switching
-        function switchTab(method) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.auth-method').forEach(m => m.classList.remove('active'));
-
-            if (method === 'pin') {
-                document.querySelector('.tab:nth-child(1)').classList.add('active');
-                document.getElementById('pinMethod').classList.add('active');
-                document.getElementById('pinInput').focus();
-            } else {
-                document.querySelector('.tab:nth-child(2)').classList.add('active');
-                document.getElementById('2faMethod').classList.add('active');
-                checkSetupStatus();
-            }
-        }
-
-        // PIN Authentication
-        document.getElementById('pinInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') checkPin();
-        });
-
-        function checkPin() {
-            const pinInput = document.getElementById('pinInput');
-            const errorMessage = document.getElementById('pinError');
-            const enteredPin = pinInput.value;
-
-            console.log('PIN girişi:', enteredPin, 'Beklenen:', CORRECT_PIN);
-
-            if (enteredPin === CORRECT_PIN) {
-                console.log('✅ PIN doğru, session oluşturuluyor...');
-                createSession();
-            } else {
-                console.log('❌ PIN yanlış!');
-                errorMessage.classList.add('show');
-                pinInput.value = '';
-                pinInput.focus();
-                setTimeout(() => errorMessage.classList.remove('show'), 2000);
-            }
-        }
-
-        // 2FA Setup
+        // 2FA Setup - sayfa yüklendiğinde otomatik başlat
         function checkSetupStatus() {
             const secret = localStorage.getItem('2fa_secret');
             const isSetup = localStorage.getItem('2fa_setup_complete');
@@ -541,9 +446,9 @@
             setInterval(updateTimer, 1000);
         }
 
-        // Auto-focus on load
+        // Auto-start 2FA on load
         window.addEventListener('load', function() {
-            document.getElementById('pinInput').focus();
+            checkSetupStatus();
         });
     </script>
 </body>
