@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .output {
+            background: white;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Auth Debug Tool</h1>
+    
+    <button class="btn" onclick="clearAll()">🗑️ localStorage Temizle</button>
+    <button class="btn" onclick="showStorage()">📦 localStorage Göster</button>
+    <button class="btn" onclick="testLibraries()">🔍 Kütüphaneleri Test Et</button>
+    <button class="btn" onclick="goToAuth()">🚀 Auth Sayfasına Git</button>
+    
+    <div class="output" id="output">Bir butona tıklayın...</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/3.3.1/sha1.js"></script>
+
+    <script>
+        function log(msg) {
+            document.getElementById('output').textContent += msg + '\n';
+        }
+
+        function clearOutput() {
+            document.getElementById('output').textContent = '';
+        }
+
+        function clearAll() {
+            clearOutput();
+            localStorage.clear();
+            log('✅ localStorage tamamen temizlendi!');
+            log('\nŞimdi auth sayfasına gidebilirsiniz.');
+        }
+
+        function showStorage() {
+            clearOutput();
+            log('📦 localStorage İçeriği:\n');
+            
+            if (localStorage.length === 0) {
+                log('(Boş)');
+            } else {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    const value = localStorage.getItem(key);
+                    log(`${key}: ${value.substring(0, 100)}${value.length > 100 ? '...' : ''}`);
+                }
+            }
+        }
+
+        function testLibraries() {
+            clearOutput();
+            log('🔍 Kütüphane Testleri:\n');
+            
+            // Test CryptoJS
+            if (typeof CryptoJS !== 'undefined') {
+                log('✅ CryptoJS yüklendi');
+                try {
+                    const encrypted = CryptoJS.AES.encrypt('test', 'key').toString();
+                    log('  ✓ Şifreleme çalışıyor: ' + encrypted.substring(0, 20) + '...');
+                } catch(e) {
+                    log('  ❌ Şifreleme hatası: ' + e.message);
+                }
+            } else {
+                log('❌ CryptoJS yüklenemedi!');
+            }
+            
+            log('');
+            
+            // Test QRCode
+            if (typeof QRCode !== 'undefined') {
+                log('✅ QRCode yüklendi');
+            } else {
+                log('❌ QRCode yüklenemedi!');
+            }
+            
+            log('');
+            
+            // Test jsSHA
+            if (typeof jsSHA !== 'undefined') {
+                log('✅ jsSHA yüklendi');
+                try {
+                    const shaObj = new jsSHA("SHA-1", "TEXT");
+                    shaObj.update("test");
+                    const hash = shaObj.getHash("HEX");
+                    log('  ✓ SHA-1 çalışıyor: ' + hash.substring(0, 20) + '...');
+                } catch(e) {
+                    log('  ❌ SHA-1 hatası: ' + e.message);
+                }
+            } else {
+                log('❌ jsSHA yüklenemedi!');
+            }
+            
+            log('\n═══════════════════════════════════════');
+            
+            if (typeof CryptoJS !== 'undefined' && typeof QRCode !== 'undefined' && typeof jsSHA !== 'undefined') {
+                log('✅ Tüm kütüphaneler hazır!');
+            } else {
+                log('❌ Bazı kütüphaneler eksik!');
+            }
+        }
+
+        function goToAuth() {
+            window.location.href = 'auth-advanced.html';
+        }
+
+        // Auto test on load
+        window.addEventListener('load', function() {
+            setTimeout(testLibraries, 500);
+        });
+    </script>
+</body>
+</html>
+
