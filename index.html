@@ -2702,6 +2702,10 @@
             console.log('✅ Tüm yıllar yüklendi!');
             const allYears = metadata.years.sort().join(', ');
             document.getElementById('dataStatus').innerHTML = `<span class="status-badge status-success">✅ Tüm Yıllar (${allYears})</span>`;
+            
+            // Loading progress'i tamamla
+            dataLoadProgress.ready = true;
+            checkLoadingComplete();
         }
 
         function populateFilters() {
@@ -13493,28 +13497,8 @@
             dataLoadProgress.pageInit = true;
             checkLoadingComplete();
             
-            // Veri yükleme işlemini başlat
-            loadDataWithProgress();
-        }
-        
-        function loadDataWithProgress() {
-            // Step 2: Veri dosyaları yükleniyor
-            setTimeout(() => {
-                dataLoadProgress.dataFiles = true;
-                checkLoadingComplete();
-                
-                // Step 3: Hedefler yükleniyor
-                setTimeout(() => {
-                    dataLoadProgress.targets = true;
-                    checkLoadingComplete();
-                    
-                    // Step 4: Hazırlanıyor
-                    setTimeout(() => {
-                        dataLoadProgress.ready = true;
-                        checkLoadingComplete();
-                    }, 300);
-                }, 500);
-            }, 1000);
+            // Gerçek veri yükleme işlemini başlat
+            loadData();
         }
 
         // Sayfa yüklendiğinde ve tab değiştiğinde çalıştır
