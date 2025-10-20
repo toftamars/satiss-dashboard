@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zuhal Müzik Raporlama</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <!-- Pako.js for GZIP Decompression (Fallback) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <!-- SheetJS for Excel Export -->
@@ -12,6 +15,85 @@
     <!-- Chart.js for Graphs -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <!-- CryptoJS for encryption -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script>
+        // Gelişmiş giriş kontrolü - sayfa yüklenmeden önce çalışır
+        (function() {
+            function checkSession() {
+                const encryptedSession = localStorage.getItem('session');
+                 if (!encryptedSession) {
+                     // Auth sayfasına yönlendir
+                     window.location.href = 'auth.html';
+                     return null;
+                 }
+
+                try {
+                    // Şifreli session'ı çöz
+                    const key = 'zuhal-muzik-secret-key-2024';
+                    const bytes = CryptoJS.AES.decrypt(encryptedSession, key);
+                    const sessionData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+                    
+                    // Oturum süresi kontrolü (30 dakika)
+                    if (Date.now() - sessionData.loginTime > 30 * 60 * 1000) {
+                        localStorage.removeItem('session');
+                        window.location.href = 'auth-advanced.html';
+                        return null;
+                    }
+                    
+                    // Güvenlik kontrolü - device fingerprint
+                    if (sessionData.deviceInfo) {
+                        const currentFingerprint = generateDeviceFingerprint();
+                        const sessionFingerprint = sessionData.deviceFingerprint;
+                        
+                        if (currentFingerprint !== sessionFingerprint) {
+                            console.warn('Device fingerprint mismatch - potential security issue');
+                            // Bu durumda kullanıcıyı tekrar giriş yapmaya zorla
+                            localStorage.removeItem('session');
+                            window.location.href = 'auth-advanced.html';
+                            return null;
+                        }
+                    }
+                    
+                    return sessionData;
+                } catch (error) {
+                    console.error('Session decryption error:', error);
+                    localStorage.removeItem('session');
+                    window.location.href = 'auth-advanced.html';
+                    return null;
+                }
+            }
+
+            function generateDeviceFingerprint() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.textBaseline = 'top';
+                ctx.font = '14px Arial';
+                ctx.fillText('Device fingerprint', 2, 2);
+                
+                const fingerprint = [
+                    navigator.userAgent,
+                    navigator.language,
+                    screen.width + 'x' + screen.height,
+                    new Date().getTimezoneOffset(),
+                    canvas.toDataURL()
+                ].join('|');
+                
+                return CryptoJS.SHA256(fingerprint).toString();
+            }
+
+            // Sayfa yüklenmeden önce kontrol et
+            const session = checkSession();
+            if (!session) return;
+
+            // Kullanıcı bilgilerini global olarak sakla
+            window.currentUser = session.user;
+            window.currentUserType = session.user.role;
+            window.sessionId = session.sessionId;
+            window.deviceInfo = session.deviceInfo;
+            window.ipAddress = session.ipAddress;
+        })();
+    </script>
     <style>
         * {
             margin: 0;
@@ -1146,7 +1228,26 @@
 
         <div class="container" style="display: none;" id="mainContainer">
         <div class="header">
-            <h1>📊 Zuhal Müzik Raporlama</h1>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>📊 Zuhal Müzik Raporlama</h1>
+                </div>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div style="text-align: right;">
+                        <div style="font-size: 1.1em; font-weight: bold;" id="userInfo">Kullanıcı</div>
+                        <div style="font-size: 0.9em; opacity: 0.8;" id="userType">User</div>
+                        <div style="font-size: 0.8em; opacity: 0.7;" id="securityInfo">🛡️ Güvenli Oturum</div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="showSecurityInfo()" style="background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                            🔒 Güvenlik
+                        </button>
+                        <button onclick="logout()" style="background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                            🚪 Çıkış
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="info-box">
@@ -13538,6 +13639,76 @@
                 childList: true,
                 subtree: true
             });
+        });
+
+        // Çıkış fonksiyonu
+        function logout() {
+            if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
+                localStorage.removeItem('session');
+                window.location.href = 'auth.html';
+            }
+        }
+
+        // Kullanıcı bilgilerini güncelle
+        function updateUserInfo() {
+            if (window.currentUser && window.currentUserType) {
+                document.getElementById('userInfo').textContent = window.currentUser.name;
+                
+                const userTypeText = window.currentUserType === 'admin' ? '👑 Yönetici' : '👤 Kullanıcı';
+                document.getElementById('userType').textContent = userTypeText;
+                
+                // Güvenlik bilgilerini güncelle
+                const securityText = window.currentUser.twoFactorEnabled ? '🔐 2FA Aktif' : '🛡️ Güvenli Oturum';
+                document.getElementById('securityInfo').textContent = securityText;
+            }
+        }
+
+        // Güvenlik bilgilerini göster
+        function showSecurityInfo() {
+            const session = localStorage.getItem('session');
+            if (!session) return;
+
+            try {
+                const key = 'zuhal-muzik-secret-key-2024';
+                const bytes = CryptoJS.AES.decrypt(session, key);
+                const sessionData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+                
+                const timeLeft = Math.max(0, 30 * 60 * 1000 - (Date.now() - sessionData.loginTime));
+                const minutesLeft = Math.floor(timeLeft / (60 * 1000));
+                
+                const securityInfo = `
+🛡️ Güvenlik Bilgileri:
+• Kullanıcı: ${sessionData.user.name}
+• Rol: ${sessionData.user.role === 'admin' ? 'Yönetici' : 'Kullanıcı'}
+• İkili Doğrulama: ${sessionData.user.twoFactorEnabled ? 'Aktif ✅' : 'Pasif ❌'}
+• IP Adresi: ${sessionData.ipAddress || 'Bilinmiyor'}
+• Cihaz: ${sessionData.deviceInfo ? sessionData.deviceInfo.platform : 'Bilinmiyor'}
+• Oturum Süresi: ${minutesLeft} dakika kaldı
+• Giriş Zamanı: ${new Date(sessionData.loginTime).toLocaleString('tr-TR')}
+• Oturum ID: ${sessionData.sessionId.substring(0, 20)}...
+                `;
+                
+                alert(securityInfo);
+            } catch (error) {
+                alert('Güvenlik bilgileri alınamadı.');
+            }
+        }
+
+        // Sayfa yüklendiğinde kullanıcı bilgilerini güncelle
+        document.addEventListener('DOMContentLoaded', function() {
+            updateUserInfo();
+            
+            // Oturum süresi kontrolü (her 5 dakikada bir)
+            setInterval(function() {
+                const session = localStorage.getItem('session');
+                if (session) {
+                    const sessionData = JSON.parse(session);
+                    if (Date.now() - sessionData.loginTime > 30 * 60 * 1000) {
+                        alert('Oturum süreniz doldu. Tekrar giriş yapın.');
+                        logout();
+                    }
+                }
+            }, 5 * 60 * 1000);
         });
         
     </script>

@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Güvenli Giriş - Zuhal Müzik</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-size: 2em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .user-selector {
+            margin-bottom: 20px;
+        }
+
+        .user-type {
+            display: inline-block;
+            margin: 0 10px;
+            padding: 10px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
+        }
+
+        .user-type.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .user-type:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .login-method-selector {
+            margin-bottom: 20px;
+        }
+
+        .method-type {
+            display: inline-block;
+            margin: 0 10px;
+            padding: 10px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
+        }
+
+        .method-type.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .method-type:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .pin-container {
+            margin-bottom: 20px;
+        }
+
+        .pin-display {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .pin-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            transition: all 0.3s ease;
+        }
+
+        .pin-dot.filled {
+            background: #667eea;
+            border-color: #667eea;
+        }
+
+        .pin-keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            max-width: 200px;
+            margin: 0 auto;
+        }
+
+        .pin-key {
+            width: 60px;
+            height: 60px;
+            border: none;
+            border-radius: 50%;
+            background: #f0f0f0;
+            font-size: 1.5em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pin-key:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .pin-key:active {
+            transform: scale(0.95);
+        }
+
+        .pin-key.clear {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .pin-key.clear:hover {
+            background: #ff5252;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            margin-top: 15px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .success-message {
+            color: #51cf66;
+            margin-top: 15px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .security-info {
+            margin-top: 30px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .two-factor-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .two-factor-section.active {
+            display: block;
+        }
+
+        .authenticator-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.1em;
+            text-align: center;
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+        }
+
+        .authenticator-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .backup-codes {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+
+        .backup-codes h4 {
+            margin-bottom: 10px;
+            color: #856404;
+        }
+
+        .backup-codes code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 2px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">🔐</div>
+        <h1 class="title">Zuhal Müzik</h1>
+        <p class="subtitle">Güvenli Giriş Sistemi</p>
+        
+        <div class="user-selector">
+            <div class="user-type active" data-type="user">
+                👤 Kullanıcı
+            </div>
+            <div class="user-type" data-type="admin">
+                👑 Yönetici
+            </div>
+        </div>
+
+        <div class="login-method-selector">
+            <div class="method-type active" data-method="pin">
+                🔢 PIN Kod
+            </div>
+            <div class="method-type" data-method="odoo">
+                🏢 Odoo Giriş
+            </div>
+        </div>
+
+        <div class="pin-container" id="pinContainer">
+            <div class="pin-display">
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+            </div>
+            
+            <div class="pin-keypad">
+                <button class="pin-key" data-number="1">1</button>
+                <button class="pin-key" data-number="2">2</button>
+                <button class="pin-key" data-number="3">3</button>
+                <button class="pin-key" data-number="4">4</button>
+                <button class="pin-key" data-number="5">5</button>
+                <button class="pin-key" data-number="6">6</button>
+                <button class="pin-key" data-number="7">7</button>
+                <button class="pin-key" data-number="8">8</button>
+                <button class="pin-key" data-number="9">9</button>
+                <button class="pin-key clear" data-action="clear">⌫</button>
+                <button class="pin-key" data-number="0">0</button>
+                <button class="pin-key" data-action="enter">✓</button>
+            </div>
+        </div>
+
+        <div class="odoo-container" id="odooContainer" style="display: none;">
+            <div class="form-group">
+                <label for="odooUsername">Odoo Kullanıcı Adı:</label>
+                <input type="text" id="odooUsername" placeholder="admin" class="form-input">
+            </div>
+            <div class="form-group">
+                <label for="odooPassword">Odoo Şifre:</label>
+                <input type="password" id="odooPassword" placeholder="••••••••" class="form-input">
+            </div>
+            <div class="form-group">
+                <label for="odooDatabase">Veritabanı:</label>
+                <input type="text" id="odooDatabase" placeholder="zuhal_muzik" class="form-input">
+            </div>
+        </div>
+
+        <button class="login-btn" id="loginBtn" disabled>Giriş Yap</button>
+        
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+
+        <div class="two-factor-section" id="twoFactorSection">
+            <h3>İkili Doğrulama</h3>
+            <p>Authenticator uygulamanızdan 6 haneli kodu girin:</p>
+            <input type="text" class="authenticator-input" id="authenticatorCode" placeholder="123456" maxlength="6">
+            <button class="login-btn" id="verifyTwoFactor">Doğrula</button>
+            
+            <div class="backup-codes">
+                <h4>Yedek Kodlar:</h4>
+                <div id="backupCodes"></div>
+            </div>
+        </div>
+
+        <div class="security-info">
+            <strong>🔒 Güvenlik Bilgisi:</strong><br>
+            • PIN kodunuz 6 haneli olmalıdır<br>
+            • Odoo giriş için kullanıcı adı, şifre ve veritabanı gerekir<br>
+            • 3 yanlış denemeden sonra 5 dakika beklemeniz gerekir<br>
+            • İkili doğrulama yöneticiler için zorunludur<br>
+            • Oturumunuz 30 dakika sonra sona erer<br>
+            <br>
+            <strong>📋 Demo Bilgileri:</strong><br>
+            • PIN: User(123456), Admin(654321)<br>
+            • Odoo: admin/admin/zuhal_muzik veya user/user/zuhal_muzik
+        </div>
+    </div>
+
+    <script>
+        class AuthSystem {
+            constructor() {
+                this.currentPin = '';
+                this.currentUserType = 'user';
+                this.currentMethod = 'pin';
+                this.maxPinLength = 6;
+                this.maxAttempts = 3;
+                this.lockoutTime = 5 * 60 * 1000; // 5 dakika
+                this.sessionTimeout = 30 * 60 * 1000; // 30 dakika
+                
+                // Odoo sunucu bilgileri
+                this.odooConfig = {
+                    url: 'https://zuhal-muzik.odoo.com', // Gerçek Odoo URL'nizi buraya yazın
+                    timeout: 10000
+                };
+                
+                // Güvenli PIN kodları (gerçek uygulamada şifrelenmiş olarak saklanmalı)
+                this.pins = {
+                    user: {
+                        '123456': { name: 'Kullanıcı', twoFactorEnabled: false },
+                        '111111': { name: 'Test User', twoFactorEnabled: false }
+                    },
+                    admin: {
+                        '654321': { name: 'Yönetici', twoFactorEnabled: true, twoFactorSecret: 'JBSWY3DPEHPK3PXP' },
+                        '999999': { name: 'Admin', twoFactorEnabled: true, twoFactorSecret: 'JBSWY3DPEHPK3PXP' }
+                    }
+                };
+                
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.loadUserPreferences();
+                this.checkLockoutStatus();
+            }
+
+            bindEvents() {
+                // Kullanıcı tipi seçimi
+                document.querySelectorAll('.user-type').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.selectUserType(e.target.dataset.type);
+                    });
+                });
+
+                // Giriş yöntemi seçimi
+                document.querySelectorAll('.method-type').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.selectMethod(e.target.dataset.method);
+                    });
+                });
+
+                // PIN tuş takımı
+                document.querySelectorAll('.pin-key').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const number = e.target.dataset.number;
+                        const action = e.target.dataset.action;
+                        
+                        if (number) {
+                            this.addDigit(number);
+                        } else if (action === 'clear') {
+                            this.clearPin();
+                        } else if (action === 'enter') {
+                            this.submitPin();
+                        }
+                    });
+                });
+
+                // Giriş butonu
+                document.getElementById('loginBtn').addEventListener('click', () => {
+                    this.submitPin();
+                });
+
+                // İkili doğrulama
+                document.getElementById('verifyTwoFactor').addEventListener('click', () => {
+                    this.verifyTwoFactor();
+                });
+
+                // Authenticator kodu girişi
+                document.getElementById('authenticatorCode').addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                    if (e.target.value.length === 6) {
+                        this.verifyTwoFactor();
+                    }
+                });
+
+                // Odoo form input'ları
+                document.getElementById('odooUsername').addEventListener('input', () => {
+                    this.updateLoginButton();
+                });
+                document.getElementById('odooPassword').addEventListener('input', () => {
+                    this.updateLoginButton();
+                });
+                document.getElementById('odooDatabase').addEventListener('input', () => {
+                    this.updateLoginButton();
+                });
+
+                // Klavye desteği
+                document.addEventListener('keydown', (e) => {
+                    if (e.key >= '0' && e.key <= '9') {
+                        this.addDigit(e.key);
+                    } else if (e.key === 'Backspace') {
+                        this.clearLastDigit();
+                    } else if (e.key === 'Enter') {
+                        this.submitPin();
+                    }
+                });
+            }
+
+            selectUserType(type) {
+                this.currentUserType = type;
+                document.querySelectorAll('.user-type').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`[data-type="${type}"]`).classList.add('active');
+                this.clearPin();
+            }
+
+            selectMethod(method) {
+                this.currentMethod = method;
+                document.querySelectorAll('.method-type').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`[data-method="${method}"]`).classList.add('active');
+                
+                // Form görünümünü değiştir
+                const pinContainer = document.getElementById('pinContainer');
+                const odooContainer = document.getElementById('odooContainer');
+                
+                if (method === 'pin') {
+                    pinContainer.style.display = 'block';
+                    odooContainer.style.display = 'none';
+                } else {
+                    pinContainer.style.display = 'none';
+                    odooContainer.style.display = 'block';
+                }
+                
+                this.updateLoginButton();
+            }
+
+            addDigit(digit) {
+                if (this.currentPin.length < this.maxPinLength) {
+                    this.currentPin += digit;
+                    this.updatePinDisplay();
+                    this.updateLoginButton();
+                }
+            }
+
+            clearLastDigit() {
+                if (this.currentPin.length > 0) {
+                    this.currentPin = this.currentPin.slice(0, -1);
+                    this.updatePinDisplay();
+                    this.updateLoginButton();
+                }
+            }
+
+            clearPin() {
+                this.currentPin = '';
+                this.updatePinDisplay();
+                this.updateLoginButton();
+            }
+
+            updatePinDisplay() {
+                const dots = document.querySelectorAll('.pin-dot');
+                dots.forEach((dot, index) => {
+                    if (index < this.currentPin.length) {
+                        dot.classList.add('filled');
+                    } else {
+                        dot.classList.remove('filled');
+                    }
+                });
+            }
+
+            updateLoginButton() {
+                const btn = document.getElementById('loginBtn');
+                
+                if (this.currentMethod === 'pin') {
+                    btn.disabled = this.currentPin.length !== this.maxPinLength;
+                } else {
+                    // Odoo giriş için form kontrolü
+                    const username = document.getElementById('odooUsername').value.trim();
+                    const password = document.getElementById('odooPassword').value.trim();
+                    const database = document.getElementById('odooDatabase').value.trim();
+                    
+                    btn.disabled = !username || !password || !database;
+                }
+            }
+
+            async submitPin() {
+                if (this.currentMethod === 'pin') {
+                    await this.submitPinMethod();
+                } else {
+                    await this.submitOdooMethod();
+                }
+            }
+
+            async submitPinMethod() {
+                if (this.currentPin.length !== this.maxPinLength) {
+                    this.showError('PIN kodunuz 6 haneli olmalıdır');
+                    return;
+                }
+
+                if (this.isLockedOut()) {
+                    this.showError('Çok fazla yanlış deneme. Lütfen bekleyin...');
+                    return;
+                }
+
+                const userPin = this.pins[this.currentUserType][this.currentPin];
+                
+                if (userPin) {
+                    this.showSuccess(`Hoş geldiniz, ${userPin.name}!`);
+                    
+                    // İkili doğrulama kontrolü
+                    if (userPin.twoFactorEnabled) {
+                        this.showTwoFactorSection();
+                    } else {
+                        this.login(userPin);
+                    }
+                } else {
+                    this.handleFailedAttempt();
+                }
+            }
+
+            async submitOdooMethod() {
+                const username = document.getElementById('odooUsername').value.trim();
+                const password = document.getElementById('odooPassword').value.trim();
+                const database = document.getElementById('odooDatabase').value.trim();
+
+                if (!username || !password || !database) {
+                    this.showError('Tüm alanları doldurun');
+                    return;
+                }
+
+                if (this.isLockedOut()) {
+                    this.showError('Çok fazla yanlış deneme. Lütfen bekleyin...');
+                    return;
+                }
+
+                try {
+                    this.showSuccess('Odoo\'ya bağlanılıyor...');
+                    
+                    // Odoo XML-RPC ile giriş kontrolü
+                    const isValid = await this.validateOdooCredentials(username, password, database);
+                    
+                    if (isValid) {
+                        const userRole = await this.getUserRole(username, database);
+                        const user = {
+                            name: username,
+                            role: userRole,
+                            twoFactorEnabled: userRole === 'admin',
+                            twoFactorSecret: userRole === 'admin' ? 'JBSWY3DPEHPK3PXP' : null
+                        };
+                        
+                        this.showSuccess(`Hoş geldiniz, ${username}!`);
+                        
+                        // İkili doğrulama kontrolü
+                        if (user.twoFactorEnabled) {
+                            this.showTwoFactorSection();
+                        } else {
+                            this.login(user);
+                        }
+                    } else {
+                        this.handleFailedAttempt();
+                    }
+                } catch (error) {
+                    console.error('Odoo bağlantı hatası:', error);
+                    this.showError('Odoo sunucusuna bağlanılamadı. Lütfen tekrar deneyin.');
+                }
+            }
+
+            async validateOdooCredentials(username, password, database) {
+                // Basit Odoo XML-RPC simülasyonu
+                // Gerçek uygulamada XML-RPC kütüphanesi kullanın
+                
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        // Demo için basit kontrol
+                        if (username === 'admin' && password === 'admin' && database === 'zuhal_muzik') {
+                            resolve(true);
+                        } else if (username === 'user' && password === 'user' && database === 'zuhal_muzik') {
+                            resolve(true);
+                        } else {
+                            resolve(false);
+                        }
+                    }, 1000);
+                });
+            }
+
+            async getUserRole(username, database) {
+                // Demo için basit rol kontrolü
+                if (username === 'admin') {
+                    return 'admin';
+                } else {
+                    return 'user';
+                }
+            }
+
+            showTwoFactorSection() {
+                document.getElementById('twoFactorSection').classList.add('active');
+                document.getElementById('authenticatorCode').focus();
+                this.generateBackupCodes();
+            }
+
+            async verifyTwoFactor() {
+                const code = document.getElementById('authenticatorCode').value;
+                
+                if (code.length !== 6) {
+                    this.showError('6 haneli kodu girin');
+                    return;
+                }
+
+                // Basit TOTP simülasyonu (gerçek uygulamada kütüphane kullanın)
+                const currentUserPin = this.pins[this.currentUserType][this.currentPin];
+                const isValidCode = this.validateTOTP(code, currentUserPin.twoFactorSecret);
+                
+                if (isValidCode) {
+                    this.login(currentUserPin);
+                } else {
+                    this.showError('Geçersiz doğrulama kodu');
+                }
+            }
+
+            validateTOTP(code, secret) {
+                // Basit TOTP validasyonu (gerçek uygulamada proper TOTP kütüphanesi kullanın)
+                const now = Math.floor(Date.now() / 1000 / 30);
+                const expectedCode = this.generateTOTP(secret, now);
+                return code === expectedCode;
+            }
+
+            generateTOTP(secret, time) {
+                // Basit TOTP üretimi (gerçek uygulamada crypto kütüphanesi kullanın)
+                const hash = btoa(secret + time).slice(-6);
+                return hash.replace(/[^0-9]/g, '').slice(0, 6).padStart(6, '0');
+            }
+
+            generateBackupCodes() {
+                const codes = [];
+                for (let i = 0; i < 5; i++) {
+                    codes.push(Math.random().toString(36).substring(2, 8).toUpperCase());
+                }
+                
+                const container = document.getElementById('backupCodes');
+                container.innerHTML = codes.map(code => `<code>${code}</code>`).join(' ');
+            }
+
+            login(user) {
+                // Oturum bilgilerini kaydet
+                const sessionData = {
+                    user: user,
+                    userType: this.currentUserType,
+                    loginTime: Date.now(),
+                    sessionId: this.generateSessionId()
+                };
+                
+                localStorage.setItem('session', JSON.stringify(sessionData));
+                
+                // Ana sayfaya yönlendir
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+            }
+
+            generateSessionId() {
+                return 'sess_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            }
+
+            handleFailedAttempt() {
+                const attempts = this.getFailedAttempts();
+                attempts.count++;
+                attempts.lastAttempt = Date.now();
+                
+                localStorage.setItem('failedAttempts', JSON.stringify(attempts));
+                
+                if (attempts.count >= this.maxAttempts) {
+                    attempts.lockoutUntil = Date.now() + this.lockoutTime;
+                    localStorage.setItem('failedAttempts', JSON.stringify(attempts));
+                    this.showError('Çok fazla yanlış deneme. 5 dakika bekleyin.');
+                } else {
+                    this.showError(`Yanlış PIN. Kalan deneme: ${this.maxAttempts - attempts.count}`);
+                }
+                
+                this.clearPin();
+            }
+
+            getFailedAttempts() {
+                const stored = localStorage.getItem('failedAttempts');
+                if (!stored) return { count: 0, lastAttempt: 0, lockoutUntil: 0 };
+                
+                const attempts = JSON.parse(stored);
+                
+                // Lockout süresi dolmuşsa sıfırla
+                if (attempts.lockoutUntil && Date.now() > attempts.lockoutUntil) {
+                    return { count: 0, lastAttempt: 0, lockoutUntil: 0 };
+                }
+                
+                return attempts;
+            }
+
+            isLockedOut() {
+                const attempts = this.getFailedAttempts();
+                return attempts.lockoutUntil && Date.now() < attempts.lockoutUntil;
+            }
+
+            checkLockoutStatus() {
+                const attempts = this.getFailedAttempts();
+                if (attempts.lockoutUntil && Date.now() < attempts.lockoutUntil) {
+                    const remaining = Math.ceil((attempts.lockoutUntil - Date.now()) / 1000);
+                    this.showError(`Sistem kilitli. Kalan süre: ${Math.floor(remaining / 60)}:${(remaining % 60).toString().padStart(2, '0')}`);
+                }
+            }
+
+            loadUserPreferences() {
+                const preferences = localStorage.getItem('userPreferences');
+                if (preferences) {
+                    const prefs = JSON.parse(preferences);
+                    this.selectUserType(prefs.defaultUserType || 'user');
+                }
+            }
+
+            showError(message) {
+                const errorDiv = document.getElementById('errorMessage');
+                const successDiv = document.getElementById('successMessage');
+                
+                successDiv.style.display = 'none';
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                }, 5000);
+            }
+
+            showSuccess(message) {
+                const errorDiv = document.getElementById('errorMessage');
+                const successDiv = document.getElementById('successMessage');
+                
+                errorDiv.style.display = 'none';
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+            }
+        }
+
+        // Sayfa yüklendiğinde auth sistemini başlat
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🔐 Auth sistemi başlatılıyor...');
+            console.log('📱 Mevcut localStorage:', localStorage.getItem('session'));
+            new AuthSystem();
+        });
+
+        // Oturum kontrolü - ana sayfada kullanılacak
+        function checkSession() {
+            const session = localStorage.getItem('session');
+            if (!session) {
+                window.location.href = 'auth.html';
+                return null;
+            }
+            
+            const sessionData = JSON.parse(session);
+            
+            // Oturum süresi kontrolü
+            if (Date.now() - sessionData.loginTime > 30 * 60 * 1000) {
+                localStorage.removeItem('session');
+                window.location.href = 'auth.html';
+                return null;
+            }
+            
+            return sessionData;
+        }
+
+        // Çıkış fonksiyonu
+        function logout() {
+            localStorage.removeItem('session');
+            window.location.href = 'auth.html';
+        }
+    </script>
+</body>
+</html>
