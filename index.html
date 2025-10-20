@@ -2368,6 +2368,14 @@
         let metadata = null;
         let loadedYears = new Set();
         
+        // Gerçek veri yükleme takibi
+        let dataLoadProgress = {
+            pageInit: false,
+            dataFiles: false,
+            targets: false,
+            ready: false
+        };
+        
         // İndirim ürünlerini tespit eden yardımcı fonksiyon
         function isDiscountProduct(item) {
             const productName = (item.product || '').toLowerCase();
@@ -13432,14 +13440,6 @@
                 }, 500);
             }
         }
-        
-        // Gerçek veri yükleme takibi
-        let dataLoadProgress = {
-            pageInit: false,
-            dataFiles: false,
-            targets: false,
-            ready: false
-        };
         
         function checkLoadingComplete() {
             let progress = 0;
