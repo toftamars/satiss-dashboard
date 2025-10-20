@@ -5978,9 +5978,10 @@
             const sortedStores = Object.entries(storeData).sort((a, b) => b[1] - a[1]);
             const topStore = sortedStores[0];
             const top3Stores = sortedStores.slice(0, 3);
+            const top10Stores = sortedStores.slice(0, 10);
             const weakStore = sortedStores[sortedStores.length - 1];
             
-            // Temsilciler - Top 3
+            // Temsilciler - Top 10
             const spData = {};
             thisYearData.forEach(item => {
                 const sp = item.sales_person || 'Bilinmiyor';
@@ -5989,6 +5990,7 @@
             });
             const sortedSP = Object.entries(spData).sort((a, b) => b[1] - a[1]);
             const top3SP = sortedSP.slice(0, 3);
+            const top10SP = sortedSP.slice(0, 10);
             
             // Markalar
             const brandData = {};
@@ -6000,7 +6002,18 @@
             const sortedBrands = Object.entries(brandData).sort((a, b) => b[1] - a[1]);
             const topBrand = sortedBrands[0];
             const top3Brands = sortedBrands.slice(0, 3);
+            const top10Brands = sortedBrands.slice(0, 10);
             const brandConcentration = (top3Brands.reduce((sum, b) => sum + b[1], 0) / totalSalesThisYear * 100);
+            
+            // Kategori analizi (category_2)
+            const categoryData = {};
+            thisYearData.forEach(item => {
+                const category = item.category_2 || 'Bilinmiyor';
+                if (!categoryData[category]) categoryData[category] = 0;
+                categoryData[category] += parseFloat(item.usd_amount || 0);
+            });
+            const sortedCategories = Object.entries(categoryData).sort((a, b) => b[1] - a[1]);
+            const top10Categories = sortedCategories.slice(0, 10);
             
             // Aylık trend - GÜNLÜK ORTALAMA bazında karşılaştırma (ay henüz bitmemiş olabilir)
             const monthlyDataThisYear = {};
@@ -6051,7 +6064,9 @@
             
             // Müşteri analizi
             const uniqueCustomers = new Set(thisYearData.map(item => item.partner)).size;
-            const avgOrderValue = totalSalesThisYear / thisYearData.length;
+            const uniqueInvoices = new Set(thisYearData.map(item => item.move_name)).size;
+            const avgOrderValue = totalSalesThisYear / thisYearData.length; // Eski hesaplama
+            const avgBasketValue = totalSalesThisYear / uniqueInvoices; // Sepet ortalaması
             
             // Ay adları
             const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
@@ -6064,14 +6079,19 @@
                         <ul style="line-height: 2.2; margin: 0;">
                             ${yearGrowth > 0 ? `<li><strong>📈 Yıllık Büyüme (${currentYear} vs ${lastYear}):</strong> %${Math.abs(yearGrowth).toFixed(1)} artış<br><span style="font-size: 0.9em; color: #666;">💵 ${lastYear}: $${totalSalesLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} → ${currentYear}: $${totalSalesThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</span></li>` : ''}
                             ${monthGrowth > 0 ? `<li><strong>📊 ${lastMonthName} Ayı İvme (Günlük Ort. ${currentYear} vs ${lastYear}):</strong> %${Math.abs(monthGrowth).toFixed(1)} artış ${isCurrentMonth ? `<span style="color: #667eea;">(⏱️ Ay %${monthCompletionRate} tamamlandı)</span>` : ''}<br><span style="font-size: 0.9em; color: #666;">📅 ${lastMonthName} ${lastYear}: ${daysLastYear} gün, günlük ort. $${dailyAvgLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}<br>📅 ${lastMonthName} ${currentYear}: ${daysThisYear} gün, günlük ort. $${dailyAvgThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</span></li>` : ''}
-                            <li><strong>🏆 En İyi 3 Mağaza (${currentYear}):</strong><br>
-                                ${top3Stores.map((s, i) => `<span style="font-size: 0.9em;">${i+1}. ${s[0]}: $${s[1].toLocaleString('tr-TR', {minimumFractionDigits: 0})} (%${(s[1]/totalSalesThisYear*100).toFixed(1)})</span>`).join('<br>')}
+                            <li><strong>🏆 En İyi 5 Mağaza (${currentYear}):</strong><br>
+                                ${top10Stores.slice(0, 5).map((s, i) => `<span style="font-size: 0.9em;">${i+1}. ${s[0]}: $${s[1].toLocaleString('tr-TR', {minimumFractionDigits: 0})} (%${(s[1]/totalSalesThisYear*100).toFixed(1)})</span>`).join('<br>')}
                             </li>
-                            <li><strong>⭐ En İyi 3 Temsilci (${currentYear}):</strong><br>
-                                ${top3SP.map((s, i) => `<span style="font-size: 0.9em;">${i+1}. ${s[0]}: $${s[1].toLocaleString('tr-TR', {minimumFractionDigits: 0})} (%${(s[1]/totalSalesThisYear*100).toFixed(1)})</span>`).join('<br>')}
+                            <li><strong>⭐ En İyi 10 Temsilci (${currentYear}):</strong><br>
+                                ${top10SP.map((s, i) => `<span style="font-size: 0.9em;">${i+1}. ${s[0]}: $${s[1].toLocaleString('tr-TR', {minimumFractionDigits: 0})} (%${(s[1]/totalSalesThisYear*100).toFixed(1)})</span>`).join('<br>')}
                             </li>
-                            <li><strong>🏷️ Lider Marka:</strong> ${topBrand ? topBrand[0] : 'N/A'} ($${topBrand ? topBrand[1].toLocaleString('tr-TR', {minimumFractionDigits: 0}) : '0'} - %${topBrand ? (topBrand[1]/totalSalesThisYear*100).toFixed(1) : '0'})</li>
-                            <li><strong>💰 Ortalama Sipariş:</strong> $${avgOrderValue.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</li>
+                            <li><strong>🏷️ Top 10 Marka:</strong><br>
+                                ${top10Brands.map((b, i) => `<span style="font-size: 0.9em;">${i+1}. ${b[0]}: $${b[1].toLocaleString('tr-TR', {minimumFractionDigits: 0})} (%${(b[1]/totalSalesThisYear*100).toFixed(1)})</span>`).join('<br>')}
+                            </li>
+                            <li><strong>📂 Top 10 Kategori:</strong><br>
+                                ${top10Categories.map((c, i) => `<span style="font-size: 0.9em;">${i+1}. ${c[0]}: $${c[1].toLocaleString('tr-TR', {minimumFractionDigits: 0})} (%${(c[1]/totalSalesThisYear*100).toFixed(1)})</span>`).join('<br>')}
+                            </li>
+                            <li><strong>🛒 Sepet Ortalaması:</strong> $${avgBasketValue.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</li>
                             <li><strong>👥 Aktif Müşteri:</strong> ${uniqueCustomers.toLocaleString('tr-TR')} farklı müşteri</li>
                         </ul>
                     </div>
@@ -6092,19 +6112,23 @@
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 4px solid #38ef7d;">
                         <strong>🎯 Kısa Vadeli (1-3 ay)</strong>
                         <ul style="margin: 10px 0 0 0; line-height: 2;">
-                            <li>${topStore ? topStore[0] : 'En iyi mağaza'} başarı faktörlerini (ürün yelpazesi, satış teknikleri, müşteri hizmetleri) diğer mağazalara aktarın</li>
-                            <li>${top3SP.length > 0 ? top3SP[0][0] : 'En iyi temsilci'} ile best practice toplantısı düzenleyin ve tekniklerini kaydedin</li>
-                            <li>${topBrand ? topBrand[0] : 'Lider marka'} için özel promosyon kampanyası (${topBrand ? '+$' + (topBrand[1] * 0.2).toLocaleString('tr-TR', {minimumFractionDigits: 0}) : ''} potansiyel)</li>
-                            ${monthGrowth < 0 ? `<li>⚠️ ${lastMonthName} ayı düşüşünün sebeplerini analiz edin (mevsimsellik, kampanya eksikliği, stok sorunu?)</li>` : ''}
+                            <li><strong>🏆 Mağaza Liderliği:</strong> ${topStore ? topStore[0] : 'En iyi mağaza'} başarı faktörlerini (ürün yelpazesi, satış teknikleri, müşteri hizmetleri) diğer mağazalara aktarın</li>
+                            <li><strong>👥 Temsilci Eğitimi:</strong> ${top10SP.length > 0 ? top10SP[0][0] : 'En iyi temsilci'} ile best practice toplantısı düzenleyin ve tekniklerini kaydedin</li>
+                            <li><strong>🏷️ Marka Stratejisi:</strong> ${topBrand ? topBrand[0] : 'Lider marka'} için özel promosyon kampanyası (${topBrand ? '+$' + (topBrand[1] * 0.2).toLocaleString('tr-TR', {minimumFractionDigits: 0}) : ''} potansiyel)</li>
+                            <li><strong>📂 Kategori Odaklı:</strong> ${top10Categories.length > 0 ? top10Categories[0][0] : 'En iyi kategori'} için stok optimizasyonu ve teşhir iyileştirmesi</li>
+                            <li><strong>🛒 Sepet Artırma:</strong> Mevcut sepet ortalaması $${avgBasketValue.toFixed(2)} - Cross-selling stratejileri ile %20 artış hedefi</li>
+                            ${monthGrowth < 0 ? `<li><strong>⚠️ Acil Aksiyon:</strong> ${lastMonthName} ayı düşüşünün sebeplerini analiz edin (mevsimsellik, kampanya eksikliği, stok sorunu?)</li>` : ''}
                         </ul>
                     </div>
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 4px solid #667eea;">
-                        <strong>🚀 Uzun Vadeli (3-12 ay)</strong>
+                        <strong>📈 Orta Vadeli (3-6 ay)</strong>
                         <ul style="margin: 10px 0 0 0; line-height: 2;">
-                            ${brandConcentration > 60 ? '<li>⚠️ Marka çeşitliliğini artırarak risk dağılımı yapın (hedef: Top 3 oranını %50\'nin altına çekin)</li>' : ''}
-                            ${weakStore ? `<li>💡 ${weakStore[0]} için özel aksiyon planı: Ürün çeşidi artırma, yerel kampanyalar, ekip eğitimi</li>` : ''}
-                            <li>🎯 Müşteri sadakat programı: Tekrarlı alım yapanları %30 artırmayı hedefleyin</li>
-                            ${yearGrowth < 0 ? '<li>📊 Pazar analizi: Rakip fiyatlandırma, yeni trendler, müşteri beklentileri araştırması yapın</li>' : ''}
+                            <li><strong>👥 Müşteri Segmentasyonu:</strong> VIP müşteriler (top %20) için özel hizmet, yeni müşteriler için onboarding süreci</li>
+                            <li><strong>🏷️ Marka Çeşitliliği:</strong> ${topBrand ? topBrand[0] : 'Lider marka'} dışındaki markaları güçlendirin - çeşitlilik stratejisi (${topBrand ? '$' + (topBrand[1] * 0.3).toLocaleString('tr-TR', {minimumFractionDigits: 0}) : ''} potansiyel)</li>
+                            <li><strong>📊 Mağaza Geliştirme:</strong> Düşük performanslı mağazalar için özel eğitim programı (${weakStore ? weakStore[0] : 'En düşük mağaza'} odaklı)</li>
+                            <li><strong>📂 Kategori Genişletme:</strong> Top 10 kategorideki güçlü pozisyonları koruyarak, yeni kategori fırsatları araştırın</li>
+                            <li><strong>📅 Sezonluk Trend:</strong> ${lastMonthName} ayı verilerini geçmiş yıllarla karşılaştırın ve sezonluk stratejiler geliştirin</li>
+                            <li><strong>🎯 Hedef Belirleme:</strong> Top 10 temsilci performanslarını baz alarak gerçekçi hedefler belirleyin</li>
                         </ul>
                     </div>
                 </div>
