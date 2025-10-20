@@ -156,9 +156,18 @@
         </div>
     </div>
 
+    <!-- CryptoJS for encryption -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    
     <script>
         // ✅ BASIT PIN KODU: 1234
         const CORRECT_PIN = '1234';
+
+        // Device fingerprint oluştur
+        function generateDeviceFingerprint() {
+            const nav = navigator;
+            return btoa(nav.userAgent + nav.language + screen.width + screen.height);
+        }
 
         // Enter tuşu ile giriş
         document.getElementById('pinInput').addEventListener('keypress', function(e) {
@@ -173,12 +182,22 @@
             const enteredPin = pinInput.value;
 
             if (enteredPin === CORRECT_PIN) {
-                // ✅ PIN doğru - oturum oluştur
+                // ✅ PIN doğru - şifreli oturum oluştur (index.html ile uyumlu)
                 const sessionData = {
-                    authenticated: true,
-                    timestamp: new Date().getTime()
+                    username: 'admin',
+                    loginTime: Date.now(),
+                    deviceFingerprint: generateDeviceFingerprint(),
+                    deviceInfo: {
+                        userAgent: navigator.userAgent,
+                        platform: navigator.platform,
+                        language: navigator.language
+                    }
                 };
-                localStorage.setItem('session', JSON.stringify(sessionData));
+
+                // Session'ı şifrele ve kaydet
+                const key = 'zuhal-muzik-secret-key-2024';
+                const encryptedSession = CryptoJS.AES.encrypt(JSON.stringify(sessionData), key).toString();
+                localStorage.setItem('session', encryptedSession);
 
                 // Dashboard'a yönlendir
                 window.location.href = 'index.html';
