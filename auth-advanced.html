@@ -710,24 +710,28 @@
                 return;
             }
 
-            console.log('📧 Şifre sıfırlama talebi:', email);
-            
-            // Check if email exists in any user
-            let found = false;
+            // Check if email exists in any user (silently)
+            let foundUsername = null;
             for (let username in USERS) {
                 const savedEmail = localStorage.getItem(`email_${username}`);
                 if (savedEmail === email) {
-                    found = true;
-                    console.log('✅ Email bulundu:', username);
+                    foundUsername = username;
                     
-                    // TODO: Send email with reset link
-                    // For now, just show in console
-                    console.log('📤 Şifre sıfırlama bağlantısı gönderilecek:', email);
-                    console.log('🔑 Geçici şifre: Bjk1903*');
+                    // Save password reset request to localStorage (admin can check)
+                    const resetRequests = JSON.parse(localStorage.getItem('password_reset_requests') || '[]');
+                    resetRequests.push({
+                        username: username,
+                        email: email,
+                        timestamp: new Date().toISOString(),
+                        ip: 'N/A'
+                    });
+                    localStorage.setItem('password_reset_requests', JSON.stringify(resetRequests));
+                    
                     break;
                 }
             }
 
+            // Always show success message (don't reveal if email exists or not - security)
             document.getElementById('forgotInfo').classList.remove('show');
             document.getElementById('forgotSuccess').classList.add('show');
             document.getElementById('forgotEmailInput').value = '';
@@ -787,6 +791,58 @@
             console.log('✅ Şifre değiştirildi:', username);
             console.log('⚠️ Not: Sayfa yenilendiğinde eski şifre geri gelecek. Kalıcı değişiklik için kod düzenlemesi gerekli.');
             return true;
+        };
+
+        // Admin: Check password reset requests
+        window.getPasswordResetRequests = function() {
+            const requests = JSON.parse(localStorage.getItem('password_reset_requests') || '[]');
+            
+            if (requests.length === 0) {
+                console.log('📭 Şifre sıfırlama talebi yok');
+                return [];
+            }
+            
+            console.log('📧 Şifre Sıfırlama Talepleri:');
+            console.log('═══════════════════════════════════════');
+            requests.forEach((req, index) => {
+                console.log(`\n${index + 1}. Talep:`);
+                console.log(`   👤 Kullanıcı: ${req.username}`);
+                console.log(`   📧 Email: ${req.email}`);
+                console.log(`   📅 Tarih: ${req.timestamp}`);
+                console.log(`   🔑 Mevcut Şifre: Bjk1903*`);
+            });
+            console.log('\n═══════════════════════════════════════');
+            console.log('💡 Şifre değiştirmek için: changePassword("username", "newPassword")');
+            
+            return requests;
+        };
+
+        // Admin: Clear password reset requests
+        window.clearPasswordResetRequests = function() {
+            localStorage.removeItem('password_reset_requests');
+            console.log('✅ Tüm şifre sıfırlama talepleri temizlendi');
+        };
+
+        // Admin: Show all registered emails
+        window.showAllEmails = function() {
+            console.log('📧 Kayıtlı Email Adresleri:');
+            console.log('═══════════════════════════════════════');
+            for (let username in USERS) {
+                const email = localStorage.getItem(`email_${username}`);
+                console.log(`👤 ${username}: ${email || '(Email kayıtlı değil)'}`);
+            }
+            console.log('═══════════════════════════════════════');
+        };
+
+        // Admin help
+        window.adminHelp = function() {
+            console.log('🔧 Admin Komutları:');
+            console.log('═══════════════════════════════════════');
+            console.log('1. getPasswordResetRequests()  - Şifre sıfırlama taleplerini göster');
+            console.log('2. clearPasswordResetRequests() - Talepleri temizle');
+            console.log('3. showAllEmails()             - Tüm kayıtlı emailleri göster');
+            console.log('4. changePassword("user", "newPass") - Şifre değiştir');
+            console.log('═══════════════════════════════════════');
         };
     </script>
 </body>
