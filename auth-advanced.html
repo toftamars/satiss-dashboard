@@ -253,7 +253,8 @@
 
             const key = 'zuhal-muzik-secret-key-2024';
             const encryptedSession = CryptoJS.AES.encrypt(JSON.stringify(sessionData), key).toString();
-            localStorage.setItem('session', encryptedSession);
+            // sessionStorage kullan - pencere kapanınca otomatik siler
+            sessionStorage.setItem('session', encryptedSession);
             
             console.log('✅ Session kaydedildi, yönlendiriliyor...');
             

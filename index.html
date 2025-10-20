@@ -21,9 +21,10 @@
         // Gelişmiş giriş kontrolü - sayfa yüklenmeden önce çalışır
         (function() {
             function checkSession() {
-                const encryptedSession = localStorage.getItem('session');
+                // sessionStorage kullan - pencere kapanınca otomatik temizlenir
+                const encryptedSession = sessionStorage.getItem('session');
                 if (!encryptedSession) {
-                    // Önce basit auth'u dene, sonra gelişmiş auth'a yönlendir
+                    // Session yok, giriş sayfasına yönlendir
                     window.location.href = 'auth-advanced.html';
                     return null;
                 }
@@ -36,7 +37,7 @@
                     
                     // Oturum süresi kontrolü (30 dakika)
                     if (Date.now() - sessionData.loginTime > 30 * 60 * 1000) {
-                        localStorage.removeItem('session');
+                        sessionStorage.removeItem('session');
                         window.location.href = 'auth-advanced.html';
                         return null;
                     }
@@ -49,7 +50,7 @@
                         if (currentFingerprint !== sessionFingerprint) {
                             console.warn('Device fingerprint mismatch - potential security issue');
                             // Bu durumda kullanıcıyı tekrar giriş yapmaya zorla
-                            localStorage.removeItem('session');
+                            sessionStorage.removeItem('session');
                             window.location.href = 'auth-advanced.html';
                             return null;
                         }
@@ -58,7 +59,7 @@
                     return sessionData;
                 } catch (error) {
                     console.error('Session decryption error:', error);
-                    localStorage.removeItem('session');
+                    sessionStorage.removeItem('session');
                     window.location.href = 'auth-advanced.html';
                     return null;
                 }
