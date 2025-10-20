@@ -353,6 +353,8 @@
 
         // Create encrypted session
         function createSession() {
+            console.log('🔐 Session oluşturuluyor...');
+            
             const sessionData = {
                 username: 'admin',
                 loginTime: Date.now(),
@@ -364,10 +366,19 @@
                 }
             };
 
+            console.log('Session Data:', sessionData);
+
             const key = 'zuhal-muzik-secret-key-2024';
             const encryptedSession = CryptoJS.AES.encrypt(JSON.stringify(sessionData), key).toString();
             localStorage.setItem('session', encryptedSession);
-            window.location.href = 'index.html';
+            
+            console.log('✅ Session kaydedildi, yönlendiriliyor...');
+            console.log('Encrypted session:', encryptedSession.substring(0, 50) + '...');
+            
+            // Kısa gecikme ekle, sonra yönlendir
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 500);
         }
 
         // Tab switching
@@ -396,9 +407,13 @@
             const errorMessage = document.getElementById('pinError');
             const enteredPin = pinInput.value;
 
+            console.log('PIN girişi:', enteredPin, 'Beklenen:', CORRECT_PIN);
+
             if (enteredPin === CORRECT_PIN) {
+                console.log('✅ PIN doğru, session oluşturuluyor...');
                 createSession();
             } else {
+                console.log('❌ PIN yanlış!');
                 errorMessage.classList.add('show');
                 pinInput.value = '';
                 pinInput.focus();
