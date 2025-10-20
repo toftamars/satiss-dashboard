@@ -78,58 +78,6 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
-        .login-method-selector {
-            margin-bottom: 20px;
-        }
-
-        .method-type {
-            display: inline-block;
-            margin: 0 10px;
-            padding: 10px 20px;
-            border: 2px solid #ddd;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: #f9f9f9;
-        }
-
-        .method-type.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-
-        .method-type:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 1.1em;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
         .pin-container {
             margin-bottom: 20px;
         }
@@ -311,16 +259,7 @@
             </div>
         </div>
 
-        <div class="login-method-selector">
-            <div class="method-type active" data-method="pin">
-                🔢 PIN Kod
-            </div>
-            <div class="method-type" data-method="odoo">
-                🏢 Odoo Giriş
-            </div>
-        </div>
-
-        <div class="pin-container" id="pinContainer">
+        <div class="pin-container">
             <div class="pin-display">
                 <div class="pin-dot"></div>
                 <div class="pin-dot"></div>
@@ -346,21 +285,6 @@
             </div>
         </div>
 
-        <div class="odoo-container" id="odooContainer" style="display: none;">
-            <div class="form-group">
-                <label for="odooUsername">Odoo Kullanıcı Adı:</label>
-                <input type="text" id="odooUsername" placeholder="admin" class="form-input">
-            </div>
-            <div class="form-group">
-                <label for="odooPassword">Odoo Şifre:</label>
-                <input type="password" id="odooPassword" placeholder="••••••••" class="form-input">
-            </div>
-            <div class="form-group">
-                <label for="odooDatabase">Veritabanı:</label>
-                <input type="text" id="odooDatabase" placeholder="zuhal_muzik" class="form-input">
-            </div>
-        </div>
-
         <button class="login-btn" id="loginBtn" disabled>Giriş Yap</button>
         
         <div class="error-message" id="errorMessage"></div>
@@ -381,14 +305,9 @@
         <div class="security-info">
             <strong>🔒 Güvenlik Bilgisi:</strong><br>
             • PIN kodunuz 6 haneli olmalıdır<br>
-            • Odoo giriş için kullanıcı adı, şifre ve veritabanı gerekir<br>
             • 3 yanlış denemeden sonra 5 dakika beklemeniz gerekir<br>
             • İkili doğrulama yöneticiler için zorunludur<br>
-            • Oturumunuz 30 dakika sonra sona erer<br>
-            <br>
-            <strong>📋 Demo Bilgileri:</strong><br>
-            • PIN: User(123456), Admin(654321)<br>
-            • Odoo: admin/admin/zuhal_muzik veya user/user/zuhal_muzik
+            • Oturumunuz 30 dakika sonra sona erer
         </div>
     </div>
 
@@ -397,17 +316,10 @@
             constructor() {
                 this.currentPin = '';
                 this.currentUserType = 'user';
-                this.currentMethod = 'pin';
                 this.maxPinLength = 6;
                 this.maxAttempts = 3;
                 this.lockoutTime = 5 * 60 * 1000; // 5 dakika
                 this.sessionTimeout = 30 * 60 * 1000; // 30 dakika
-                
-                // Odoo sunucu bilgileri
-                this.odooConfig = {
-                    url: 'https://zuhal-muzik.odoo.com', // Gerçek Odoo URL'nizi buraya yazın
-                    timeout: 10000
-                };
                 
                 // Güvenli PIN kodları (gerçek uygulamada şifrelenmiş olarak saklanmalı)
                 this.pins = {
@@ -435,13 +347,6 @@
                 document.querySelectorAll('.user-type').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         this.selectUserType(e.target.dataset.type);
-                    });
-                });
-
-                // Giriş yöntemi seçimi
-                document.querySelectorAll('.method-type').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        this.selectMethod(e.target.dataset.method);
                     });
                 });
 
@@ -479,17 +384,6 @@
                     }
                 });
 
-                // Odoo form input'ları
-                document.getElementById('odooUsername').addEventListener('input', () => {
-                    this.updateLoginButton();
-                });
-                document.getElementById('odooPassword').addEventListener('input', () => {
-                    this.updateLoginButton();
-                });
-                document.getElementById('odooDatabase').addEventListener('input', () => {
-                    this.updateLoginButton();
-                });
-
                 // Klavye desteği
                 document.addEventListener('keydown', (e) => {
                     if (e.key >= '0' && e.key <= '9') {
@@ -509,28 +403,6 @@
                 });
                 document.querySelector(`[data-type="${type}"]`).classList.add('active');
                 this.clearPin();
-            }
-
-            selectMethod(method) {
-                this.currentMethod = method;
-                document.querySelectorAll('.method-type').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                document.querySelector(`[data-method="${method}"]`).classList.add('active');
-                
-                // Form görünümünü değiştir
-                const pinContainer = document.getElementById('pinContainer');
-                const odooContainer = document.getElementById('odooContainer');
-                
-                if (method === 'pin') {
-                    pinContainer.style.display = 'block';
-                    odooContainer.style.display = 'none';
-                } else {
-                    pinContainer.style.display = 'none';
-                    odooContainer.style.display = 'block';
-                }
-                
-                this.updateLoginButton();
             }
 
             addDigit(digit) {
@@ -568,28 +440,10 @@
 
             updateLoginButton() {
                 const btn = document.getElementById('loginBtn');
-                
-                if (this.currentMethod === 'pin') {
-                    btn.disabled = this.currentPin.length !== this.maxPinLength;
-                } else {
-                    // Odoo giriş için form kontrolü
-                    const username = document.getElementById('odooUsername').value.trim();
-                    const password = document.getElementById('odooPassword').value.trim();
-                    const database = document.getElementById('odooDatabase').value.trim();
-                    
-                    btn.disabled = !username || !password || !database;
-                }
+                btn.disabled = this.currentPin.length !== this.maxPinLength;
             }
 
             async submitPin() {
-                if (this.currentMethod === 'pin') {
-                    await this.submitPinMethod();
-                } else {
-                    await this.submitOdooMethod();
-                }
-            }
-
-            async submitPinMethod() {
                 if (this.currentPin.length !== this.maxPinLength) {
                     this.showError('PIN kodunuz 6 haneli olmalıdır');
                     return;
@@ -613,80 +467,6 @@
                     }
                 } else {
                     this.handleFailedAttempt();
-                }
-            }
-
-            async submitOdooMethod() {
-                const username = document.getElementById('odooUsername').value.trim();
-                const password = document.getElementById('odooPassword').value.trim();
-                const database = document.getElementById('odooDatabase').value.trim();
-
-                if (!username || !password || !database) {
-                    this.showError('Tüm alanları doldurun');
-                    return;
-                }
-
-                if (this.isLockedOut()) {
-                    this.showError('Çok fazla yanlış deneme. Lütfen bekleyin...');
-                    return;
-                }
-
-                try {
-                    this.showSuccess('Odoo\'ya bağlanılıyor...');
-                    
-                    // Odoo XML-RPC ile giriş kontrolü
-                    const isValid = await this.validateOdooCredentials(username, password, database);
-                    
-                    if (isValid) {
-                        const userRole = await this.getUserRole(username, database);
-                        const user = {
-                            name: username,
-                            role: userRole,
-                            twoFactorEnabled: userRole === 'admin',
-                            twoFactorSecret: userRole === 'admin' ? 'JBSWY3DPEHPK3PXP' : null
-                        };
-                        
-                        this.showSuccess(`Hoş geldiniz, ${username}!`);
-                        
-                        // İkili doğrulama kontrolü
-                        if (user.twoFactorEnabled) {
-                            this.showTwoFactorSection();
-                        } else {
-                            this.login(user);
-                        }
-                    } else {
-                        this.handleFailedAttempt();
-                    }
-                } catch (error) {
-                    console.error('Odoo bağlantı hatası:', error);
-                    this.showError('Odoo sunucusuna bağlanılamadı. Lütfen tekrar deneyin.');
-                }
-            }
-
-            async validateOdooCredentials(username, password, database) {
-                // Basit Odoo XML-RPC simülasyonu
-                // Gerçek uygulamada XML-RPC kütüphanesi kullanın
-                
-                return new Promise((resolve) => {
-                    setTimeout(() => {
-                        // Demo için basit kontrol
-                        if (username === 'admin' && password === 'admin' && database === 'zuhal_muzik') {
-                            resolve(true);
-                        } else if (username === 'user' && password === 'user' && database === 'zuhal_muzik') {
-                            resolve(true);
-                        } else {
-                            resolve(false);
-                        }
-                    }, 1000);
-                });
-            }
-
-            async getUserRole(username, database) {
-                // Demo için basit rol kontrolü
-                if (username === 'admin') {
-                    return 'admin';
-                } else {
-                    return 'user';
                 }
             }
 

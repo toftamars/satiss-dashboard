@@ -22,11 +22,11 @@
         (function() {
             function checkSession() {
                 const encryptedSession = localStorage.getItem('session');
-                 if (!encryptedSession) {
-                     // Auth sayfasına yönlendir
-                     window.location.href = 'auth.html';
-                     return null;
-                 }
+                if (!encryptedSession) {
+                    // Önce basit auth'u dene, sonra gelişmiş auth'a yönlendir
+                    window.location.href = 'auth-advanced.html';
+                    return null;
+                }
 
                 try {
                     // Şifreli session'ı çöz

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔒 Giriş - Zuhal Müzik Raporlama</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .auth-container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        p {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .pin-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 24px;
+            text-align: center;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            letter-spacing: 10px;
+            transition: all 0.3s;
+        }
+
+        .pin-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .footer {
+            margin-top: 20px;
+            color: #999;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="logo">🎵</div>
+        <h1>Zuhal Müzik Raporlama</h1>
+        <p>Lütfen PIN kodunuzu girin</p>
+
+        <div class="error-message" id="errorMessage">
+            ❌ Hatalı PIN kodu! Lütfen tekrar deneyin.
+        </div>
+
+        <input 
+            type="password" 
+            id="pinInput" 
+            class="pin-input" 
+            placeholder="••••" 
+            maxlength="4"
+            autofocus
+        >
+
+        <button class="btn-login" onclick="checkPin()">
+            🔓 Giriş Yap
+        </button>
+
+        <div class="footer">
+            🔒 Güvenli Giriş
+        </div>
+    </div>
+
+    <script>
+        // ✅ BASIT PIN KODU: 1234
+        const CORRECT_PIN = '1234';
+
+        // Enter tuşu ile giriş
+        document.getElementById('pinInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPin();
+            }
+        });
+
+        function checkPin() {
+            const pinInput = document.getElementById('pinInput');
+            const errorMessage = document.getElementById('errorMessage');
+            const enteredPin = pinInput.value;
+
+            if (enteredPin === CORRECT_PIN) {
+                // ✅ PIN doğru - oturum oluştur
+                const sessionData = {
+                    authenticated: true,
+                    timestamp: new Date().getTime()
+                };
+                localStorage.setItem('session', JSON.stringify(sessionData));
+
+                // Dashboard'a yönlendir
+                window.location.href = 'index.html';
+            } else {
+                // ❌ PIN yanlış
+                errorMessage.classList.add('show');
+                pinInput.value = '';
+                pinInput.focus();
+
+                // 2 saniye sonra hata mesajını gizle
+                setTimeout(() => {
+                    errorMessage.classList.remove('show');
+                }, 2000);
+            }
+        }
+
+        // Sayfa yüklendiğinde otomatik odaklan
+        window.addEventListener('load', function() {
+            document.getElementById('pinInput').focus();
+        });
+    </script>
+</body>
+</html>
