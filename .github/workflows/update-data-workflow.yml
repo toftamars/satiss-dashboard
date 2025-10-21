@@ -1284,6 +1284,7 @@ jobs:
     - name: Değişiklikleri commit et ve yükle
       env:
         PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        DATA_MODE: ${{ github.event.inputs.data_mode || 'fast' }}
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
@@ -1317,10 +1318,18 @@ jobs:
             git add data-*.json.gz data-metadata.json .gitattributes
           fi
           
-          # Tüm data dosyalarını ekle (fatura + envanter)
-          git add data-*.json.gz data-metadata.json
+          # Data Mode'a göre dosya ekleme stratejisi
+          if [[ "$DATA_MODE" == "fast" ]]; then
+            # FAST MODE: SADECE 2024-2025 dosyalarını ekle (eski yıllar korunur)
+            echo "⚡ FAST MODE: Sadece 2024-2025 dosyaları güncelleniyor..."
+            git add data-2024.json.gz data-2025.json.gz data-metadata.json 2>/dev/null || echo "2024-2025 dosyaları bulunamadı"
+          else
+            # FULL MODE: TÜM yıl dosyalarını ekle
+            echo "🔄 FULL MODE: Tüm yıl dosyaları ekleniyor..."
+            git add data-*.json.gz data-metadata.json
+          fi
           
-          # Envanter dosyası varsa ekle
+          # Envanter dosyası varsa ekle (her iki mode için)
           if [[ -f "inventory.json.gz" ]]; then
             echo "📦 Envanter dosyası ekleniyor..."
             git add inventory.json.gz
