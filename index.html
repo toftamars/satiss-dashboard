@@ -12536,6 +12536,7 @@
             });
             
             console.log('🏘️ Ham ilçe sayısı:', rawDistricts.size);
+            console.log('📋 İlk 10 ilçe örneği:', Array.from(rawDistricts).slice(0, 10));
             
             // İlçeleri normalize et (yanlış yazımları düzelt)
             const districtArray = Array.from(rawDistricts);
