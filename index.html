@@ -11993,6 +11993,92 @@
             console.log('✅ Hedef takip mağaza dropdownları dolduruldu:', stores.size, 'mağaza');
         }
         
+        // ==================== İLÇE NORMALIZASYON SİSTEMİ ====================
+        // Levenshtein Distance - Harf hatalarını tespit eder
+        function levenshteinDistance(str1, str2) {
+            const len1 = str1.length;
+            const len2 = str2.length;
+            const matrix = [];
+            
+            for (let i = 0; i <= len1; i++) {
+                matrix[i] = [i];
+            }
+            for (let j = 0; j <= len2; j++) {
+                matrix[0][j] = j;
+            }
+            
+            for (let i = 1; i <= len1; i++) {
+                for (let j = 1; j <= len2; j++) {
+                    if (str1[i - 1] === str2[j - 1]) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1, // substitution
+                            matrix[i][j - 1] + 1,     // insertion
+                            matrix[i - 1][j] + 1      // deletion
+                        );
+                    }
+                }
+            }
+            
+            return matrix[len1][len2];
+        }
+        
+        // Türkçe karakter normalizasyonu
+        function normalizeTurkish(str) {
+            if (!str) return '';
+            const turkishMap = {
+                'ı': 'i', 'İ': 'i',
+                'ş': 's', 'Ş': 's',
+                'ğ': 'g', 'Ğ': 'g',
+                'ü': 'u', 'Ü': 'u',
+                'ö': 'o', 'Ö': 'o',
+                'ç': 'c', 'Ç': 'c'
+            };
+            
+            return str
+                .toLowerCase()
+                .trim()
+                .split('')
+                .map(char => turkishMap[char] || char)
+                .join('');
+        }
+        
+        // İlçe adını düzelt (Fuzzy Matching)
+        function normalizeDistrictName(districtName, masterList) {
+            if (!districtName || districtName === 'Bilinmeyen') return districtName;
+            
+            // Direkt eşleşme varsa döndür (performans)
+            if (masterList.includes(districtName)) return districtName;
+            
+            // Normalize edilmiş versiyonu
+            const normalized = normalizeTurkish(districtName);
+            
+            let bestMatch = districtName;
+            let bestScore = Infinity;
+            const threshold = 3; // Maksimum 3 harf farkı
+            
+            for (const master of masterList) {
+                const masterNormalized = normalizeTurkish(master);
+                const distance = levenshteinDistance(normalized, masterNormalized);
+                
+                // Benzerlik skoru
+                const similarity = 1 - (distance / Math.max(normalized.length, masterNormalized.length));
+                
+                // %70'den fazla benzer VE 3'ten az harf farkı
+                if (distance < bestScore && distance <= threshold && similarity >= 0.7) {
+                    bestScore = distance;
+                    bestMatch = master;
+                }
+            }
+            
+            if (bestMatch !== districtName) {
+                console.log(`🔧 İlçe düzeltildi: "${districtName}" → "${bestMatch}" (distance: ${bestScore})`);
+            }
+            
+            return bestMatch;
+        }
+        
         function clearCityFilters() {
             document.getElementById('citySelect').value = '';
             document.getElementById('districtSelect').value = '';
@@ -12019,16 +12105,30 @@
                 return;
             }
             
-            // Seçilen şehirdeki ilçeleri bul
-            const districts = new Set();
+            // Seçilen şehirdeki ham ilçeleri topla
+            const rawDistricts = new Set();
             allData.forEach(item => {
                 if (item.city === selectedCity && item.partner_city) {
-                    districts.add(item.partner_city);
+                    rawDistricts.add(item.partner_city);
                 }
             });
             
-            const sortedDistricts = Array.from(districts).sort();
-            console.log('🏘️ Bulunan ilçeler:', sortedDistricts.length);
+            console.log('🏘️ Ham ilçe sayısı:', rawDistricts.size);
+            
+            // İlçeleri normalize et (yanlış yazımları düzelt)
+            const districtArray = Array.from(rawDistricts);
+            const normalizedDistricts = new Map(); // Normalize edilmiş → Orijinal
+            
+            // İlk geçiş: Tüm ilçeleri normalize et
+            districtArray.forEach(district => {
+                const normalized = normalizeDistrictName(district, districtArray);
+                if (!normalizedDistricts.has(normalized)) {
+                    normalizedDistricts.set(normalized, normalized);
+                }
+            });
+            
+            const sortedDistricts = Array.from(normalizedDistricts.keys()).sort();
+            console.log('🏘️ Normalize edilmiş ilçe sayısı:', sortedDistricts.length);
             
             // İlçe dropdown'ını doldur
             districtSelect.innerHTML = '<option value="">-- Tüm İlçeler --</option>';
@@ -12058,13 +12158,28 @@
             
             console.log('🌍 Şehir analizi:', selectedCity, selectedDistrict ? `/ ${selectedDistrict}` : '', 'Tarih:', dateStart, '-', dateEnd);
             
-            // Şehir verilerini filtrele (şehir + ilçe + tarih)
+            // Seçilen şehirdeki tüm ilçeleri topla (normalize için)
+            const allDistrictsInCity = [];
+            if (selectedDistrict) {
+                allData.forEach(item => {
+                    if (item.city === selectedCity && item.partner_city) {
+                        allDistrictsInCity.push(item.partner_city);
+                    }
+                });
+            }
+            
+            // Şehir verilerini filtrele (şehir + ilçe + tarih) - NORMALİZE EDİLMİŞ
             const cityData = allData.filter(item => {
                 // Şehir kontrolü
                 if (item.city !== selectedCity) return false;
                 
-                // İlçe kontrolü (seçiliyse)
-                if (selectedDistrict && item.partner_city !== selectedDistrict) return false;
+                // İlçe kontrolü (seçiliyse) - NORMALİZE ET
+                if (selectedDistrict && item.partner_city) {
+                    const normalizedItemDistrict = normalizeDistrictName(item.partner_city, allDistrictsInCity);
+                    if (normalizedItemDistrict !== selectedDistrict) return false;
+                } else if (selectedDistrict && !item.partner_city) {
+                    return false;
+                }
                 
                 // Tarih filtresi
                 if (dateStart && item.date < dateStart) return false;
