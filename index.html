@@ -2451,69 +2451,69 @@
         <!-- Inventory Tab -->
         <div id="stockTab" class="tab-content">
             <div class="content">
-                <h2 style="margin-bottom: 30px;">📦 Perakende Stok Analizi</h2>
+                <h2 style="margin-bottom: 30px;">📦 Stok & Satış Analizi</h2>
                 
                 <!-- Loading State -->
                 <div id="inventoryLoading" style="text-align: center; padding: 60px;">
                     <div style="font-size: 4em; margin-bottom: 20px;">⏳</div>
-                    <h3 style="color: #667eea;">Envanter verileri yükleniyor...</h3>
+                    <h3 style="color: #667eea;">Envanter ve satış verileri yükleniyor...</h3>
                 </div>
                 
                 <!-- Main Content -->
                 <div id="inventoryContent" style="display: none;">
-                    <!-- Summary Cards -->
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 40px;">
-                        <div class="summary-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                            <h3>📦 Toplam Ürün</h3>
-                            <p id="invTotalProducts">0</p>
-                            <small>Farklı ürün sayısı</small>
-                        </div>
-                        <div class="summary-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
-                            <h3>📊 Toplam Miktar</h3>
-                            <p id="invTotalQuantity">0</p>
-                            <small>Toplam stok adedi</small>
-                        </div>
-                        <div class="summary-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
-                            <h3>💰 Toplam Değer</h3>
-                            <p id="invTotalValue">$0</p>
-                            <small>Maliyet değeri</small>
-                        </div>
-                        <div class="summary-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
-                            <h3>🏪 Lokasyon</h3>
-                            <p id="invTotalLocations">0</p>
-                            <small>Farklı depo/mağaza</small>
+                    
+                    <!-- Search Filters -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 15px; margin-bottom: 30px; color: white;">
+                        <h3 style="margin: 0 0 20px 0;">🔍 Ürün Ara & Filtrele</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Marka</label>
+                                <input type="text" id="stockSearchBrand" placeholder="Marka adı..." 
+                                       onkeyup="filterStockAnalysis()"
+                                       style="width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 1em;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Ürün Adı</label>
+                                <input type="text" id="stockSearchProduct" placeholder="Ürün adı..." 
+                                       onkeyup="filterStockAnalysis()"
+                                       style="width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 1em;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Kategori 2</label>
+                                <input type="text" id="stockSearchCat2" placeholder="Kategori 2..." 
+                                       onkeyup="filterStockAnalysis()"
+                                       style="width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 1em;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Kategori 3</label>
+                                <input type="text" id="stockSearchCat3" placeholder="Kategori 3..." 
+                                       onkeyup="filterStockAnalysis()"
+                                       style="width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 1em;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Kategori 4</label>
+                                <input type="text" id="stockSearchCat4" placeholder="Kategori 4..." 
+                                       onkeyup="filterStockAnalysis()"
+                                       style="width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 1em;">
+                            </div>
+                            <div style="display: flex; align-items: end;">
+                                <button onclick="clearStockFilters()" 
+                                        style="width: 100%; padding: 10px 20px; background: white; color: #667eea; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em;">
+                                    🗑️ Temizle
+                                </button>
+                            </div>
                         </div>
                     </div>
                     
-                    <!-- Charts Grid -->
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 30px; margin-bottom: 40px;">
-                        <div class="chart-container">
-                            <h3 style="text-align: center; margin-bottom: 20px;">🏷️ Markaya Göre Stok Dağılımı</h3>
-                            <canvas id="invBrandChart"></canvas>
-                        </div>
-                        <div class="chart-container">
-                            <h3 style="text-align: center; margin-bottom: 20px;">📂 Kategoriye Göre Stok</h3>
-                            <canvas id="invCategoryChart"></canvas>
-                        </div>
-                        <div class="chart-container">
-                            <h3 style="text-align: center; margin-bottom: 20px;">🏪 Lokasyona Göre Stok</h3>
-                            <canvas id="invLocationChart"></canvas>
-                        </div>
-                        <div class="chart-container">
-                            <h3 style="text-align: center; margin-bottom: 20px;">💰 En Yüksek Değerli Ürünler (Top 10)</h3>
-                            <canvas id="invTopValueChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <!-- Detailed Table -->
+                    <!-- AI Stock Analysis Table -->
                     <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                        <h3 style="margin-bottom: 20px;">📋 Detaylı Stok Listesi</h3>
-                        <div style="margin-bottom: 15px;">
-                            <input type="text" id="invSearchInput" placeholder="🔍 Ürün ara (isim, kod, marka, kategori)..." 
-                                   onkeyup="filterInventoryTable()"
-                                   style="width: 100%; padding: 12px; border: 2px solid #667eea; border-radius: 8px; font-size: 1em;">
+                        <h3 style="margin-bottom: 20px;">📊 Mağaza Bazlı Stok & Satış Analizi (AI Destekli)</h3>
+                        <p style="color: #666; margin-bottom: 20px;">
+                            <strong>Not:</strong> AI, geçmiş satış verilerine göre her mağaza için önerilen stok ve satın alma miktarlarını hesaplar.
+                        </p>
+                        <div id="stockAnalysisTableContainer" style="overflow-x: auto; max-height: 600px; overflow-y: auto;">
+                            <!-- Tablo burada dinamik olarak oluşturulacak -->
                         </div>
-                        <div id="inventoryTableContainer" style="overflow-x: auto;"></div>
                     </div>
                 </div>
             </div>
