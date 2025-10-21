@@ -88,11 +88,12 @@
             if (!session) return;
 
             // Kullanıcı bilgilerini global olarak sakla
-            window.currentUser = session.user;
-            window.currentUserType = session.user.role;
-            window.sessionId = session.sessionId;
+            window.currentUser = {
+                username: session.username,
+                name: session.name
+            };
             window.deviceInfo = session.deviceInfo;
-            window.ipAddress = session.ipAddress;
+            window.loginTime = session.loginTime;
         })();
     </script>
     <style>
@@ -7057,10 +7058,10 @@
             const daysThisYear = monthlyDaysThisYear[lastMonth] ? monthlyDaysThisYear[lastMonth].size : 1;
             const daysLastYear = monthlyDaysLastYear[lastMonth] ? monthlyDaysLastYear[lastMonth].size : 1;
             
-            // GÜNLÜK ORTALAMA hesapla
-            const dailyAvgThisYear = lastMonthThisYear / daysThisYear;
-            const dailyAvgLastYear = lastMonthLastYear / daysLastYear;
-            const monthGrowth = dailyAvgLastYear > 0 ? ((dailyAvgThisYear - dailyAvgLastYear) / dailyAvgLastYear * 100) : 0;
+            // GÜNLÜK ORTALAMA hesapla (AYLIK bazında)
+            const dailyAvgThisMonth = lastMonthThisYear / daysThisYear;
+            const dailyAvgLastMonth = lastMonthLastYear / daysLastYear;
+            const monthGrowth = dailyAvgLastMonth > 0 ? ((dailyAvgThisMonth - dailyAvgLastMonth) / dailyAvgLastMonth * 100) : 0;
             
             // Ay tamamlanma durumu
             const today = new Date();
@@ -7101,7 +7102,7 @@
                         <h4 style="margin-bottom: 15px; color: #38ef7d;">✅ Olumlu Tespitler & Güçlü Yönler</h4>
                         <ul style="line-height: 2.2; margin: 0;">
                             ${dailyGrowth > 0 ? `<li><strong>📈 Günlük Ortalama İvme:</strong> %${Math.abs(dailyGrowth).toFixed(1)} artış<br><span style="font-size: 0.9em; color: #666;">💵 ${lastYear}: $${dailyAvgLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün → ${currentYear}: $${dailyAvgThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün<br>🎯 Yıl sonu tahmini: $${projectedYearEndSales.toLocaleString('tr-TR', {minimumFractionDigits: 0})} (%${projectedGrowth.toFixed(1)} büyüme)</span></li>` : ''}
-                            ${monthGrowth > 0 ? `<li><strong>📊 ${lastMonthName} Ayı İvme (Günlük Ort.):</strong> %${Math.abs(monthGrowth).toFixed(1)} artış ${isCurrentMonth ? `<span style="color: #667eea;">(⏱️ Ay %${monthCompletionRate} tamamlandı)</span>` : ''}<br><span style="font-size: 0.9em; color: #666;">📅 ${lastYear}: $${dailyAvgLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün → ${currentYear}: $${dailyAvgThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün</span></li>` : ''}
+                            ${monthGrowth > 0 ? `<li><strong>📊 ${lastMonthName} Ayı İvme (Günlük Ort.):</strong> %${Math.abs(monthGrowth).toFixed(1)} artış ${isCurrentMonth ? `<span style="color: #667eea;">(⏱️ Ay %${monthCompletionRate} tamamlandı)</span>` : ''}<br><span style="font-size: 0.9em; color: #666;">📅 ${lastYear}: $${dailyAvgLastMonth.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün → ${currentYear}: $${dailyAvgThisMonth.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün</span></li>` : ''}
                             ${basketGrowth > 0 ? `<li><strong>🛒 Sepet Ortalaması İvmesi:</strong> %${Math.abs(basketGrowth).toFixed(1)} artış<br><span style="font-size: 0.9em; color: #666;">💰 ${lastYear}: $${avgBasketValueLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} → ${currentYear}: $${avgBasketValue.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</span></li>` : ''}
                             ${fastestGrowingStore && fastestGrowingStore.growth > 20 ? `<li><strong>🚀 En Hızlı Büyüyen Mağaza:</strong> ${fastestGrowingStore.store} (%${fastestGrowingStore.growth.toFixed(1)} ivme)<br><span style="font-size: 0.9em; color: #666;">🎯 Best practice kaynak olarak kullanılmalı</span></li>` : ''}
                             ${fastestGrowingBrand && fastestGrowingBrand.growth > 30 ? `<li><strong>🏷️ En Hızlı Büyüyen Marka:</strong> ${fastestGrowingBrand.brand} (%${fastestGrowingBrand.growth.toFixed(1)} ivme)<br><span style="font-size: 0.9em; color: #666;">💡 Bu markaya yatırım artırılmalı</span></li>` : ''}
@@ -7120,7 +7121,7 @@
                         <h4 style="margin-bottom: 15px; color: #f5576c;">⚠️ Dikkat Noktaları & İyileştirme Alanları</h4>
                         <ul style="line-height: 2.2; margin: 0;">
                             ${yearGrowth < 0 ? `<li><strong>⏱️ ${currentYear} Durum Raporu (${daysPassedThisYear} gün geçti, ${daysRemainingThisYear} gün kaldı):</strong><br><span style="font-size: 0.9em; color: #666;">💵 <strong>${lastYear} Tamamı:</strong> $${totalSalesLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}<br>💵 <strong>${currentYear} Şu An:</strong> $${totalSalesThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} <span style="color: #f5576c;">(-%${Math.abs(yearGrowth).toFixed(1)} - YANILTICI!)</span><br>📊 <strong>Günlük Ortalama:</strong> ${lastYear}: $${dailyAvgLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün → ${currentYear}: $${dailyAvgThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün <span style="${dailyGrowth < 0 ? 'color: #f5576c;' : 'color: #38ef7d;'}">(${dailyGrowth > 0 ? '+' : ''}%${dailyGrowth.toFixed(1)})</span><br>🎯 <strong>Yıl Sonu Tahmini:</strong> $${projectedYearEndSales.toLocaleString('tr-TR', {minimumFractionDigits: 0})} <span style="${projectedGrowth < 0 ? 'color: #f5576c;' : 'color: #38ef7d;'}">(${projectedGrowth > 0 ? '+' : ''}%${projectedGrowth.toFixed(1)} vs ${lastYear})</span><br>🚨 <strong>${lastYear} seviyesini yakalamak için kalan ${daysRemainingThisYear} günde:</strong> $${targetRemainingForLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} ciro gerekli ($${dailyTargetToMatchLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün vs mevcut $${dailyAvgThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün)</span></li>` : ''}
-                            ${monthGrowth < 0 ? `<li><strong>⚠️ ${lastMonthName} Ayı Negatif İvme:</strong> %${Math.abs(monthGrowth).toFixed(1)} düşüş ${isCurrentMonth ? `<span style="color: #f5576c;">(⏱️ Ay %${monthCompletionRate} tamamlandı)</span>` : ''}<br><span style="font-size: 0.9em; color: #666;">📅 Günlük ort: $${dailyAvgLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} → $${dailyAvgThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}<br>💡 Ay sonu tahmini: $${(dailyAvgThisYear * 30).toLocaleString('tr-TR', {minimumFractionDigits: 0})} (vs ${lastYear}: $${lastMonthLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})})</span></li>` : ''}
+                            ${monthGrowth < 0 ? `<li><strong>⚠️ ${lastMonthName} Ayı Negatif İvme:</strong> %${Math.abs(monthGrowth).toFixed(1)} düşüş ${isCurrentMonth ? `<span style="color: #f5576c;">(⏱️ Ay %${monthCompletionRate} tamamlandı)</span>` : ''}<br><span style="font-size: 0.9em; color: #666;">📅 Günlük ort: $${dailyAvgLastMonth.toLocaleString('tr-TR', {minimumFractionDigits: 0})} → $${dailyAvgThisMonth.toLocaleString('tr-TR', {minimumFractionDigits: 0})}<br>💡 Ay sonu tahmini: $${(dailyAvgThisMonth * 30).toLocaleString('tr-TR', {minimumFractionDigits: 0})} (vs ${lastYear}: $${lastMonthLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})})</span></li>` : ''}
                             ${basketGrowth < 0 ? `<li><strong>🛒 Sepet Ortalaması Düşüşü:</strong> %${Math.abs(basketGrowth).toFixed(1)} azalış<br><span style="font-size: 0.9em; color: #666;">⚠️ Cross-selling ve upselling stratejileri güçlendirilmeli</span></li>` : ''}
                             ${slowestGrowingStore && slowestGrowingStore.growth < -10 ? `<li><strong>📊 En Düşük İvmeli Mağaza:</strong> ${slowestGrowingStore.store} (%${slowestGrowingStore.growth.toFixed(1)})<br><span style="font-size: 0.9em; color: #666;">🎯 Acil müdahale ve destek gerekli</span></li>` : ''}
                             ${slowestGrowingBrand && slowestGrowingBrand.growth < -20 ? `<li><strong>🏷️ Düşüş Yaşayan Marka:</strong> ${slowestGrowingBrand.brand} (%${slowestGrowingBrand.growth.toFixed(1)})<br><span style="font-size: 0.9em; color: #666;">💡 Ürün yelpazesi ve fiyatlandırma gözden geçirilmeli</span></li>` : ''}
