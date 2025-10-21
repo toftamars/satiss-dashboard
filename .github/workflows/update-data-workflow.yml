@@ -1365,13 +1365,13 @@ jobs:
             all_years=$(echo -e "$existing_years\n$new_years" | sort -u | grep -v '^$')
             echo "📅 Metadata'ya eklenecek tüm yıllar: $all_years"
             
-            # Metadata'yı güncelle (Python ile - tek satır)
-            export ALL_YEARS="$all_years"
-            python3 -c "
-import json, os
+            # Metadata'yı güncelle (Python scripti oluştur ve çalıştır)
+            cat > update_metadata.py << 'PYEOF'
+import json
+import sys
 from datetime import datetime
 
-years = sorted([y.strip() for y in os.environ.get('ALL_YEARS', '').split('\n') if y.strip()])
+years = sorted([y.strip() for y in sys.argv[1].split() if y.strip()])
 print(f'🔧 Metadata güncelleniyor: {years}')
 
 try:
@@ -1391,7 +1391,10 @@ with open('data-metadata.json', 'w') as f:
     json.dump(metadata, f, indent=2)
 
 print(f'✅ Metadata güncellendi: {len(years)} yıl')
-"
+PYEOF
+            
+            python3 update_metadata.py "$all_years"
+            rm update_metadata.py
             
             # Metadata'yı ekle
             if [[ -f "data-metadata.json" ]]; then
