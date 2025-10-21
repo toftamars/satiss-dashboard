@@ -770,9 +770,10 @@ jobs:
                                     partner_name = partner[1] if isinstance(partner, list) and len(partner) > 1 else 'Bilinmeyen'
                                     partner_id = partner[0] if isinstance(partner, list) else 0
                                     
-                                    # Şehir (İL) - partner_city_map'ten çek (partner tablosundan)
+                                    # Şehir ve İlçe bilgilerini al
                                     line_id = line.get('id')
-                                    city = partner_city_map.get(partner_id, 'Bilinmeyen')
+                                    city = partner_city_map.get(partner_id, 'Bilinmeyen')  # İL (state_id)
+                                    partner_district = partner_district_map.get(partner_id, '')  # İLÇE (res.partner.city)
                                     
                                     # Mağaza - analytic_account_id'den
                                     analytic_account = line.get('analytic_account_id')
@@ -881,11 +882,12 @@ jobs:
                                     processed_data['products'][product_id]['quantity'] += qty
                                     processed_data['products'][product_id]['usd_amount'] += usd_amount
                                     
-                                    # Müşteri/Mağaza bazlı - SADECE USD VE MİKTAR + ŞEHİR + ETİKETLER
+                                    # Müşteri/Mağaza bazlı - SADECE USD VE MİKTAR + ŞEHİR + İLÇE + ETİKETLER
                                     if partner_id not in processed_data['partners']:
                                         processed_data['partners'][partner_id] = {
                                             'name': partner_name,
-                                            'city': city,
+                                            'city': partner_district,  # İLÇE (res.partner.city)
+                                            'partner_city': city,  # İL (state_id)
                                             'quantity': 0,
                                             'usd_amount': 0
                                         }
@@ -947,17 +949,13 @@ jobs:
                                             cat_info = cat_data
                                             break
                                     
-                                    # Partner'dan ilçe ve şehir bilgisini çek
-                                    partner_district = partner_district_map.get(partner_id, '')  # İLÇE (res.partner.city)
-                                    partner_state = partner_city_map.get(partner_id, 'Bilinmeyen')  # İL (state_id)
-                                    
                                     details.append({
                                         'date': date_str,
                                         'create_hour': create_hour,
                                         'day_of_week': create_day_of_week,
                                         'partner': partner_name,
-                                        'city': partner_district,  # İLÇE bilgisi (res.partner.city)
-                                        'partner_city': partner_state,  # İL bilgisi (state_id)
+                                        'city': partner_district,  # İLÇE bilgisi (res.partner.city) - zaten yukarıda tanımlı
+                                        'partner_city': city,  # İL bilgisi (state_id) - zaten yukarıda tanımlı
                                         'product': product_name,
                                         'brand': product_brand_map.get(product_id, 'Bilinmeyen'),
                                         'category_1': cat_info.get('level1', ''),
