@@ -1318,6 +1318,14 @@
                 <h3>Toplam USD (KDV Hariç)</h3>
                 <p id="totalUSD">-</p>
             </div>
+            <div class="info-card">
+                <h3>📅 Günlük Ortalama</h3>
+                <p id="dailyAverage">-</p>
+            </div>
+            <div class="info-card">
+                <h3>🛒 Sepet Ortalaması</h3>
+                <p id="basketAverage">-</p>
+            </div>
         </div>
 
         <!-- Tab Navigation -->
@@ -2878,6 +2886,15 @@
             const totalUSD = allData.reduce((sum, item) => sum + (parseFloat(item.usd_amount) || 0), 0);
             document.getElementById('totalUSD').textContent = '$' + totalUSD.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             
+            // Günlük Ortalama Hesapla
+            const uniqueDates = [...new Set(allData.map(item => item.date))];
+            const dailyAverage = uniqueDates.length > 0 ? totalUSD / uniqueDates.length : 0;
+            document.getElementById('dailyAverage').textContent = '$' + dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            
+            // Sepet Ortalaması Hesapla (Toplam USD / Toplam İşlem)
+            const basketAverage = allData.length > 0 ? totalUSD / allData.length : 0;
+            document.getElementById('basketAverage').textContent = '$' + basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            
             // Filtreleri yeniden doldur
             populateFilters();
             updateSummary();
@@ -2946,6 +2963,15 @@
                     totalUSD = allData.reduce((sum, item) => sum + (parseFloat(item.usd_amount) || 0), 0);
                 }
                 document.getElementById('totalUSD').textContent = '$' + totalUSD.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                
+                // Günlük Ortalama Hesapla
+                const uniqueDates = [...new Set(allData.map(item => item.date))];
+                const dailyAverage = uniqueDates.length > 0 ? totalUSD / uniqueDates.length : 0;
+                document.getElementById('dailyAverage').textContent = '$' + dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                
+                // Sepet Ortalaması Hesapla (Toplam USD / Toplam İşlem)
+                const basketAverage = allData.length > 0 ? totalUSD / allData.length : 0;
+                document.getElementById('basketAverage').textContent = '$' + basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 
                 populateFilters();
                 updateSummary();
@@ -3023,6 +3049,15 @@
                         // Toplam USD'yi güncelle
                         const totalUSD = allData.reduce((sum, item) => sum + (parseFloat(item.usd_amount) || 0), 0);
                         document.getElementById('totalUSD').textContent = '$' + totalUSD.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        
+                        // Günlük Ortalama Hesapla
+                        const uniqueDates = [...new Set(allData.map(item => item.date))];
+                        const dailyAverage = uniqueDates.length > 0 ? totalUSD / uniqueDates.length : 0;
+                        document.getElementById('dailyAverage').textContent = '$' + dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        
+                        // Sepet Ortalaması Hesapla (Toplam USD / Toplam İşlem)
+                        const basketAverage = allData.length > 0 ? totalUSD / allData.length : 0;
+                        document.getElementById('basketAverage').textContent = '$' + basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                         
                         // Dashboard'ı güncelle - sadece grafikleri yenile, veri yükleme yapma
                         // loadDashboard() çağırmıyoruz çünkü zaten veriler yüklü
