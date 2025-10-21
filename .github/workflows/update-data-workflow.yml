@@ -1370,33 +1370,26 @@ jobs:
 import json
 import os
 
-# Tüm yılları al (bash'ten)
 all_years_str = os.popen('echo "$all_years"').read().strip()
 all_years = sorted([y.strip() for y in all_years_str.split('\n') if y.strip()])
 
 print(f"🔧 Metadata güncelleniyor: {all_years}")
 
-# Mevcut metadata'yı oku (varsa)
 try:
     with open('data-metadata.json', 'r') as f:
         metadata = json.load(f)
 except:
     metadata = {}
 
-# Yılları güncelle
 metadata['years'] = all_years
 metadata['files'] = [f'data-{year}.json.gz' for year in all_years]
-
-# Toplam kayıt sayısını güncelle (sadece yeni yıllardaki)
 metadata['total_records'] = metadata.get('total_records', 0)
 
-# Tarih güncelle
 from datetime import datetime
 metadata['last_update'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 metadata['mode'] = 'fast'
 metadata['note'] = 'Fast mode: 2024-2025 güncellendi, eski yıllar (2020-2023) korundu'
 
-# Kaydet
 with open('data-metadata.json', 'w') as f:
     json.dump(metadata, f, indent=2)
 
