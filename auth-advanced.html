@@ -284,6 +284,44 @@
             if (e.key === 'Enter') login();
         });
 
+        // 2FA input - Enter key support
+        document.getElementById('twoFactorCode').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') verify2FA();
+        });
+
+        // 2FA doğrulama fonksiyonu
+        function verify2FA() {
+            const code = document.getElementById('twoFactorCode').value.trim();
+            
+            if (!pendingUsername) {
+                alert('❌ Oturum hatası. Lütfen tekrar giriş yapın.');
+                cancel2FA();
+                return;
+            }
+            
+            const correctCode = USERS[pendingUsername].twoFactorCode;
+            
+            if (code === correctCode) {
+                console.log('✅ 2FA kodu doğru - Giriş başarılı');
+                createSession(pendingUsername);
+            } else {
+                console.log('❌ 2FA kodu yanlış');
+                alert('❌ Doğrulama kodu yanlış!');
+                document.getElementById('twoFactorCode').value = '';
+                document.getElementById('twoFactorCode').focus();
+            }
+        }
+
+        // 2FA iptal fonksiyonu
+        function cancel2FA() {
+            console.log('❌ 2FA iptal edildi');
+            pendingUsername = null;
+            document.getElementById('twoFactorCode').value = '';
+            document.getElementById('twoFactorModal').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('usernameInput').focus();
+        }
+
         // Login function
         function login() {
             const username = document.getElementById('usernameInput').value.trim().toLowerCase();
@@ -307,8 +345,13 @@
                 return;
             }
 
-            console.log('✅ Kullanıcı adı ve şifre doğru');
-            createSession(username);
+            console.log('✅ Kullanıcı adı ve şifre doğru - 2FA gösteriliyor');
+            
+            // Username'i sakla ve 2FA modalını göster
+            pendingUsername = username;
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('twoFactorModal').style.display = 'block';
+            document.getElementById('twoFactorCode').focus();
         }
 
         // Global password change function (for console use)

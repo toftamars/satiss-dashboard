@@ -12459,7 +12459,7 @@
             
             let bestMatch = districtName;
             let bestScore = Infinity;
-            const threshold = 3; // Maksimum 3 harf farkı
+            const threshold = 4; // Maksimum 4 harf farkı (artırıldı)
             
             for (const master of masterList) {
                 const masterNormalized = normalizeTurkish(master);
@@ -12468,10 +12468,27 @@
                 // Benzerlik skoru
                 const similarity = 1 - (distance / Math.max(normalized.length, masterNormalized.length));
                 
-                // %70'den fazla benzer VE 3'ten az harf farkı
-                if (distance < bestScore && distance <= threshold && similarity >= 0.7) {
+                // %65'ten fazla benzer VE 4'ten az harf farkı (daha toleranslı)
+                if (distance < bestScore && distance <= threshold && similarity >= 0.65) {
                     bestScore = distance;
                     bestMatch = master;
+                }
+            }
+            
+            // Eğer hiç eşleşme yoksa, en yüksek benzerlik oranına bak (threshold olmadan)
+            if (bestMatch === districtName && masterList.length > 0) {
+                let maxSimilarity = 0;
+                for (const master of masterList) {
+                    const masterNormalized = normalizeTurkish(master);
+                    const distance = levenshteinDistance(normalized, masterNormalized);
+                    const similarity = 1 - (distance / Math.max(normalized.length, masterNormalized.length));
+                    
+                    // En az %60 benzer ise kabul et
+                    if (similarity > maxSimilarity && similarity >= 0.6) {
+                        maxSimilarity = similarity;
+                        bestMatch = master;
+                        bestScore = distance;
+                    }
                 }
             }
             
@@ -12508,11 +12525,18 @@
                 return;
             }
             
-            // Seçilen şehirdeki ham ilçeleri topla
+            // Seçilen şehirdeki ham ilçeleri topla (city alanından - res.partner.city)
             const rawDistricts = new Set();
             allData.forEach(item => {
-                if (item.city === selectedCity && item.partner_city) {
-                    rawDistricts.add(item.partner_city);
+                // item.city veya item.partner_city = İL bilgisi (state_id)
+                // item.city (asıl res.partner.city) = İLÇE/SEMT bilgisi
+                // Şehir eşleşmesi: partner_city (İL) kullan
+                // İlçe verisi: city alanından al (bu Odoo'da res.partner.city)
+                if ((item.partner_city === selectedCity || item.city === selectedCity) && item.city) {
+                    // Sadece İL değilse ekle (İlçe/Semt olmalı)
+                    if (item.city !== selectedCity && item.city.length > 0) {
+                        rawDistricts.add(item.city);
+                    }
                 }
             });
             
@@ -12565,22 +12589,23 @@
             const allDistrictsInCity = [];
             if (selectedDistrict) {
                 allData.forEach(item => {
-                    if (item.city === selectedCity && item.partner_city) {
-                        allDistrictsInCity.push(item.partner_city);
+                    // partner_city = İL, city = İLÇE
+                    if ((item.partner_city === selectedCity || item.city === selectedCity) && item.city) {
+                        allDistrictsInCity.push(item.city);
                     }
                 });
             }
             
             // Şehir verilerini filtrele (şehir + ilçe + tarih) - NORMALİZE EDİLMİŞ
             const cityData = allData.filter(item => {
-                // Şehir kontrolü
-                if (item.city !== selectedCity) return false;
+                // Şehir kontrolü (partner_city = İL)
+                if (item.partner_city !== selectedCity && item.city !== selectedCity) return false;
                 
-                // İlçe kontrolü (seçiliyse) - NORMALİZE ET
-                if (selectedDistrict && item.partner_city) {
-                    const normalizedItemDistrict = normalizeDistrictName(item.partner_city, allDistrictsInCity);
+                // İlçe kontrolü (seçiliyse) - NORMALİZE ET (city = İLÇE)
+                if (selectedDistrict && item.city) {
+                    const normalizedItemDistrict = normalizeDistrictName(item.city, allDistrictsInCity);
                     if (normalizedItemDistrict !== selectedDistrict) return false;
-                } else if (selectedDistrict && !item.partner_city) {
+                } else if (selectedDistrict && !item.city) {
                     return false;
                 }
                 
