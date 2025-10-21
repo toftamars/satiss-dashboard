@@ -2,8 +2,8 @@ name: Odoo Veri Güncelleme
 
 on:
   workflow_dispatch:  # Manuel çalıştırma (sağ üstte "Run workflow" butonu)
-  schedule:
-    - cron: '0 2 * * *'  # Her gece saat 05:00 İstanbul saati (UTC 02:00)
+  # schedule:
+  #   - cron: '0 2 * * *'  # Her gece saat 05:00 İstanbul saati (UTC 02:00) - PASİF
 
 jobs:
   update-data:
