@@ -2352,12 +2352,19 @@
                 
                 <!-- City Selection & Date Filters -->
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; margin-bottom: 40px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 20px; align-items: end;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 20px; align-items: end;">
                         <div>
                             <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">📍 Şehir Seçin</label>
-                            <select id="citySelect" onchange="analyzeCityPerformance()" 
+                            <select id="citySelect" onchange="handleCityChange()" 
                                     style="width: 100%; padding: 15px; font-size: 1.1em; border: none; border-radius: 10px; outline: none;">
                                 <option value="">-- Şehir Seçin --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="color: white; display: block; margin-bottom: 8px; font-weight: 600;">🏘️ İlçe Seçin <small style="opacity: 0.8;">(Opsiyonel)</small></label>
+                            <select id="districtSelect" onchange="analyzeCityPerformance()" 
+                                    style="width: 100%; padding: 15px; font-size: 1.1em; border: none; border-radius: 10px; outline: none;" disabled>
+                                <option value="">-- Önce Şehir Seçin --</option>
                             </select>
                         </div>
                         <div>
@@ -11988,14 +11995,59 @@
         
         function clearCityFilters() {
             document.getElementById('citySelect').value = '';
+            document.getElementById('districtSelect').value = '';
+            document.getElementById('districtSelect').innerHTML = '<option value="">-- Önce Şehir Seçin --</option>';
+            document.getElementById('districtSelect').disabled = true;
             document.getElementById('cityDateStart').value = '';
             document.getElementById('cityDateEnd').value = '';
             document.getElementById('cityAnalysisContainer').style.display = 'none';
-            console.log('🗑️ Şehir filtreleri temizlendi');
+            console.log('🗑️ Şehir ve ilçe filtreleri temizlendi');
+        }
+        
+        // Şehir seçildiğinde ilçeleri doldur
+        function handleCityChange() {
+            const selectedCity = document.getElementById('citySelect').value;
+            const districtSelect = document.getElementById('districtSelect');
+            
+            console.log('📍 Şehir değişti:', selectedCity);
+            
+            if (!selectedCity) {
+                // Şehir seçimi iptal edildi
+                districtSelect.innerHTML = '<option value="">-- Önce Şehir Seçin --</option>';
+                districtSelect.disabled = true;
+                analyzeCityPerformance();
+                return;
+            }
+            
+            // Seçilen şehirdeki ilçeleri bul
+            const districts = new Set();
+            allData.forEach(item => {
+                if (item.city === selectedCity && item.partner_city) {
+                    districts.add(item.partner_city);
+                }
+            });
+            
+            const sortedDistricts = Array.from(districts).sort();
+            console.log('🏘️ Bulunan ilçeler:', sortedDistricts.length);
+            
+            // İlçe dropdown'ını doldur
+            districtSelect.innerHTML = '<option value="">-- Tüm İlçeler --</option>';
+            sortedDistricts.forEach(district => {
+                const option = document.createElement('option');
+                option.value = district;
+                option.textContent = district;
+                districtSelect.appendChild(option);
+            });
+            
+            districtSelect.disabled = sortedDistricts.length === 0;
+            
+            // Analizi çalıştır
+            analyzeCityPerformance();
         }
         
         function analyzeCityPerformance() {
             const selectedCity = document.getElementById('citySelect').value;
+            const selectedDistrict = document.getElementById('districtSelect').value;
             const dateStart = document.getElementById('cityDateStart').value;
             const dateEnd = document.getElementById('cityDateEnd').value;
             
@@ -12004,11 +12056,15 @@
                 return;
             }
             
-            console.log('🌍 Şehir analizi:', selectedCity, 'Tarih:', dateStart, '-', dateEnd);
+            console.log('🌍 Şehir analizi:', selectedCity, selectedDistrict ? `/ ${selectedDistrict}` : '', 'Tarih:', dateStart, '-', dateEnd);
             
-            // Şehir verilerini filtrele (şehir + tarih)
+            // Şehir verilerini filtrele (şehir + ilçe + tarih)
             const cityData = allData.filter(item => {
+                // Şehir kontrolü
                 if (item.city !== selectedCity) return false;
+                
+                // İlçe kontrolü (seçiliyse)
+                if (selectedDistrict && item.partner_city !== selectedDistrict) return false;
                 
                 // Tarih filtresi
                 if (dateStart && item.date < dateStart) return false;

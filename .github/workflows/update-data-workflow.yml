@@ -939,11 +939,15 @@ jobs:
                                             cat_info = cat_data
                                             break
                                     
+                                    # Partner'dan ilçe bilgisini çek (city alanı)
+                                    partner_city_district = partner_city_map.get(partner_id, 'Bilinmeyen')
+                                    
                                     details.append({
                                         'date': date_str,
                                         'create_hour': create_hour,
                                         'day_of_week': create_day_of_week,
                                         'partner': partner_name,
+                                        'partner_city': partner_city_district,  # İlçe bilgisi (res.partner.city)
                                         'product': product_name,
                                         'brand': product_brand_map.get(product_id, 'Bilinmeyen'),
                                         'category_1': cat_info.get('level1', ''),
@@ -952,7 +956,7 @@ jobs:
                                         'category_4': cat_info.get('level4', ''),
                                         'sales_person': user_name,
                                         'store': store_name,
-                                        'city': city,
+                                        'city': city,  # Şehir bilgisi (state_id - İl)
                                         'quantity': qty,  # Negatif olabilir (iade)
                                         'usd_amount': usd_amount,  # Negatif olabilir (iade)
                                         'is_refund': is_refund,  # İade mi değil mi?
