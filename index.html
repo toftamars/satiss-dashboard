@@ -14056,14 +14056,35 @@
                 });
             }
             
+            // Zayıf zaman dilimi analizi (Gece hariç - mağazalar kapalı)
             if (timeSlots.length > 1) {
-                const weakSlot = timeSlots[timeSlots.length - 1];
-                const weakPercent = ((weakSlot.value / profile.totalSales) * 100).toFixed(1);
-                insights.recommendations.push({
-                    icon: '🎯',
-                    title: 'Zayıf Zaman Dilimini Güçlendir',
-                    description: `${weakSlot.name} sadece %${weakPercent} ciro yapıyor. Bu saatlerde aktivite artırılmalı.`
-                });
+                // Çalışma saatleri içindeki zaman dilimlerini filtrele (Gece hariç)
+                const workingHoursSlots = timeSlots.filter(slot => !slot.name.includes('Gece'));
+                
+                if (workingHoursSlots.length > 1) {
+                    const weakSlot = workingHoursSlots[workingHoursSlots.length - 1];
+                    const weakPercent = ((weakSlot.value / profile.totalSales) * 100).toFixed(1);
+                    
+                    // Sadece %20'nin altındaki zaman dilimlerini öner
+                    if (parseFloat(weakPercent) < 20) {
+                        let recommendation = `${weakSlot.name} sadece %${weakPercent} ciro yapıyor.`;
+                        
+                        // Zaman dilimine göre özel öneriler
+                        if (weakSlot.name.includes('Sabah')) {
+                            recommendation += ' Sabah müşteri akışını artırmak için açılış kampanyaları ve sosyal medya duyuruları yapılmalı.';
+                        } else if (weakSlot.name.includes('Öğlen')) {
+                            recommendation += ' Öğle saatlerinde özel indirimler ve hızlı servis sunulmalı.';
+                        } else if (weakSlot.name.includes('Akşam')) {
+                            recommendation += ' Akşam saatlerinde (17:00-20:00/22:00) özel etkinlikler ve workshop\'lar düzenlenebilir.';
+                        }
+                        
+                        insights.recommendations.push({
+                            icon: '🎯',
+                            title: 'Zayıf Zaman Dilimini Güçlendir',
+                            description: recommendation
+                        });
+                    }
+                }
             }
             
             if (bottomBrands.length > 0) {
