@@ -1378,6 +1378,16 @@
                         <p id="dashTotalSalespeople" style="color: white; font-size: 1.6em; font-weight: bold; margin: 10px 0;">0</p>
                         <small style="opacity: 0.9; font-size: 0.85em;">Aktif temsilci sayısı</small>
                     </div>
+                    <div class="summary-card" style="background: linear-gradient(135deg, #ffa751 0%, #ffe259 100%); color: white; padding: 20px;">
+                        <h3 style="font-size: 0.95em; margin-bottom: 10px;">📅 Günlük Ortalama</h3>
+                        <p id="dashDailyAverage" style="color: white; font-size: 1.6em; font-weight: bold; margin: 10px 0;">$0</p>
+                        <small style="opacity: 0.9; font-size: 0.85em;">Günlük ortalama satış</small>
+                    </div>
+                    <div class="summary-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: white; padding: 20px;">
+                        <h3 style="font-size: 0.95em; margin-bottom: 10px;">🛒 Sepet Ortalaması</h3>
+                        <p id="dashBasketAverage" style="color: white; font-size: 1.6em; font-weight: bold; margin: 10px 0;">$0</p>
+                        <small style="opacity: 0.9; font-size: 0.85em;">Ortalama sepet değeri</small>
+                    </div>
                 </div>
 
                 <!-- Yıllık Karşılaştırma -->
@@ -2429,10 +2439,6 @@
                         <div class="chart-container">
                             <h3 style="text-align: center; margin-bottom: 20px;">📂 En Çok Satılan Kategoriler</h3>
                             <canvas id="cityCategoryChart"></canvas>
-                        </div>
-                        <div class="chart-container">
-                            <h3 style="text-align: center; margin-bottom: 20px;">📈 Aylık Satış Trendi</h3>
-                            <canvas id="cityMonthlyChart"></canvas>
                         </div>
                         <div class="chart-container">
                             <h3 style="text-align: center; margin-bottom: 20px;">📈 Aylık Performans Trendi (Yıl Karşılaştırmalı)</h3>
@@ -6033,6 +6039,12 @@
             const uniqueStores = new Set(allData.map(item => item.store).filter(Boolean)).size;
             const uniqueSalespeople = new Set(allData.map(item => item.sales_person).filter(Boolean)).size;
             
+            // Günlük Ortalama ve Sepet Ortalaması Hesaplama
+            const uniqueDates = new Set(allData.map(item => item.date ? item.date.split(' ')[0] : null).filter(Boolean)).size;
+            const uniqueOrders = new Set(allData.map(item => item.invoice_id).filter(Boolean)).size;
+            const dailyAverage = uniqueDates > 0 ? totalSales / uniqueDates : 0;
+            const basketAverage = uniqueOrders > 0 ? totalSales / uniqueOrders : 0;
+            
             // UI güncelle
             document.getElementById('dashTotalSales').textContent = '$' + totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('dashTotalQty').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 0});
@@ -6040,6 +6052,8 @@
             document.getElementById('dashTotalProducts').textContent = uniqueProducts.toLocaleString('tr-TR');
             document.getElementById('dashTotalStores').textContent = uniqueStores.toLocaleString('tr-TR');
             document.getElementById('dashTotalSalespeople').textContent = uniqueSalespeople.toLocaleString('tr-TR');
+            document.getElementById('dashDailyAverage').textContent = '$' + dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            document.getElementById('dashBasketAverage').textContent = '$' + basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             
             // Yıllık karşılaştırma
             renderDashYearlyChart();
@@ -12589,10 +12603,10 @@
             });
             const topBrands = Object.entries(brandData).sort((a, b) => b[1] - a[1]).slice(0, 3);
             
-            // Kategori analizi
+            // Kategori analizi (category_2 kullanıyoruz)
             const categoryData = {};
             data.forEach(item => {
-                const category = item.category_1 || 'Bilinmiyor';
+                const category = item.category_2 || 'Bilinmiyor';
                 if (!categoryData[category]) categoryData[category] = 0;
                 categoryData[category] += parseFloat(item.usd_amount || 0);
             });
