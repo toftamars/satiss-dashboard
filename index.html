@@ -1507,13 +1507,21 @@
                 <!-- Customer Search Section -->
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; margin: 30px 0;">
                     <h3 style="color: white; margin: 0 0 20px 0;">🔍 Müşteri Arama</h3>
-                    <div style="position: relative; max-width: 600px;">
-                        <input type="text" id="customerSearchInputMain" placeholder="Müşteri adı yazın... (örn: Ahmet Yılmaz)" 
-                               style="width: 100%; padding: 15px 60px 15px 15px; font-size: 1em; border: 2px solid white; border-radius: 10px; outline: none;"
-                               onkeyup="if(event.key==='Enter') searchCustomerProfileMain()">
-                        <button onclick="searchCustomerProfileMain()" 
-                                style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: white; color: #667eea; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">
-                            🔍 Ara
+                    <div style="display: flex; gap: 10px; max-width: 600px;">
+                        <div style="position: relative; flex: 1;">
+                            <input type="text" id="customerSearchInputMain" placeholder="Müşteri adı yazın... (örn: Ahmet Yılmaz)" 
+                                   style="width: 100%; padding: 15px 60px 15px 15px; font-size: 1em; border: 2px solid white; border-radius: 10px; outline: none;"
+                                   onkeyup="if(event.key==='Enter') searchCustomerProfileMain()">
+                            <button onclick="searchCustomerProfileMain()" 
+                                    style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: white; color: #667eea; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                                🔍 Ara
+                            </button>
+                        </div>
+                        <button onclick="clearCustomerSearchMain()" 
+                                style="background: rgba(255,255,255,0.2); border: 2px solid white; color: white; padding: 15px 20px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: all 0.3s;"
+                                onmouseover="this.style.background='rgba(255,255,255,0.3)'" 
+                                onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                            🗑️ Temizle
                         </button>
                     </div>
                     <p style="color: white; opacity: 0.9; margin-top: 10px; font-size: 0.9em;">
@@ -1579,9 +1587,11 @@
                     </div>
                 </div>
                 
-                <h3 style="margin: 30px 0 20px 0;">🏆 Top 20 Müşteri</h3>
-                <div class="customer-grid" id="topCustomersGrid">
-                    <!-- Dinamik olarak doldurulacak -->
+                <div id="topCustomersSection">
+                    <h3 style="margin: 30px 0 20px 0;">🏆 Top 30 Müşteri</h3>
+                    <div class="customer-grid" id="topCustomersGrid">
+                        <!-- Dinamik olarak doldurulacak -->
+                    </div>
                 </div>
                 
                 <!-- Customer Charts -->
@@ -4801,12 +4811,25 @@
                 let contentHtml = '';
                 
                 if (store.percentage >= 130) {
-                    // %130 hedefi aşıldı
+                    // %130 hedefi aşıldı - Gerçekleşen satışı göster
                     contentHtml = '<div style="text-align: center; margin-bottom: 20px;">';
                     contentHtml += '<div style="font-size: 3em; font-weight: bold; margin-bottom: 5px;">' + store.percentage.toFixed(1) + '%</div>';
                     contentHtml += '<div style="font-size: 0.9em; opacity: 0.9;">Gerçekleşme</div>';
                     contentHtml += '</div>';
                     contentHtml += '<div style="text-align: center; font-size: 1.8em; margin: 20px 0;">🏆 Tüm Hedefler Tamamlandı!</div>';
+                    contentHtml += '<div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; margin-top: 15px;">';
+                    contentHtml += '<div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">📊 Gerçekleşen</div>';
+                    contentHtml += '<div style="font-size: 1.5em; font-weight: bold;">$' + store.achieved.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</div>';
+                    contentHtml += '</div>';
+                    contentHtml += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; font-size: 0.9em;">';
+                    contentHtml += '<div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px;">';
+                    contentHtml += '<div style="opacity: 0.9; margin-bottom: 3px;">🎯 %100 Hedef</div>';
+                    contentHtml += '<div style="font-weight: bold;">$' + store.target.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + '</div>';
+                    contentHtml += '</div>';
+                    contentHtml += '<div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px;">';
+                    contentHtml += '<div style="opacity: 0.9; margin-bottom: 3px;">🏆 %130 Hedef</div>';
+                    contentHtml += '<div style="font-weight: bold;">$' + (store.target * 1.3).toLocaleString('tr-TR', {minimumFractionDigits: 2}) + '</div>';
+                    contentHtml += '</div></div>';
                 } else if (store.percentage >= 100) {
                     // %100 hedef gerçekleşti, %130 için bilgileri göster
                     const remaining130 = (store.target * 1.3) - store.achieved;
@@ -8362,8 +8385,9 @@
                 return;
             }
             
-            // Sonuçları göster
+            // Sonuçları göster ve Top 30'u gizle
             document.getElementById('customerProfileMainContainer').style.display = 'block';
+            document.getElementById('topCustomersSection').style.display = 'none';
             
             // Müşteri bilgilerini hesapla
             const customerName = customerData[0].partner;
