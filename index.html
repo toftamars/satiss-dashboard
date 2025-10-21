@@ -12525,18 +12525,13 @@
                 return;
             }
             
-            // Seçilen şehirdeki ham ilçeleri topla (city alanından - res.partner.city)
+            // Seçilen şehirdeki ham ilçeleri topla
             const rawDistricts = new Set();
             allData.forEach(item => {
-                // item.city veya item.partner_city = İL bilgisi (state_id)
-                // item.city (asıl res.partner.city) = İLÇE/SEMT bilgisi
-                // Şehir eşleşmesi: partner_city (İL) kullan
-                // İlçe verisi: city alanından al (bu Odoo'da res.partner.city)
-                if ((item.partner_city === selectedCity || item.city === selectedCity) && item.city) {
-                    // Sadece İL değilse ekle (İlçe/Semt olmalı)
-                    if (item.city !== selectedCity && item.city.length > 0) {
-                        rawDistricts.add(item.city);
-                    }
+                // partner_city = İL (state_id) - Şehir kontrolü için
+                // city = İLÇE/SEMT (res.partner.city) - İlçe verisi için
+                if (item.partner_city === selectedCity && item.city && item.city.length > 0) {
+                    rawDistricts.add(item.city);
                 }
             });
             
@@ -12590,7 +12585,7 @@
             if (selectedDistrict) {
                 allData.forEach(item => {
                     // partner_city = İL, city = İLÇE
-                    if ((item.partner_city === selectedCity || item.city === selectedCity) && item.city) {
+                    if (item.partner_city === selectedCity && item.city) {
                         allDistrictsInCity.push(item.city);
                     }
                 });
@@ -12599,7 +12594,7 @@
             // Şehir verilerini filtrele (şehir + ilçe + tarih) - NORMALİZE EDİLMİŞ
             const cityData = allData.filter(item => {
                 // Şehir kontrolü (partner_city = İL)
-                if (item.partner_city !== selectedCity && item.city !== selectedCity) return false;
+                if (item.partner_city !== selectedCity) return false;
                 
                 // İlçe kontrolü (seçiliyse) - NORMALİZE ET (city = İLÇE)
                 if (selectedDistrict && item.city) {
@@ -14981,6 +14976,11 @@
         });
         
     </script>
+    
+    <!-- Developer Credit -->
+    <div style="position: fixed; bottom: 10px; right: 15px; font-size: 11px; color: #999; z-index: 9999; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: rgba(255,255,255,0.9); padding: 5px 12px; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); backdrop-filter: blur(5px);">
+        💻 Developed by <strong style="color: #667eea;">Tofta</strong>
+    </div>
 </body>
 </html>
 
