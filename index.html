@@ -2425,6 +2425,15 @@
                             <h3 style="font-size: 1em; margin-bottom: 10px;">📊 Ortalama Sepet</h3>
                             <p id="cityAvgBasket" style="font-size: 1.8em; font-weight: bold;">$0</p>
                         </div>
+                        <div class="summary-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                            <h3 style="font-size: 1em; margin-bottom: 10px; color: white;">🏙️ Nüfus (2024)</h3>
+                            <p id="cityPopulation" style="font-size: 1.8em; font-weight: bold; color: white;">-</p>
+                        </div>
+                        <div class="summary-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                            <h3 style="font-size: 1em; margin-bottom: 10px; color: white;">👤 Kişi Başı Satış</h3>
+                            <p id="cityPerCapitaSales" style="font-size: 1.8em; font-weight: bold; color: white;">$0</p>
+                            <small style="opacity: 0.9; font-size: 0.85em;">Toplam Satış / Nüfus</small>
+                        </div>
                         <div class="summary-card" style="background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%); color: white; grid-column: span 1;">
                             <h3 style="font-size: 0.95em; margin-bottom: 10px;">👤 Top 5 Temsilci</h3>
                             <div id="cityTopSalespersons" style="color: white; font-size: 0.85em; line-height: 1.6; max-height: 120px; overflow-y: auto;"></div>
@@ -12626,6 +12635,39 @@
             analyzeCityPerformance();
         }
         
+        // Türkiye Şehir Nüfusları (2024 TÜİK - Milyonlarca)
+        const cityPopulations = {
+            'İstanbul': 15900000, 'İstanbul (TR)': 15900000,
+            'Ankara': 5800000, 'Ankara (TR)': 5800000,
+            'İzmir': 4400000, 'İzmir (TR)': 4400000,
+            'Bursa': 3100000, 'Bursa (TR)': 3100000,
+            'Antalya': 2600000, 'Antalya (TR)': 2600000,
+            'Adana': 2300000, 'Adana (TR)': 2300000,
+            'Konya': 2300000, 'Konya (TR)': 2300000,
+            'Gaziantep': 2100000, 'Gaziantep (TR)': 2100000,
+            'Şanlıurfa': 2100000, 'Şanlıurfa (TR)': 2100000,
+            'Kocaeli': 2000000, 'Kocaeli (TR)': 2000000,
+            'Mersin': 1900000, 'Mersin (TR)': 1900000,
+            'Diyarbakır': 1800000, 'Diyarbakır (TR)': 1800000,
+            'Hatay': 1700000, 'Hatay (TR)': 1700000,
+            'Manisa': 1500000, 'Manisa (TR)': 1500000,
+            'Kayseri': 1400000, 'Kayseri (TR)': 1400000,
+            'Samsun': 1400000, 'Samsun (TR)': 1400000,
+            'Balıkesir': 1200000, 'Balıkesir (TR)': 1200000,
+            'Mardin': 850000, 'Mardin (TR)': 850000,
+            'Van': 1100000, 'Van (TR)': 1100000,
+            'Aydın': 1100000, 'Aydın (TR)': 1100000,
+            'Denizli': 1000000, 'Denizli (TR)': 1000000,
+            'Sakarya': 1050000, 'Sakarya (TR)': 1050000,
+            'Tekirdağ': 1100000, 'Tekirdağ (TR)': 1100000,
+            'Muğla': 1000000, 'Muğla (TR)': 1000000,
+            'Eskişehir': 900000, 'Eskişehir (TR)': 900000,
+            'Malatya': 800000, 'Malatya (TR)': 800000,
+            'Trabzon': 800000, 'Trabzon (TR)': 800000,
+            'Elazığ': 600000, 'Elazığ (TR)': 600000,
+            'Erzurum': 750000, 'Erzurum (TR)': 750000
+        };
+        
         function analyzeCityPerformance() {
             const selectedCity = document.getElementById('citySelect').value;
             const selectedDistrict = document.getElementById('districtSelect').value;
@@ -12700,11 +12742,25 @@
             });
             const topStore = Object.entries(storeData).sort((a, b) => b[1] - a[1])[0];
             
+            // Nüfus ve kişi başı satış hesapla
+            const cityPopulation = cityPopulations[selectedCity] || 0;
+            const perCapitaSales = cityPopulation > 0 ? totalSales / cityPopulation : 0;
+            
             // UI güncelle
             document.getElementById('cityTotalSales').textContent = '$' + totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('cityTotalQty').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('cityCustomerCount').textContent = uniqueCustomers;
             document.getElementById('cityAvgBasket').textContent = '$' + avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            
+            // Nüfus ve kişi başı satış
+            if (cityPopulation > 0) {
+                const popInMillions = (cityPopulation / 1000000).toFixed(2);
+                document.getElementById('cityPopulation').textContent = popInMillions + 'M';
+                document.getElementById('cityPerCapitaSales').textContent = '$' + perCapitaSales.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            } else {
+                document.getElementById('cityPopulation').textContent = 'Veri Yok';
+                document.getElementById('cityPerCapitaSales').textContent = '-';
+            }
             
             // İlk 5 Temsilci
             const top5Salespersons = Object.entries(salespersonData).sort((a, b) => b[1] - a[1]).slice(0, 5);
