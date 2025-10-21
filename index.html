@@ -3306,6 +3306,47 @@
             
             console.log(`✅ Envanter tablosu oluşturuldu: ${displayData.length} kayıt`);
         }
+        
+        function filterInventoryTable() {
+            if (!inventoryData || inventoryData.length === 0) return;
+            
+            const searchTerm = document.getElementById('inventorySearch').value.toLowerCase();
+            
+            if (!searchTerm.trim()) {
+                // Arama boşsa ilk 100 kaydı göster
+                renderInventoryTable();
+                return;
+            }
+            
+            // Arama yap
+            const filtered = inventoryData.filter(item => {
+                return (
+                    (item.product && item.product.toLowerCase().includes(searchTerm)) ||
+                    (item.brand && item.brand.toLowerCase().includes(searchTerm)) ||
+                    (item.category && item.category.toLowerCase().includes(searchTerm)) ||
+                    (item.location && item.location.toLowerCase().includes(searchTerm))
+                );
+            });
+            
+            // Tabloyu güncelle
+            const tbody = document.getElementById('inventoryTableBody');
+            if (!tbody) return;
+            
+            const displayData = filtered.slice(0, 100); // İlk 100 sonuç
+            
+            tbody.innerHTML = displayData.map(item => `
+                <tr>
+                    <td>${item.product || '-'}</td>
+                    <td>${item.brand || '-'}</td>
+                    <td>${item.category || '-'}</td>
+                    <td>${item.location || '-'}</td>
+                    <td style="text-align: right;">${(parseFloat(item.quantity) || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                    <td style="text-align: right;">$${(parseFloat(item.value) || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                </tr>
+            `).join('');
+            
+            console.log(`🔍 Arama sonucu: ${filtered.length} kayıt bulundu, ${displayData.length} gösteriliyor`);
+        }
 
         function populateFilters() {
             const brands = new Set();
