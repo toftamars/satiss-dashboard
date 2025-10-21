@@ -1365,15 +1365,14 @@ jobs:
             all_years=$(echo -e "$existing_years\n$new_years" | sort -u | grep -v '^$')
             echo "📅 Metadata'ya eklenecek tüm yıllar: $all_years"
             
-            # Metadata'yı güncelle (Python ile)
-            python3 << 'METADATA_EOF'
-import json
-import os
+            # Metadata'yı güncelle (Python ile - tek satır)
+            export ALL_YEARS="$all_years"
+            python3 -c "
+import json, os
+from datetime import datetime
 
-all_years_str = os.popen('echo "$all_years"').read().strip()
-all_years = sorted([y.strip() for y in all_years_str.split('\n') if y.strip()])
-
-print(f"🔧 Metadata güncelleniyor: {all_years}")
+years = sorted([y.strip() for y in os.environ.get('ALL_YEARS', '').split('\n') if y.strip()])
+print(f'🔧 Metadata güncelleniyor: {years}')
 
 try:
     with open('data-metadata.json', 'r') as f:
@@ -1381,11 +1380,9 @@ try:
 except:
     metadata = {}
 
-metadata['years'] = all_years
-metadata['files'] = [f'data-{year}.json.gz' for year in all_years]
+metadata['years'] = years
+metadata['files'] = [f'data-{year}.json.gz' for year in years]
 metadata['total_records'] = metadata.get('total_records', 0)
-
-from datetime import datetime
 metadata['last_update'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 metadata['mode'] = 'fast'
 metadata['note'] = 'Fast mode: 2024-2025 güncellendi, eski yıllar (2020-2023) korundu'
@@ -1393,8 +1390,8 @@ metadata['note'] = 'Fast mode: 2024-2025 güncellendi, eski yıllar (2020-2023) 
 with open('data-metadata.json', 'w') as f:
     json.dump(metadata, f, indent=2)
 
-print(f"✅ Metadata güncellendi: {len(all_years)} yıl")
-METADATA_EOF
+print(f'✅ Metadata güncellendi: {len(years)} yıl')
+"
             
             # Metadata'yı ekle
             if [[ -f "data-metadata.json" ]]; then
