@@ -1110,6 +1110,128 @@ jobs:
                             print(f"✅ {len(created_files)} dosya oluşturuldu!")
                             print(f"✅ data-metadata.json oluşturuldu!")
                             
+                            # ENVANTER VERİSİ ÇEK (YENİ!)
+                            print("\n" + "=" * 60)
+                            print("📦 ENVANTER VERİSİ ÇEKİLİYOR")
+                            print("=" * 60)
+                            
+                            try:
+                                # PerakendeStok filtresini bul
+                                print("🔍 'PerakendeStok' filtresi aranıyor...")
+                                
+                                inventory_filters = models.execute_kw(
+                                    db, uid_xmlrpc, password,
+                                    'ir.filters', 'search_read',
+                                    [[
+                                        ('user_id', '=', uid_xmlrpc),
+                                        ('name', '=', 'PerakendeStok')
+                                    ]],
+                                    {'fields': ['name', 'domain', 'model_id']}
+                                )
+                                
+                                if inventory_filters and len(inventory_filters) > 0:
+                                    inv_filter = inventory_filters[0]
+                                    print(f"✅ PerakendeStok filtresi bulundu!")
+                                    print(f"📋 Model: {inv_filter.get('model_id')}")
+                                    print(f"📋 Domain: {inv_filter['domain']}")
+                                    
+                                    # Domain'i parse et
+                                    inv_domain = ast.literal_eval(inv_filter['domain']) if inv_filter['domain'] else []
+                                    
+                                    # stock.quant'tan envanter verilerini çek
+                                    print("📦 Envanter verileri çekiliyor...")
+                                    
+                                    inventory_data = models.execute_kw(
+                                        db, uid_xmlrpc, password,
+                                        'stock.quant', 'search_read',
+                                        [inv_domain],
+                                        {
+                                            'fields': [
+                                                'id', 'product_id', 'location_id',
+                                                'quantity', 'reserved_quantity',
+                                                'available_quantity', 'lot_id',
+                                                'package_id', 'owner_id'
+                                            ]
+                                        }
+                                    )
+                                    
+                                    print(f"✅ {len(inventory_data)} envanter kaydı çekildi!")
+                                    
+                                    # Ürün detaylarını çek
+                                    product_ids = list(set([item['product_id'][0] for item in inventory_data if item.get('product_id')]))
+                                    print(f"📦 {len(product_ids)} ürün detayı çekiliyor...")
+                                    
+                                    products = models.execute_kw(
+                                        db, uid_xmlrpc, password,
+                                        'product.product', 'search_read',
+                                        [[('id', 'in', product_ids)]],
+                                        {
+                                            'fields': [
+                                                'id', 'name', 'default_code', 
+                                                'categ_id', 'product_brand_id',
+                                                'list_price', 'standard_price'
+                                            ]
+                                        }
+                                    )
+                                    
+                                    product_map = {p['id']: p for p in products}
+                                    
+                                    # Envanter verisini işle
+                                    processed_inventory = []
+                                    for item in inventory_data:
+                                        product_id = item['product_id'][0] if item.get('product_id') else 0
+                                        product_info = product_map.get(product_id, {})
+                                        
+                                        location = item.get('location_id')
+                                        location_name = location[1] if isinstance(location, list) and len(location) > 1 else 'Bilinmeyen'
+                                        
+                                        product_name = item['product_id'][1] if isinstance(item.get('product_id'), list) and len(item['product_id']) > 1 else 'Bilinmeyen'
+                                        
+                                        categ = product_info.get('categ_id')
+                                        category = categ[1] if isinstance(categ, list) and len(categ) > 1 else 'Diğer'
+                                        
+                                        brand = product_info.get('product_brand_id')
+                                        brand_name = brand[1] if isinstance(brand, list) and len(brand) > 1 else 'Bilinmeyen'
+                                        
+                                        processed_inventory.append({
+                                            'product_code': product_info.get('default_code', ''),
+                                            'product_name': product_name,
+                                            'category': category,
+                                            'brand': brand_name,
+                                            'location': location_name,
+                                            'quantity': float(item.get('quantity', 0)),
+                                            'reserved_quantity': float(item.get('reserved_quantity', 0)),
+                                            'available_quantity': float(item.get('available_quantity', 0)),
+                                            'list_price': float(product_info.get('list_price', 0)),
+                                            'cost_price': float(product_info.get('standard_price', 0)),
+                                            'total_value': float(item.get('quantity', 0)) * float(product_info.get('standard_price', 0))
+                                        })
+                                    
+                                    # JSON dosyası oluştur
+                                    inventory_json = {
+                                        'inventory': processed_inventory,
+                                        'total_records': len(processed_inventory),
+                                        'total_quantity': sum(item['quantity'] for item in processed_inventory),
+                                        'total_value': sum(item['total_value'] for item in processed_inventory),
+                                        'last_update': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                                    }
+                                    
+                                    # Sıkıştırılmış dosya olarak kaydet
+                                    with gzip.open('inventory.json.gz', 'wt', encoding='utf-8') as f:
+                                        json.dump(inventory_json, f, ensure_ascii=False)
+                                    
+                                    file_size_mb = os.path.getsize('inventory.json.gz') / (1024 * 1024)
+                                    print(f"✅ inventory.json.gz oluşturuldu: {file_size_mb:.2f} MB")
+                                    print(f"📊 Toplam miktar: {inventory_json['total_quantity']:,.0f}")
+                                    print(f"💰 Toplam değer: ${inventory_json['total_value']:,.2f}")
+                                    
+                                else:
+                                    print("⚠️ PerakendeStok filtresi bulunamadı, envanter atlanıyor...")
+                                    
+                            except Exception as e:
+                                print(f"⚠️ Envanter çekme hatası: {e}")
+                                print("⚠️ Envanter verisi atlanıyor, fatura verileri ile devam ediliyor...")
+                            
                             print("\n" + "=" * 60)
                             print("🎉 TÜM VERİLER BAŞARIYLA ÇEKİLDİ VE İŞLENDİ!")
                             print("=" * 60)
@@ -1195,11 +1317,17 @@ jobs:
             git add data-*.json.gz data-metadata.json .gitattributes
           fi
           
-          # Tüm data dosyalarını ekle
+          # Tüm data dosyalarını ekle (fatura + envanter)
           git add data-*.json.gz data-metadata.json
           
+          # Envanter dosyası varsa ekle
+          if [[ -f "inventory.json.gz" ]]; then
+            echo "📦 Envanter dosyası ekleniyor..."
+            git add inventory.json.gz
+          fi
+          
           if [[ -n $(git status -s) ]]; then
-            git commit -m "Veriler güncellendi - $(date +'%Y-%m-%d %H:%M')" || echo "Zaten commit edilmiş"
+            git commit -m "Veriler güncellendi (Fatura + Envanter) - $(date +'%Y-%m-%d %H:%M')" || echo "Zaten commit edilmiş"
             
             # Push URL'ini PAT ile güncelle
             git remote set-url origin https://x-access-token:${PAT_TOKEN}@github.com/toftamars/satiss-dashboard.git
