@@ -12386,7 +12386,7 @@
             
             const cities = new Set();
             allData.forEach(item => {
-                if (item.city) cities.add(item.city);
+                if (item.partner_city) cities.add(item.partner_city);  // İL bilgisi (state_id)
             });
             
             const select = document.getElementById('citySelect');
