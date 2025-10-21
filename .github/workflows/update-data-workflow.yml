@@ -1,11 +1,9 @@
 name: Odoo Veri Güncelleme
 
 on:
-  # push:
-  #   branches: [ main ]  # Otomatik çalışma kapalı
-  # schedule:
-  #   - cron: '0 23 * * *'  # Otomatik çalışma kapatıldı
-  workflow_dispatch:  # SADECE MANUEL ÇALIŞTIRMA - Kullanıcı kontrol eder
+  schedule:
+    - cron: '0 2 * * *'  # Her gece saat 05:00 İstanbul saati (UTC 02:00)
+  workflow_dispatch:  # Manuel çalıştırma da hala mümkün
     inputs:
       data_mode:
         description: 'Veri Çekme Modu'
