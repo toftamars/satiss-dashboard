@@ -179,27 +179,56 @@
 
         <!-- 2FA Modal -->
         <div id="twoFactorModal" style="display: none;">
-            <p>İki faktörlü doğrulama kodunuzu girin</p>
-            
-            <div class="input-group">
-                <label>🔐 Doğrulama Kodu</label>
-                <input 
-                    type="text" 
-                    id="twoFactorCode" 
-                    class="form-input" 
-                    placeholder="6 haneli kod"
-                    maxlength="6"
-                    style="text-align: center; font-size: 24px; letter-spacing: 8px;"
-                >
+            <!-- QR Code Setup (First Time) -->
+            <div id="qrSetupScreen" style="display: none;">
+                <h3 style="margin-bottom: 15px; color: #667eea;">📱 Google Authenticator Kurulumu</h3>
+                <p style="font-size: 13px; color: #666; margin-bottom: 15px;">
+                    Google Authenticator uygulamasını açın ve bu QR kodu tarayın:
+                </p>
+                
+                <div id="qrcodeContainer" style="display: flex; justify-content: center; margin: 20px 0; padding: 20px; background: white; border-radius: 10px;">
+                    <!-- QR Code will be generated here -->
+                </div>
+                
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <p style="font-size: 12px; margin: 0 0 8px 0; color: #666;"><strong>Manuel Giriş Kodu:</strong></p>
+                    <p id="manualSecret" style="font-size: 14px; font-family: monospace; letter-spacing: 2px; margin: 0; color: #333; font-weight: bold;"></p>
+                </div>
+                
+                <button class="btn-login" onclick="showCodeInput()" style="margin-top: 15px;">
+                    ✅ Kurulumu Tamamladım
+                </button>
             </div>
-
-            <button class="btn-login" onclick="verify2FA()" style="margin-bottom: 10px;">
-                ✅ Doğrula
-            </button>
             
-            <button onclick="cancel2FA()" style="width: 100%; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">
-                ❌ İptal
-            </button>
+            <!-- Code Input Screen -->
+            <div id="codeInputScreen" style="display: none;">
+                <p>Google Authenticator kodunuzu girin</p>
+                <p style="font-size: 12px; color: #999; margin-top: 5px;">Kod 30 saniyede bir değişir</p>
+                
+                <div class="input-group">
+                    <label>🔐 Doğrulama Kodu</label>
+                    <input 
+                        type="text" 
+                        id="twoFactorCode" 
+                        class="form-input" 
+                        placeholder="6 haneli kod"
+                        maxlength="6"
+                        style="text-align: center; font-size: 24px; letter-spacing: 8px;"
+                    >
+                </div>
+
+                <button class="btn-login" onclick="verify2FA()" style="margin-bottom: 10px;">
+                    ✅ Doğrula
+                </button>
+                
+                <button onclick="showQRAgain()" style="width: 100%; padding: 10px; background: #ffc107; color: #333; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; margin-bottom: 10px;">
+                    🔄 QR Kodu Tekrar Göster
+                </button>
+                
+                <button onclick="cancel2FA()" style="width: 100%; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px;">
+                    ❌ İptal
+                </button>
+            </div>
         </div>
         
         <div class="footer">
@@ -209,46 +238,52 @@
 
     <!-- CryptoJS for encryption -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <!-- TOTP Library (Google Authenticator) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/otpauth/9.1.4/otpauth.umd.min.js"></script>
 
     <script>
-        console.log('🚀 Giriş sayfası yüklendi - v2.0 (2FA Aktif)');
+        console.log('🚀 Giriş sayfası yüklendi - v3.0 (Google Authenticator TOTP)');
         
-        // Kullanıcı veritabanı + 2FA Kodları
+        // Kullanıcı veritabanı + TOTP Secret Keys (Google Authenticator)
         const USERS = {
             'anilemre': {
                 password: 'Bjk1903*',
                 name: 'Anil Emre',
-                twoFactorCode: '123456'
+                totpSecret: 'JBSWY3DPEHPK3PXP' // Google Authenticator secret
             },
             'alisungurlu': {
                 password: 'Bjk1903*',
                 name: 'Ali Sungurlu',
-                twoFactorCode: '234567'
+                totpSecret: 'KRSXG5CTMVRXEZLU'
             },
             'furkan': {
                 password: 'Bjk1903*',
                 name: 'Furkan',
-                twoFactorCode: '345678'
+                totpSecret: 'MF2WI5DJMQRW2ZLU'
             },
             'tofta': {
                 password: 'Bjk1903*',
                 name: 'Tofta',
-                twoFactorCode: '456789'
+                totpSecret: 'NB4XE4DPNFZW45DF'
             },
             'gokhanisilay': {
                 password: 'Bjk1903*',
                 name: 'Gokhan Isilay',
-                twoFactorCode: '567890'
+                totpSecret: 'ORSXG5DJNZ4XQ2LN'
             },
             'akasya': {
                 password: 'Bjk1903*',
                 name: 'Akasya',
-                twoFactorCode: '678901'
+                totpSecret: 'PJRXE4TPNVZW65DF'
             },
             'hakanguler': {
                 password: 'Bjk1903*',
                 name: 'Hakan Guler',
-                twoFactorCode: '789012'
+                totpSecret: 'QK5WY3DPOVXW25LN'
             }
         };
         
@@ -318,6 +353,87 @@
             if (e.key === 'Enter') verify2FA();
         });
 
+        // TOTP Doğrulama (Google Authenticator)
+        function verifyTOTP(username, token) {
+            try {
+                const secret = USERS[username].totpSecret;
+                const totp = new OTPAuth.TOTP({
+                    issuer: 'Zuhal Müzik',
+                    label: username,
+                    algorithm: 'SHA1',
+                    digits: 6,
+                    period: 30,
+                    secret: secret
+                });
+                
+                // Token'ı doğrula (±1 zaman penceresi = 90 saniye tolerance)
+                const delta = totp.validate({ token: token, window: 1 });
+                
+                if (delta !== null) {
+                    console.log('✅ TOTP kodu doğru (delta:', delta, ')');
+                    return true;
+                } else {
+                    console.log('❌ TOTP kodu yanlış veya süresi dolmuş');
+                    return false;
+                }
+            } catch (error) {
+                console.error('❌ TOTP doğrulama hatası:', error);
+                return false;
+            }
+        }
+        
+        // QR Kod oluştur
+        function generateQRCode(username) {
+            const secret = USERS[username].totpSecret;
+            const totp = new OTPAuth.TOTP({
+                issuer: 'Zuhal Müzik',
+                label: username,
+                algorithm: 'SHA1',
+                digits: 6,
+                period: 30,
+                secret: secret
+            });
+            
+            const otpauthURL = totp.toString();
+            
+            // QR kod container'ı temizle
+            const qrcodeContainer = document.getElementById('qrcodeContainer');
+            qrcodeContainer.innerHTML = '';
+            
+            // QR kod oluştur
+            new QRCode(qrcodeContainer, {
+                text: otpauthURL,
+                width: 200,
+                height: 200
+            });
+            
+            // Manuel secret göster
+            document.getElementById('manualSecret').textContent = secret;
+            
+            console.log('📱 QR Kod oluşturuldu:', username);
+            console.log('🔑 Secret:', secret);
+        }
+        
+        // QR ekranını göster
+        function showQRScreen() {
+            document.getElementById('qrSetupScreen').style.display = 'block';
+            document.getElementById('codeInputScreen').style.display = 'none';
+            generateQRCode(pendingUsername);
+        }
+        
+        // Kod giriş ekranını göster
+        function showCodeInput() {
+            document.getElementById('qrSetupScreen').style.display = 'none';
+            document.getElementById('codeInputScreen').style.display = 'block';
+            document.getElementById('twoFactorCode').value = '';
+            document.getElementById('twoFactorCode').focus();
+        }
+        
+        // QR'ı tekrar göster
+        function showQRAgain() {
+            showQRScreen();
+        }
+        
         // 2FA doğrulama fonksiyonu
         function verify2FA() {
             const code = document.getElementById('twoFactorCode').value.trim();
@@ -328,14 +444,18 @@
                 return;
             }
             
-            const correctCode = USERS[pendingUsername].twoFactorCode;
+            if (code.length !== 6 || isNaN(code)) {
+                alert('❌ Lütfen 6 haneli kod girin!');
+                return;
+            }
             
-            if (code === correctCode) {
-                console.log('✅ 2FA kodu doğru - Giriş başarılı');
+            // TOTP ile doğrula
+            if (verifyTOTP(pendingUsername, code)) {
+                console.log('✅ Google Authenticator kodu doğru - Giriş başarılı');
                 createSession(pendingUsername);
             } else {
-                console.log('❌ 2FA kodu yanlış');
-                alert('❌ Doğrulama kodu yanlış!');
+                console.log('❌ Google Authenticator kodu yanlış');
+                alert('❌ Doğrulama kodu yanlış veya süresi dolmuş!\n\nLütfen yeni kodu deneyin.');
                 document.getElementById('twoFactorCode').value = '';
                 document.getElementById('twoFactorCode').focus();
             }
@@ -374,13 +494,15 @@
                 return;
             }
 
-            console.log('✅ Kullanıcı adı ve şifre doğru - 2FA gösteriliyor');
+            console.log('✅ Kullanıcı adı ve şifre doğru - Google Authenticator gösteriliyor');
             
             // Username'i sakla ve 2FA modalını göster
             pendingUsername = username;
             document.getElementById('loginForm').style.display = 'none';
             document.getElementById('twoFactorModal').style.display = 'block';
-            document.getElementById('twoFactorCode').focus();
+            
+            // QR ekranını göster (ilk giriş için)
+            showQRScreen();
         }
 
         // Global password change function (for console use)
