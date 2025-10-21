@@ -1285,6 +1285,22 @@
             </div>
         </div>
 
+        <!-- Loading Spinner for Channel Filter -->
+        <div id="channelLoadingSpinner" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center;">
+            <div style="text-align: center;">
+                <div style="width: 80px; height: 80px; border: 8px solid rgba(255,255,255,0.2); border-top: 8px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+                <div style="color: white; font-size: 1.3em; font-weight: bold;" id="channelLoadingText">🔄 Filtreleniyor...</div>
+                <div style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-top: 10px;">Lütfen bekleyin</div>
+            </div>
+        </div>
+
+        <style>
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
+
         <div class="info-box">
             <div class="info-card">
                 <h3>📊 Veri Durumu</h3>
@@ -2773,12 +2789,36 @@
             console.log('📊 activeChannels:', activeChannels);
             console.log('📊 baseData uzunluk:', baseData.length);
             
-            // Tümü seçiliyse tüm veriyi kullan
-            if (activeChannels.all) {
-                allData = [...baseData];
-                console.log('✅ Tümü seçili, allData uzunluk:', allData.length);
-                document.getElementById('channelFilterInfo').textContent = '📊 Aktif: Tüm Kanallar (19)';
-            } else {
+            // Spinner'ı göster
+            const spinner = document.getElementById('channelLoadingSpinner');
+            const loadingText = document.getElementById('channelLoadingText');
+            spinner.style.display = 'flex';
+            
+            // Hangi kanal seçiliyse onu göster
+            const channelNames = {
+                retail: '🏪 Perakende',
+                wholesale: '📦 Toptan Satış',
+                online: '🌐 Online Satış',
+                corporate: '🏢 Kurumsal Satış',
+                central: '🏛️ Merkezi Satış'
+            };
+            
+            let activeChannelName = 'Tüm Kanallar';
+            if (!activeChannels.all) {
+                const active = Object.keys(activeChannels).filter(key => activeChannels[key] && key !== 'all');
+                activeChannelName = active.map(key => channelNames[key]).join(' + ');
+            }
+            
+            loadingText.textContent = `🔄 ${activeChannelName} verileri yükleniyor...`;
+            
+            // Filtrelemeyi setTimeout ile geciktir - UI'ın güncellenmesi için
+            setTimeout(() => {
+                // Tümü seçiliyse tüm veriyi kullan
+                if (activeChannels.all) {
+                    allData = [...baseData];
+                    console.log('✅ Tümü seçili, allData uzunluk:', allData.length);
+                    document.getElementById('channelFilterInfo').textContent = '📊 Aktif: Tüm Kanallar (19)';
+                } else {
                 // Seçili kanallara göre filtrele
                 const selectedChannels = [];
                 
@@ -2829,6 +2869,7 @@
             
             // TÜM SAYFA YENİDEN HESAPLANIYOR!
             updateAfterChannelFilter();
+            }, 100); // 100ms gecikme - UI'ın spinner'ı göstermesi için
         }
         
         function updateAfterChannelFilter() {
@@ -2849,6 +2890,11 @@
             
             // Hedef takibini yenile
             loadAllStoresTargets();
+            
+            // Spinner'ı gizle
+            setTimeout(() => {
+                document.getElementById('channelLoadingSpinner').style.display = 'none';
+            }, 500); // Tüm işlemler bittikten 500ms sonra kapat
         }
 
         async function loadData() {
@@ -13837,7 +13883,7 @@
         // Kullanıcı bilgilerini güncelle
         function updateUserInfo() {
             if (window.currentUser && window.currentUserType) {
-                document.getElementById('userInfo').textContent = window.currentUser.name;
+                document.getElementById('userInfo').textContent = window.currentUser.name || window.currentUser.username || 'Kullanıcı';
                 
                 const userTypeText = window.currentUserType === 'admin' ? '👑 Yönetici' : '👤 Kullanıcı';
                 document.getElementById('userType').textContent = userTypeText;
@@ -13847,6 +13893,9 @@
                 document.getElementById('securityInfo').textContent = securityText;
             }
         }
+        
+        // Sayfa yüklenince kullanıcı bilgilerini güncelle
+        updateUserInfo();
 
         // Güvenlik bilgilerini göster
         function showSecurityInfo() {
