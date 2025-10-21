@@ -3081,6 +3081,219 @@
             dataLoadProgress.ready = true;
             checkLoadingComplete();
         }
+        
+        // ==================== INVENTORY DATA LOADING ====================
+        async function loadInventoryData() {
+            console.log('📦 Envanter verileri yükleniyor...');
+            
+            // Loading state'i göster
+            document.getElementById('inventoryLoading').style.display = 'block';
+            document.getElementById('inventoryContent').style.display = 'none';
+            
+            try {
+                // inventory.json.gz dosyasını yükle
+                const response = await fetch('inventory.json.gz');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const compressedData = await response.arrayBuffer();
+                const decompressedData = pako.ungzip(new Uint8Array(compressedData), { to: 'string' });
+                inventoryData = JSON.parse(decompressedData);
+                
+                console.log(`✅ Envanter verileri yüklendi: ${inventoryData.length} kayıt`);
+                
+                // Verileri görüntüle
+                renderInventoryDashboard();
+                
+            } catch (error) {
+                console.error('❌ Envanter verileri yüklenemedi:', error);
+                document.getElementById('inventoryLoading').innerHTML = `
+                    <div style="text-align: center; padding: 60px;">
+                        <div style="font-size: 4em; margin-bottom: 20px;">⚠️</div>
+                        <h3 style="color: #f5576c;">Envanter verileri yüklenemedi</h3>
+                        <p style="color: #666; margin-top: 15px;">Hata: ${error.message}</p>
+                        <button onclick="loadInventoryData()" style="margin-top: 20px; padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1em;">
+                            🔄 Tekrar Dene
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        function renderInventoryDashboard() {
+            if (!inventoryData || inventoryData.length === 0) {
+                console.warn('⚠️ Envanter verisi yok!');
+                return;
+            }
+            
+            console.log('📊 Envanter dashboard oluşturuluyor...');
+            
+            // Loading'i gizle, content'i göster
+            document.getElementById('inventoryLoading').style.display = 'none';
+            document.getElementById('inventoryContent').style.display = 'block';
+            
+            // Summary kartlarını doldur
+            const totalProducts = new Set(inventoryData.map(item => item.product)).size;
+            const totalQty = inventoryData.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
+            const totalValue = inventoryData.reduce((sum, item) => sum + (parseFloat(item.value) || 0), 0);
+            const totalLocations = new Set(inventoryData.map(item => item.location)).size;
+            
+            document.getElementById('invTotalProducts').textContent = totalProducts.toLocaleString('tr-TR');
+            document.getElementById('invTotalQty').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            document.getElementById('invTotalValue').textContent = '$' + totalValue.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            document.getElementById('invTotalLocations').textContent = totalLocations.toLocaleString('tr-TR');
+            
+            // Grafikleri oluştur
+            renderInventoryCharts();
+            
+            // Tabloyu doldur
+            renderInventoryTable();
+            
+            console.log('✅ Envanter dashboard oluşturuldu!');
+        }
+        
+        function renderInventoryCharts() {
+            // Marka bazında stok
+            const brandData = {};
+            inventoryData.forEach(item => {
+                const brand = item.brand || 'Diğer';
+                if (!brandData[brand]) brandData[brand] = 0;
+                brandData[brand] += parseFloat(item.value) || 0;
+            });
+            const topBrands = Object.entries(brandData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            
+            // Kategori bazında stok
+            const categoryData = {};
+            inventoryData.forEach(item => {
+                const category = item.category || 'Diğer';
+                if (!categoryData[category]) categoryData[category] = 0;
+                categoryData[category] += parseFloat(item.value) || 0;
+            });
+            const topCategories = Object.entries(categoryData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            
+            // Lokasyon bazında stok
+            const locationData = {};
+            inventoryData.forEach(item => {
+                const location = item.location || 'Diğer';
+                if (!locationData[location]) locationData[location] = 0;
+                locationData[location] += parseFloat(item.value) || 0;
+            });
+            const topLocations = Object.entries(locationData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            
+            // En yüksek değerli ürünler
+            const topValueProducts = [...inventoryData]
+                .sort((a, b) => (parseFloat(b.value) || 0) - (parseFloat(a.value) || 0))
+                .slice(0, 10);
+            
+            // Chart.js ile grafikleri oluştur
+            // Marka grafiği
+            if (inventoryCharts.brand) inventoryCharts.brand.destroy();
+            const brandCtx = document.getElementById('invBrandChart');
+            if (brandCtx) {
+                inventoryCharts.brand = new Chart(brandCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: topBrands.map(b => b[0]),
+                        datasets: [{
+                            label: 'Stok Değeri ($)',
+                            data: topBrands.map(b => b[1]),
+                            backgroundColor: '#667eea'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+            
+            // Kategori grafiği
+            if (inventoryCharts.category) inventoryCharts.category.destroy();
+            const categoryCtx = document.getElementById('invCategoryChart');
+            if (categoryCtx) {
+                inventoryCharts.category = new Chart(categoryCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: topCategories.map(c => c[0]),
+                        datasets: [{
+                            data: topCategories.map(c => c[1]),
+                            backgroundColor: ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#fee140', '#30cfd0', '#a8edea', '#ffa751', '#f5576c']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true
+                    }
+                });
+            }
+            
+            // Lokasyon grafiği
+            if (inventoryCharts.location) inventoryCharts.location.destroy();
+            const locationCtx = document.getElementById('invLocationChart');
+            if (locationCtx) {
+                inventoryCharts.location = new Chart(locationCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: topLocations.map(l => l[0]),
+                        datasets: [{
+                            label: 'Stok Değeri ($)',
+                            data: topLocations.map(l => l[1]),
+                            backgroundColor: '#f093fb'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+            
+            // Top Value Products grafiği
+            if (inventoryCharts.topValue) inventoryCharts.topValue.destroy();
+            const topValueCtx = document.getElementById('invTopValueChart');
+            if (topValueCtx) {
+                inventoryCharts.topValue = new Chart(topValueCtx, {
+                    type: 'horizontalBar',
+                    data: {
+                        labels: topValueProducts.map(p => (p.product || 'Bilinmeyen').substring(0, 30)),
+                        datasets: [{
+                            label: 'Değer ($)',
+                            data: topValueProducts.map(p => parseFloat(p.value) || 0),
+                            backgroundColor: '#43e97b'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+        }
+        
+        function renderInventoryTable() {
+            const tbody = document.getElementById('inventoryTableBody');
+            if (!tbody) return;
+            
+            // İlk 100 kayıt
+            const displayData = inventoryData.slice(0, 100);
+            
+            tbody.innerHTML = displayData.map(item => `
+                <tr>
+                    <td>${item.product || '-'}</td>
+                    <td>${item.brand || '-'}</td>
+                    <td>${item.category || '-'}</td>
+                    <td>${item.location || '-'}</td>
+                    <td style="text-align: right;">${(parseFloat(item.quantity) || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                    <td style="text-align: right;">$${(parseFloat(item.value) || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                </tr>
+            `).join('');
+            
+            console.log(`✅ Envanter tablosu oluşturuldu: ${displayData.length} kayıt`);
+        }
 
         function populateFilters() {
             const brands = new Set();
@@ -4410,6 +4623,9 @@
                         }
                     }, 2000);
                 }
+            } else if (tabName === 'stock') {
+                console.log('📦 Stok analizi sekmesi açılıyor...');
+                loadInventoryData();
             }
         }
         
