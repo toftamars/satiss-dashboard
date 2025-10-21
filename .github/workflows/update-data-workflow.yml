@@ -770,9 +770,9 @@ jobs:
                                     partner_name = partner[1] if isinstance(partner, list) and len(partner) > 1 else 'Bilinmeyen'
                                     partner_id = partner[0] if isinstance(partner, list) else 0
                                     
-                                    # Şehir - account.invoice.report'tan state_id_map'den çek (HİBRİT YÖNTEM)
+                                    # Şehir (İL) - partner_city_map'ten çek (partner tablosundan)
                                     line_id = line.get('id')
-                                    city = state_id_map.get(line_id, 'Bilinmeyen') if state_id_map else partner_city_map.get(partner_id, 'Bilinmeyen')
+                                    city = partner_city_map.get(partner_id, 'Bilinmeyen')
                                     
                                     # Mağaza - analytic_account_id'den
                                     analytic_account = line.get('analytic_account_id')
