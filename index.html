@@ -3170,10 +3170,17 @@
             // Envanter verilerini filtrele
             let filtered = inventoryData.filter(item => {
                 if (searchBrand && !(item.brand || '').toLowerCase().includes(searchBrand)) return false;
-                if (searchProduct && !(item.product || '').toLowerCase().includes(searchProduct)) return false;
-                if (searchCat2 && !(item.category_2 || '').toLowerCase().includes(searchCat2)) return false;
-                if (searchCat3 && !(item.category_3 || '').toLowerCase().includes(searchCat3)) return false;
-                if (searchCat4 && !(item.category_4 || '').toLowerCase().includes(searchCat4)) return false;
+                
+                // Ürün adı: product_name veya product alanını kontrol et
+                const productName = item.product_name || item.product || '';
+                if (searchProduct && !productName.toLowerCase().includes(searchProduct)) return false;
+                
+                // Kategoriler: tek bir string'de birleşik (örn: "All / Lifestyle / Kitap")
+                const category = item.category || '';
+                if (searchCat2 && !category.toLowerCase().includes(searchCat2)) return false;
+                if (searchCat3 && !category.toLowerCase().includes(searchCat3)) return false;
+                if (searchCat4 && !category.toLowerCase().includes(searchCat4)) return false;
+                
                 return true;
             });
             
@@ -3184,7 +3191,7 @@
             
             filtered.forEach(invItem => {
                 const store = invItem.location || 'Bilinmeyen';
-                const product = invItem.product || '';
+                const product = invItem.product_name || invItem.product || '';
                 const brand = invItem.brand || '';
                 
                 if (!storeAnalysis[store]) {

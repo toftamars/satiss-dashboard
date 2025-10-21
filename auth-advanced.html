@@ -184,37 +184,47 @@
     <script>
         console.log('🚀 Giriş sayfası yüklendi');
         
-        // Kullanıcı veritabanı
+        // Kullanıcı veritabanı + 2FA Kodları
         const USERS = {
             'anilemre': {
                 password: 'Bjk1903*',
-                name: 'Anil Emre'
+                name: 'Anil Emre',
+                twoFactorCode: '123456'
             },
             'alisungurlu': {
                 password: 'Bjk1903*',
-                name: 'Ali Sungurlu'
+                name: 'Ali Sungurlu',
+                twoFactorCode: '234567'
             },
             'furkan': {
                 password: 'Bjk1903*',
-                name: 'Furkan'
+                name: 'Furkan',
+                twoFactorCode: '345678'
             },
             'tofta': {
                 password: 'Bjk1903*',
-                name: 'Tofta'
+                name: 'Tofta',
+                twoFactorCode: '456789'
             },
             'gokhanisilay': {
                 password: 'Bjk1903*',
-                name: 'Gokhan Isilay'
+                name: 'Gokhan Isilay',
+                twoFactorCode: '567890'
             },
             'akasya': {
                 password: 'Bjk1903*',
-                name: 'Akasya'
+                name: 'Akasya',
+                twoFactorCode: '678901'
             },
             'hakanguler': {
                 password: 'Bjk1903*',
-                name: 'Hakan Guler'
+                name: 'Hakan Guler',
+                twoFactorCode: '789012'
             }
         };
+        
+        // Geçici olarak kullanıcı adını sakla (2FA için)
+        let pendingUsername = null;
 
         // Device fingerprint (must match index.html)
         function generateDeviceFingerprint() {
