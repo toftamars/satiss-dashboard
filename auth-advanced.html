@@ -427,6 +427,13 @@
             document.getElementById('codeInputScreen').style.display = 'block';
             document.getElementById('twoFactorCode').value = '';
             document.getElementById('twoFactorCode').focus();
+            
+            // Kurulumu tamamlandı olarak işaretle
+            if (pendingUsername) {
+                const setupKey = `totp_setup_${pendingUsername}`;
+                localStorage.setItem(setupKey, 'completed');
+                console.log('✅ TOTP kurulumu tamamlandı:', pendingUsername);
+            }
         }
         
         // QR'ı tekrar göster
@@ -501,8 +508,19 @@
             document.getElementById('loginForm').style.display = 'none';
             document.getElementById('twoFactorModal').style.display = 'block';
             
-            // QR ekranını göster (ilk giriş için)
-            showQRScreen();
+            // Kurulum durumunu kontrol et
+            const setupKey = `totp_setup_${username}`;
+            const isSetupCompleted = localStorage.getItem(setupKey) === 'completed';
+            
+            if (isSetupCompleted) {
+                // Daha önce kurulum yapılmış, direkt kod ekranını göster
+                console.log('📱 TOTP daha önce kurulmuş, kod ekranı açılıyor...');
+                showCodeInput();
+            } else {
+                // İlk giriş, QR ekranını göster
+                console.log('📱 İlk giriş, QR kurulum ekranı açılıyor...');
+                showQRScreen();
+            }
         }
 
         // Global password change function (for console use)
@@ -515,6 +533,24 @@
             USERS[username].password = newPassword;
             console.log('✅ Şifre değiştirildi:', username);
             console.log('⚠️ Not: Sayfa yenilendiğinde eski şifre geri gelecek. Kalıcı değişiklik için kod düzenlemesi gerekli.');
+            return true;
+        };
+        
+        // TOTP kurulumunu sıfırla (for console use)
+        window.resetTOTPSetup = function(username) {
+            if (!username) {
+                console.log('❌ Kullanım: resetTOTPSetup("username")');
+                return false;
+            }
+            if (!USERS[username]) {
+                console.error('❌ Kullanıcı bulunamadı:', username);
+                return false;
+            }
+            
+            const setupKey = `totp_setup_${username}`;
+            localStorage.removeItem(setupKey);
+            console.log('✅ TOTP kurulumu sıfırlandı:', username);
+            console.log('📱 Bir sonraki girişte QR kod tekrar gösterilecek.');
             return true;
         };
 
