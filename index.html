@@ -1595,13 +1595,13 @@
                 </div>
                 
                 <!-- Customer Charts -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 30px; margin-top: 30px;">
+                <div id="customerChartsSection" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 30px; margin-top: 30px;">
                     <div class="chart-container">
                         <h3 style="text-align: center; margin-bottom: 20px;">Müşteri Dağılımı (Şehir)</h3>
                         <canvas id="customerCityChart"></canvas>
                     </div>
                     <div class="chart-container">
-                        <h3 style="text-align: center; margin-bottom: 20px;">Aylık Müşteri Trendi</h3>
+                        <h3 style="text-align: center; margin-bottom: 20px;">Yıllık Müşteri Trendi</h3>
                         <canvas id="customerTrendChart"></canvas>
                     </div>
                 </div>
@@ -8385,9 +8385,10 @@
                 return;
             }
             
-            // Sonuçları göster ve Top 30'u gizle
+            // Sonuçları göster ve Top 30 + Grafikleri gizle
             document.getElementById('customerProfileMainContainer').style.display = 'block';
             document.getElementById('topCustomersSection').style.display = 'none';
+            document.getElementById('customerChartsSection').style.display = 'none';
             
             // Müşteri bilgilerini hesapla
             const customerName = customerData[0].partner;
@@ -8442,10 +8443,11 @@
             // Arama sonuçlarını gizle
             document.getElementById('customerProfileMainContainer').style.display = 'none';
             
-            // Top 30'u göster
+            // Top 30 ve Grafikleri göster
             document.getElementById('topCustomersSection').style.display = 'block';
+            document.getElementById('customerChartsSection').style.display = 'grid';
             
-            console.log('✅ Müşteri araması temizlendi, Top 30 gösteriliyor');
+            console.log('✅ Müşteri araması temizlendi, Top 30 ve grafikler gösteriliyor');
         }
         
         function renderCustomerBrandChartMain(data) {
