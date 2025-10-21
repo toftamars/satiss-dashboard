@@ -3145,24 +3145,170 @@
             document.getElementById('inventoryLoading').style.display = 'none';
             document.getElementById('inventoryContent').style.display = 'block';
             
-            // Summary kartlarını doldur
-            const totalProducts = new Set(inventoryData.map(item => item.product)).size;
-            const totalQty = inventoryData.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
-            const totalValue = inventoryData.reduce((sum, item) => sum + (parseFloat(item.value) || 0), 0);
-            const totalLocations = new Set(inventoryData.map(item => item.location)).size;
-            
-            document.getElementById('invTotalProducts').textContent = totalProducts.toLocaleString('tr-TR');
-            document.getElementById('invTotalQuantity').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2});
-            document.getElementById('invTotalValue').textContent = '$' + totalValue.toLocaleString('tr-TR', {minimumFractionDigits: 2});
-            document.getElementById('invTotalLocations').textContent = totalLocations.toLocaleString('tr-TR');
-            
-            // Grafikleri oluştur
-            renderInventoryCharts();
-            
-            // Tabloyu doldur
-            renderInventoryTable();
+            // İlk yüklemede tüm ürünleri göster
+            filterStockAnalysis();
             
             console.log('✅ Envanter dashboard oluşturuldu!');
+        }
+        
+        function filterStockAnalysis() {
+            if (!inventoryData || inventoryData.length === 0 || !allData || allData.length === 0) {
+                console.warn('⚠️ Envanter veya satış verisi yok!');
+                document.getElementById('stockAnalysisTableContainer').innerHTML = '<p style="text-align: center; color: #f5576c; padding: 40px;">⚠️ Veri henüz yüklenmedi. Lütfen bekleyin...</p>';
+                return;
+            }
+            
+            console.log('🔍 Stok analizi filtreleniyor...');
+            
+            // Filtre değerlerini al
+            const searchBrand = (document.getElementById('stockSearchBrand')?.value || '').toLowerCase().trim();
+            const searchProduct = (document.getElementById('stockSearchProduct')?.value || '').toLowerCase().trim();
+            const searchCat2 = (document.getElementById('stockSearchCat2')?.value || '').toLowerCase().trim();
+            const searchCat3 = (document.getElementById('stockSearchCat3')?.value || '').toLowerCase().trim();
+            const searchCat4 = (document.getElementById('stockSearchCat4')?.value || '').toLowerCase().trim();
+            
+            // Envanter verilerini filtrele
+            let filtered = inventoryData.filter(item => {
+                if (searchBrand && !(item.brand || '').toLowerCase().includes(searchBrand)) return false;
+                if (searchProduct && !(item.product || '').toLowerCase().includes(searchProduct)) return false;
+                if (searchCat2 && !(item.category_2 || '').toLowerCase().includes(searchCat2)) return false;
+                if (searchCat3 && !(item.category_3 || '').toLowerCase().includes(searchCat3)) return false;
+                if (searchCat4 && !(item.category_4 || '').toLowerCase().includes(searchCat4)) return false;
+                return true;
+            });
+            
+            console.log(`📦 Filtrelenmiş envanter: ${filtered.length} ürün`);
+            
+            // Her ürün için mağaza bazlı stok ve satış analizi
+            const storeAnalysis = {};
+            
+            filtered.forEach(invItem => {
+                const store = invItem.location || 'Bilinmeyen';
+                const product = invItem.product || '';
+                const brand = invItem.brand || '';
+                
+                if (!storeAnalysis[store]) {
+                    storeAnalysis[store] = {};
+                }
+                
+                const key = `${brand}_${product}`;
+                if (!storeAnalysis[store][key]) {
+                    storeAnalysis[store][key] = {
+                        brand: brand,
+                        product: product,
+                        stock: 0,
+                        sales: 0,
+                        salesQty: 0
+                    };
+                }
+                
+                storeAnalysis[store][key].stock += parseFloat(invItem.quantity) || 0;
+            });
+            
+            // Satış verilerini ekle (son 12 ay)
+            const twelveMonthsAgo = new Date();
+            twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+            
+            allData.forEach(saleItem => {
+                const saleDate = new Date(saleItem.date);
+                if (saleDate < twelveMonthsAgo) return;
+                
+                const store = saleItem.store || 'Bilinmeyen';
+                const product = saleItem.product || '';
+                const brand = saleItem.brand || '';
+                const key = `${brand}_${product}`;
+                
+                if (storeAnalysis[store] && storeAnalysis[store][key]) {
+                    storeAnalysis[store][key].sales += parseFloat(saleItem.usd_amount) || 0;
+                    storeAnalysis[store][key].salesQty += parseFloat(saleItem.quantity) || 0;
+                }
+            });
+            
+            // AI: Önerilen stok ve satın alma hesapla
+            Object.keys(storeAnalysis).forEach(store => {
+                Object.keys(storeAnalysis[store]).forEach(key => {
+                    const item = storeAnalysis[store][key];
+                    
+                    // Aylık ortalama satış (son 12 ay)
+                    const monthlySales = item.salesQty / 12;
+                    
+                    // Önerilen stok: 2 aylık satış + %20 güvenlik marjı
+                    const recommendedStock = Math.ceil(monthlySales * 2 * 1.2);
+                    item.recommendedStock = recommendedStock;
+                    
+                    // Önerilen satın alma: Önerilen stok - Mevcut stok
+                    const purchaseNeed = Math.max(0, recommendedStock - item.stock);
+                    item.recommendedPurchase = Math.ceil(purchaseNeed);
+                });
+            });
+            
+            // Tabloyu oluştur
+            renderStockAnalysisTable(storeAnalysis);
+        }
+        
+        function renderStockAnalysisTable(storeAnalysis) {
+            const container = document.getElementById('stockAnalysisTableContainer');
+            if (!container) return;
+            
+            // Her mağaza için tablo
+            let html = '';
+            
+            Object.entries(storeAnalysis).sort((a, b) => a[0].localeCompare(b[0])).forEach(([store, products]) => {
+                const productList = Object.values(products);
+                if (productList.length === 0) return;
+                
+                html += `
+                    <div style="margin-bottom: 40px;">
+                        <h4 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                            🏪 ${store} <span style="opacity: 0.8; font-size: 0.9em;">(${productList.length} ürün)</span>
+                        </h4>
+                        <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <thead>
+                                <tr style="background: #f8f9fa; text-align: left;">
+                                    <th style="padding: 12px; border-bottom: 2px solid #dee2e6;">Marka</th>
+                                    <th style="padding: 12px; border-bottom: 2px solid #dee2e6;">Ürün</th>
+                                    <th style="padding: 12px; border-bottom: 2px solid #dee2e6; text-align: right;">📦 Stok</th>
+                                    <th style="padding: 12px; border-bottom: 2px solid #dee2e6; text-align: right;">📊 Satış (12 Ay)</th>
+                                    <th style="padding: 12px; border-bottom: 2px solid #dee2e6; text-align: right;">🤖 Önerilen Stok</th>
+                                    <th style="padding: 12px; border-bottom: 2px solid #dee2e6; text-align: right;">🛒 Önerilen Satın Alma</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${productList.map(item => {
+                                    const stockStatus = item.stock >= item.recommendedStock ? 'background: #d4edda;' : item.stock < item.recommendedStock * 0.5 ? 'background: #f8d7da;' : '';
+                                    return `
+                                        <tr style="${stockStatus}">
+                                            <td style="padding: 10px; border-bottom: 1px solid #dee2e6;">${item.brand || '-'}</td>
+                                            <td style="padding: 10px; border-bottom: 1px solid #dee2e6;">${item.product || '-'}</td>
+                                            <td style="padding: 10px; border-bottom: 1px solid #dee2e6; text-align: right; font-weight: bold;">${item.stock.toFixed(0)}</td>
+                                            <td style="padding: 10px; border-bottom: 1px solid #dee2e6; text-align: right;">${item.salesQty.toFixed(0)} adet</td>
+                                            <td style="padding: 10px; border-bottom: 1px solid #dee2e6; text-align: right; color: #667eea; font-weight: bold;">${item.recommendedStock}</td>
+                                            <td style="padding: 10px; border-bottom: 1px solid #dee2e6; text-align: right; ${item.recommendedPurchase > 0 ? 'color: #f5576c; font-weight: bold;' : 'color: #38ef7d;'}">${item.recommendedPurchase > 0 ? item.recommendedPurchase : '✓ Yeterli'}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            });
+            
+            if (html === '') {
+                html = '<p style="text-align: center; color: #666; padding: 40px;">Filtre kriterlerine uygun ürün bulunamadı.</p>';
+            }
+            
+            container.innerHTML = html;
+            console.log('✅ Stok analiz tablosu oluşturuldu!');
+        }
+        
+        function clearStockFilters() {
+            document.getElementById('stockSearchBrand').value = '';
+            document.getElementById('stockSearchProduct').value = '';
+            document.getElementById('stockSearchCat2').value = '';
+            document.getElementById('stockSearchCat3').value = '';
+            document.getElementById('stockSearchCat4').value = '';
+            filterStockAnalysis();
+            console.log('🗑️ Stok filtreleri temizlendi');
         }
         
         function renderInventoryCharts() {
