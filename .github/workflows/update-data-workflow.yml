@@ -2,15 +2,6 @@ name: Odoo Veri Güncelleme
 
 on:
   workflow_dispatch:  # Manuel çalıştırma (sağ üstte "Run workflow" butonu)
-    inputs:
-      data_mode:
-        description: 'Veri Çekme Modu'
-        required: true
-        default: 'fast'
-        type: choice
-        options:
-          - fast
-          - full
   schedule:
     - cron: '0 2 * * *'  # Her gece saat 05:00 İstanbul saati (UTC 02:00)
 
@@ -39,7 +30,6 @@ jobs:
         ODOO_URL: ${{ secrets.ODOO_URL }}
         ODOO_USERNAME: ${{ secrets.ODOO_USERNAME }}
         ODOO_API_KEY: ${{ secrets.ODOO_API_KEY }}
-        DATA_MODE: ${{ github.event.inputs.data_mode || 'fast' }}
       run: |
         python3 << 'EOF'
         import os
@@ -61,21 +51,12 @@ jobs:
         username = os.environ['ODOO_USERNAME']
         password = os.environ['ODOO_API_KEY']
         db = "erp.zuhalmuzik.com"
-        data_mode = os.environ.get('DATA_MODE', 'fast')
         
         print(f"🔌 URL: {url}")
         print(f"🗄️ Database: {db}")
         print(f"👤 Username: {username}")
         print(f"🔐 Password: {'*' * len(password)}")
-        print(f"⚡ Data Mode: {data_mode.upper()}")
-        
-        # Tarih filtresi belirleme
-        if data_mode == 'full':
-            date_filter = '2020-01-01'
-            print(f"📅 Tarih Aralığı: 2020-01-01'den itibaren TÜM VERİLER (~40 dk)")
-        else:  # fast mode
-            date_filter = '2024-01-01'
-            print(f"📅 Tarih Aralığı: 2024-01-01'den itibaren (~2-3 dk)")
+        print(f"📅 Tarih Aralığı: TÜM ZAMANLAR (tarih filtresi yok)")
         
         # Batch boyutu
         batch_size = 10000
@@ -290,9 +271,8 @@ jobs:
                                     converted_domain.append(('move_id.state', '=', 'posted'))
                                     print("🔒 State filtresi eklendi: SADECE posted (onaylanmış) faturalar")
                                     
-                                    # TARİH FİLTRESİ EKLE (FAST/FULL MODE)
-                                    converted_domain.append(('move_id.invoice_date', '>=', date_filter))
-                                    print(f"📅 Tarih filtresi eklendi: {date_filter} ve sonrası")
+                                    # TARİH FİLTRESİ YOK - TÜM ZAMANLAR!
+                                    print("📅 Tarih filtresi: YOK - TÜM ZAMANLAR çekiliyor!")
                                     
                                     domain = converted_domain
                                     print(f"✅ Domain dönüştürüldü: {len(domain)} koşul")
