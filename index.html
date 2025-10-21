@@ -1381,12 +1381,12 @@
                     <div class="summary-card" style="background: linear-gradient(135deg, #ffa751 0%, #ffe259 100%); color: white; padding: 20px;">
                         <h3 style="font-size: 0.95em; margin-bottom: 10px;">📅 Günlük Ortalama</h3>
                         <p id="dashDailyAverage" style="color: white; font-size: 1.6em; font-weight: bold; margin: 10px 0;">$0</p>
-                        <small style="opacity: 0.9; font-size: 0.85em;">Bu yıl günlük ortalama</small>
+                        <small style="opacity: 0.9; font-size: 0.85em;">Günlük ortalama satış</small>
                     </div>
                     <div class="summary-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: white; padding: 20px;">
                         <h3 style="font-size: 0.95em; margin-bottom: 10px;">🛒 Sepet Ortalaması</h3>
                         <p id="dashBasketAverage" style="color: white; font-size: 1.6em; font-weight: bold; margin: 10px 0;">$0</p>
-                        <small style="opacity: 0.9; font-size: 0.85em;">Bu yıl ortalama sepet</small>
+                        <small style="opacity: 0.9; font-size: 0.85em;">Ortalama işlem tutarı</small>
                     </div>
                 </div>
 
@@ -6039,29 +6039,19 @@
             const uniqueStores = new Set(allData.map(item => item.store).filter(Boolean)).size;
             const uniqueSalespeople = new Set(allData.map(item => item.sales_person).filter(Boolean)).size;
             
-            // Günlük Ortalama ve Sepet Ortalaması Hesaplama (BU YIL İÇİN)
-            const currentYear = new Date().getFullYear();
+            // Günlük Ortalama ve Sepet Ortalaması Hesaplama (GLOBAL MANTIK - DİĞER SEKMELERLE AYNI)
+            // Günlük Ortalama = Toplam USD / Benzersiz Tarih Sayısı (tüm zamanlar)
+            const uniqueDates = new Set(allData.map(item => item.date).filter(Boolean)).size;
+            const dailyAverage = uniqueDates > 0 ? totalSales / uniqueDates : 0;
             
-            // Bu yılın verilerini filtrele
-            const thisYearData = allData.filter(item => {
-                if (!item.date) return false;
-                const itemYear = parseInt(item.date.substring(0, 4));
-                return itemYear === currentYear;
-            });
+            // Sepet Ortalaması = Toplam USD / Toplam Kayıt Sayısı (her satır bir işlem)
+            const basketAverage = allData.length > 0 ? totalSales / allData.length : 0;
             
-            // Bu yılın istatistikleri
-            const thisYearSales = thisYearData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
-            const thisYearDates = new Set(thisYearData.map(item => item.date ? item.date.split(' ')[0] : null).filter(Boolean)).size;
-            const thisYearOrders = new Set(thisYearData.map(item => item.name || item.invoice || item.invoice_id).filter(Boolean)).size;
-            
-            const dailyAverage = thisYearDates > 0 ? thisYearSales / thisYearDates : 0;
-            const basketAverage = thisYearOrders > 0 ? thisYearSales / thisYearOrders : 0;
-            
-            console.log(`📅 ${currentYear} Benzersiz Gün Sayısı:`, thisYearDates);
-            console.log(`💰 ${currentYear} Toplam Satış:`, thisYearSales.toLocaleString('tr-TR', {minimumFractionDigits: 2}));
-            console.log(`🛒 ${currentYear} Benzersiz Sipariş Sayısı:`, thisYearOrders);
-            console.log(`📊 ${currentYear} Günlük Ortalama:`, dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2}));
-            console.log(`🛒 ${currentYear} Sepet Ortalaması:`, basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2}));
+            console.log('📅 Benzersiz Gün Sayısı (Tüm Zamanlar):', uniqueDates);
+            console.log('💰 Toplam Satış:', totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2}));
+            console.log('📦 Toplam Kayıt:', allData.length.toLocaleString('tr-TR'));
+            console.log('📊 Günlük Ortalama:', dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2}));
+            console.log('🛒 Sepet Ortalaması:', basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2}));
             
             // UI güncelle
             document.getElementById('dashTotalSales').textContent = '$' + totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2});
