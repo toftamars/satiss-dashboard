@@ -1476,6 +1476,14 @@
                 
                 <!-- Tüm Mağazalar Hedef Listesi -->
                 <div id="allStoresTargetsContainer"></div>
+                
+                <!-- AI Hedef Analizi -->
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; margin-top: 30px;">
+                    <h3 style="color: white; margin-bottom: 20px;">🤖 AI Hedef Analizi & Gelecek Önerileri</h3>
+                    <div id="targetAIAnalysis" style="color: white;">
+                        <!-- Dinamik olarak doldurulacak -->
+                    </div>
+                </div>
             </div>
         </div>
         <!-- End Targets Tab -->
@@ -1595,14 +1603,17 @@
                 </div>
                 
                 <!-- Customer Charts -->
-                <div id="customerChartsSection" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 30px; margin-top: 30px;">
-                    <div class="chart-container">
-                        <h3 style="text-align: center; margin-bottom: 20px;">Müşteri Dağılımı (Şehir)</h3>
-                        <canvas id="customerCityChart"></canvas>
+                <div id="customerChartsSection" style="margin-top: 30px;">
+                    <!-- Yıllık Müşteri Trendi - Tam Genişlik -->
+                    <div class="chart-container" style="margin-bottom: 30px;">
+                        <h3 style="text-align: center; margin-bottom: 20px;">📊 Yıllık Müşteri Trendi</h3>
+                        <canvas id="customerTrendChart" style="max-height: 400px;"></canvas>
                     </div>
-                    <div class="chart-container">
-                        <h3 style="text-align: center; margin-bottom: 20px;">Yıllık Müşteri Trendi</h3>
-                        <canvas id="customerTrendChart"></canvas>
+                    
+                    <!-- Müşteri Dağılımı (Şehir) - Alt kısımda -->
+                    <div class="chart-container" style="max-width: 600px; margin: 0 auto;">
+                        <h3 style="text-align: center; margin-bottom: 20px;">🌍 Müşteri Dağılımı (Şehir)</h3>
+                        <canvas id="customerCityChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -4913,6 +4924,200 @@
                 console.error(`❌ HTML yazma hatası:`, error);
                 console.log(`❌ Hatalı HTML:`, html.substring(0, 500));
             }
+            
+            // AI Hedef Analizi
+            performTargetAIAnalysis(year, month, storesArray);
+        }
+        
+        // ==================== TARGET AI ANALYSIS ====================
+        function performTargetAIAnalysis(year, month, storesArray) {
+            console.log('🤖 Hedef AI Analizi başlatılıyor...', {year, month, storeCount: storesArray.length});
+            
+            const currentYear = new Date().getFullYear().toString();
+            const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+            const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+            
+            const isCurrentYear = (year === currentYear);
+            const isCurrentMonth = (year === currentYear && month === currentMonth);
+            const periodName = month ? `${monthNames[parseInt(month) - 1]} ${year}` : `${year} Yılı`;
+            
+            // ========== VERİ ANALİZİ ==========
+            const storesWithTargets = storesArray.filter(s => s.target > 0);
+            const storesWithoutTargets = storesArray.filter(s => s.target === 0);
+            
+            const totalTarget = storesWithTargets.reduce((sum, s) => sum + s.target, 0);
+            const totalAchieved = storesArray.reduce((sum, s) => sum + s.achieved, 0);
+            const overallPercentage = totalTarget > 0 ? (totalAchieved / totalTarget * 100) : 0;
+            
+            // Başarı kategorileri
+            const exceeding130 = storesWithTargets.filter(s => s.percentage >= 130);
+            const exceeding100 = storesWithTargets.filter(s => s.percentage >= 100 && s.percentage < 130);
+            const between75and100 = storesWithTargets.filter(s => s.percentage >= 75 && s.percentage < 100);
+            const below75 = storesWithTargets.filter(s => s.percentage < 75);
+            
+            // En iyi ve en kötü performans
+            const topPerformers = [...storesWithTargets].sort((a, b) => b.percentage - a.percentage).slice(0, 5);
+            const bottomPerformers = [...storesWithTargets].sort((a, b) => a.percentage - b.percentage).slice(0, 5);
+            
+            // Hedef aşma ve aşamama toplamları
+            const overachievingTotal = storesWithTargets.filter(s => s.percentage >= 100).reduce((sum, s) => sum + (s.achieved - s.target), 0);
+            const underachievingTotal = storesWithTargets.filter(s => s.percentage < 100).reduce((sum, s) => sum + (s.target - s.achieved), 0);
+            
+            // Geçen yıl karşılaştırması (sadece yıllık hedefler için)
+            let yearOverYearGrowth = null;
+            if (!month && year !== currentYear) {
+                const lastYearData = allData.filter(item => item.date && item.date.startsWith((parseInt(year) - 1).toString()));
+                const lastYearTotal = lastYearData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
+                if (lastYearTotal > 0) {
+                    yearOverYearGrowth = ((totalAchieved - lastYearTotal) / lastYearTotal * 100);
+                }
+            }
+            
+            // Gelecek yıl önerilen hedef hesaplama
+            const nextYear = (parseInt(year) + 1).toString();
+            let suggestedGrowthRate = 15; // Varsayılan %15
+            if (overallPercentage >= 130) suggestedGrowthRate = 25;
+            else if (overallPercentage >= 110) suggestedGrowthRate = 20;
+            else if (overallPercentage >= 100) suggestedGrowthRate = 15;
+            else if (overallPercentage >= 90) suggestedGrowthRate = 10;
+            else suggestedGrowthRate = 5;
+            
+            const suggestedNextYearTarget = totalAchieved * (1 + suggestedGrowthRate / 100);
+            
+            // ========== HTML ÇIKTISI ==========
+            const analysis = `
+                <!-- Genel Durum -->
+                <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                    <h4 style="margin: 0 0 15px 0; font-size: 1.3em;">📊 ${periodName} Genel Performans Özeti</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 2.5em; font-weight: bold; margin-bottom: 5px;">${overallPercentage.toFixed(1)}%</div>
+                            <div style="font-size: 0.9em; opacity: 0.9;">Toplam Gerçekleşme</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 1.8em; font-weight: bold; margin-bottom: 5px;">$${totalAchieved.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</div>
+                            <div style="font-size: 0.9em; opacity: 0.9;">Gerçekleşen</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 1.8em; font-weight: bold; margin-bottom: 5px;">$${totalTarget.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</div>
+                            <div style="font-size: 0.9em; opacity: 0.9;">Hedef</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 1.5em; font-weight: bold; margin-bottom: 5px;">${storesWithTargets.length}/${storesArray.length}</div>
+                            <div style="font-size: 0.9em; opacity: 0.9;">Hedefli Mağaza</div>
+                        </div>
+                    </div>
+                    ${yearOverYearGrowth !== null ? `
+                    <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px; text-align: center;">
+                        <strong>📈 Yıllık Büyüme (${year} vs ${parseInt(year)-1}):</strong> 
+                        <span style="font-size: 1.2em; font-weight: bold;">${yearOverYearGrowth > 0 ? '+' : ''}${yearOverYearGrowth.toFixed(1)}%</span>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                <!-- Olumlu ve Olumsuz Tespitler -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                    <div style="background: rgba(56, 239, 125, 0.2); padding: 20px; border-radius: 10px; border-left: 4px solid #38ef7d;">
+                        <h4 style="margin: 0 0 15px 0;">✅ Olumlu Tespitler</h4>
+                        <ul style="line-height: 2; margin: 0; padding-left: 20px;">
+                            ${exceeding130.length > 0 ? `<li><strong>${exceeding130.length} mağaza</strong> %130+ hedef aşımı gerçekleştirdi 🏆<br><span style="font-size: 0.9em; opacity: 0.9;">Toplam fazla satış: $${exceeding130.reduce((sum, s) => sum + (s.achieved - s.target * 1.3), 0).toLocaleString('tr-TR', {minimumFractionDigits: 0})}</span></li>` : ''}
+                            ${exceeding100.length > 0 ? `<li><strong>${exceeding100.length} mağaza</strong> %100+ hedefine ulaştı ✓<br><span style="font-size: 0.9em; opacity: 0.9;">Toplam fazla satış: $${overachievingTotal.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</span></li>` : ''}
+                            ${topPerformers.length > 0 ? `<li><strong>En Başarılı:</strong> ${topPerformers[0].store} (%${topPerformers[0].percentage.toFixed(1)})</li>` : ''}
+                            ${overallPercentage >= 100 ? `<li>Tüm mağazalar toplamda <strong>hedefi aştı</strong> 🎉</li>` : ''}
+                            ${yearOverYearGrowth && yearOverYearGrowth > 10 ? `<li>Geçen yıla göre <strong>%${yearOverYearGrowth.toFixed(1)} büyüme</strong> gerçekleşti 📈</li>` : ''}
+                        </ul>
+                    </div>
+                    <div style="background: rgba(245, 87, 108, 0.2); padding: 20px; border-radius: 10px; border-left: 4px solid #f5576c;">
+                        <h4 style="margin: 0 0 15px 0;">⚠️ İyileştirme Alanları</h4>
+                        <ul style="line-height: 2; margin: 0; padding-left: 20px;">
+                            ${below75.length > 0 ? `<li><strong>${below75.length} mağaza</strong> %75'in altında performans gösterdi ⚠️<br><span style="font-size: 0.9em; opacity: 0.9;">Hedef açığı: $${below75.reduce((sum, s) => sum + (s.target - s.achieved), 0).toLocaleString('tr-TR', {minimumFractionDigits: 0})}</span></li>` : ''}
+                            ${between75and100.length > 0 ? `<li><strong>${between75and100.length} mağaza</strong> hedefe %75-100 arası ulaştı<br><span style="font-size: 0.9em; opacity: 0.9;">Az kaldı! Destek gerekli</span></li>` : ''}
+                            ${storesWithoutTargets.length > 0 ? `<li><strong>${storesWithoutTargets.length} mağaza</strong> için hedef belirlenmemiş 📋<br><span style="font-size: 0.9em; opacity: 0.9;">Mağazalar: ${storesWithoutTargets.map(s => s.store).join(', ')}</span></li>` : ''}
+                            ${bottomPerformers.length > 0 && bottomPerformers[0].percentage < 75 ? `<li><strong>En Düşük:</strong> ${bottomPerformers[0].store} (%${bottomPerformers[0].percentage.toFixed(1)})<br><span style="font-size: 0.9em; opacity: 0.9;">Acil aksiyon gerekli!</span></li>` : ''}
+                            ${overallPercentage < 90 ? `<li>Toplam performans <strong>%90'ın altında</strong> - Genel strateji gözden geçirilmeli</li>` : ''}
+                            ${underachievingTotal > 0 ? `<li>Toplam hedef açığı: <strong>$${underachievingTotal.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</strong></li>` : ''}
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Detaylı Analiz -->
+                <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                    <h4 style="margin: 0 0 15px 0;">📋 Performans Dağılımı</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div style="background: rgba(56, 239, 125, 0.3); padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 2em; font-weight: bold;">${exceeding130.length}</div>
+                            <div style="font-size: 0.9em; margin-top: 5px;">🏆 %130+ Aşan</div>
+                        </div>
+                        <div style="background: rgba(102, 126, 234, 0.3); padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 2em; font-weight: bold;">${exceeding100.length}</div>
+                            <div style="font-size: 0.9em; margin-top: 5px;">✓ %100-130 Arası</div>
+                        </div>
+                        <div style="background: rgba(255, 193, 7, 0.3); padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 2em; font-weight: bold;">${between75and100.length}</div>
+                            <div style="font-size: 0.9em; margin-top: 5px;">⚡ %75-100 Arası</div>
+                        </div>
+                        <div style="background: rgba(245, 87, 108, 0.3); padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 2em; font-weight: bold;">${below75.length}</div>
+                            <div style="font-size: 0.9em; margin-top: 5px;">⚠️ %75 Altı</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stratejik Öneriler ve Gelecek Hedefleri -->
+                <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px;">
+                    <h4 style="margin: 0 0 15px 0; font-size: 1.2em;">💡 Stratejik Öneriler & ${nextYear} Hedef Önerileri</h4>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;">
+                            <h5 style="margin: 0 0 10px 0;">🎯 Kısa Vadeli Aksiyonlar (1-3 ay)</h5>
+                            <ul style="line-height: 2; margin: 0; padding-left: 20px; font-size: 0.95em;">
+                                ${bottomPerformers.length > 0 ? `<li><strong>Acil Destek:</strong> ${bottomPerformers.slice(0, 3).map(s => s.store).join(', ')} mağazaları için özel eğitim ve destek programı</li>` : ''}
+                                ${between75and100.length > 0 ? `<li><strong>Motivasyon:</strong> %75-100 arasındaki ${between75and100.length} mağaza için teşvik kampanyası (hedefe az kaldı!)</li>` : ''}
+                                ${topPerformers.length > 0 ? `<li><strong>Best Practice:</strong> ${topPerformers[0].store} mağazasının başarı faktörlerini analiz edin ve paylaşın</li>` : ''}
+                                <li><strong>Stok Kontrolü:</strong> Düşük performanslı mağazalarda ürün çeşitliliği ve stok durumunu gözden geçirin</li>
+                                <li><strong>Haftalık Takip:</strong> Hedef altındaki mağazalar için haftalık performans toplantıları düzenleyin</li>
+                            </ul>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;">
+                            <h5 style="margin: 0 0 10px 0;">📈 Orta-Uzun Vadeli Stratejiler</h5>
+                            <ul style="line-height: 2; margin: 0; padding-left: 20px; font-size: 0.95em;">
+                                ${storesWithoutTargets.length > 0 ? `<li><strong>Hedef Belirleme:</strong> ${storesWithoutTargets.length} hedefsiz mağaza için performansa dayalı hedefler oluşturun</li>` : ''}
+                                <li><strong>Bölgesel Analiz:</strong> Coğrafi bölgelere göre performans farklarını inceleyin ve yerel stratejiler geliştirin</li>
+                                <li><strong>Personel Eğitimi:</strong> Satış teknikleri, ürün bilgisi ve müşteri deneyimi konularında kapsamlı eğitim</li>
+                                <li><strong>Ödül Sistemi:</strong> Hedefe ulaşan ve aşan mağazalar için çekici ödül ve bonus sistemleri</li>
+                                <li><strong>Mağaza Denetimi:</strong> Düşük performanslı lokasyonlarda fiziki koşullar, erişim ve görünürlük analizi</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Gelecek Yıl Hedef Önerisi -->
+                    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 10px; text-align: center; margin-top: 20px;">
+                        <h5 style="margin: 0 0 15px 0; font-size: 1.3em;">🎯 ${nextYear} Yılı Önerilen Hedef</h5>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 800px; margin: 0 auto;">
+                            <div>
+                                <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">${year} Gerçekleşen</div>
+                                <div style="font-size: 1.8em; font-weight: bold;">$${totalAchieved.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">Önerilen Büyüme</div>
+                                <div style="font-size: 1.8em; font-weight: bold;">%${suggestedGrowthRate}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">${nextYear} Önerilen Hedef</div>
+                                <div style="font-size: 1.8em; font-weight: bold;">$${suggestedNextYearTarget.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px; font-size: 0.95em; opacity: 0.9; line-height: 1.8;">
+                            <strong>💡 Öneri Gerekçesi:</strong> ${year} yılı %${overallPercentage.toFixed(0)} hedef gerçekleşmesi baz alınarak, 
+                            ${overallPercentage >= 110 ? 'yüksek performans' : overallPercentage >= 90 ? 'dengeli performans' : 'iyileştirme potansiyeli'} 
+                            göz önünde bulundurulmuştur. Mağaza bazlı hedefler belirlenirken her mağazanın kendi geçmiş performansı ve potansiyeli değerlendirilmelidir.
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('targetAIAnalysis').innerHTML = analysis;
+            console.log('✅ Hedef AI Analizi tamamlandı');
         }
         
         // Yıllık hedefi yükle
@@ -5371,60 +5576,92 @@
             const ctx = document.getElementById('customerTrendChart');
             if (!ctx) return;
             
-            // Son 12 ay için müşteri sayısı
-            const monthlyCustomers = {};
-            const today = new Date();
+            console.log('📊 Yıllık Müşteri Trendi oluşturuluyor...');
             
-            for (let i = 11; i >= 0; i--) {
-                const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
-                const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-                monthlyCustomers[key] = new Set();
-            }
+            // Yıllara göre müşteri sayısı (Dashboard gibi)
+            const yearlyCustomers = {};
+            const years = new Set();
             
             allData.forEach(item => {
                 if (!item.date || !item.partner) return;
-                const monthKey = item.date.substring(0, 7);
-                if (monthlyCustomers[monthKey] !== undefined) {
-                    monthlyCustomers[monthKey].add(item.partner);
+                const year = item.date.substring(0, 4);
+                years.add(year);
+                if (!yearlyCustomers[year]) {
+                    yearlyCustomers[year] = new Set();
                 }
+                yearlyCustomers[year].add(item.partner);
             });
             
-            const labels = Object.keys(monthlyCustomers);
-            const data = Object.values(monthlyCustomers).map(set => set.size);
+            // Yılları sırala
+            const sortedYears = Array.from(years).sort();
+            const customerCounts = sortedYears.map(year => yearlyCustomers[year].size);
+            
+            console.log('📊 Yıllar:', sortedYears);
+            console.log('📊 Müşteri sayıları:', customerCounts);
             
             if (customerTrendChart) {
                 customerTrendChart.destroy();
             }
             
+            // Renk paleti (Dashboard ile aynı)
+            const colors = [
+                'rgba(102, 126, 234, 0.8)',   // 2020 - Mor
+                'rgba(250, 112, 154, 0.8)',   // 2021 - Pembe
+                'rgba(56, 239, 125, 0.8)',    // 2022 - Yeşil
+                'rgba(255, 193, 7, 0.8)',     // 2023 - Sarı
+                'rgba(245, 87, 108, 0.8)',    // 2024 - Kırmızı
+                'rgba(72, 219, 251, 0.8)'     // 2025 - Turkuaz
+            ];
+            
             customerTrendChart = new Chart(ctx, {
-                type: 'line',
+                type: 'bar',
                 data: {
-                    labels: labels,
+                    labels: sortedYears,
                     datasets: [{
                         label: 'Aktif Müşteri Sayısı',
-                        data: data,
-                        borderColor: 'rgba(102, 126, 234, 1)',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4
+                        data: customerCounts,
+                        backgroundColor: sortedYears.map((year, idx) => colors[idx % colors.length]),
+                        borderColor: sortedYears.map((year, idx) => colors[idx % colors.length].replace('0.8', '1')),
+                        borderWidth: 2,
+                        borderRadius: 10,
+                        barThickness: 60
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
+                    maintainAspectRatio: true,
+                    aspectRatio: 3,
                     plugins: {
                         legend: {
-                            display: true
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Müşteri: ' + context.parsed.y.toLocaleString('tr-TR');
+                                }
+                            }
                         }
                     },
                     scales: {
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('tr-TR');
+                                }
+                            }
                         }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeInOutQuart'
                     }
-                }
+                },
+                plugins: [ChartDataLabels]
             });
+            
+            console.log('✅ Yıllık Müşteri Trendi grafiği oluşturuldu');
         }
 
         // ==================== AI ANALYSIS & INSIGHTS ====================
@@ -6360,61 +6597,130 @@
         }
 
         function performDashboardAIAnalysis() {
+            console.log('🤖 Gelişmiş AI Analiz başlatılıyor...');
+            
             const currentYear = new Date().getFullYear();
             const lastYear = currentYear - 1;
             const thisYearData = allData.filter(item => item.date && item.date.startsWith(currentYear.toString()));
             const lastYearData = allData.filter(item => item.date && item.date.startsWith(lastYear.toString()));
             
+            // ========== VERİ GÜNCELLEME TARİHİ VE İVME HESAPLAMA ==========
+            const allDates = allData.map(item => item.date).filter(d => d).sort();
+            const latestDataDate = allDates[allDates.length - 1];
+            const latestYear = latestDataDate ? latestDataDate.substring(0, 4) : currentYear;
+            const latestMonth = latestDataDate ? latestDataDate.substring(5, 7) : '';
+            const latestDay = latestDataDate ? latestDataDate.substring(8, 10) : '';
+            
+            const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+            const latestMonthName = latestMonth ? monthNames[parseInt(latestMonth) - 1] : '';
+            const dataUpdateInfo = `${latestDay} ${latestMonthName} ${latestYear}`;
+            
+            console.log('📅 Son veri güncelleme tarihi:', dataUpdateInfo);
+            
+            // ========== YILLIK KARŞILAŞTIRMA ==========
             const totalSalesThisYear = thisYearData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
             const totalSalesLastYear = lastYearData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
             const yearGrowth = lastYearData.length > 0 ? ((totalSalesThisYear - totalSalesLastYear) / totalSalesLastYear * 100) : 0;
             
-            // En iyi ve en düşük performans
+            // ========== MAĞAZA ANALİZİ ==========
             const storeData = {};
+            const storeDataLastYear = {};
             thisYearData.forEach(item => {
                 const store = item.store || 'Bilinmiyor';
                 if (!storeData[store]) storeData[store] = 0;
                 storeData[store] += parseFloat(item.usd_amount || 0);
             });
+            lastYearData.forEach(item => {
+                const store = item.store || 'Bilinmiyor';
+                if (!storeDataLastYear[store]) storeDataLastYear[store] = 0;
+                storeDataLastYear[store] += parseFloat(item.usd_amount || 0);
+            });
             const sortedStores = Object.entries(storeData).sort((a, b) => b[1] - a[1]);
-            const topStore = sortedStores[0];
-            const top3Stores = sortedStores.slice(0, 3);
             const top10Stores = sortedStores.slice(0, 10);
             const weakStore = sortedStores[sortedStores.length - 1];
             
-            // Temsilciler - Top 10
+            // Mağaza ivme hesaplama
+            const storeGrowth = sortedStores.map(([store, sales]) => {
+                const lastYearSales = storeDataLastYear[store] || 0;
+                const growth = lastYearSales > 0 ? ((sales - lastYearSales) / lastYearSales * 100) : 0;
+                return { store, sales, growth };
+            }).sort((a, b) => b.growth - a.growth);
+            const fastestGrowingStore = storeGrowth[0];
+            const slowestGrowingStore = storeGrowth[storeGrowth.length - 1];
+            
+            // ========== TEMSİLCİ ANALİZİ ==========
             const spData = {};
+            const spDataLastYear = {};
             thisYearData.forEach(item => {
                 const sp = item.sales_person || 'Bilinmiyor';
                 if (!spData[sp]) spData[sp] = 0;
                 spData[sp] += parseFloat(item.usd_amount || 0);
             });
+            lastYearData.forEach(item => {
+                const sp = item.sales_person || 'Bilinmiyor';
+                if (!spDataLastYear[sp]) spDataLastYear[sp] = 0;
+                spDataLastYear[sp] += parseFloat(item.usd_amount || 0);
+            });
             const sortedSP = Object.entries(spData).sort((a, b) => b[1] - a[1]);
-            const top3SP = sortedSP.slice(0, 3);
             const top10SP = sortedSP.slice(0, 10);
             
-            // Markalar
+            // Temsilci ivme hesaplama
+            const spGrowth = sortedSP.map(([sp, sales]) => {
+                const lastYearSales = spDataLastYear[sp] || 0;
+                const growth = lastYearSales > 0 ? ((sales - lastYearSales) / lastYearSales * 100) : 0;
+                return { sp, sales, growth };
+            }).sort((a, b) => b.growth - a.growth);
+            
+            // ========== MARKA ANALİZİ (TOP 10) ==========
             const brandData = {};
+            const brandDataLastYear = {};
             thisYearData.forEach(item => {
                 const brand = item.brand || 'Bilinmiyor';
                 if (!brandData[brand]) brandData[brand] = 0;
                 brandData[brand] += parseFloat(item.usd_amount || 0);
             });
+            lastYearData.forEach(item => {
+                const brand = item.brand || 'Bilinmiyor';
+                if (!brandDataLastYear[brand]) brandDataLastYear[brand] = 0;
+                brandDataLastYear[brand] += parseFloat(item.usd_amount || 0);
+            });
             const sortedBrands = Object.entries(brandData).sort((a, b) => b[1] - a[1]);
-            const topBrand = sortedBrands[0];
-            const top3Brands = sortedBrands.slice(0, 3);
             const top10Brands = sortedBrands.slice(0, 10);
-            const brandConcentration = (top3Brands.reduce((sum, b) => sum + b[1], 0) / totalSalesThisYear * 100);
+            const brandConcentration10 = (top10Brands.reduce((sum, b) => sum + b[1], 0) / totalSalesThisYear * 100);
             
-            // Kategori analizi (category_2)
+            // Marka ivme hesaplama
+            const brandGrowth = sortedBrands.map(([brand, sales]) => {
+                const lastYearSales = brandDataLastYear[brand] || 0;
+                const growth = lastYearSales > 0 ? ((sales - lastYearSales) / lastYearSales * 100) : 0;
+                return { brand, sales, growth };
+            }).sort((a, b) => b.growth - a.growth);
+            const fastestGrowingBrand = brandGrowth[0];
+            const slowestGrowingBrand = brandGrowth[brandGrowth.length - 1];
+            
+            // ========== KATEGORİ ANALİZİ ==========
             const categoryData = {};
+            const categoryDataLastYear = {};
             thisYearData.forEach(item => {
                 const category = item.category_2 || 'Bilinmiyor';
                 if (!categoryData[category]) categoryData[category] = 0;
                 categoryData[category] += parseFloat(item.usd_amount || 0);
             });
+            lastYearData.forEach(item => {
+                const category = item.category_2 || 'Bilinmiyor';
+                if (!categoryDataLastYear[category]) categoryDataLastYear[category] = 0;
+                categoryDataLastYear[category] += parseFloat(item.usd_amount || 0);
+            });
             const sortedCategories = Object.entries(categoryData).sort((a, b) => b[1] - a[1]);
             const top10Categories = sortedCategories.slice(0, 10);
+            
+            // Kategori ivme hesaplama
+            const categoryGrowth = sortedCategories.map(([category, sales]) => {
+                const lastYearSales = categoryDataLastYear[category] || 0;
+                const growth = lastYearSales > 0 ? ((sales - lastYearSales) / lastYearSales * 100) : 0;
+                return { category, sales, growth };
+            }).sort((a, b) => b.growth - a.growth);
+            const fastestGrowingCategory = categoryGrowth[0];
+            const slowestGrowingCategory = categoryGrowth[categoryGrowth.length - 1];
             
             // Aylık trend - GÜNLÜK ORTALAMA bazında karşılaştırma (ay henüz bitmemiş olabilir)
             const monthlyDataThisYear = {};
@@ -6463,73 +6769,98 @@
             const isCurrentMonth = (lastMonth === currentMonth);
             const monthCompletionRate = isCurrentMonth ? ((currentDay / 30) * 100).toFixed(0) : 100;
             
-            // Müşteri analizi
+            // ========== MÜŞTERİ ANALİZİ ==========
             const uniqueCustomers = new Set(thisYearData.map(item => item.partner)).size;
             const uniqueInvoices = new Set(thisYearData.map(item => item.move_name)).size;
-            const avgOrderValue = totalSalesThisYear / thisYearData.length; // Eski hesaplama
-            const avgBasketValue = totalSalesThisYear / uniqueInvoices; // Sepet ortalaması
+            const avgBasketValue = totalSalesThisYear / uniqueInvoices;
+            const avgCustomerValue = totalSalesThisYear / uniqueCustomers;
             
-            // Ay adları
-            const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+            // Sepet ortalamas geçen yıl
+            const uniqueInvoicesLastYear = new Set(lastYearData.map(item => item.move_name)).size;
+            const avgBasketValueLastYear = uniqueInvoicesLastYear > 0 ? totalSalesLastYear / uniqueInvoicesLastYear : 0;
+            const basketGrowth = avgBasketValueLastYear > 0 ? ((avgBasketValue - avgBasketValueLastYear) / avgBasketValueLastYear * 100) : 0;
+            
             const lastMonthName = monthNames[parseInt(lastMonth) - 1];
             
+            // ========== GELİŞMİŞ AI ANALİZ HTML ÇIKTISI ==========
+            console.log('📊 Veri güncelleme:', dataUpdateInfo);
+            console.log('📈 Yıllık büyüme:', yearGrowth.toFixed(1) + '%');
+            console.log('📊 Aylık ivme:', monthGrowth.toFixed(1) + '%');
+            
             const analysis = `
+                <!-- Veri Güncelleme Tarihi -->
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 10px; margin-bottom: 20px; color: white; text-align: center;">
+                    <strong>📅 Son Veri Güncelleme:</strong> ${dataUpdateInfo} | <strong>🎵 Müzik Enstrüman Sektörü</strong>
+                </div>
+                
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
                     <div>
-                        <h4 style="margin-bottom: 15px; color: #38ef7d;">✅ Olumlu Tespitler</h4>
+                        <h4 style="margin-bottom: 15px; color: #38ef7d;">✅ Olumlu Tespitler & Güçlü Yönler</h4>
                         <ul style="line-height: 2.2; margin: 0;">
                             ${yearGrowth > 0 ? `<li><strong>📈 Yıllık Büyüme (${currentYear} vs ${lastYear}):</strong> %${Math.abs(yearGrowth).toFixed(1)} artış<br><span style="font-size: 0.9em; color: #666;">💵 ${lastYear}: $${totalSalesLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} → ${currentYear}: $${totalSalesThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</span></li>` : ''}
-                            ${monthGrowth > 0 ? `<li><strong>📊 ${lastMonthName} Ayı İvme (Günlük Ort. ${currentYear} vs ${lastYear}):</strong> %${Math.abs(monthGrowth).toFixed(1)} artış ${isCurrentMonth ? `<span style="color: #667eea;">(⏱️ Ay %${monthCompletionRate} tamamlandı)</span>` : ''}<br><span style="font-size: 0.9em; color: #666;">📅 ${lastMonthName} ${lastYear}: ${daysLastYear} gün, günlük ort. $${dailyAvgLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}<br>📅 ${lastMonthName} ${currentYear}: ${daysThisYear} gün, günlük ort. $${dailyAvgThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</span></li>` : ''}
-                            <li><strong>🏆 En İyi 5 Mağaza (${currentYear}):</strong><br>
-                                ${top10Stores.slice(0, 5).map((s, i) => `<span style="font-size: 0.9em;">${i+1}. ${s[0]}: $${s[1].toLocaleString('tr-TR', {minimumFractionDigits: 0})} (%${(s[1]/totalSalesThisYear*100).toFixed(1)})</span>`).join('<br>')}
-                            </li>
-                            <li><strong>⭐ En İyi 10 Temsilci (${currentYear}):</strong><br>
-                                ${top10SP.map((s, i) => `<span style="font-size: 0.9em;">${i+1}. ${s[0]}: $${s[1].toLocaleString('tr-TR', {minimumFractionDigits: 0})} (%${(s[1]/totalSalesThisYear*100).toFixed(1)})</span>`).join('<br>')}
-                            </li>
-                            <li><strong>🏷️ Top 10 Marka:</strong><br>
+                            ${monthGrowth > 0 ? `<li><strong>📊 ${lastMonthName} Ayı İvme (Günlük Ort.):</strong> %${Math.abs(monthGrowth).toFixed(1)} artış ${isCurrentMonth ? `<span style="color: #667eea;">(⏱️ Ay %${monthCompletionRate} tamamlandı)</span>` : ''}<br><span style="font-size: 0.9em; color: #666;">📅 ${lastYear}: $${dailyAvgLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün → ${currentYear}: $${dailyAvgThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün</span></li>` : ''}
+                            ${basketGrowth > 0 ? `<li><strong>🛒 Sepet Ortalaması İvmesi:</strong> %${Math.abs(basketGrowth).toFixed(1)} artış<br><span style="font-size: 0.9em; color: #666;">💰 ${lastYear}: $${avgBasketValueLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} → ${currentYear}: $${avgBasketValue.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</span></li>` : ''}
+                            ${fastestGrowingStore && fastestGrowingStore.growth > 20 ? `<li><strong>🚀 En Hızlı Büyüyen Mağaza:</strong> ${fastestGrowingStore.store} (%${fastestGrowingStore.growth.toFixed(1)} ivme)<br><span style="font-size: 0.9em; color: #666;">🎯 Best practice kaynak olarak kullanılmalı</span></li>` : ''}
+                            ${fastestGrowingBrand && fastestGrowingBrand.growth > 30 ? `<li><strong>🏷️ En Hızlı Büyüyen Marka:</strong> ${fastestGrowingBrand.brand} (%${fastestGrowingBrand.growth.toFixed(1)} ivme)<br><span style="font-size: 0.9em; color: #666;">💡 Bu markaya yatırım artırılmalı</span></li>` : ''}
+                            <li><strong>🏷️ Top 10 Marka Performansı:</strong><br>
                                 ${top10Brands.map((b, i) => `<span style="font-size: 0.9em;">${i+1}. ${b[0]}: $${b[1].toLocaleString('tr-TR', {minimumFractionDigits: 0})} (%${(b[1]/totalSalesThisYear*100).toFixed(1)})</span>`).join('<br>')}
+                                <br><span style="font-size: 0.9em; color: #666;">🎯 Top 10 marka toplam satışın %${brandConcentration10.toFixed(1)}'ini oluşturuyor</span>
                             </li>
-                            <li><strong>📂 Top 10 Kategori:</strong><br>
-                                ${top10Categories.map((c, i) => `<span style="font-size: 0.9em;">${i+1}. ${c[0]}: $${c[1].toLocaleString('tr-TR', {minimumFractionDigits: 0})} (%${(c[1]/totalSalesThisYear*100).toFixed(1)})</span>`).join('<br>')}
+                            <li><strong>👥 Müşteri Metrikleri:</strong><br>
+                                <span style="font-size: 0.9em;">• ${uniqueCustomers.toLocaleString('tr-TR')} aktif müşteri<br>
+                                • Müşteri başı ortalama: $${avgCustomerValue.toLocaleString('tr-TR', {minimumFractionDigits: 0})}<br>
+                                • Sepet ortalaması: $${avgBasketValue.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</span>
                             </li>
-                            <li><strong>🛒 Sepet Ortalaması:</strong> $${avgBasketValue.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</li>
-                            <li><strong>👥 Aktif Müşteri:</strong> ${uniqueCustomers.toLocaleString('tr-TR')} farklı müşteri</li>
                         </ul>
                     </div>
                     <div>
-                        <h4 style="margin-bottom: 15px; color: #f5576c;">⚠️ Dikkat Noktaları</h4>
+                        <h4 style="margin-bottom: 15px; color: #f5576c;">⚠️ Dikkat Noktaları & İyileştirme Alanları</h4>
                         <ul style="line-height: 2.2; margin: 0;">
-                            ${yearGrowth < 0 ? `<li><strong>📉 Yıllık Düşüş (${currentYear} vs ${lastYear}):</strong> %${Math.abs(yearGrowth).toFixed(1)} azalış - Acil aksiyon gerekli!<br><span style="font-size: 0.9em; color: #666;">💵 ${lastYear}: $${totalSalesLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} → ${currentYear}: $${totalSalesThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</span></li>` : ''}
-                            ${monthGrowth < 0 ? `<li><strong>⚠️ ${lastMonthName} Ayı İvme (Günlük Ort. ${currentYear} vs ${lastYear}):</strong> %${Math.abs(monthGrowth).toFixed(1)} düşüş ${isCurrentMonth ? `<span style="color: #f5576c;">(⏱️ Ay %${monthCompletionRate} tamamlandı - İvme negatif)</span>` : ''}<br><span style="font-size: 0.9em; color: #666;">📅 ${lastMonthName} ${lastYear}: ${daysLastYear} gün, günlük ort. $${dailyAvgLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}<br>📅 ${lastMonthName} ${currentYear}: ${daysThisYear} gün, günlük ort. $${dailyAvgThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}<br><span style="color: #f5576c;">💡 Bu ivmeyle ay sonunda tahmini: $${(dailyAvgThisYear * 30).toLocaleString('tr-TR', {minimumFractionDigits: 0})} (geçen yıl: $${lastMonthLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})})</span></span></li>` : ''}
-                            <li><strong>🎯 Marka Yoğunlaşması:</strong> Top 3 marka (${top3Brands.map(b => b[0]).join(', ')}) toplam ${currentYear} satışının %${brandConcentration.toFixed(1)}'ini oluşturuyor ${brandConcentration > 60 ? '<span style="color: #f5576c;">(⚠️ Risk yüksek! Çeşitlilik az)</span>' : '<span style="color: #38ef7d;">(✓ Dengeli dağılım)</span>'}</li>
-                            ${weakStore ? `<li><strong>📊 En Düşük Performans (${currentYear}):</strong> ${weakStore[0]} mağazası ($${weakStore[1].toLocaleString('tr-TR', {minimumFractionDigits: 0})}) - Toplam satışın sadece %${(weakStore[1]/totalSalesThisYear*100).toFixed(2)}'i</li>` : ''}
-                            <li><strong>🔄 Müşteri Analizi:</strong> ${uniqueCustomers} müşteriden toplam $${totalSalesThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} satış = Müşteri başı $${(totalSalesThisYear/uniqueCustomers).toLocaleString('tr-TR', {minimumFractionDigits: 0})}</li>
+                            ${yearGrowth < 0 ? `<li><strong>📉 Yıllık Düşüş:</strong> %${Math.abs(yearGrowth).toFixed(1)} azalış - Acil aksiyon gerekli!<br><span style="font-size: 0.9em; color: #666;">💵 ${lastYear}: $${totalSalesLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} → ${currentYear}: $${totalSalesThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</span></li>` : ''}
+                            ${monthGrowth < 0 ? `<li><strong>⚠️ ${lastMonthName} Ayı Negatif İvme:</strong> %${Math.abs(monthGrowth).toFixed(1)} düşüş ${isCurrentMonth ? `<span style="color: #f5576c;">(⏱️ Ay %${monthCompletionRate} tamamlandı)</span>` : ''}<br><span style="font-size: 0.9em; color: #666;">📅 Günlük ort: $${dailyAvgLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} → $${dailyAvgThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}<br>💡 Ay sonu tahmini: $${(dailyAvgThisYear * 30).toLocaleString('tr-TR', {minimumFractionDigits: 0})} (vs ${lastYear}: $${lastMonthLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})})</span></li>` : ''}
+                            ${basketGrowth < 0 ? `<li><strong>🛒 Sepet Ortalaması Düşüşü:</strong> %${Math.abs(basketGrowth).toFixed(1)} azalış<br><span style="font-size: 0.9em; color: #666;">⚠️ Cross-selling ve upselling stratejileri güçlendirilmeli</span></li>` : ''}
+                            ${slowestGrowingStore && slowestGrowingStore.growth < -10 ? `<li><strong>📊 En Düşük İvmeli Mağaza:</strong> ${slowestGrowingStore.store} (%${slowestGrowingStore.growth.toFixed(1)})<br><span style="font-size: 0.9em; color: #666;">🎯 Acil müdahale ve destek gerekli</span></li>` : ''}
+                            ${slowestGrowingBrand && slowestGrowingBrand.growth < -20 ? `<li><strong>🏷️ Düşüş Yaşayan Marka:</strong> ${slowestGrowingBrand.brand} (%${slowestGrowingBrand.growth.toFixed(1)})<br><span style="font-size: 0.9em; color: #666;">💡 Ürün yelpazesi ve fiyatlandırma gözden geçirilmeli</span></li>` : ''}
+                            ${weakStore ? `<li><strong>📍 En Düşük Performanslı Mağaza:</strong> ${weakStore[0]} ($${weakStore[1].toLocaleString('tr-TR', {minimumFractionDigits: 0})})<br><span style="font-size: 0.9em; color: #666;">Toplam satışın %${(weakStore[1]/totalSalesThisYear*100).toFixed(2)}'i - Stratejik değerlendirme gerekli</span></li>` : ''}
+                            <li><strong>🎯 Marka Çeşitliliği:</strong> Top 10 marka satışların %${brandConcentration10.toFixed(1)}'ini oluşturuyor ${brandConcentration10 > 70 ? '<span style="color: #f5576c;">(⚠️ Risk yüksek!)</span>' : '<span style="color: #38ef7d;">(✓ Dengeli)</span>'}<br><span style="font-size: 0.9em; color: #666;">💡 Portföy çeşitliliği artırılmalı</span></li>
                         </ul>
                     </div>
                 </div>
+                
                 <hr style="margin: 25px 0; border: none; border-top: 2px solid #667eea;">
-                <h4 style="margin-bottom: 15px; color: #667eea;">💡 Stratejik Öneriler</h4>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <h4 style="margin-bottom: 15px; color: #667eea;">💡 Stratejik Öneriler & Aksiyon Planı (Müzik Sektörü Özel)</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 4px solid #38ef7d;">
                         <strong>🎯 Kısa Vadeli (1-3 ay)</strong>
-                        <ul style="margin: 10px 0 0 0; line-height: 2;">
-                            <li><strong>🏆 Mağaza Liderliği:</strong> ${topStore ? topStore[0] : 'En iyi mağaza'} başarı faktörlerini (ürün yelpazesi, satış teknikleri, müşteri hizmetleri) diğer mağazalara aktarın</li>
-                            <li><strong>👥 Temsilci Eğitimi:</strong> ${top10SP.length > 0 ? top10SP[0][0] : 'En iyi temsilci'} ile best practice toplantısı düzenleyin ve tekniklerini kaydedin</li>
-                            <li><strong>🏷️ Marka Stratejisi:</strong> ${topBrand ? topBrand[0] : 'Lider marka'} için özel promosyon kampanyası (${topBrand ? '+$' + (topBrand[1] * 0.2).toLocaleString('tr-TR', {minimumFractionDigits: 0}) : ''} potansiyel)</li>
-                            <li><strong>📂 Kategori Odaklı:</strong> ${top10Categories.length > 0 ? top10Categories[0][0] : 'En iyi kategori'} için stok optimizasyonu ve teşhir iyileştirmesi</li>
-                            <li><strong>🛒 Sepet Artırma:</strong> Mevcut sepet ortalaması $${avgBasketValue.toFixed(2)} - Cross-selling stratejileri ile %20 artış hedefi</li>
-                            ${monthGrowth < 0 ? `<li><strong>⚠️ Acil Aksiyon:</strong> ${lastMonthName} ayı düşüşünün sebeplerini analiz edin (mevsimsellik, kampanya eksikliği, stok sorunu?)</li>` : ''}
+                        <ul style="margin: 10px 0 0 0; line-height: 2; font-size: 0.95em;">
+                            ${monthGrowth < 0 ? `<li><strong>🚨 ACİL:</strong> ${lastMonthName} ayı düşüşü analizi - Stok, kampanya ve sezonsal faktörleri inceleyin</li>` : ''}
+                            ${top10Stores.length > 0 ? `<li><strong>🏆 Best Practice:</strong> ${top10Stores[0][0]} mağazasının başarı faktörlerini (vitrin düzeni, müşteri deneyimi, teşhir teknikleri) diğer mağazalara aktarın</li>` : ''}
+                            <li><strong>🎸 Ürün Teşhiri:</strong> Gitarlar, klavyeler, davullar için akustik test alanları oluşturun - deneyimsel satış artışı hedefleyin</li>
+                            <li><strong>🛒 Sepet Büyütme:</strong> Aksesuar paketleri (teller, kılıflar, tuner) ile cross-selling - hedef: %20 sepet artışı</li>
+                            ${top10Brands.length > 0 ? `<li><strong>🏷️ Kampanya:</strong> ${top10Brands[0][0]} için "Yeni Başlayanlar Paketi" kampanyası düzenleyin</li>` : ''}
+                            <li><strong>📱 Dijital:</strong> Online mağazada canlı ürün demoları ve sanal deneme özellikleri ekleyin</li>
                         </ul>
                     </div>
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 4px solid #667eea;">
                         <strong>📈 Orta Vadeli (3-6 ay)</strong>
-                        <ul style="margin: 10px 0 0 0; line-height: 2;">
-                            <li><strong>👥 Müşteri Segmentasyonu:</strong> VIP müşteriler (top %20) için özel hizmet, yeni müşteriler için onboarding süreci</li>
-                            <li><strong>🏷️ Marka Çeşitliliği:</strong> ${topBrand ? topBrand[0] : 'Lider marka'} dışındaki markaları güçlendirin - çeşitlilik stratejisi (${topBrand ? '$' + (topBrand[1] * 0.3).toLocaleString('tr-TR', {minimumFractionDigits: 0}) : ''} potansiyel)</li>
-                            <li><strong>📊 Mağaza Geliştirme:</strong> Düşük performanslı mağazalar için özel eğitim programı (${weakStore ? weakStore[0] : 'En düşük mağaza'} odaklı)</li>
-                            <li><strong>📂 Kategori Genişletme:</strong> Top 10 kategorideki güçlü pozisyonları koruyarak, yeni kategori fırsatları araştırın</li>
-                            <li><strong>📅 Sezonluk Trend:</strong> ${lastMonthName} ayı verilerini geçmiş yıllarla karşılaştırın ve sezonluk stratejiler geliştirin</li>
-                            <li><strong>🎯 Hedef Belirleme:</strong> Top 10 temsilci performanslarını baz alarak gerçekçi hedefler belirleyin</li>
+                        <ul style="margin: 10px 0 0 0; line-height: 2; font-size: 0.95em;">
+                            <li><strong>👥 Müşteri Segmentasyonu:</strong> Profesyonel müzisyenler, amatörler ve yeni başlayanlar için özel hizmet paketleri</li>
+                            <li><strong>🎓 Eğitim Programı:</strong> Mağazalarda ücretsiz enstrüman tanıtım ve deneme workshopları (müşteri bağlılığı %30+ artış)</li>
+                            <li><strong>🔧 Servis Geliştirme:</strong> Enstrüman bakım ve onarım servisleri ile satış sonrası gelir kaynağı oluşturun</li>
+                            <li><strong>📦 Stok Optimizasyonu:</strong> Sezonsal trendlere göre (okul açılışı, yılbaşı) stok planlaması yapın</li>
+                            ${weakStore ? `<li><strong>📊 Mağaza İyileştirme:</strong> ${weakStore[0]} için özel destek programı - ürün karması ve satış ekibi eğitimi</li>` : ''}
+                            <li><strong>🌐 Online-Offline Entegrasyon:</strong> Click & Collect, mağazadan deneme sonrası online sipariş sistemi</li>
+                        </ul>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 4px solid #fa7268;">
+                        <strong>🚀 Uzun Vadeli (6-12 ay)</strong>
+                        <ul style="margin: 10px 0 0 0; line-height: 2; font-size: 0.95em;">
+                            <li><strong>🎵 Topluluk Oluşturma:</strong> Müzisyen topluluğu platformu - konserler, jamler, ürün lansmanları düzenleyin</li>
+                            <li><strong>🤝 B2B Geliştirme:</strong> Müzik okulları, kurslar ve tiyatrolar ile kurumsal anlaşmalar yapın</li>
+                            <li><strong>💼 Kiralama Servisi:</strong> Profesyonel ekipman kiralama servisi başlatın (pasif gelir kaynağı)</li>
+                            <li><strong>📊 Data Analytics:</strong> Müşteri satın alma davranışları analizi ile kişiselleştirilmiş öneriler geliştirin</li>
+                            <li><strong>🌍 Pazar Genişletme:</strong> Yeni mağaza açılışları için potansiyel şehirleri analiz edin (${currentYear} verilerine göre)</li>
+                            <li><strong>🎯 Hedef Belirleme:</strong> ${currentYear + 1} yılı için gerçekçi büyüme hedefleri belirleyin - önerilen: %${yearGrowth > 0 ? (yearGrowth * 1.2).toFixed(0) : '15'} büyüme</li>
                         </ul>
                     </div>
                 </div>
