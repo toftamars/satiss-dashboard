@@ -1627,6 +1627,23 @@
             <div class="content">
                 <h2 style="margin-bottom: 20px;">⏰ Zaman Analizi</h2>
                 
+                <!-- Filters -->
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 15px; margin-bottom: 30px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; color: white; font-weight: 600;">📁 Kategori 1</label>
+                            <select id="timeCategory1Filter" onchange="analyzeTime()" style="width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 1em;">
+                                <option value="">Tüm Kategoriler</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: end;">
+                            <button onclick="clearTimeFilters()" style="width: 100%; padding: 10px 20px; background: rgba(255,255,255,0.2); color: white; border: 2px solid white; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em;">
+                                🔄 Temizle
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Time Summary Cards -->
                 <div class="summary-cards">
                     <div class="summary-card">
@@ -7131,6 +7148,16 @@
         function analyzeTime() {
             console.log('⏰ Zaman analizi başlatılıyor...');
             
+            // Kategori 1 filtresini uygula
+            const category1Filter = document.getElementById('timeCategory1Filter')?.value || '';
+            
+            if (category1Filter) {
+                filteredData = allData.filter(item => item.category_1 === category1Filter);
+                console.log(`📁 Kategori 1 filtresi: "${category1Filter}" - ${filteredData.length} kayıt`);
+            } else {
+                filteredData = [...allData];
+            }
+            
             // Summary cards güncelle
             updateTimeSummary();
             
@@ -7404,6 +7431,18 @@
         }
         
         function populateTimeFilters() {
+            // Kategori 1 filtresi (üst filtre - allData'dan doldur)
+            const category1Set = [...new Set(allData.map(item => item.category_1).filter(c => c && c.toLowerCase() !== 'all'))].sort();
+            const category1Select = document.getElementById('timeCategory1Filter');
+            if (category1Select) {
+                const currentValue = category1Select.value;
+                category1Select.innerHTML = '<option value="">Tüm Kategoriler</option>';
+                category1Set.forEach(cat => {
+                    const selected = cat === currentValue ? 'selected' : '';
+                    category1Select.innerHTML += `<option value="${cat}" ${selected}>${cat}</option>`;
+                });
+            }
+            
             // Mağaza filtresi
             const stores = [...new Set(filteredData.map(item => item.store).filter(Boolean))];
             const storeSelect = document.getElementById('storeTimeFilter');
@@ -7412,7 +7451,7 @@
                 storeSelect.innerHTML += `<option value="${store}">${store}</option>`;
             });
             
-            // Kategori filtresi (sadece Kategori 1, ALL hariç)
+            // Kategori filtresi (alt grafik için - sadece Kategori 1, ALL hariç)
             const categories = [...new Set(filteredData.map(item => item.category_1).filter(c => c && c.toLowerCase() !== 'all'))].sort();
             const categorySelect = document.getElementById('categoryTimeFilter');
             categorySelect.innerHTML = '<option value="">Tüm Kategoriler</option>';
@@ -7427,6 +7466,17 @@
             salesPersons.forEach(person => {
                 salesPersonSelect.innerHTML += `<option value="${person}">${person}</option>`;
             });
+        }
+        
+        function clearTimeFilters() {
+            // Kategori 1 filtresini temizle
+            const category1Select = document.getElementById('timeCategory1Filter');
+            if (category1Select) {
+                category1Select.value = '';
+            }
+            
+            console.log('🔄 Zaman analizi filtreleri temizlendi');
+            analyzeTime();
         }
         
         function renderStoreTimeChart() {
