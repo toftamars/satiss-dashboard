@@ -1,8 +1,0 @@
-{
-      "years": ["2023","2024","2025"],
-      "files": ["data-2023.json.gz","data-2024.json.gz","data-2025.json.gz"],
-      "total_records": 0,
-      "last_update": "2025-10-21 23:13:00",
-      "mode": "fast",
-      "note": "Fast mode: 2024-2025 güncellendi, eski yıllar (2020-2023) korundu"
-    }
