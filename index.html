@@ -7805,7 +7805,7 @@
         
         // Kategori dropdown fonksiyonları
         function initializeProductFilters() {
-            // Tüm kategorileri topla (hiyerarşik olarak)
+            // Tüm kategorileri topla (hiyerarşik olarak + ara seviyeler)
             const categoryMap = new Map();
             allData.forEach(item => {
                 const cat1 = item.category_1 || '';
@@ -7813,11 +7813,19 @@
                 const cat3 = item.category_3 || '';
                 const cat4 = item.category_4 || '';
                 
-                // Hiyerarşik yapıyı oluştur
-                if (cat1 || cat2 || cat3 || cat4) {
-                    const hierarchy = [cat1, cat2, cat3, cat4].filter(c => c && c.trim()).join(' > ');
-                    if (hierarchy) {
-                        categoryMap.set(hierarchy, {cat1, cat2, cat3, cat4});
+                // Her seviyeyi ayrı ayrı ekle
+                const levels = [cat1, cat2, cat3, cat4].filter(c => c && c.trim());
+                
+                // Tüm kombinasyonları ekle (ara seviyeler dahil)
+                for (let i = 1; i <= levels.length; i++) {
+                    const hierarchy = levels.slice(0, i).join(' > ');
+                    if (hierarchy && !categoryMap.has(hierarchy)) {
+                        categoryMap.set(hierarchy, {
+                            cat1: levels[0] || '',
+                            cat2: levels[1] || '',
+                            cat3: levels[2] || '',
+                            cat4: levels[3] || ''
+                        });
                     }
                 }
             });
