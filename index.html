@@ -2448,77 +2448,100 @@
         </div>
         <!-- End City Analysis Tab -->
 
-        <!-- Inventory Tab -->
+        <!-- Stock Distribution Tab -->
         <div id="stockTab" class="tab-content">
             <div class="content">
-                <h2 style="margin-bottom: 30px;">📦 Stok & Satış Analizi</h2>
+                <h2 style="margin-bottom: 30px;">📦 Stok Dağılım Analizi</h2>
                 
-                <!-- Loading State -->
-                <div id="inventoryLoading" style="text-align: center; padding: 60px;">
-                    <div style="font-size: 4em; margin-bottom: 20px;">⏳</div>
-                    <h3 style="color: #667eea;">Envanter ve satış verileri yükleniyor...</h3>
-                </div>
-                
-                <!-- Main Content -->
-                <div id="inventoryContent" style="display: none;">
-                    
-                    <!-- Search Filters -->
-                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 15px; margin-bottom: 30px; color: white;">
-                        <h3 style="margin: 0 0 20px 0;">🔍 Ürün Ara & Filtrele</h3>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <!-- Tarih Filtresi -->
+                <div style="max-width: 1000px; margin: 0 auto 30px;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 15px; color: white;">
+                        <h3 style="margin-bottom: 15px;">📅 Tarih Aralığı Filtresi (Opsiyonel)</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 15px; align-items: end;">
                             <div>
-                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Marka</label>
-                                <input type="text" id="stockSearchBrand" placeholder="Marka adı..." 
-                                       onkeyup="filterStockAnalysis()"
+                                <label style="display: block; margin-bottom: 5px; font-size: 0.9em; opacity: 0.9;">Başlangıç Tarihi:</label>
+                                <input type="date" id="stockDateStart" 
                                        style="width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 1em;">
                             </div>
                             <div>
-                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Ürün Adı</label>
-                                <input type="text" id="stockSearchProduct" placeholder="Ürün adı..." 
-                                       onkeyup="filterStockAnalysis()"
+                                <label style="display: block; margin-bottom: 5px; font-size: 0.9em; opacity: 0.9;">Bitiş Tarihi:</label>
+                                <input type="date" id="stockDateEnd" 
                                        style="width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 1em;">
                             </div>
                             <div>
-                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Kategori 2</label>
-                                <input type="text" id="stockSearchCat2" placeholder="Kategori 2..." 
-                                       onkeyup="filterStockAnalysis()"
-                                       style="width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 1em;">
-                            </div>
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Kategori 3</label>
-                                <input type="text" id="stockSearchCat3" placeholder="Kategori 3..." 
-                                       onkeyup="filterStockAnalysis()"
-                                       style="width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 1em;">
-                            </div>
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Kategori 4</label>
-                                <input type="text" id="stockSearchCat4" placeholder="Kategori 4..." 
-                                       onkeyup="filterStockAnalysis()"
-                                       style="width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 1em;">
-                            </div>
-                            <div style="display: flex; align-items: end;">
-                                <button onclick="clearStockFilters()" 
-                                        style="width: 100%; padding: 10px 20px; background: white; color: #667eea; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em;">
-                                    🗑️ Temizle
+                                <button onclick="clearStockDateFilters()" 
+                                        style="padding: 10px 20px; background: rgba(255,255,255,0.2); color: white; border: 2px solid white; border-radius: 8px; cursor: pointer; font-size: 1em;">
+                                    🔄 Temizle
                                 </button>
                             </div>
                         </div>
+                        <p style="margin-top: 10px; font-size: 0.85em; opacity: 0.8;">
+                            💡 Tarih seçmezseniz tüm satış verileri kullanılır
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Stock Input Methods -->
+                <div style="max-width: 1000px; margin: 0 auto;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px;">
+                        <!-- Excel Upload -->
+                        <div style="background: #f8f9fa; padding: 30px; border-radius: 15px;">
+                            <h3 style="margin-bottom: 20px;">📄 Excel ile Toplu Yükleme</h3>
+                            <p style="color: #6c757d; margin-bottom: 15px;">Excel formatı: <strong>Ürün Kodu | Stok Miktarı</strong></p>
+                            <input type="file" id="stockExcelInput" accept=".xlsx,.xls" 
+                                   style="display: none;" onchange="handleStockExcelUpload(event)">
+                            <button onclick="document.getElementById('stockExcelInput').click()" 
+                                    style="width: 100%; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1.1em;">
+                                📂 Excel Dosyası Seç
+                            </button>
+                            <p style="color: #6c757d; margin-top: 10px; font-size: 0.9em;">Max 5 MB, .xlsx veya .xls</p>
+                        </div>
+                        
+                        <!-- Manual Entry -->
+                        <div style="background: #f8f9fa; padding: 30px; border-radius: 15px;">
+                            <h3 style="margin-bottom: 20px;">✏️ Manuel Giriş</h3>
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Ürün Kodu:</label>
+                                <input type="text" id="manualProductCode" placeholder="örn: KDP120R" 
+                                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Stok Miktarı:</label>
+                                <input type="number" id="manualStockQty" placeholder="örn: 25" min="0"
+                                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                            </div>
+                            <button onclick="addManualStock()" 
+                                    style="width: 100%; padding: 15px; background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1.1em;">
+                                ➕ Stok Ekle
+                            </button>
+                        </div>
                     </div>
                     
-                    <!-- AI Stock Analysis Table -->
-                    <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                        <h3 style="margin-bottom: 20px;">📊 Mağaza Bazlı Stok & Satış Analizi (AI Destekli)</h3>
-                        <p style="color: #666; margin-bottom: 20px;">
-                            <strong>Not:</strong> AI, geçmiş satış verilerine göre her mağaza için önerilen stok ve satın alma miktarlarını hesaplar.
-                        </p>
-                        <div id="stockAnalysisTableContainer" style="overflow-x: auto; max-height: 600px; overflow-y: auto;">
-                            <!-- Tablo burada dinamik olarak oluşturulacak -->
+                    <!-- Current Stock List -->
+                    <div id="stockListContainer" style="display: none; margin-bottom: 40px;">
+                        <h3 style="margin-bottom: 20px;">📋 Mevcut Stok Listesi</h3>
+                        <div id="stockListTable" style="overflow-x: auto;"></div>
+                        <div style="margin-top: 20px; text-align: center;">
+                            <button onclick="analyzeStockDistribution()" 
+                                    style="padding: 15px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1.1em; margin-right: 10px;">
+                                🤖 AI Dağılım Önerisi Al
+                            </button>
+                            <button onclick="clearStockList()" 
+                                    style="padding: 15px 40px; background: #dc3545; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1.1em;">
+                                🗑️ Listeyi Temizle
+                            </button>
                         </div>
+                    </div>
+                    
+                    <!-- AI Distribution Recommendations -->
+                    <div id="stockDistributionResults" style="display: none;">
+                        <h3 style="margin-bottom: 20px;">🤖 AI Stok Dağılım Önerileri</h3>
+                        <div id="stockDistributionContent"></div>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- End Inventory Tab -->
+        <!-- End Stock Distribution Tab -->
 
     </div>
 
@@ -4830,8 +4853,8 @@
                     }, 2000);
                 }
             } else if (tabName === 'stock') {
-                console.log('📦 Stok analizi sekmesi açılıyor...');
-                loadInventoryData();
+                console.log('📦 Stok dağılım sekmesi açılıyor...');
+                // Excel veya manuel giriş ile stok eklenir, yüklenecek bir şey yok
             }
         }
         
