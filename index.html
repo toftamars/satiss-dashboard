@@ -2456,100 +2456,77 @@
         </div>
         <!-- End City Analysis Tab -->
 
-        <!-- Stock Distribution Tab -->
+        <!-- Inventory Tab -->
         <div id="stockTab" class="tab-content">
             <div class="content">
-                <h2 style="margin-bottom: 30px;">📦 Stok Dağılım Analizi</h2>
+                <h2 style="margin-bottom: 30px;">📦 Perakende Stok Analizi</h2>
                 
-                <!-- Tarih Filtresi -->
-                <div style="max-width: 1000px; margin: 0 auto 30px;">
-                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 15px; color: white;">
-                        <h3 style="margin-bottom: 15px;">📅 Tarih Aralığı Filtresi (Opsiyonel)</h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 15px; align-items: end;">
-                            <div>
-                                <label style="display: block; margin-bottom: 5px; font-size: 0.9em; opacity: 0.9;">Başlangıç Tarihi:</label>
-                                <input type="date" id="stockDateStart" 
-                                       style="width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 1em;">
-                            </div>
-                            <div>
-                                <label style="display: block; margin-bottom: 5px; font-size: 0.9em; opacity: 0.9;">Bitiş Tarihi:</label>
-                                <input type="date" id="stockDateEnd" 
-                                       style="width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 1em;">
-                            </div>
-                            <div>
-                                <button onclick="clearStockDateFilters()" 
-                                        style="padding: 10px 20px; background: rgba(255,255,255,0.2); color: white; border: 2px solid white; border-radius: 8px; cursor: pointer; font-size: 1em;">
-                                    🔄 Temizle
-                                </button>
-                            </div>
-                        </div>
-                        <p style="margin-top: 10px; font-size: 0.85em; opacity: 0.8;">
-                            💡 Tarih seçmezseniz tüm satış verileri kullanılır
-                        </p>
-                    </div>
+                <!-- Loading State -->
+                <div id="inventoryLoading" style="text-align: center; padding: 60px;">
+                    <div style="font-size: 4em; margin-bottom: 20px;">⏳</div>
+                    <h3 style="color: #667eea;">Envanter verileri yükleniyor...</h3>
                 </div>
                 
-                <!-- Stock Input Methods -->
-                <div style="max-width: 1000px; margin: 0 auto;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px;">
-                        <!-- Excel Upload -->
-                        <div style="background: #f8f9fa; padding: 30px; border-radius: 15px;">
-                            <h3 style="margin-bottom: 20px;">📄 Excel ile Toplu Yükleme</h3>
-                            <p style="color: #6c757d; margin-bottom: 15px;">Excel formatı: <strong>Ürün Kodu | Stok Miktarı</strong></p>
-                            <input type="file" id="stockExcelInput" accept=".xlsx,.xls" 
-                                   style="display: none;" onchange="handleStockExcelUpload(event)">
-                            <button onclick="document.getElementById('stockExcelInput').click()" 
-                                    style="width: 100%; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1.1em;">
-                                📂 Excel Dosyası Seç
-                            </button>
-                            <p style="color: #6c757d; margin-top: 10px; font-size: 0.9em;">Max 5 MB, .xlsx veya .xls</p>
+                <!-- Main Content -->
+                <div id="inventoryContent" style="display: none;">
+                    <!-- Summary Cards -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 40px;">
+                        <div class="summary-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                            <h3>📦 Toplam Ürün</h3>
+                            <p id="invTotalProducts">0</p>
+                            <small>Farklı ürün sayısı</small>
                         </div>
-                        
-                        <!-- Manual Entry -->
-                        <div style="background: #f8f9fa; padding: 30px; border-radius: 15px;">
-                            <h3 style="margin-bottom: 20px;">✏️ Manuel Giriş</h3>
-                            <div style="margin-bottom: 15px;">
-                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Ürün Kodu:</label>
-                                <input type="text" id="manualProductCode" placeholder="örn: KDP120R" 
-                                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                            </div>
-                            <div style="margin-bottom: 15px;">
-                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Stok Miktarı:</label>
-                                <input type="number" id="manualStockQty" placeholder="örn: 25" min="0"
-                                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                            </div>
-                            <button onclick="addManualStock()" 
-                                    style="width: 100%; padding: 15px; background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1.1em;">
-                                ➕ Stok Ekle
-                            </button>
+                        <div class="summary-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                            <h3>📊 Toplam Miktar</h3>
+                            <p id="invTotalQuantity">0</p>
+                            <small>Toplam stok adedi</small>
+                        </div>
+                        <div class="summary-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                            <h3>💰 Toplam Değer</h3>
+                            <p id="invTotalValue">$0</p>
+                            <small>Maliyet değeri</small>
+                        </div>
+                        <div class="summary-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                            <h3>🏪 Lokasyon</h3>
+                            <p id="invTotalLocations">0</p>
+                            <small>Farklı depo/mağaza</small>
                         </div>
                     </div>
                     
-                    <!-- Current Stock List -->
-                    <div id="stockListContainer" style="display: none; margin-bottom: 40px;">
-                        <h3 style="margin-bottom: 20px;">📋 Mevcut Stok Listesi</h3>
-                        <div id="stockListTable" style="overflow-x: auto;"></div>
-                        <div style="margin-top: 20px; text-align: center;">
-                            <button onclick="analyzeStockDistribution()" 
-                                    style="padding: 15px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1.1em; margin-right: 10px;">
-                                🤖 AI Dağılım Önerisi Al
-                            </button>
-                            <button onclick="clearStockList()" 
-                                    style="padding: 15px 40px; background: #dc3545; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1.1em;">
-                                🗑️ Listeyi Temizle
-                            </button>
+                    <!-- Charts Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 30px; margin-bottom: 40px;">
+                        <div class="chart-container">
+                            <h3 style="text-align: center; margin-bottom: 20px;">🏷️ Markaya Göre Stok Dağılımı</h3>
+                            <canvas id="invBrandChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 style="text-align: center; margin-bottom: 20px;">📂 Kategoriye Göre Stok</h3>
+                            <canvas id="invCategoryChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 style="text-align: center; margin-bottom: 20px;">🏪 Lokasyona Göre Stok</h3>
+                            <canvas id="invLocationChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 style="text-align: center; margin-bottom: 20px;">💰 En Yüksek Değerli Ürünler (Top 10)</h3>
+                            <canvas id="invTopValueChart"></canvas>
                         </div>
                     </div>
                     
-                    <!-- AI Distribution Recommendations -->
-                    <div id="stockDistributionResults" style="display: none;">
-                        <h3 style="margin-bottom: 20px;">🤖 AI Stok Dağılım Önerileri</h3>
-                        <div id="stockDistributionContent"></div>
+                    <!-- Detailed Table -->
+                    <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <h3 style="margin-bottom: 20px;">📋 Detaylı Stok Listesi</h3>
+                        <div style="margin-bottom: 15px;">
+                            <input type="text" id="invSearchInput" placeholder="🔍 Ürün ara (isim, kod, marka, kategori)..." 
+                                   onkeyup="filterInventoryTable()"
+                                   style="width: 100%; padding: 12px; border: 2px solid #667eea; border-radius: 8px; font-size: 1em;">
+                        </div>
+                        <div id="inventoryTableContainer" style="overflow-x: auto;"></div>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- End Stock Distribution Tab -->
+        <!-- End Inventory Tab -->
 
     </div>
 
@@ -2559,6 +2536,8 @@
         let baseData = []; // Kanal filtresi öncesi tüm veri
         let metadata = null;
         let loadedYears = new Set();
+        let inventoryData = null; // Envanter verileri
+        let inventoryCharts = {}; // Envanter grafikleri
         
         // Global Satış Kanalı Filtresi State
         let activeChannels = {
@@ -11588,6 +11567,165 @@
         
         function performStoreAIAnalysis(data, profile) {
             const insights = {positive: [], negative: [], neutral: [], recommendations: [], warnings: []};
+            
+            // ==================== YILLIK TREND VE GELECEK YIL HED EF ÖNERİSİ ====================
+            console.log('📊 Yıllık trend analizi başlatılıyor...');
+            
+            // Yıllık satış verileri
+            const yearlyData = {};
+            data.forEach(item => {
+                const year = item.date ? item.date.substring(0, 4) : null;
+                if (year) {
+                    if (!yearlyData[year]) yearlyData[year] = 0;
+                    yearlyData[year] += parseFloat(item.usd_amount || 0);
+                }
+            });
+            
+            const years = Object.keys(yearlyData).sort();
+            const currentYear = new Date().getFullYear().toString();
+            const lastYear = (parseInt(currentYear) - 1).toString();
+            
+            let yearlyTrendAnalysis = '';
+            let nextYearTargetRecommendation = '';
+            
+            if (years.length >= 2) {
+                // Son 3 yılın verilerini al
+                const recentYears = years.slice(-3);
+                const yearSales = recentYears.map(y => ({year: y, sales: yearlyData[y]}));
+                
+                // Trend hesapla (son 2 yıl karşılaştırması)
+                const currentYearSales = yearlyData[currentYear] || 0;
+                const lastYearSales = yearlyData[lastYear] || 0;
+                const growth = lastYearSales > 0 ? ((currentYearSales - lastYearSales) / lastYearSales * 100) : 0;
+                
+                // Ortalama büyüme oranı (son 3 yıl varsa)
+                let avgGrowth = 0;
+                if (recentYears.length === 3) {
+                    const growth1 = yearlyData[recentYears[1]] > 0 ? 
+                        ((yearlyData[recentYears[1]] - yearlyData[recentYears[0]]) / yearlyData[recentYears[0]] * 100) : 0;
+                    const growth2 = yearlyData[recentYears[2]] > 0 ? 
+                        ((yearlyData[recentYears[2]] - yearlyData[recentYears[1]]) / yearlyData[recentYears[1]] * 100) : 0;
+                    avgGrowth = (growth1 + growth2) / 2;
+                }
+                
+                // Trend açıklaması
+                let trendIcon = '📊';
+                let trendText = '';
+                let trendColor = '#667eea';
+                
+                if (growth > 20) {
+                    trendIcon = '🚀';
+                    trendText = 'GÜÇLÜ BÜYÜME';
+                    trendColor = '#38ef7d';
+                } else if (growth > 10) {
+                    trendIcon = '📈';
+                    trendText = 'POZİTİF BÜYÜME';
+                    trendColor = '#4facfe';
+                } else if (growth > 0) {
+                    trendIcon = '➡️';
+                    trendText = 'STABIL BÜYÜME';
+                    trendColor = '#ffa751';
+                } else if (growth > -10) {
+                    trendIcon = '⚠️';
+                    trendText = 'DÜŞ';
+                    trendColor = '#ff6b6b';
+                } else {
+                    trendIcon = '📉';
+                    trendText = 'YÜKSEK DÜŞÜŞ';
+                    trendColor = '#dc3545';
+                }
+                
+                yearlyTrendAnalysis = `
+                    <div style="background: linear-gradient(135deg, ${trendColor} 0%, ${trendColor}dd 100%); padding: 20px; border-radius: 12px; color: white; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 15px 0; font-size: 1.3em;">${trendIcon} Yıllık Performans Trendi</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                            ${recentYears.map(y => `
+                                <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">${y}</div>
+                                    <div style="font-size: 1.3em; font-weight: bold;">$${(yearlyData[y] || 0).toLocaleString('tr-TR', {minimumFractionDigits: 0})}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px;">
+                            <div style="font-size: 1.1em; margin-bottom: 8px;"><strong>📊 ${currentYear} Performansı:</strong> ${trendText}</div>
+                            <div style="font-size: 0.95em; line-height: 1.6;">
+                                • ${lastYear} vs ${currentYear}: <strong>${growth > 0 ? '+' : ''}${growth.toFixed(1)}%</strong> ${growth > 0 ? 'büyüme' : 'düşüş'}<br>
+                                • ${lastYear} Satış: $${lastYearSales.toLocaleString('tr-TR', {minimumFractionDigits: 0})}<br>
+                                • ${currentYear} Satış: $${currentYearSales.toLocaleString('tr-TR', {minimumFractionDigits: 0})}<br>
+                                ${recentYears.length === 3 ? `• 3 Yıllık Ortalama Büyüme: ${avgGrowth > 0 ? '+' : ''}${avgGrowth.toFixed(1)}%` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // GELECEK YIL HEDEF ÖNERİSİ
+                const nextYear = (parseInt(currentYear) + 1).toString();
+                let recommendedTarget = 0;
+                let targetReason = '';
+                let targetColor = '#667eea';
+                
+                if (growth > 20) {
+                    // Güçlü büyüme: %20-25 hedef
+                    recommendedTarget = currentYearSales * 1.22;
+                    targetReason = `🚀 Mağaza son yıl <strong>%${growth.toFixed(1)}</strong> büyüdü! Bu momentum ile ${nextYear} için <strong>%22</strong> büyüme hedefi makul.`;
+                    targetColor = '#38ef7d';
+                } else if (growth > 10) {
+                    // İyi büyüme: %15-18 hedef
+                    recommendedTarget = currentYearSales * 1.16;
+                    targetReason = `📈 Mağaza sağlam bir büyüme gösteriyor (%${growth.toFixed(1)}). ${nextYear} için <strong>%16</strong> büyüme hedefi öneriyoruz.`;
+                    targetColor = '#4facfe';
+                } else if (growth > 0) {
+                    // Stabil: %10-12 hedef
+                    recommendedTarget = currentYearSales * 1.10;
+                    targetReason = `➡️ Mağaza stabil büyüme gösteriyor (%${growth.toFixed(1)}). ${nextYear} için dikkatli bir <strong>%10</strong> büyüme hedefi uygun.`;
+                    targetColor = '#ffa751';
+                } else if (growth > -10) {
+                    // Hafif düşüş: Stabilizasyon hedefi
+                    recommendedTarget = currentYearSales * 1.05;
+                    targetReason = `⚠️ Mağaza hafif düşüş yaşıyor (%${growth.toFixed(1)}). ${nextYear} için önce <strong>stabilizasyon</strong>, sonra %5 büyüme hedefleyin. <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 4px; font-size: 0.9em;">Acil aksiyon gerekli!</span>`;
+                    targetColor = '#ff6b6b';
+                } else {
+                    // Yüksek düşüş: Minimum kayıp hedefi
+                    recommendedTarget = currentYearSales;
+                    targetReason = `📉 Mağaza ciddi düşüş yaşıyor (%${growth.toFixed(1)}). ${nextYear} için öncelik <strong>mevcut seviyeyi korumak</strong> olmalı. <span style="background: rgba(255,0,0,0.3); padding: 4px 8px; border-radius: 4px; font-size: 0.9em;">🚨 Kapsamlı strateji revizyonu şart!</span>`;
+                    targetColor = '#dc3545';
+                }
+                
+                nextYearTargetRecommendation = `
+                    <div style="background: linear-gradient(135deg, ${targetColor} 0%, ${targetColor}dd 100%); padding: 20px; border-radius: 12px; color: white; margin-bottom: 20px; border: 3px solid rgba(255,255,255,0.3);">
+                        <h4 style="margin: 0 0 15px 0; font-size: 1.3em;">🎯 ${nextYear} Yılı Önerilen Hedef</h4>
+                        <div style="text-align: center; margin: 20px 0;">
+                            <div style="font-size: 2.5em; font-weight: bold; margin-bottom: 10px;">
+                                $${recommendedTarget.toLocaleString('tr-TR', {minimumFractionDigits: 0})}
+                            </div>
+                            <div style="font-size: 1.1em; opacity: 0.95;">
+                                ${currentYear} Satış: $${currentYearSales.toLocaleString('tr-TR', {minimumFractionDigits: 0})} 
+                                → <strong>${nextYear}: +${((recommendedTarget - currentYearSales) / currentYearSales * 100).toFixed(1)}%</strong>
+                            </div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; line-height: 1.7;">
+                            <strong>💡 Neden Bu Hedef?</strong><br>
+                            ${targetReason}
+                        </div>
+                        ${growth > 0 ? `
+                            <div style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.15); border-radius: 8px; font-size: 0.95em;">
+                                <strong>📊 Aylık Hedef Dağılımı (Öneri):</strong><br>
+                                • Yıllık Hedef: $${recommendedTarget.toLocaleString('tr-TR', {minimumFractionDigits: 0})}<br>
+                                • Aylık Ortalama: $${(recommendedTarget / 12).toLocaleString('tr-TR', {minimumFractionDigits: 0})}<br>
+                                • Günlük Ortalama: $${(recommendedTarget / 365).toLocaleString('tr-TR', {minimumFractionDigits: 0})}
+                            </div>
+                        ` : `
+                            <div style="margin-top: 15px; padding: 12px; background: rgba(255,0,0,0.2); border-radius: 8px; font-size: 0.95em;">
+                                <strong>⚠️ Aksiyon Önerileri:</strong><br>
+                                • Ürün karması revizyonu<br>
+                                • Satış ekibi eğitimi<br>
+                                • Kampanya stratejisi değişikliği<br>
+                                • Müşteri memnuniyeti analizi
+                            </div>
+                        `}
+                    </div>
+                `;
+            }
             
             // Marka analizi
             const brandData = {};
