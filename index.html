@@ -5253,8 +5253,8 @@
             document.getElementById('avgOrderValue').textContent = '$' + avgOrderValue.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('maxOrderValue').textContent = '$' + maxOrderValue.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             
-            // Top 20 müşteri kartları (otomatik göster)
-            renderTopCustomers(customers.slice(0, 20));
+            // Top 30 müşteri kartları (otomatik göster)
+            renderTopCustomers(customers.slice(0, 30));
             
             // Grafikler
             renderCustomerCityChart(customers);
@@ -8432,6 +8432,20 @@
             
             // Sonuçlara scroll
             document.getElementById('customerProfileMainContainer').scrollIntoView({behavior: 'smooth', block: 'start'});
+        }
+        
+        // Temizle butonu fonksiyonu
+        function clearCustomerSearchMain() {
+            // Input'u temizle
+            document.getElementById('customerSearchInputMain').value = '';
+            
+            // Arama sonuçlarını gizle
+            document.getElementById('customerProfileMainContainer').style.display = 'none';
+            
+            // Top 30'u göster
+            document.getElementById('topCustomersSection').style.display = 'block';
+            
+            console.log('✅ Müşteri araması temizlendi, Top 30 gösteriliyor');
         }
         
         function renderCustomerBrandChartMain(data) {
