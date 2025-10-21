@@ -1322,9 +1322,96 @@ jobs:
           
           # Data Mode'a göre dosya ekleme stratejisi
           if [[ "$DATA_MODE" == "fast" ]]; then
-            # FAST MODE: SADECE 2024-2025 dosyalarını ekle (eski yıllar korunur)
-            echo "⚡ FAST MODE: Sadece 2024-2025 dosyaları güncelleniyor..."
-            git add data-2024.json.gz data-2025.json.gz data-metadata.json 2>/dev/null || echo "2024-2025 dosyaları bulunamadı"
+            # FAST MODE: SADECE 2024-2025 dosyalarını ekle + metadata (eski yıllar GitHub'da korunur)
+            echo "⚡ FAST MODE: Sadece 2024-2025 dosyaları güncelleniyor (eski yıllar korunuyor)..."
+            
+            # Önce GitHub'dan mevcut data-*.json.gz dosyalarını listele
+            echo "📋 GitHub'daki mevcut data dosyaları:"
+            git ls-files "data-*.json.gz" | sort
+            
+            # Lokal oluşturulan dosyalar
+            echo ""
+            echo "📋 Lokal oluşturulan dosyalar:"
+            ls -la data-*.json.gz 2>/dev/null || echo "Henüz dosya yok"
+            
+            # SADECE lokal oluşturulan 2024-2025 dosyalarını ekle
+            if [[ -f "data-2024.json.gz" ]]; then
+              echo "✅ data-2024.json.gz ekleniyor..."
+              git add data-2024.json.gz
+            else
+              echo "⚠️ data-2024.json.gz bulunamadı"
+            fi
+            
+            if [[ -f "data-2025.json.gz" ]]; then
+              echo "✅ data-2025.json.gz ekleniyor..."
+              git add data-2025.json.gz
+            else
+              echo "⚠️ data-2025.json.gz bulunamadı"
+            fi
+            
+            # Metadata'yı DÜZENLE: GitHub'daki TÜM yılları koru + yeni yılları ekle
+            echo ""
+            echo "🔧 Metadata düzenleniyor (eski yıllar + yeni yıllar)..."
+            
+            # GitHub'daki mevcut yılları al
+            existing_years=$(git ls-files "data-*.json.gz" | grep -oP 'data-\K\d{4}' | sort -u || echo "")
+            echo "📅 GitHub'daki mevcut yıllar: $existing_years"
+            
+            # Yeni oluşturulan dosyalardaki yılları al
+            new_years=$(ls data-*.json.gz 2>/dev/null | grep -oP 'data-\K\d{4}' | sort -u || echo "")
+            echo "📅 Yeni oluşturulan yıllar: $new_years"
+            
+            # Tüm yılları birleştir (unique)
+            all_years=$(echo -e "$existing_years\n$new_years" | sort -u | grep -v '^$')
+            echo "📅 Metadata'ya eklenecek tüm yıllar: $all_years"
+            
+            # Metadata'yı güncelle (Python ile)
+            python3 << 'METADATA_EOF'
+import json
+import os
+
+# Tüm yılları al (bash'ten)
+all_years_str = os.popen('echo "$all_years"').read().strip()
+all_years = sorted([y.strip() for y in all_years_str.split('\n') if y.strip()])
+
+print(f"🔧 Metadata güncelleniyor: {all_years}")
+
+# Mevcut metadata'yı oku (varsa)
+try:
+    with open('data-metadata.json', 'r') as f:
+        metadata = json.load(f)
+except:
+    metadata = {}
+
+# Yılları güncelle
+metadata['years'] = all_years
+metadata['files'] = [f'data-{year}.json.gz' for year in all_years]
+
+# Toplam kayıt sayısını güncelle (sadece yeni yıllardaki)
+metadata['total_records'] = metadata.get('total_records', 0)
+
+# Tarih güncelle
+from datetime import datetime
+metadata['last_update'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+metadata['mode'] = 'fast'
+metadata['note'] = 'Fast mode: 2024-2025 güncellendi, eski yıllar (2020-2023) korundu'
+
+# Kaydet
+with open('data-metadata.json', 'w') as f:
+    json.dump(metadata, f, indent=2)
+
+print(f"✅ Metadata güncellendi: {len(all_years)} yıl")
+METADATA_EOF
+            
+            # Metadata'yı ekle
+            if [[ -f "data-metadata.json" ]]; then
+              echo "✅ data-metadata.json ekleniyor..."
+              git add data-metadata.json
+            fi
+            
+            # ÖNEMLİ: Eski yıl dosyalarına DOKUNMA (git add etme, git rm etme)
+            echo "ℹ️ 2020-2023 dosyaları GitHub'da korunuyor (değiştirilmedi)"
+            
           else
             # FULL MODE: TÜM yıl dosyalarını ekle
             echo "🔄 FULL MODE: Tüm yıl dosyaları ekleniyor..."
