@@ -6041,9 +6041,22 @@
             
             // Günlük Ortalama ve Sepet Ortalaması Hesaplama
             const uniqueDates = new Set(allData.map(item => item.date ? item.date.split(' ')[0] : null).filter(Boolean)).size;
-            const uniqueOrders = new Set(allData.map(item => item.invoice_id).filter(Boolean)).size;
+            
+            // Fatura numarasını bul (invoice, invoice_id, order_id gibi alanları kontrol et)
+            const invoiceField = allData[0]?.invoice || allData[0]?.invoice_id || allData[0]?.order_id || allData[0]?.name;
+            console.log('📊 İlk kayıt örneği:', allData[0]);
+            console.log('🔍 Fatura alanı örneği:', invoiceField);
+            
+            // Benzersiz fatura sayısını hesapla (name alanı fatura numarası)
+            const uniqueOrders = new Set(allData.map(item => item.name || item.invoice || item.invoice_id).filter(Boolean)).size;
+            
             const dailyAverage = uniqueDates > 0 ? totalSales / uniqueDates : 0;
             const basketAverage = uniqueOrders > 0 ? totalSales / uniqueOrders : 0;
+            
+            console.log('📅 Benzersiz Gün Sayısı:', uniqueDates);
+            console.log('🛒 Benzersiz Sipariş Sayısı:', uniqueOrders);
+            console.log('💰 Günlük Ortalama:', dailyAverage.toFixed(2));
+            console.log('🛒 Sepet Ortalaması:', basketAverage.toFixed(2));
             
             // UI güncelle
             document.getElementById('dashTotalSales').textContent = '$' + totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2});
