@@ -6894,9 +6894,32 @@
             
             console.log('📅 Son veri güncelleme tarihi:', dataUpdateInfo);
             
-            // ========== YILLIK KARŞILAŞTIRMA ==========
+            // ========== YILLIK KARŞILAŞTIRMA (İVME BAZLI) ==========
             const totalSalesThisYear = thisYearData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
             const totalSalesLastYear = lastYearData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
+            
+            // Bu yıl için geçen gün sayısını hesapla (veri güncelleme tarihine göre)
+            const startOfYear = new Date(currentYear, 0, 1);
+            const latestDate = new Date(latestDataDate);
+            const daysPassedThisYear = Math.ceil((latestDate - startOfYear) / (1000 * 60 * 60 * 24));
+            const daysRemainingThisYear = 365 - daysPassedThisYear;
+            
+            // Günlük ortalama ciro (bu yıl vs geçen yıl)
+            const dailyAvgThisYear = daysPassedThisYear > 0 ? totalSalesThisYear / daysPassedThisYear : 0;
+            const dailyAvgLastYear = totalSalesLastYear / 365;
+            
+            // Günlük ortalama bazında ivme
+            const dailyGrowth = dailyAvgLastYear > 0 ? ((dailyAvgThisYear - dailyAvgLastYear) / dailyAvgLastYear * 100) : 0;
+            
+            // Yıl sonu projeksiyonu (mevcut günlük ortalama ile)
+            const projectedYearEndSales = dailyAvgThisYear * 365;
+            const projectedGrowth = totalSalesLastYear > 0 ? ((projectedYearEndSales - totalSalesLastYear) / totalSalesLastYear * 100) : 0;
+            
+            // Hedef hesaplama: 2024 seviyesine ulaşmak için kalan günlerde ne kadar gerekli
+            const targetRemainingForLastYear = Math.max(0, totalSalesLastYear - totalSalesThisYear);
+            const dailyTargetToMatchLastYear = daysRemainingThisYear > 0 ? targetRemainingForLastYear / daysRemainingThisYear : 0;
+            
+            // Basit karşılaştırma (yanıltıcı olabilir ama gösterelim)
             const yearGrowth = lastYearData.length > 0 ? ((totalSalesThisYear - totalSalesLastYear) / totalSalesLastYear * 100) : 0;
             
             // ========== MAĞAZA ANALİZİ ==========
@@ -7061,7 +7084,10 @@
             
             // ========== GELİŞMİŞ AI ANALİZ HTML ÇIKTISI ==========
             console.log('📊 Veri güncelleme:', dataUpdateInfo);
-            console.log('📈 Yıllık büyüme:', yearGrowth.toFixed(1) + '%');
+            console.log(`⏱️ ${currentYear}: ${daysPassedThisYear} gün geçti, ${daysRemainingThisYear} gün kaldı`);
+            console.log('📊 Günlük ortalama:', dailyAvgLastYear.toFixed(0), '→', dailyAvgThisYear.toFixed(0), `(${dailyGrowth > 0 ? '+' : ''}${dailyGrowth.toFixed(1)}%)`);
+            console.log('🎯 Yıl sonu tahmini:', projectedYearEndSales.toFixed(0), `(${projectedGrowth > 0 ? '+' : ''}${projectedGrowth.toFixed(1)}%)`);
+            console.log('📈 Basit karşılaştırma (YANILTICI):', yearGrowth.toFixed(1) + '%');
             console.log('📊 Aylık ivme:', monthGrowth.toFixed(1) + '%');
             
             const analysis = `
@@ -7074,7 +7100,7 @@
                     <div>
                         <h4 style="margin-bottom: 15px; color: #38ef7d;">✅ Olumlu Tespitler & Güçlü Yönler</h4>
                         <ul style="line-height: 2.2; margin: 0;">
-                            ${yearGrowth > 0 ? `<li><strong>📈 Yıllık Büyüme (${currentYear} vs ${lastYear}):</strong> %${Math.abs(yearGrowth).toFixed(1)} artış<br><span style="font-size: 0.9em; color: #666;">💵 ${lastYear}: $${totalSalesLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} → ${currentYear}: $${totalSalesThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</span></li>` : ''}
+                            ${dailyGrowth > 0 ? `<li><strong>📈 Günlük Ortalama İvme:</strong> %${Math.abs(dailyGrowth).toFixed(1)} artış<br><span style="font-size: 0.9em; color: #666;">💵 ${lastYear}: $${dailyAvgLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün → ${currentYear}: $${dailyAvgThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün<br>🎯 Yıl sonu tahmini: $${projectedYearEndSales.toLocaleString('tr-TR', {minimumFractionDigits: 0})} (%${projectedGrowth.toFixed(1)} büyüme)</span></li>` : ''}
                             ${monthGrowth > 0 ? `<li><strong>📊 ${lastMonthName} Ayı İvme (Günlük Ort.):</strong> %${Math.abs(monthGrowth).toFixed(1)} artış ${isCurrentMonth ? `<span style="color: #667eea;">(⏱️ Ay %${monthCompletionRate} tamamlandı)</span>` : ''}<br><span style="font-size: 0.9em; color: #666;">📅 ${lastYear}: $${dailyAvgLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün → ${currentYear}: $${dailyAvgThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün</span></li>` : ''}
                             ${basketGrowth > 0 ? `<li><strong>🛒 Sepet Ortalaması İvmesi:</strong> %${Math.abs(basketGrowth).toFixed(1)} artış<br><span style="font-size: 0.9em; color: #666;">💰 ${lastYear}: $${avgBasketValueLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} → ${currentYear}: $${avgBasketValue.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</span></li>` : ''}
                             ${fastestGrowingStore && fastestGrowingStore.growth > 20 ? `<li><strong>🚀 En Hızlı Büyüyen Mağaza:</strong> ${fastestGrowingStore.store} (%${fastestGrowingStore.growth.toFixed(1)} ivme)<br><span style="font-size: 0.9em; color: #666;">🎯 Best practice kaynak olarak kullanılmalı</span></li>` : ''}
@@ -7093,7 +7119,7 @@
                     <div>
                         <h4 style="margin-bottom: 15px; color: #f5576c;">⚠️ Dikkat Noktaları & İyileştirme Alanları</h4>
                         <ul style="line-height: 2.2; margin: 0;">
-                            ${yearGrowth < 0 ? `<li><strong>📉 Yıllık Düşüş:</strong> %${Math.abs(yearGrowth).toFixed(1)} azalış - Acil aksiyon gerekli!<br><span style="font-size: 0.9em; color: #666;">💵 ${lastYear}: $${totalSalesLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} → ${currentYear}: $${totalSalesThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</span></li>` : ''}
+                            ${yearGrowth < 0 ? `<li><strong>⏱️ ${currentYear} Durum Raporu (${daysPassedThisYear} gün geçti, ${daysRemainingThisYear} gün kaldı):</strong><br><span style="font-size: 0.9em; color: #666;">💵 <strong>${lastYear} Tamamı:</strong> $${totalSalesLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}<br>💵 <strong>${currentYear} Şu An:</strong> $${totalSalesThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} <span style="color: #f5576c;">(-%${Math.abs(yearGrowth).toFixed(1)} - YANILTICI!)</span><br>📊 <strong>Günlük Ortalama:</strong> ${lastYear}: $${dailyAvgLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün → ${currentYear}: $${dailyAvgThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün <span style="${dailyGrowth < 0 ? 'color: #f5576c;' : 'color: #38ef7d;'}">(${dailyGrowth > 0 ? '+' : ''}%${dailyGrowth.toFixed(1)})</span><br>🎯 <strong>Yıl Sonu Tahmini:</strong> $${projectedYearEndSales.toLocaleString('tr-TR', {minimumFractionDigits: 0})} <span style="${projectedGrowth < 0 ? 'color: #f5576c;' : 'color: #38ef7d;'}">(${projectedGrowth > 0 ? '+' : ''}%${projectedGrowth.toFixed(1)} vs ${lastYear})</span><br>🚨 <strong>${lastYear} seviyesini yakalamak için kalan ${daysRemainingThisYear} günde:</strong> $${targetRemainingForLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} ciro gerekli ($${dailyTargetToMatchLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün vs mevcut $${dailyAvgThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}/gün)</span></li>` : ''}
                             ${monthGrowth < 0 ? `<li><strong>⚠️ ${lastMonthName} Ayı Negatif İvme:</strong> %${Math.abs(monthGrowth).toFixed(1)} düşüş ${isCurrentMonth ? `<span style="color: #f5576c;">(⏱️ Ay %${monthCompletionRate} tamamlandı)</span>` : ''}<br><span style="font-size: 0.9em; color: #666;">📅 Günlük ort: $${dailyAvgLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})} → $${dailyAvgThisYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})}<br>💡 Ay sonu tahmini: $${(dailyAvgThisYear * 30).toLocaleString('tr-TR', {minimumFractionDigits: 0})} (vs ${lastYear}: $${lastMonthLastYear.toLocaleString('tr-TR', {minimumFractionDigits: 0})})</span></li>` : ''}
                             ${basketGrowth < 0 ? `<li><strong>🛒 Sepet Ortalaması Düşüşü:</strong> %${Math.abs(basketGrowth).toFixed(1)} azalış<br><span style="font-size: 0.9em; color: #666;">⚠️ Cross-selling ve upselling stratejileri güçlendirilmeli</span></li>` : ''}
                             ${slowestGrowingStore && slowestGrowingStore.growth < -10 ? `<li><strong>📊 En Düşük İvmeli Mağaza:</strong> ${slowestGrowingStore.store} (%${slowestGrowingStore.growth.toFixed(1)})<br><span style="font-size: 0.9em; color: #666;">🎯 Acil müdahale ve destek gerekli</span></li>` : ''}
