@@ -3152,7 +3152,7 @@
             const totalLocations = new Set(inventoryData.map(item => item.location)).size;
             
             document.getElementById('invTotalProducts').textContent = totalProducts.toLocaleString('tr-TR');
-            document.getElementById('invTotalQty').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            document.getElementById('invTotalQuantity').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('invTotalValue').textContent = '$' + totalValue.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('invTotalLocations').textContent = totalLocations.toLocaleString('tr-TR');
             
