@@ -1399,27 +1399,27 @@
                 <!-- Top Performanslar -->
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px; margin-bottom: 40px;">
                     <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                        <h3 style="margin-bottom: 20px;">🏆 Top 10 Mağaza (Bu Yıl)</h3>
+                        <h3 style="margin-bottom: 20px;">🏆 Top 10 Mağaza (Tüm Zamanlar)</h3>
                         <canvas id="dashTopStoresChart"></canvas>
                     </div>
                     <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                        <h3 style="margin-bottom: 20px;">⭐ Top 10 Satış Temsilcisi (Bu Yıl)</h3>
+                        <h3 style="margin-bottom: 20px;">⭐ Top 10 Satış Temsilcisi (Tüm Zamanlar)</h3>
                         <canvas id="dashTopSalespeopleChart"></canvas>
                     </div>
                     <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                        <h3 style="margin-bottom: 20px;">🏷️ Top 10 Marka (Bu Yıl)</h3>
+                        <h3 style="margin-bottom: 20px;">🏷️ Top 10 Marka (Tüm Zamanlar)</h3>
                         <canvas id="dashTopBrandsChart"></canvas>
                     </div>
                     <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                        <h3 style="margin-bottom: 20px;">📂 Top 10 Kategori (Bu Yıl)</h3>
+                        <h3 style="margin-bottom: 20px;">📂 Top 10 Kategori (Tüm Zamanlar)</h3>
                         <canvas id="dashTopCategoriesChart"></canvas>
                     </div>
                     <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                        <h3 style="margin-bottom: 20px;">🌍 Top 10 Şehir (Bu Yıl)</h3>
+                        <h3 style="margin-bottom: 20px;">🌍 Top 10 Şehir (Tüm Zamanlar)</h3>
                         <canvas id="dashTopCitiesChart"></canvas>
                     </div>
                     <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                        <h3 style="margin-bottom: 20px;">🎸 Top 10 Ürün (Bu Yıl)</h3>
+                        <h3 style="margin-bottom: 20px;">🎸 Top 10 Ürün (Tüm Zamanlar)</h3>
                         <canvas id="dashTopProductsChart"></canvas>
                     </div>
                 </div>
@@ -5800,16 +5800,13 @@
             // Yıllık karşılaştırma
             renderDashYearlyChart();
             
-            // Top performanslar (bu yıl)
-            const currentYear = new Date().getFullYear().toString();
-            const thisYearData = allData.filter(item => item.date && item.date.startsWith(currentYear));
-            
-            renderDashTopStoresChart(thisYearData);
-            renderDashTopSalespeopleChart(thisYearData);
-            renderDashTopBrandsChart(thisYearData);
-            renderDashTopCategoriesChart(thisYearData);
-            renderDashTopCitiesChart(thisYearData);
-            renderDashTopProductsChart(thisYearData);
+            // Top performanslar (TÜM ZAMANLAR)
+            renderDashTopStoresChart(allData);
+            renderDashTopSalespeopleChart(allData);
+            renderDashTopBrandsChart(allData);
+            renderDashTopCategoriesChart(allData);
+            renderDashTopCitiesChart(allData);
+            renderDashTopProductsChart(allData);
             
             // AI Analizi
             performDashboardAIAnalysis();
