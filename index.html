@@ -3099,9 +3099,21 @@
                 
                 const compressedData = await response.arrayBuffer();
                 const decompressedData = pako.ungzip(new Uint8Array(compressedData), { to: 'string' });
-                inventoryData = JSON.parse(decompressedData);
+                const parsedData = JSON.parse(decompressedData);
                 
-                console.log(`✅ Envanter verileri yüklendi: ${inventoryData.length} kayıt`);
+                // Veri yapısını kontrol et (object içinde inventory array'i var)
+                if (parsedData.inventory && Array.isArray(parsedData.inventory)) {
+                    inventoryData = parsedData.inventory;
+                    console.log(`✅ Envanter verileri yüklendi: ${inventoryData.length} kayıt`);
+                    console.log(`📊 Toplam miktar: ${parsedData.total_quantity}`);
+                    console.log(`💰 Toplam değer: $${parsedData.total_value}`);
+                } else if (Array.isArray(parsedData)) {
+                    // Eğer direkt array ise
+                    inventoryData = parsedData;
+                    console.log(`✅ Envanter verileri yüklendi: ${inventoryData.length} kayıt`);
+                } else {
+                    throw new Error('Beklenmeyen veri formatı: inventory array bulunamadı');
+                }
                 
                 // Verileri görüntüle
                 renderInventoryDashboard();
