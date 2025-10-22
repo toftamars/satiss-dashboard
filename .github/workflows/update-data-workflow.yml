@@ -311,8 +311,8 @@ jobs:
                                 
                                 while True:
                                     batch_count += 1
-                                    # Her 5 batch'te bir log (gereksiz log azaltma)
-                                    if batch_count % 5 == 1:
+                                    # Her 10 batch'te bir log (optimize edildi: 5 → 10)
+                                    if batch_count % 10 == 1:
                                         print(f"📦 Batch {batch_count}: Offset {offset:,} - {offset + batch_size:,}")
                                     
                                     try:
@@ -328,7 +328,7 @@ jobs:
                                             break
                                         
                                         all_data.extend(batch_data)
-                                        print(f"✅ Batch {batch_count}: {len(batch_data)} kayıt eklendi (Toplam: {len(all_data)})")
+                                        # Log azaltıldı (sadece her 10 batch'te göster)
                                         
                                         # Hata sayacını sıfırla (başarılı batch)
                                         error_count = 0
@@ -341,8 +341,9 @@ jobs:
                                         
                                     except Exception as e:
                                         error_count += 1
-                                        print(f"⚠️ Batch {batch_count} hatası: {str(e)[:100]}")
-                                        print(f"⏭️ Batch atlanıyor... (Hata: {error_count}/{max_errors})")
+                                        # Hata log'u azaltıldı (sadece kritik hatalar)
+                                        if error_count >= max_errors - 1:
+                                            print(f"⚠️ Batch {batch_count} hatası: {str(e)[:100]}")
                                         
                                         if error_count >= max_errors:
                                             print(f"❌ Çok fazla hata ({max_errors}), durduruluyor...")
@@ -370,7 +371,9 @@ jobs:
                                     usd_batch_size = 10000
                                     for i in range(0, len(line_ids), usd_batch_size):
                                         batch_ids = line_ids[i:i+usd_batch_size]
-                                        print(f"   💵 USD + Şehir + KUR batch {i//usd_batch_size + 1}: {len(batch_ids)} kayıt...")
+                                        # Log azaltıldı (sadece her 5 batch'te)
+                                        if (i // usd_batch_size) % 5 == 0:
+                                            print(f"   💵 USD batch {i//usd_batch_size + 1}: {len(batch_ids)} kayıt...")
                                         
                                         # account.invoice.report'tan price_usd_subtotal, state_id ve usd_rate çek
                                         usd_batch = models.execute_kw(
