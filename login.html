@@ -213,11 +213,27 @@
             <div style="text-align:center; margin-bottom:25px;">
                 <div style="font-size:3em; margin-bottom:10px;">🔐</div>
                 <h3 style="color:#667eea; margin-bottom:10px;">İkili Doğrulama</h3>
-                <p style="color:#666; font-size:14px;">Email adresinize gönderilen 6 haneli kodu girin</p>
+                <p style="color:#666; font-size:14px;" id="twoFactorInstructions">Google Authenticator ile QR kodu taratın</p>
+            </div>
+
+            <!-- QR Kod Alanı (İlk giriş için) -->
+            <div id="qrCodeSection" style="display:none; text-align:center; margin-bottom:20px;">
+                <div style="background:#f5f5f5; padding:20px; border-radius:10px; display:inline-block;">
+                    <div id="qrcode" style="margin-bottom:10px;"></div>
+                    <p style="font-size:12px; color:#666; margin:10px 0 0 0;">
+                        📱 Google Authenticator uygulamasını açın<br>
+                        ➕ "+" butonuna tıklayın<br>
+                        📷 QR kodu taratın
+                    </p>
+                </div>
+                <div style="margin-top:15px; padding:10px; background:#fff3cd; border-radius:5px; font-size:12px;">
+                    <strong>Manuel Giriş Kodu:</strong><br>
+                    <code id="secretKey" style="font-size:14px; letter-spacing:2px; color:#667eea;"></code>
+                </div>
             </div>
 
             <div class="form-group">
-                <label for="verificationCode">Doğrulama Kodu</label>
+                <label for="verificationCode">Doğrulama Kodu (6 Haneli)</label>
                 <input 
                     type="text" 
                     id="verificationCode" 
@@ -226,18 +242,13 @@
                     pattern="[0-9]{6}"
                     style="text-align:center; font-size:24px; letter-spacing:5px; font-weight:700;"
                     required
+                    autocomplete="off"
                 >
             </div>
 
             <button onclick="verifyCode()" class="btn-login" id="verifyBtn">
                 ✅ Doğrula
             </button>
-
-            <div style="text-align:center; margin-top:15px;">
-                <a href="#" onclick="resendCode(); return false;" style="color:#667eea; font-size:14px; text-decoration:none;">
-                    🔄 Kodu Tekrar Gönder
-                </a>
-            </div>
 
             <div style="text-align:center; margin-top:10px;">
                 <a href="#" onclick="cancelTwoFactor(); return false;" style="color:#888; font-size:13px; text-decoration:none;">
@@ -289,6 +300,12 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    
+    <!-- QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <!-- TOTP Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/otpauth/9.1.4/otpauth.umd.min.js"></script>
 
     <script>
         // ✅ Firebase Configuration (Configured)
@@ -357,9 +374,9 @@
                     // Kullanıcıyı kaydet (2FA için)
                     currentUser = userCredential.user;
                     
-                    // 2FA kodu üret
-                    verificationCodeSent = Math.floor(100000 + Math.random() * 900000).toString();
-                    console.log('🔐 2FA Kodu:', verificationCodeSent);
+                    // TOTP secret oluştur veya getir
+                    const { secret, isNew } = getOrCreateTOTPSecret(currentUser.email);
+                    userTOTPSecret = secret;
                     
                     // Loading'i gizle
                     document.getElementById('loading').style.display = 'none';
@@ -371,8 +388,14 @@
                     document.getElementById('loginForm').style.display = 'none';
                     document.getElementById('twoFactorScreen').style.display = 'block';
                     
-                    // Alert ile kodu göster (gerçek uygulamada SMS/Email gönderilir)
-                    alert('🔐 İkili Doğrulama Kodu: ' + verificationCodeSent + '\n\n(Gerçek uygulamada bu kod email/SMS ile gönderilir)');
+                    // İlk giriş ise QR kod göster
+                    if (isNew) {
+                        showQRCode(currentUser.email, secret);
+                    } else {
+                        // Zaten kayıtlı, sadece kod iste
+                        document.getElementById('qrCodeSection').style.display = 'none';
+                        document.getElementById('twoFactorInstructions').textContent = 'Google Authenticator\'dan 6 haneli kodu girin';
+                    }
                     
                     // Input'a focus
                     document.getElementById('verificationCode').focus();
@@ -432,9 +455,62 @@
 
         // 🔐 2FA Fonksiyonları
         let currentUser = null;
-        let verificationCodeSent = null;
+        let userTOTPSecret = null;
+        let totpInstance = null;
 
-        // 2FA kodunu doğrula
+        // TOTP Secret oluştur veya getir
+        function getOrCreateTOTPSecret(email) {
+            // LocalStorage'dan kullanıcıya özel secret'ı al
+            const storageKey = `totp_secret_${email}`;
+            let secret = localStorage.getItem(storageKey);
+            
+            if (!secret) {
+                // Yeni secret oluştur (Base32 encoded)
+                secret = generateBase32Secret();
+                localStorage.setItem(storageKey, secret);
+                console.log('🔐 Yeni TOTP secret oluşturuldu');
+                return { secret, isNew: true };
+            }
+            
+            console.log('🔐 Mevcut TOTP secret kullanılıyor');
+            return { secret, isNew: false };
+        }
+
+        // Base32 Secret üret
+        function generateBase32Secret() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+            let secret = '';
+            for (let i = 0; i < 32; i++) {
+                secret += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return secret;
+        }
+
+        // QR Kod göster
+        function showQRCode(email, secret) {
+            // QR kod için URI oluştur
+            const issuer = 'Zuhal Muzik Dashboard';
+            const label = `${issuer}:${email}`;
+            const otpauthURL = `otpauth://totp/${encodeURIComponent(label)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}`;
+            
+            // QR kod oluştur
+            document.getElementById('qrcode').innerHTML = '';
+            new QRCode(document.getElementById('qrcode'), {
+                text: otpauthURL,
+                width: 200,
+                height: 200,
+                colorDark: '#667eea',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            // Secret'ı göster
+            document.getElementById('secretKey').textContent = secret;
+            document.getElementById('qrCodeSection').style.display = 'block';
+            document.getElementById('twoFactorInstructions').textContent = 'QR kodu taratın ve 6 haneli kodu girin';
+        }
+
+        // TOTP kodunu doğrula
         function verifyCode() {
             const inputCode = document.getElementById('verificationCode').value.trim();
             
@@ -443,47 +519,59 @@
                 return;
             }
             
-            // Basit doğrulama (gerçek uygulamada backend'den kontrol edilmeli)
-            if (inputCode === verificationCodeSent) {
-                console.log('✅ 2FA doğrulaması başarılı');
+            try {
+                // TOTP instance oluştur
+                const totp = new OTPAuth.TOTP({
+                    issuer: 'Zuhal Muzik',
+                    label: currentUser.email,
+                    algorithm: 'SHA1',
+                    digits: 6,
+                    period: 30,
+                    secret: userTOTPSecret
+                });
                 
-                // Session'a kaydet
-                sessionStorage.setItem('isLoggedIn', 'true');
-                sessionStorage.setItem('username', currentUser.email.split('@')[0]);
-                sessionStorage.setItem('email', currentUser.email);
-                sessionStorage.setItem('twoFactorCompleted', 'true'); // 2FA tamamlandı
+                // Kodu doğrula (±1 pencere toleransı)
+                const delta = totp.validate({ token: inputCode, window: 1 });
                 
-                // Auth kontrolünü tekrar aktif et
-                authCheckEnabled = true;
-                
-                // Başarı mesajı
-                document.getElementById('twoFactorScreen').style.display = 'none';
-                document.getElementById('successMessage').textContent = '✅ Doğrulama başarılı! Yönlendiriliyorsunuz...';
-                document.getElementById('successMessage').style.display = 'block';
-                
-                // Dashboard'a yönlendir
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1000);
-            } else {
-                alert('❌ Doğrulama kodu hatalı! Lütfen tekrar deneyin.');
-                document.getElementById('verificationCode').value = '';
-                document.getElementById('verificationCode').focus();
+                if (delta !== null) {
+                    console.log('✅ 2FA doğrulaması başarılı');
+                    
+                    // Session'a kaydet
+                    sessionStorage.setItem('isLoggedIn', 'true');
+                    sessionStorage.setItem('username', currentUser.email.split('@')[0]);
+                    sessionStorage.setItem('email', currentUser.email);
+                    sessionStorage.setItem('twoFactorCompleted', 'true');
+                    
+                    // Auth kontrolünü tekrar aktif et
+                    authCheckEnabled = true;
+                    
+                    // Başarı mesajı
+                    document.getElementById('twoFactorScreen').style.display = 'none';
+                    document.getElementById('successMessage').textContent = '✅ Doğrulama başarılı! Yönlendiriliyorsunuz...';
+                    document.getElementById('successMessage').style.display = 'block';
+                    
+                    // Dashboard'a yönlendir
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                } else {
+                    alert('❌ Doğrulama kodu hatalı! Lütfen tekrar deneyin.');
+                    document.getElementById('verificationCode').value = '';
+                    document.getElementById('verificationCode').focus();
+                }
+            } catch (error) {
+                console.error('❌ TOTP doğrulama hatası:', error);
+                alert('❌ Doğrulama hatası! Lütfen tekrar deneyin.');
             }
         }
 
-        // Kodu tekrar gönder
-        function resendCode() {
-            if (!currentUser) {
+        // QR kodu tekrar göster
+        function showQRAgain() {
+            if (!currentUser || !userTOTPSecret) {
                 alert('❌ Kullanıcı bilgisi bulunamadı!');
                 return;
             }
-            
-            // Yeni kod oluştur
-            verificationCodeSent = Math.floor(100000 + Math.random() * 900000).toString();
-            console.log('🔐 Yeni 2FA Kodu:', verificationCodeSent);
-            
-            alert(`✅ Yeni doğrulama kodu gönderildi!\n\n📧 Email: ${currentUser.email}\n🔐 Kod: ${verificationCodeSent}\n\n(Demo amaçlı konsola yazdırıldı)`);
+            showQRCode(currentUser.email, userTOTPSecret);
         }
 
         // 2FA'yı iptal et
