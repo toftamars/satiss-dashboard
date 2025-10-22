@@ -476,14 +476,11 @@
             return { secret, isNew: false };
         }
 
-        // Base32 Secret üret
+        // Base32 Secret üret (OTPAuth uyumlu)
         function generateBase32Secret() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-            let secret = '';
-            for (let i = 0; i < 32; i++) {
-                secret += chars[Math.floor(Math.random() * chars.length)];
-            }
-            return secret;
+            // OTPAuth'un kendi secret üretecini kullan
+            const secret = new OTPAuth.Secret({ size: 20 });
+            return secret.base32;
         }
 
         // QR Kod göster
