@@ -18,11 +18,11 @@
     <!-- CryptoJS for encryption -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <!-- Performance Optimizer -->
-    <script src="performance-optimizer.js"></script>
+    <script defer src="js/performance-optimizer.js"></script>
     <!-- Enhanced AI Analyzer -->
-    <script src="ai-analyzer-enhanced.js"></script>
+    <script defer src="js/ai-analyzer-enhanced.js"></script>
     <!-- Enhanced Time Analysis -->
-    <script src="time-analysis-enhanced.js"></script>
+    <script defer src="js/time-analysis-enhanced.js"></script>
     <!-- Login Kontrolü -->
     <script>
         // Sayfa yüklendiğinde oturum kontrolü
