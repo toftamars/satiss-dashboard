@@ -754,7 +754,9 @@ jobs:
                                     
                                     # Şehir ve İlçe bilgilerini al
                                     line_id = line.get('id')
-                                    city = partner_city_map.get(partner_id, 'Bilinmeyen')  # İL (state_id)
+                                    
+                                    # HİBRİT ŞEHIR: 1. state_id (en doğru) → 2. partner city → 3. Bilinmeyen
+                                    city = state_id_map.get(line_id) or partner_city_map.get(partner_id, 'Bilinmeyen')
                                     partner_district = partner_district_map.get(partner_id, '')  # İLÇE (res.partner.city)
                                     
                                     # Mağaza - analytic_account_id'den
