@@ -312,16 +312,23 @@
         }
 
         // Zaten giriş yapmışsa ve 2FA tamamlanmışsa dashboard'a yönlendir
+        let authCheckEnabled = true; // 2FA sırasında devre dışı bırakmak için
+        
         firebase.auth().onAuthStateChanged((user) => {
+            if (!authCheckEnabled) return; // 2FA sırasında kontrol yapma
+            
             if (user && window.location.pathname.includes('login')) {
                 // 2FA tamamlanmış mı kontrol et
                 const twoFactorCompleted = sessionStorage.getItem('twoFactorCompleted');
                 if (twoFactorCompleted === 'true') {
                     window.location.href = 'index.html';
                 } else {
-                    // 2FA tamamlanmamış, logout yap
-                    firebase.auth().signOut();
-                    sessionStorage.clear();
+                    // 2FA tamamlanmamış, logout yap (ama 2FA ekranındaysa yapma)
+                    const is2FAScreenVisible = document.getElementById('twoFactorScreen').style.display === 'block';
+                    if (!is2FAScreenVisible) {
+                        firebase.auth().signOut();
+                        sessionStorage.clear();
+                    }
                 }
             }
         });
@@ -356,6 +363,9 @@
                     
                     // Loading'i gizle
                     document.getElementById('loading').style.display = 'none';
+                    
+                    // Auth kontrolünü geçici olarak devre dışı bırak (2FA sırasında)
+                    authCheckEnabled = false;
                     
                     // 2FA ekranını göster
                     document.getElementById('loginForm').style.display = 'none';
@@ -443,6 +453,9 @@
                 sessionStorage.setItem('email', currentUser.email);
                 sessionStorage.setItem('twoFactorCompleted', 'true'); // 2FA tamamlandı
                 
+                // Auth kontrolünü tekrar aktif et
+                authCheckEnabled = true;
+                
                 // Başarı mesajı
                 document.getElementById('twoFactorScreen').style.display = 'none';
                 document.getElementById('successMessage').textContent = '✅ Doğrulama başarılı! Yönlendiriliyorsunuz...';
@@ -475,11 +488,22 @@
 
         // 2FA'yı iptal et
         function cancelTwoFactor() {
+            // Auth kontrolünü tekrar aktif et
+            authCheckEnabled = true;
+            
+            // Firebase oturumunu kapat
+            if (currentUser) {
+                firebase.auth().signOut();
+            }
+            
             document.getElementById('twoFactorScreen').style.display = 'none';
             document.getElementById('loginForm').style.display = 'block';
             document.getElementById('verificationCode').value = '';
             currentUser = null;
             verificationCodeSent = null;
+            
+            // Session'ı temizle
+            sessionStorage.clear();
         }
 
         // Login fonksiyonunu güncelle (2FA ile)
