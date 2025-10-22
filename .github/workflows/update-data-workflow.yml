@@ -1309,13 +1309,9 @@ jobs:
             git add data-*.json.gz data-metadata.json .gitattributes
           fi
           
-          # ESKİ DATA DOSYALARINI SİL (Her zaman sadece yeni run'ın verileri kalacak)
-          echo "🗑️ Eski data dosyaları siliniyor..."
-          git rm -f data-*.json.gz data-metadata.json 2>/dev/null || echo "Silinecek eski dosya yok"
-          
-          # YENİ DOSYALARI EKLE
+          # YENİ DOSYALARI EKLE (eski dosyalar otomatik güncellenir)
           echo "✅ Yeni data dosyaları ve metadata ekleniyor..."
-          git add data-*.json.gz data-metadata.json 2>/dev/null || echo "⚠️ Data dosyaları bulunamadı"
+          git add -f data-*.json.gz data-metadata.json 2>/dev/null || echo "⚠️ Data dosyaları bulunamadı"
           
           # Envanter dosyası varsa ekle (her iki mode için)
           if [[ -f "inventory.json.gz" ]]; then
