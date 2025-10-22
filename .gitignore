@@ -2,21 +2,36 @@
 node_modules/
 package-lock.json
 
-# Mac
+# Hassas Veri Dosyaları (GitHub'a yüklenmesin)
+data/*.json.gz
+data-*.json.gz
+data/*.json
+*.json.gz
+
+# Firebase private keys
+firebase-adminsdk-*.json
+serviceAccountKey.json
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Mac OS
 .DS_Store
 
 # IDE
 .vscode/
 .idea/
 
-# Yedek dosyalar
-*.backup
-*.original
-*.bak
-
-# Log dosyalar
+# Logs
 *.log
+npm-debug.log*
 
 # Temporary files
 *.tmp
-*~
+*.temp
+
+# Backup files
+*.backup
+*.bak
