@@ -250,6 +250,12 @@
                 ✅ Doğrula
             </button>
 
+            <div style="text-align:center; margin-top:15px;">
+                <a href="#" onclick="showQRAgain(); return false;" style="color:#667eea; font-size:14px; text-decoration:none;">
+                    📱 QR Kodu Göster
+                </a>
+            </div>
+
             <div style="text-align:center; margin-top:10px;">
                 <a href="#" onclick="cancelTwoFactor(); return false;" style="color:#888; font-size:13px; text-decoration:none;">
                     ← Geri Dön
@@ -388,13 +394,14 @@
                     document.getElementById('loginForm').style.display = 'none';
                     document.getElementById('twoFactorScreen').style.display = 'block';
                     
-                    // İlk giriş ise QR kod göster
+                    // QR kodu göster (ilk giriş veya sonraki girişler)
                     if (isNew) {
                         showQRCode(currentUser.email, secret);
+                        document.getElementById('twoFactorInstructions').textContent = '📱 QR kodu taratın ve Google Authenticator\'ı kurun';
                     } else {
-                        // Zaten kayıtlı, sadece kod iste
+                        // Zaten kayıtlı, QR kodu gizle ama "QR Kodu Göster" butonu ile gösterilebilir
                         document.getElementById('qrCodeSection').style.display = 'none';
-                        document.getElementById('twoFactorInstructions').textContent = 'Google Authenticator\'dan 6 haneli kodu girin';
+                        document.getElementById('twoFactorInstructions').textContent = 'Google Authenticator\'dan 6 haneli kodu girin (veya QR Kodu Göster\'e tıklayın)';
                     }
                     
                     // Input'a focus
