@@ -58,8 +58,8 @@ jobs:
         print(f"🔐 Password: {'*' * len(password)}")
         print(f"📅 Tarih Aralığı: TÜM ZAMANLAR (tarih filtresi yok)")
         
-        # Batch boyutu (Optimize edildi: 10K → 20K)
-        batch_size = 20000
+        # Batch boyutu (Optimize edildi: 10K → 20K → 22K)
+        batch_size = 22000
         print(f"📦 Batch Boyutu: {batch_size:,} kayıt/batch")
         
         try:
@@ -299,10 +299,10 @@ jobs:
                                 ]
                                 
                                 # TÜM VERİYİ BATCH (PARÇA PARÇA) ÇEK
-                                print("⚠️ Tüm fatura satırları çekiliyor (20,000'erlik parçalar halinde)...")
+                                print("⚠️ Tüm fatura satırları çekiliyor (22,000'erlik parçalar halinde)...")
                                 
                                 all_data = []
-                                batch_size = 20000
+                                batch_size = 22000
                                 offset = 0
                                 batch_count = 0
                                 
