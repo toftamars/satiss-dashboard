@@ -1,0 +1,105 @@
+🔥 FIREBASE AUTH KURULUM - BASIT ADIMLAR
+
+═══════════════════════════════════════════════════════════
+
+ADIM 1: FIREBASE KONSOLA GİT
+─────────────────────────────
+1. https://console.firebase.google.com/
+2. Gmail ile giriş yap
+3. "Proje ekle" butonuna tıkla
+4. Proje adı: Satis Dashboard
+5. "Projeyi oluştur" → Bekle → "Devam et"
+
+✅ Proje oluştu!
+
+═══════════════════════════════════════════════════════════
+
+ADIM 2: AUTHENTICATION AKTIF ET
+─────────────────────────────────
+1. Sol menüden: Build → Authentication
+2. "Get started" butonuna tıkla
+3. "Email/Password" satırına tıkla
+4. "Enable" anahtarını aç
+5. "Save"
+
+✅ Authentication aktif!
+
+═══════════════════════════════════════════════════════════
+
+ADIM 3: KULLANICILARI EKLE
+──────────────────────────
+1. Üstte "Users" sekmesine tıkla
+2. "Add user" butonuna tıkla
+3. Aşağıdaki 7 kullanıcıyı tek tek ekle:
+
+   akasya@dashboard.com          Bjk1903*
+   tofta@dashboard.com           Bjk1903*
+   hakanguler@dashboard.com      Bjk1903*
+   gokhanisilay@dashboard.com    Bjk1903*
+   alisungurlu@dashboard.com     Bjk1903*
+   anilemre@dashboard.com        Bjk1903*
+   furkan@dashboard.com          Bjk1903*
+
+✅ 7 kullanıcı eklendi!
+
+═══════════════════════════════════════════════════════════
+
+ADIM 4: CONFIG KODUNU AL
+─────────────────────────
+1. Sol üstte dişli ikonu (⚙️) → "Project settings"
+2. Aşağı kaydır → "Your apps" bölümü
+3. "</>" (web) ikonuna tıkla
+4. App nickname: Dashboard
+5. "Register app"
+6. Gelen kodu KOPYALA (şöyle görünecek):
+
+   const firebaseConfig = {
+     apiKey: "AIzaSyABC123...",
+     authDomain: "satis-dashboard.firebaseapp.com",
+     projectId: "satis-dashboard",
+     ...
+   };
+
+7. Not defterine yapıştır ve KAYDET
+8. "Continue to console"
+
+✅ Config kodu hazır!
+
+═══════════════════════════════════════════════════════════
+
+ADIM 5: LOGIN DOSYASINI GÜNCELLE
+─────────────────────────────────
+1. Proje klasöründe "login-firebase.html" dosyasını aç
+2. 247. satırı bul (firebaseConfig = { ... })
+3. Firebase'den kopyaladığın kodu YAPIŞTIR
+4. Kaydet (Ctrl+S veya Cmd+S)
+
+✅ Dosya güncellendi!
+
+═══════════════════════════════════════════════════════════
+
+ADIM 6: BENİ ÇAĞıR - DOSYA DEĞİŞİMİ
+───────────────────────────────────
+Config kodunu yapıştırdıktan sonra bana:
+
+"Firebase config kodunu yapıştırdım, devam et"
+
+diye yaz. Ben:
+- Eski login.html'i yedekleyeceğim
+- Yeni dosyayı aktif edeceğim
+- GitHub'a yükleyeceğim
+
+✅ Hazır olunca haber ver!
+
+═══════════════════════════════════════════════════════════
+
+ADIM 7: TEST (Ben hallederim)
+─────────────────────────────
+Lokal test edip sonra GitHub'a pushlayacağım.
+
+✅ Tamamlandı!
+
+═══════════════════════════════════════════════════════════
+
+📝 NOT: Bu adımları sırayla takip et, her adımda ✅ işareti koy!
+

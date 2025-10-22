@@ -108,6 +108,11 @@
             transform: translateY(0);
         }
 
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .error-message {
             background: #fee;
             color: #c33;
@@ -137,11 +142,49 @@
             display: none;
         }
 
+        .forgot-password {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .forgot-password a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
         .footer {
             text-align: center;
             margin-top: 20px;
             color: #888;
             font-size: 12px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -150,6 +193,11 @@
         <div class="logo">
             <h1>🎵 Satış Dashboard</h1>
             <p>Müzik Enstrüman Sektörü</p>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
+            <p>Giriş yapılıyor...</p>
         </div>
 
         <div class="error-message" id="errorMessage">
@@ -167,7 +215,7 @@
                     type="text" 
                     id="username" 
                     name="username" 
-                    placeholder="Kullanıcı adınızı girin"
+                    placeholder="Örn: akasya"
                     autocomplete="username"
                     required
                 >
@@ -185,82 +233,141 @@
                 >
             </div>
 
-            <button type="submit" class="btn-login">
-                Giriş Yap
+            <button type="submit" class="btn-login" id="loginBtn">
+                🔐 Giriş Yap
             </button>
         </form>
 
+        <div class="forgot-password">
+            <a href="#" onclick="resetPassword(); return false;">🔑 Şifremi Unuttum</a>
+        </div>
+
         <div class="footer">
-            Developed by Tofta
+            🔒 Firebase Auth | Developed by Tofta
         </div>
     </div>
 
-    <script>
-        // Kullanıcı veritabanı (Güncel - 7 kullanıcı)
-        const users = {
-            'akasya': 'Bjk1903*',
-            'tofta': 'Bjk1903*',
-            'hakanguler': 'Bjk1903*',
-            'gokhanisilay': 'Bjk1903*',
-            'alisungurlu': 'Bjk1903*',
-            'anilemre': 'Bjk1903*',
-            'furkan': 'Bjk1903*'
-        };
-        
-        console.log('✅ Login sistemi hazır - 7 kullanıcı tanımlı');
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 
-        // Sayfa yüklendiğinde oturum kontrolü
-        window.addEventListener('DOMContentLoaded', function() {
-            const isLoggedIn = sessionStorage.getItem('isLoggedIn');
-            const username = sessionStorage.getItem('username');
-            
-            if (isLoggedIn === 'true' && username) {
-                // Zaten giriş yapılmış, dashboard'a yönlendir
+    <script>
+        // ✅ Firebase Configuration (Configured)
+        const firebaseConfig = {
+            apiKey: "AIzaSyA7rVsNOnD4yWOFPZWWOvTcdbMUkcdSGuo",
+            authDomain: "satis-dashboard.firebaseapp.com",
+            projectId: "satis-dashboard",
+            storageBucket: "satis-dashboard.firebasestorage.app",
+            messagingSenderId: "761147868519",
+            appId: "1:761147868519:web:c30a413236134965885bc2"
+        };
+
+        // Firebase'i başlat
+        try {
+            firebase.initializeApp(firebaseConfig);
+            console.log('✅ Firebase başlatıldı');
+        } catch (error) {
+            console.error('❌ Firebase başlatma hatası:', error);
+            document.getElementById('errorMessage').textContent = '❌ Firebase bağlantı hatası! Config kontrol edin.';
+            document.getElementById('errorMessage').style.display = 'block';
+        }
+
+        // Zaten giriş yapmışsa dashboard'a yönlendir
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user && window.location.pathname.includes('login')) {
                 window.location.href = 'index.html';
             }
         });
 
-        function handleLogin(event) {
-            event.preventDefault();
+        // Login fonksiyonu
+        function handleLogin(e) {
+            e.preventDefault();
             
-            const username = document.getElementById('username').value.trim().toLowerCase();
+            const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
-            const errorMessage = document.getElementById('errorMessage');
-            const successMessage = document.getElementById('successMessage');
             
-            // Mesajları gizle
-            errorMessage.style.display = 'none';
-            successMessage.style.display = 'none';
+            // Email formatına çevir (akasya → akasya@dashboard.com)
+            const email = username.includes('@') ? username : username + '@dashboard.com';
             
-            // Kullanıcı kontrolü
-            if (users[username] && users[username] === password) {
-                // Başarılı giriş
-                successMessage.style.display = 'block';
-                
-                // Session'a kaydet
-                sessionStorage.setItem('isLoggedIn', 'true');
-                sessionStorage.setItem('username', username);
-                sessionStorage.setItem('loginTime', new Date().toISOString());
-                
-                // 1 saniye sonra yönlendir
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1000);
-                
-                return false;
-            } else {
-                // Hatalı giriş
-                errorMessage.style.display = 'block';
-                
-                // Şifre alanını temizle
-                document.getElementById('password').value = '';
-                document.getElementById('password').focus();
-                
-                return false;
+            // UI güncellemeleri
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('loginBtn').disabled = true;
+            
+            // Firebase Auth ile giriş
+            firebase.auth().signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    console.log('✅ Giriş başarılı:', userCredential.user.email);
+                    
+                    // Session'a kaydet
+                    sessionStorage.setItem('isLoggedIn', 'true');
+                    sessionStorage.setItem('username', username);
+                    sessionStorage.setItem('email', userCredential.user.email);
+                    
+                    // Başarı mesajı
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('successMessage').style.display = 'block';
+                    
+                    // Dashboard'a yönlendir
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                })
+                .catch((error) => {
+                    console.error('❌ Giriş hatası:', error);
+                    
+                    // Hata mesajı
+                    let errorMsg = '❌ Kullanıcı adı veya şifre hatalı!';
+                    
+                    if (error.code === 'auth/user-not-found') {
+                        errorMsg = '❌ Kullanıcı bulunamadı!';
+                    } else if (error.code === 'auth/wrong-password') {
+                        errorMsg = '❌ Şifre hatalı!';
+                    } else if (error.code === 'auth/too-many-requests') {
+                        errorMsg = '❌ Çok fazla deneme! Lütfen bekleyin.';
+                    } else if (error.code === 'auth/invalid-email') {
+                        errorMsg = '❌ Geçersiz kullanıcı adı!';
+                    }
+                    
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('errorMessage').textContent = errorMsg;
+                    document.getElementById('errorMessage').style.display = 'block';
+                    document.getElementById('loginBtn').disabled = false;
+                });
+        }
+
+        // Şifre sıfırlama
+        function resetPassword() {
+            const username = document.getElementById('username').value.trim();
+            
+            if (!username) {
+                alert('❌ Lütfen önce kullanıcı adınızı girin!');
+                document.getElementById('username').focus();
+                return;
+            }
+            
+            const email = username.includes('@') ? username : username + '@dashboard.com';
+            
+            if (confirm(`🔑 Şifre sıfırlama linki ${email} adresine gönderilsin mi?`)) {
+                firebase.auth().sendPasswordResetEmail(email)
+                    .then(() => {
+                        alert('✅ Şifre sıfırlama linki email adresinize gönderildi!\n\nEmail kutunuzu kontrol edin.');
+                    })
+                    .catch((error) => {
+                        console.error('❌ Şifre sıfırlama hatası:', error);
+                        
+                        let errorMsg = '❌ Şifre sıfırlama başarısız!';
+                        if (error.code === 'auth/user-not-found') {
+                            errorMsg = '❌ Bu kullanıcı bulunamadı!';
+                        }
+                        
+                        alert(errorMsg);
+                    });
             }
         }
 
-        // Enter tuşu ile form gönderimi
+        // Enter tuşu ile giriş
         document.getElementById('password').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 handleLogin(e);
