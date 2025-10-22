@@ -208,6 +208,45 @@
             ✅ Giriş başarılı! Yönlendiriliyorsunuz...
         </div>
 
+        <!-- 🔐 İkili Doğrulama (2FA) Ekranı -->
+        <div id="twoFactorScreen" style="display:none;">
+            <div style="text-align:center; margin-bottom:25px;">
+                <div style="font-size:3em; margin-bottom:10px;">🔐</div>
+                <h3 style="color:#667eea; margin-bottom:10px;">İkili Doğrulama</h3>
+                <p style="color:#666; font-size:14px;">Email adresinize gönderilen 6 haneli kodu girin</p>
+            </div>
+
+            <div class="form-group">
+                <label for="verificationCode">Doğrulama Kodu</label>
+                <input 
+                    type="text" 
+                    id="verificationCode" 
+                    placeholder="Örn: 123456"
+                    maxlength="6"
+                    pattern="[0-9]{6}"
+                    style="text-align:center; font-size:24px; letter-spacing:5px; font-weight:700;"
+                    required
+                >
+            </div>
+
+            <button onclick="verifyCode()" class="btn-login" id="verifyBtn">
+                ✅ Doğrula
+            </button>
+
+            <div style="text-align:center; margin-top:15px;">
+                <a href="#" onclick="resendCode(); return false;" style="color:#667eea; font-size:14px; text-decoration:none;">
+                    🔄 Kodu Tekrar Gönder
+                </a>
+            </div>
+
+            <div style="text-align:center; margin-top:10px;">
+                <a href="#" onclick="cancelTwoFactor(); return false;" style="color:#888; font-size:13px; text-decoration:none;">
+                    ← Geri Dön
+                </a>
+            </div>
+        </div>
+
+        <!-- 📝 Normal Login Formu -->
         <form id="loginForm" onsubmit="return handleLogin(event)">
             <div class="form-group">
                 <label for="username">Kullanıcı Adı</label>
