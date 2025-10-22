@@ -304,8 +304,8 @@
     <!-- QR Code Generator -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
-    <!-- TOTP Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/otpauth/9.1.4/otpauth.umd.min.js"></script>
+    <!-- TOTP Library - OTPAuth (CDN güncel) -->
+    <script src="https://cdn.jsdelivr.net/npm/otpauth@9.2.2/dist/otpauth.umd.min.js"></script>
 
     <script>
         // ✅ Firebase Configuration (Configured)
@@ -520,6 +520,17 @@
             }
             
             try {
+                console.log('🔐 TOTP Doğrulama başlıyor...');
+                console.log('Secret:', userTOTPSecret);
+                console.log('Girilen kod:', inputCode);
+                
+                // OTPAuth kontrolü
+                if (typeof OTPAuth === 'undefined') {
+                    console.error('❌ OTPAuth kütüphanesi yüklenmedi!');
+                    alert('❌ Sistem hatası! Sayfayı yenileyin.');
+                    return;
+                }
+                
                 // TOTP instance oluştur
                 const totp = new OTPAuth.TOTP({
                     issuer: 'Zuhal Muzik',
@@ -527,11 +538,16 @@
                     algorithm: 'SHA1',
                     digits: 6,
                     period: 30,
-                    secret: userTOTPSecret
+                    secret: OTPAuth.Secret.fromBase32(userTOTPSecret)
                 });
                 
-                // Kodu doğrula (±1 pencere toleransı)
+                // Şu anki kodu üret (test için)
+                const currentToken = totp.generate();
+                console.log('Beklenen kod:', currentToken);
+                
+                // Kodu doğrula (±1 pencere toleransı = 90 saniye)
                 const delta = totp.validate({ token: inputCode, window: 1 });
+                console.log('Doğrulama delta:', delta);
                 
                 if (delta !== null) {
                     console.log('✅ 2FA doğrulaması başarılı');
@@ -555,13 +571,14 @@
                         window.location.href = 'index.html';
                     }, 1000);
                 } else {
-                    alert('❌ Doğrulama kodu hatalı! Lütfen tekrar deneyin.');
+                    console.warn('❌ Kod eşleşmedi');
+                    alert('❌ Doğrulama kodu hatalı! Lütfen tekrar deneyin.\n\nBeklenen: ' + currentToken + '\nGirilen: ' + inputCode);
                     document.getElementById('verificationCode').value = '';
                     document.getElementById('verificationCode').focus();
                 }
             } catch (error) {
                 console.error('❌ TOTP doğrulama hatası:', error);
-                alert('❌ Doğrulama hatası! Lütfen tekrar deneyin.');
+                alert('❌ Doğrulama hatası!\n\n' + error.message);
             }
         }
 
