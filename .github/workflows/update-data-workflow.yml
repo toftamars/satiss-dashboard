@@ -58,8 +58,8 @@ jobs:
         print(f"🔐 Password: {'*' * len(password)}")
         print(f"📅 Tarih Aralığı: TÜM ZAMANLAR (tarih filtresi yok)")
         
-        # Batch boyutu
-        batch_size = 10000
+        # Batch boyutu (Optimize edildi: 10K → 20K)
+        batch_size = 20000
         print(f"📦 Batch Boyutu: {batch_size:,} kayıt/batch")
         
         try:
@@ -86,7 +86,7 @@ jobs:
                 json=auth_payload,
                 headers={"Content-Type": "application/json"},
                 verify=False,
-                timeout=30
+                timeout=60
             )
             
             print(f"📡 HTTP Status: {response.status_code}")
@@ -299,10 +299,10 @@ jobs:
                                 ]
                                 
                                 # TÜM VERİYİ BATCH (PARÇA PARÇA) ÇEK
-                                print("⚠️ Tüm fatura satırları çekiliyor (10,000'erlik parçalar halinde)...")
+                                print("⚠️ Tüm fatura satırları çekiliyor (20,000'erlik parçalar halinde)...")
                                 
                                 all_data = []
-                                batch_size = 10000
+                                batch_size = 20000
                                 offset = 0
                                 batch_count = 0
                                 
@@ -311,7 +311,9 @@ jobs:
                                 
                                 while True:
                                     batch_count += 1
-                                    print(f"📦 Batch {batch_count}: Offset {offset} | Limit {batch_size} (Toplam: {offset}-{offset + batch_size})")
+                                    # Her 5 batch'te bir log (gereksiz log azaltma)
+                                    if batch_count % 5 == 1:
+                                        print(f"📦 Batch {batch_count}: Offset {offset:,} - {offset + batch_size:,}")
                                     
                                     try:
                                         batch_data = models.execute_kw(
