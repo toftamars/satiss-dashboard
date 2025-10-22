@@ -254,6 +254,10 @@
                 <a href="#" onclick="showQRAgain(); return false;" style="color:#667eea; font-size:14px; text-decoration:none;">
                     📱 QR Kodu Göster
                 </a>
+                <span style="color:#ddd; margin:0 10px;">|</span>
+                <a href="#" onclick="resetTOTP(); return false;" style="color:#ff6b6b; font-size:14px; text-decoration:none;">
+                    🔄 Yeni QR Oluştur
+                </a>
             </div>
 
             <div style="text-align:center; margin-top:10px;">
@@ -483,14 +487,11 @@
             return { secret, isNew: false };
         }
 
-        // Base32 Secret üret
+        // Base32 Secret üret (OTPAuth uyumlu)
         function generateBase32Secret() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-            let secret = '';
-            for (let i = 0; i < 32; i++) {
-                secret += chars[Math.floor(Math.random() * chars.length)];
-            }
-            return secret;
+            // OTPAuth'un kendi secret üretecini kullan
+            const secret = new OTPAuth.Secret({ size: 20 });
+            return secret.base32;
         }
 
         // QR Kod göster
@@ -539,13 +540,29 @@
                 }
                 
                 // TOTP instance oluştur
+                let secretObj;
+                try {
+                    // Secret'ı OTPAuth.Secret objesine çevir
+                    if (typeof userTOTPSecret === 'string') {
+                        secretObj = OTPAuth.Secret.fromBase32(userTOTPSecret);
+                    } else {
+                        secretObj = userTOTPSecret;
+                    }
+                } catch (e) {
+                    console.error('❌ Secret decode hatası:', e);
+                    alert('❌ Secret formatı hatalı! localStorage temizlenecek.');
+                    localStorage.removeItem(`totp_secret_${currentUser.email}`);
+                    location.reload();
+                    return;
+                }
+                
                 const totp = new OTPAuth.TOTP({
                     issuer: 'Zuhal Muzik',
                     label: currentUser.email,
                     algorithm: 'SHA1',
                     digits: 6,
                     period: 30,
-                    secret: OTPAuth.Secret.fromBase32(userTOTPSecret)
+                    secret: secretObj
                 });
                 
                 // Şu anki kodu üret (test için)
@@ -596,6 +613,29 @@
                 return;
             }
             showQRCode(currentUser.email, userTOTPSecret);
+        }
+
+        // TOTP'yi sıfırla ve yeni QR oluştur
+        function resetTOTP() {
+            if (!currentUser) {
+                alert('❌ Kullanıcı bilgisi bulunamadı!');
+                return;
+            }
+            
+            if (confirm('⚠️ Mevcut Google Authenticator kaydı silinecek!\n\nYeni QR kod oluşturulacak ve tekrar taratmanız gerekecek.\n\nDevam etmek istiyor musunuz?')) {
+                // localStorage'dan sil
+                localStorage.removeItem(`totp_secret_${currentUser.email}`);
+                
+                // Yeni secret oluştur
+                const newSecret = generateBase32Secret();
+                localStorage.setItem(`totp_secret_${currentUser.email}`, newSecret);
+                userTOTPSecret = newSecret;
+                
+                // QR kodu göster
+                showQRCode(currentUser.email, newSecret);
+                
+                alert('✅ Yeni QR kod oluşturuldu!\n\n📱 Google Authenticator\'da eski kaydı silin ve yeni QR kodu taratın.');
+            }
         }
 
         // 2FA'yı iptal et
