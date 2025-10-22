@@ -170,19 +170,19 @@ jobs:
                         print("=" * 60)
                         
                         # XML-RPC İLE VERİ ÇEK
-                        print("\n1️⃣ TestDeneme filtresi ile fatura satırları çekiliyor (XML-RPC)...")
+                        print("\n1️⃣ ALL ZUHAL filtresi ile fatura satırları çekiliyor (XML-RPC)...")
                         
                         if models:
                             # XML-RPC ile çek
                             try:
                                 print("⏳ Veri çekiliyor (bu 2-3 dakika sürebilir)...")
                                 
-                                # TestDeneme FİLTRESİ - Kullanıcının kaydedilmiş filtresini çek
-                                print("🔍 'TestDeneme' filtresinin domain'i çekiliyor...")
+                                # ALL ZUHAL FİLTRESİ - Kullanıcının kaydedilmiş filtresini çek
+                                print("🔍 'ALL ZUHAL' filtresinin domain'i çekiliyor...")
                                 
                                 try:
-                                    # SADECE 'TestDeneme' FİLTRESİNİ ARA (TEK YER)
-                                    print("🔍 'TestDeneme' filtresi aranıyor...")
+                                    # SADECE 'ALL ZUHAL' FİLTRESİNİ ARA (TEK YER)
+                                    print("🔍 'ALL ZUHAL' filtresi aranıyor...")
                                     
                                     filters = models.execute_kw(
                                         db, uid_xmlrpc, password,
@@ -190,20 +190,20 @@ jobs:
                                         [[
                                             ('user_id', '=', uid_xmlrpc),
                                             ('model_id', '=', 'account.invoice.report'),
-                                            ('name', '=', 'TestDeneme')
+                                            ('name', '=', 'ALL ZUHAL')
                                         ]],
                                         {'fields': ['name', 'domain', 'context']}
                                     )
                                     
                                     # Filtre bulunamadıysa HATA VER VE DURDUR
                                     if not filters or len(filters) == 0:
-                                        print("❌ HATA: 'TestDeneme' filtresi bulunamadı!")
-                                        print("❌ Kullanıcıya özel account.invoice.report'ta 'TestDeneme' filtresi olmalı.")
+                                        print("❌ HATA: 'ALL ZUHAL' filtresi bulunamadı!")
+                                        print("❌ Kullanıcıya özel account.invoice.report'ta 'ALL ZUHAL' filtresi olmalı.")
                                         exit(1)
                                     
                                     # Filtre bulundu
                                     filter_data = filters[0]
-                                    print(f"✅ 'TestDeneme' filtresi bulundu!")
+                                    print(f"✅ 'ALL ZUHAL' filtresi bulundu!")
                                     print(f"📋 Domain: {filter_data['domain']}")
                                     
                                     # KONTROL: Filtre out_refund'ları dahil ediyor mu?
