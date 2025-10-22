@@ -2,6 +2,11 @@
 node_modules/
 package-lock.json
 
+# Veri Dosyaları (Firebase Storage'da)
+data/*.json.gz
+data/data-*.json.gz
+*.json.gz
+
 # Mac OS
 .DS_Store
 
@@ -21,7 +26,7 @@ npm-debug.log*
 *.backup
 *.bak
 
-# Environment variables (sadece bunlar gizli kalsın)
+# Environment variables
 .env.local
 firebase-adminsdk-*.json
 serviceAccountKey.json
