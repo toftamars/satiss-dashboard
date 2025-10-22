@@ -1083,7 +1083,8 @@ jobs:
                                 }
                                 
                                 filename = f'data-{year}.json.gz'
-                                with gzip.open(filename, 'wt', encoding='utf-8') as f:
+                                # GZIP Level 6: Hız-Boyut dengesi (Level 9 → 6: %30 hızlanma)
+                                with gzip.open(filename, 'wt', encoding='utf-8', compresslevel=6) as f:
                                     json.dump(year_data, f, ensure_ascii=False)
                                 
                                 # Dosya boyutunu kontrol et
@@ -1212,8 +1213,8 @@ jobs:
                                         'last_update': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                                     }
                                     
-                                    # Sıkıştırılmış dosya olarak kaydet
-                                    with gzip.open('inventory.json.gz', 'wt', encoding='utf-8') as f:
+                                    # Sıkıştırılmış dosya olarak kaydet (Level 6: Hız optimizasyonu)
+                                    with gzip.open('inventory.json.gz', 'wt', encoding='utf-8', compresslevel=6) as f:
                                         json.dump(inventory_json, f, ensure_ascii=False)
                                     
                                     file_size_mb = os.path.getsize('inventory.json.gz') / (1024 * 1024)
