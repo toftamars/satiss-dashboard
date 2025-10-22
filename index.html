@@ -1590,7 +1590,7 @@
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 15px; margin-bottom: 30px;">
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                         <div>
-                            <label style="display: block; margin-bottom: 8px; color: white; font-weight: 600;">📁 Kategori 1</label>
+                            <label style="display: block; margin-bottom: 8px; color: white; font-weight: 600;">📁 Kategori</label>
                             <select id="timeCategory1Filter" onchange="analyzeTime()" style="width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 1em;">
                                 <option value="">Tüm Kategoriler</option>
                             </select>
@@ -7162,8 +7162,8 @@
             const category1Filter = document.getElementById('timeCategory1Filter')?.value || '';
             
             if (category1Filter) {
-                filteredData = allData.filter(item => item.category_1 === category1Filter);
-                console.log(`📁 Kategori 1 filtresi: "${category1Filter}" - ${filteredData.length} kayıt`);
+                filteredData = allData.filter(item => item.category_2 === category1Filter);
+                console.log(`📁 Kategori filtresi: "${category1Filter}" - ${filteredData.length} kayıt`);
             } else {
                 filteredData = [...allData];
             }
@@ -7441,8 +7441,8 @@
         }
         
         function populateTimeFilters() {
-            // Kategori 1 filtresi (üst filtre - allData'dan doldur)
-            const category1Set = [...new Set(allData.map(item => item.category_1).filter(c => c && c.toLowerCase() !== 'all'))].sort();
+            // Kategori filtresi (üst filtre - allData'dan doldur)
+            const category1Set = [...new Set(allData.map(item => item.category_2).filter(c => c && c.toLowerCase() !== 'all'))].sort();
             const category1Select = document.getElementById('timeCategory1Filter');
             if (category1Select) {
                 const currentValue = category1Select.value;
