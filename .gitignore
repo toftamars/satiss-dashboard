@@ -2,11 +2,6 @@
 node_modules/
 package-lock.json
 
-# Veri Dosyaları (Firebase Storage'da)
-data/*.json.gz
-data/data-*.json.gz
-*.json.gz
-
 # Mac OS
 .DS_Store
 
