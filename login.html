@@ -311,10 +311,18 @@
             document.getElementById('errorMessage').style.display = 'block';
         }
 
-        // Zaten giriş yapmışsa dashboard'a yönlendir
+        // Zaten giriş yapmışsa ve 2FA tamamlanmışsa dashboard'a yönlendir
         firebase.auth().onAuthStateChanged((user) => {
             if (user && window.location.pathname.includes('login')) {
-                window.location.href = 'index.html';
+                // 2FA tamamlanmış mı kontrol et
+                const twoFactorCompleted = sessionStorage.getItem('twoFactorCompleted');
+                if (twoFactorCompleted === 'true') {
+                    window.location.href = 'index.html';
+                } else {
+                    // 2FA tamamlanmamış, logout yap
+                    firebase.auth().signOut();
+                    sessionStorage.clear();
+                }
             }
         });
 
@@ -339,19 +347,25 @@
                 .then((userCredential) => {
                     console.log('✅ Giriş başarılı:', userCredential.user.email);
                     
-                    // Session'a kaydet
-                    sessionStorage.setItem('isLoggedIn', 'true');
-                    sessionStorage.setItem('username', username);
-                    sessionStorage.setItem('email', userCredential.user.email);
+                    // Kullanıcıyı kaydet (2FA için)
+                    currentUser = userCredential.user;
                     
-                    // Başarı mesajı
+                    // 2FA kodu üret
+                    verificationCodeSent = Math.floor(100000 + Math.random() * 900000).toString();
+                    console.log('🔐 2FA Kodu:', verificationCodeSent);
+                    
+                    // Loading'i gizle
                     document.getElementById('loading').style.display = 'none';
-                    document.getElementById('successMessage').style.display = 'block';
                     
-                    // Dashboard'a yönlendir
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 1000);
+                    // 2FA ekranını göster
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('twoFactorScreen').style.display = 'block';
+                    
+                    // Alert ile kodu göster (gerçek uygulamada SMS/Email gönderilir)
+                    alert('🔐 İkili Doğrulama Kodu: ' + verificationCodeSent + '\n\n(Gerçek uygulamada bu kod email/SMS ile gönderilir)');
+                    
+                    // Input'a focus
+                    document.getElementById('verificationCode').focus();
                 })
                 .catch((error) => {
                     console.error('❌ Giriş hatası:', error);
@@ -425,8 +439,9 @@
                 
                 // Session'a kaydet
                 sessionStorage.setItem('isLoggedIn', 'true');
-                sessionStorage.setItem('username', currentUser.username);
+                sessionStorage.setItem('username', currentUser.email.split('@')[0]);
                 sessionStorage.setItem('email', currentUser.email);
+                sessionStorage.setItem('twoFactorCompleted', 'true'); // 2FA tamamlandı
                 
                 // Başarı mesajı
                 document.getElementById('twoFactorScreen').style.display = 'none';
