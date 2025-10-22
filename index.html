@@ -7,12 +7,22 @@
             const unsubscribe = window.firebaseAuth.onAuthStateChanged((user) => {
                 if (!user) {
                     // Kullanıcı giriş yapmamış
-                    window.location.href = "login.html";
+                    const twoFactorCompleted = sessionStorage.getItem('twoFactorCompleted');
+                    if (twoFactorCompleted !== 'true') {
+                        window.location.href = "login.html";
+                    }
                 } else {
-                    // Kullanıcı giriş yapmış, sessionStorage'a kaydet
-                    sessionStorage.setItem("isLoggedIn", "true");
-                    sessionStorage.setItem("username", user.email.split("@")[0]);
-                    sessionStorage.setItem("email", user.email);
+                    // Kullanıcı giriş yapmış
+                    const twoFactorCompleted = sessionStorage.getItem('twoFactorCompleted');
+                    if (twoFactorCompleted === 'true') {
+                        // 2FA tamamlanmış, sessionStorage'a kaydet
+                        sessionStorage.setItem("isLoggedIn", "true");
+                        sessionStorage.setItem("username", user.email.split("@")[0]);
+                        sessionStorage.setItem("email", user.email);
+                    } else {
+                        // 2FA tamamlanmamış, login sayfasına yönlendir
+                        window.location.href = "login.html";
+                    }
                 }
                 unsubscribe();
             });
