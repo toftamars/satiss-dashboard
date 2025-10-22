@@ -250,16 +250,6 @@
                 ✅ Doğrula
             </button>
 
-            <div style="text-align:center; margin-top:15px;">
-                <a href="#" onclick="showQRAgain(); return false;" style="color:#667eea; font-size:14px; text-decoration:none;">
-                    📱 QR Kodu Göster
-                </a>
-                <span style="color:#ddd; margin:0 10px;">|</span>
-                <a href="#" onclick="resetTOTP(); return false;" style="color:#ff6b6b; font-size:14px; text-decoration:none;">
-                    🔄 Yeni QR Oluştur
-                </a>
-            </div>
-
             <div style="text-align:center; margin-top:10px;">
                 <a href="#" onclick="cancelTwoFactor(); return false;" style="color:#888; font-size:13px; text-decoration:none;">
                     ← Geri Dön
@@ -314,8 +304,8 @@
     <!-- QR Code Generator -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
-    <!-- TOTP Library - OTPAuth (CDN güncel) -->
-    <script src="https://cdn.jsdelivr.net/npm/otpauth@9.2.2/dist/otpauth.umd.min.js"></script>
+    <!-- TOTP Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/otpauth/9.1.4/otpauth.umd.min.js"></script>
 
     <script>
         // ✅ Firebase Configuration (Configured)
@@ -398,14 +388,13 @@
                     document.getElementById('loginForm').style.display = 'none';
                     document.getElementById('twoFactorScreen').style.display = 'block';
                     
-                    // QR kodu göster (ilk giriş veya sonraki girişler)
+                    // İlk giriş ise QR kod göster
                     if (isNew) {
                         showQRCode(currentUser.email, secret);
-                        document.getElementById('twoFactorInstructions').textContent = '📱 QR kodu taratın ve Google Authenticator\'ı kurun';
                     } else {
-                        // Zaten kayıtlı, QR kodu gizle ama "QR Kodu Göster" butonu ile gösterilebilir
+                        // Zaten kayıtlı, sadece kod iste
                         document.getElementById('qrCodeSection').style.display = 'none';
-                        document.getElementById('twoFactorInstructions').textContent = 'Google Authenticator\'dan 6 haneli kodu girin (veya QR Kodu Göster\'e tıklayın)';
+                        document.getElementById('twoFactorInstructions').textContent = 'Google Authenticator\'dan 6 haneli kodu girin';
                     }
                     
                     // Input'a focus
@@ -487,11 +476,14 @@
             return { secret, isNew: false };
         }
 
-        // Base32 Secret üret (OTPAuth uyumlu)
+        // Base32 Secret üret
         function generateBase32Secret() {
-            // OTPAuth'un kendi secret üretecini kullan
-            const secret = new OTPAuth.Secret({ size: 20 });
-            return secret.base32;
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+            let secret = '';
+            for (let i = 0; i < 32; i++) {
+                secret += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return secret;
         }
 
         // QR Kod göster
@@ -528,50 +520,18 @@
             }
             
             try {
-                console.log('🔐 TOTP Doğrulama başlıyor...');
-                console.log('Secret:', userTOTPSecret);
-                console.log('Girilen kod:', inputCode);
-                
-                // OTPAuth kontrolü
-                if (typeof OTPAuth === 'undefined') {
-                    console.error('❌ OTPAuth kütüphanesi yüklenmedi!');
-                    alert('❌ Sistem hatası! Sayfayı yenileyin.');
-                    return;
-                }
-                
                 // TOTP instance oluştur
-                let secretObj;
-                try {
-                    // Secret'ı OTPAuth.Secret objesine çevir
-                    if (typeof userTOTPSecret === 'string') {
-                        secretObj = OTPAuth.Secret.fromBase32(userTOTPSecret);
-                    } else {
-                        secretObj = userTOTPSecret;
-                    }
-                } catch (e) {
-                    console.error('❌ Secret decode hatası:', e);
-                    alert('❌ Secret formatı hatalı! localStorage temizlenecek.');
-                    localStorage.removeItem(`totp_secret_${currentUser.email}`);
-                    location.reload();
-                    return;
-                }
-                
                 const totp = new OTPAuth.TOTP({
                     issuer: 'Zuhal Muzik',
                     label: currentUser.email,
                     algorithm: 'SHA1',
                     digits: 6,
                     period: 30,
-                    secret: secretObj
+                    secret: userTOTPSecret
                 });
                 
-                // Şu anki kodu üret (test için)
-                const currentToken = totp.generate();
-                console.log('Beklenen kod:', currentToken);
-                
-                // Kodu doğrula (±1 pencere toleransı = 90 saniye)
+                // Kodu doğrula (±1 pencere toleransı)
                 const delta = totp.validate({ token: inputCode, window: 1 });
-                console.log('Doğrulama delta:', delta);
                 
                 if (delta !== null) {
                     console.log('✅ 2FA doğrulaması başarılı');
@@ -595,14 +555,13 @@
                         window.location.href = 'index.html';
                     }, 1000);
                 } else {
-                    console.warn('❌ Kod eşleşmedi');
-                    alert('❌ Doğrulama kodu hatalı! Lütfen tekrar deneyin.\n\nBeklenen: ' + currentToken + '\nGirilen: ' + inputCode);
+                    alert('❌ Doğrulama kodu hatalı! Lütfen tekrar deneyin.');
                     document.getElementById('verificationCode').value = '';
                     document.getElementById('verificationCode').focus();
                 }
             } catch (error) {
                 console.error('❌ TOTP doğrulama hatası:', error);
-                alert('❌ Doğrulama hatası!\n\n' + error.message);
+                alert('❌ Doğrulama hatası! Lütfen tekrar deneyin.');
             }
         }
 
@@ -613,29 +572,6 @@
                 return;
             }
             showQRCode(currentUser.email, userTOTPSecret);
-        }
-
-        // TOTP'yi sıfırla ve yeni QR oluştur
-        function resetTOTP() {
-            if (!currentUser) {
-                alert('❌ Kullanıcı bilgisi bulunamadı!');
-                return;
-            }
-            
-            if (confirm('⚠️ Mevcut Google Authenticator kaydı silinecek!\n\nYeni QR kod oluşturulacak ve tekrar taratmanız gerekecek.\n\nDevam etmek istiyor musunuz?')) {
-                // localStorage'dan sil
-                localStorage.removeItem(`totp_secret_${currentUser.email}`);
-                
-                // Yeni secret oluştur
-                const newSecret = generateBase32Secret();
-                localStorage.setItem(`totp_secret_${currentUser.email}`, newSecret);
-                userTOTPSecret = newSecret;
-                
-                // QR kodu göster
-                showQRCode(currentUser.email, newSecret);
-                
-                alert('✅ Yeni QR kod oluşturuldu!\n\n📱 Google Authenticator\'da eski kaydı silin ve yeni QR kodu taratın.');
-            }
         }
 
         // 2FA'yı iptal et
