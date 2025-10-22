@@ -17,7 +17,19 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <!-- CryptoJS for encryption -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-    <!-- 2FA Kaldırıldı - Direkt Erişim -->
+    <!-- Login Kontrolü -->
+    <script>
+        // Sayfa yüklendiğinde oturum kontrolü
+        (function() {
+            const isLoggedIn = sessionStorage.getItem('isLoggedIn');
+            const username = sessionStorage.getItem('username');
+            
+            if (isLoggedIn !== 'true' || !username) {
+                // Giriş yapılmamış, login sayfasına yönlendir
+                window.location.href = 'login.html';
+            }
+        })();
+    </script>
     <style>
         * {
             margin: 0;
@@ -46,6 +58,7 @@
             color: white;
             padding: 30px;
             text-align: center;
+            position: relative;
         }
 
         .header h1 {
@@ -56,6 +69,41 @@
         .header p {
             font-size: 1.2em;
             opacity: 0.9;
+        }
+
+        .user-info {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-1px);
         }
 
         .info-box {
@@ -1152,25 +1200,11 @@
 
         <div class="container" style="display: none;" id="mainContainer">
         <div class="header">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h1>📊 Zuhal Müzik Raporlama</h1>
-                </div>
-                <div style="display: flex; align-items: center; gap: 20px;">
-                    <div style="text-align: right;">
-                        <div style="font-size: 1.1em; font-weight: bold;" id="userInfo">Kullanıcı</div>
-                        <div style="font-size: 0.9em; opacity: 0.8;" id="userType">User</div>
-                        <div style="font-size: 0.8em; opacity: 0.7;" id="securityInfo">🛡️ Güvenli Oturum</div>
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button onclick="showSecurityInfo()" style="background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
-                            🔒 Güvenlik
-                        </button>
-                        <button onclick="logout()" style="background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
-                            🚪 Çıkış
-                        </button>
-                    </div>
-                </div>
+            <h1>📊 Zuhal Müzik Raporlama</h1>
+            <p>Müzik Enstrüman Sektörü</p>
+            <div class="user-info">
+                <span class="user-name" id="currentUserName">Kullanıcı</span>
+                <button class="logout-btn" onclick="logout()">🚪 Çıkış</button>
             </div>
         </div>
 
@@ -2495,6 +2529,22 @@
     </div>
 
     <script>
+        // Sayfa yüklendiğinde kullanıcı adını göster
+        window.addEventListener('DOMContentLoaded', function() {
+            const username = sessionStorage.getItem('username');
+            if (username) {
+                document.getElementById('currentUserName').textContent = username.charAt(0).toUpperCase() + username.slice(1);
+            }
+        });
+
+        // Çıkış fonksiyonu
+        function logout() {
+            if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
+                sessionStorage.clear();
+                window.location.href = 'login.html';
+            }
+        }
+
         let allData = [];
         let filteredData = [];
         let baseData = []; // Kanal filtresi öncesi tüm veri
