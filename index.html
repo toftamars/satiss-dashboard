@@ -1552,7 +1552,7 @@
             </button>
             
             <div style="text-align: center;">
-                <button onclick="showAuthForm()" 
+                <button onclick="window.showAuthForm()" 
                         style="padding: 10px 20px; background: #e5e7eb; color: #666; border: none; border-radius: 8px; cursor: pointer;">
                     🔄 Geri Dön
                 </button>
@@ -15821,13 +15821,7 @@
 
         // Authentication UI Fonksiyonları
         function showAuthForm() {
-            const authForm = document.getElementById('authForm');
-            const otpForm = document.getElementById('otpForm');
-            const loadingScreen = document.getElementById('loadingScreen');
-            
-            if (authForm) authForm.style.display = 'flex';
-            if (otpForm) otpForm.style.display = 'none';
-            if (loadingScreen) loadingScreen.style.display = 'none';
+            window.showAuthForm();
         }
         
         function showOTPForm(email) {
@@ -15858,10 +15852,8 @@
         
         // Sayfa yüklendiğinde authentication formunu göster
         document.addEventListener('DOMContentLoaded', function() {
-            // Loading tamamlandıktan sonra auth formunu göster
-            setTimeout(() => {
-                showAuthForm();
-            }, 2000);
+            // Bu fonksiyon artık gerekli değil - session kontrolü zaten yapılıyor
+            console.log('📝 DOMContentLoaded - Session kontrolü zaten yapıldı');
         });
 
         // Kullanıcı bilgilerini güncelle
