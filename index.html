@@ -2754,7 +2754,7 @@
         async function loadCentralTargets() {
             try {
                 console.log('🎯 Merkezi hedefler yükleniyor...');
-                const response = await fetch('targets.json?' + Date.now()); // Cache bypass
+                const response = await fetch('data/targets.json?' + Date.now()); // Cache bypass
                 if (response.ok) {
                     centralTargets = await response.json();
                     console.log('✅ Merkezi hedefler yüklendi:', centralTargets);
