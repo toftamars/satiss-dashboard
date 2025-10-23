@@ -139,6 +139,94 @@
             console.log('✅ Çıkış yapıldı, session temizlendi');
         };
         
+        // ===== GLOBAL DATA LOADING FUNCTION =====
+        // Bu fonksiyon sayfa yüklenir yüklenmez tanımlanır
+        window.loadData = async function() {
+            console.log('🚀 loadData fonksiyonu çağrıldı');
+            try {
+                // Loading progress'i güncelle
+                if (typeof dataLoadProgress !== 'undefined') {
+                    dataLoadProgress.dataFiles = true;
+                    checkLoadingComplete();
+                }
+                
+                if (document.getElementById('dataStatus')) {
+                    document.getElementById('dataStatus').innerHTML = '<span class="status-badge" style="background:#ffc107;color:#000;">⏳ Yükleniyor...</span>';
+                }
+                
+                // tableContainer artık Dashboard'da yok, null check ekledik
+                const tableContainer = document.getElementById('tableContainer');
+                if (tableContainer) {
+                    tableContainer.innerHTML = '<div style="text-align:center;padding:50px;font-size:1.2em;">⏳ Veriler yükleniyor, lütfen bekleyin...</div>';
+                }
+                
+                // Hedefleri yükle (paralel olarak)
+                if (typeof loadCentralTargets === 'function') {
+                    loadCentralTargets();
+                }
+                
+                // İlk olarak metadata'yı yükle
+                const metadata = await loadMetadata();
+                console.log('📊 Metadata yüklendi:', metadata);
+                
+                if (!metadata || !metadata.years || metadata.years.length === 0) {
+                    throw new Error('Geçerli yıl verisi bulunamadı');
+                }
+                
+                // TÜM YILLARI PARALEL YÜKLE (İlk girişte hepsi)
+                console.log(`📅 Tüm yıllar yükleniyor: ${metadata.years.join(', ')}`);
+                
+                // Tüm yılları paralel olarak yükle
+                const yearPromises = metadata.years.map(year => loadYearData(year));
+                const yearResults = await Promise.all(yearPromises);
+                
+                // Tüm verileri birleştir
+                let allRawData = [];
+                let totalRecords = 0;
+                
+                for (let i = 0; i < metadata.years.length; i++) {
+                    const year = metadata.years[i];
+                    const yearData = yearResults[i];
+                    
+                    if (yearData?.details && yearData.details.length > 0) {
+                        console.log(`✅ ${year} yılı yüklendi: ${yearData.details.length} kayıt`);
+                        allRawData = allRawData.concat(yearData.details);
+                        totalRecords += yearData.details.length;
+                    } else {
+                        console.warn(`⚠️ ${year} yılında veri bulunamadı`);
+                    }
+                }
+                
+                console.log(`📊 Toplam yüklenen kayıt: ${totalRecords}`);
+                
+                if (allRawData.length === 0) {
+                    console.error('❌ Hiçbir yılda veri bulunamadı!');
+                    return;
+                }
+                
+                // Tüm verileri işle
+                allData = allRawData.map(item => applyDiscountLogic(item));
+                baseData = [...allData];
+                const discountProducts = allData.filter(item => isDiscountProduct(item));
+                filteredData = [...allData];
+                
+                console.log(`💰 ${discountProducts.length} indirim ürünü negatif değer olarak işlendi (toplam kayıt: ${allRawData.length})`);
+                
+                // Dashboard'ı yükle
+                setTimeout(() => {
+                    loadDashboard();
+                }, 500);
+                
+                console.log('✅ Veri yükleme tamamlandı');
+                
+            } catch (error) {
+                console.error('❌ Veri yükleme hatası:', error);
+                if (document.getElementById('dataStatus')) {
+                    document.getElementById('dataStatus').innerHTML = '<span class="status-badge" style="background:#dc3545;color:#fff;">❌ Hata</span>';
+                }
+            }
+        };
+        
         // Email servisi ayarları
         const EMAIL_SERVICE_URL = 'http://localhost:3001'; // Güvenli port
         
@@ -3353,22 +3441,9 @@
             }, 500); // Tüm işlemler bittikten 500ms sonra kapat
         }
 
-        // Global scope'a taşı
-        window.loadData = async function() {
-            try {
-                // Loading progress'i güncelle
-                dataLoadProgress.dataFiles = true;
-                checkLoadingComplete();
-                
-                document.getElementById('dataStatus').innerHTML = '<span class="status-badge" style="background:#ffc107;color:#000;">⏳ Yükleniyor...</span>';
-                // tableContainer artık Dashboard'da yok, null check ekledik
-                const tableContainer = document.getElementById('tableContainer');
-                if (tableContainer) {
-                    tableContainer.innerHTML = '<div style="text-align:center;padding:50px;font-size:1.2em;">⏳ Veriler yükleniyor, lütfen bekleyin...</div>';
-                }
-                
-                // Hedefleri yükle (paralel olarak)
-                loadCentralTargets();
+        }
+        
+        // Hedefleri yükle
                 
                 // İlk olarak metadata'yı yükle
                 metadata = await loadMetadata();
