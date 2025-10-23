@@ -1505,6 +1505,11 @@
                         <p id="dashBasketAverage" style="color: white; font-size: 1.6em; font-weight: bold; margin: 10px 0;">$0</p>
                         <small style="opacity: 0.9; font-size: 0.85em;">Ortalama işlem tutarı</small>
                     </div>
+                    <div class="summary-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px;">
+                        <h3 style="font-size: 0.95em; margin-bottom: 10px;">🔄 Cache Versiyonu</h3>
+                        <p id="cacheVersion" style="color: white; font-size: 1.6em; font-weight: bold; margin: 10px 0;">20241024</p>
+                        <small style="opacity: 0.9; font-size: 0.85em;">Günlük veri versiyonu</small>
+                    </div>
                 </div>
 
                 <!-- Yıllık Karşılaştırma -->
@@ -2732,12 +2737,23 @@
             }
         }
 
-        let allData = [];
-        let filteredData = [];
-        let baseData = []; // Kanal filtresi öncesi tüm veri
-        let metadata = null;
-        let loadedYears = new Set();
-        let loadedDataCache = {}; // Yüklenen verileri cache'le
+        // Akıllı Cache Sistemi
+        function getDailyVersion() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}${month}${day}`;
+        }
+        
+        function getHourlyVersion() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hour = String(now.getHours()).padStart(2, '0');
+            return `${year}${month}${day}-${hour}`;
+        }
         let inventoryData = null; // Envanter verileri
         let inventoryCharts = {}; // Envanter grafikleri
         let stockLocations = {}; // Stok konumu ve mağaza eşleşmesi
@@ -2841,14 +2857,11 @@
         // GZIP Decompression ve Yıl Yükleme Fonksiyonları
         async function loadMetadata() {
             try {
-                // Cache-busting: Her seferinde yeni veri çek
-                const cacheBuster = new Date().getTime();
-                const response = await fetch(`data-metadata.json?v=${cacheBuster}`, {
-                    cache: 'no-cache',
+                // Akıllı Cache: Metadata için saatlik versiyon
+                const version = getHourlyVersion();
+                const response = await fetch(`data-metadata.json?v=${version}`, {
                     headers: {
-                        'Cache-Control': 'no-cache, no-store, must-revalidate',
-                        'Pragma': 'no-cache',
-                        'Expires': '0'
+                        'Cache-Control': 'public, max-age=3600' // 1 saat cache
                     }
                 });
                 if (!response.ok) throw new Error('Metadata yüklenemedi');
@@ -2963,14 +2976,11 @@
             try {
                 console.log(`📦 ${year} yükleniyor...`);
                 
-                // GZIP dosyasını indir - Cache-busting ile
-                const cacheBuster = new Date().getTime();
-                const response = await fetch(`data-${year}.json.gz?v=${cacheBuster}`, {
-                    cache: 'no-cache',
+                // GZIP dosyasını indir - Akıllı Cache ile
+                const version = getDailyVersion(); // Günlük versiyon
+                const response = await fetch(`data-${year}.json.gz?v=${version}`, {
                     headers: {
-                        'Cache-Control': 'no-cache, no-store, must-revalidate',
-                        'Pragma': 'no-cache',
-                        'Expires': '0'
+                        'Cache-Control': 'public, max-age=86400' // 24 saat cache
                     }
                 });
                 if (!response.ok) throw new Error(`${year} verisi bulunamadı`);
@@ -6636,15 +6646,8 @@
             console.log('📊 Günlük Ortalama:', dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2}), '(Toplam Satış /', uniqueDates, 'gün)');
             console.log('🛒 Sepet Ortalaması:', basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2}), '(Toplam Satış /', uniqueInvoices, 'fatura)');
             
-            // UI güncelle
-            document.getElementById('dashTotalSales').textContent = '$' + totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2});
-            document.getElementById('dashTotalQty').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 0});
-            document.getElementById('dashTotalCustomers').textContent = uniqueCustomers.toLocaleString('tr-TR');
-            document.getElementById('dashTotalProducts').textContent = uniqueProducts.toLocaleString('tr-TR');
-            document.getElementById('dashTotalStores').textContent = uniqueStores.toLocaleString('tr-TR');
-            document.getElementById('dashTotalSalespeople').textContent = uniqueSalespeople.toLocaleString('tr-TR');
-            document.getElementById('dashDailyAverage').textContent = '$' + dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2});
-            document.getElementById('dashBasketAverage').textContent = '$' + basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            // Cache versiyonunu güncelle
+            document.getElementById('cacheVersion').textContent = getDailyVersion();
             
             // Yıllık karşılaştırma
             renderDashYearlyChart();
