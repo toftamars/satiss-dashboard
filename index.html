@@ -83,33 +83,6 @@
                 showAuthError(error.message);
             }
         }
-        
-        async function sendLoginLink(email) {
-            try {
-                showAuthLoading();
-                
-                const response = await fetch(`${EMAIL_SERVICE_URL}/send-login-link`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ email: email })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    console.log('✅ Login link gönderildi:', email);
-                    showAuthError('✅ Giriş linki emailinize gönderildi!', 'success');
-                } else {
-                    throw new Error(result.error || 'Login link gönderilemedi');
-                }
-                
-            } catch (error) {
-                console.error('❌ Login link gönderme hatası:', error);
-                showAuthError('Email gönderilemedi: ' + error.message);
-            }
-        }
     </script>
     <!-- Login Kontrolü -->
     <script>
@@ -1247,16 +1220,9 @@
             </div>
             
             <button id="authLoginBtn" onclick="sendOTPCode(document.getElementById('authEmailInput').value)" 
-                    style="width: 100%; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 1.1em; font-weight: 600; cursor: pointer; transition: transform 0.2s ease; margin-bottom: 10px;">
+                    style="width: 100%; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 1.1em; font-weight: 600; cursor: pointer; transition: transform 0.2s ease;">
                 📧 Doğrulama Kodu Gönder
             </button>
-            
-            <div style="text-align: center;">
-                <button onclick="sendLoginLink(document.getElementById('authEmailInput').value)" 
-                        style="padding: 10px 20px; background: #f59e0b; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9em;">
-                    🔗 Giriş Linki Gönder
-                </button>
-            </div>
         </div>
     </div>
 
