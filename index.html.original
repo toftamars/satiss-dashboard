@@ -3042,11 +3042,23 @@
             
             console.log('📦 Diğer yıllar arka planda yükleniyor...');
             
-            for (const year of metadata.years) {
-                if (year === skipYear || loadedYears.has(year)) continue;
+            // Paralel yükleme için Promise.all kullan
+            const yearPromises = metadata.years
+                .filter(year => year !== skipYear && !loadedYears.has(year))
+                .map(year => loadYearData(year).catch(err => {
+                    console.error(`❌ ${year} yükleme hatası:`, err);
+                    return null;
+                }));
+            
+            const yearResults = await Promise.all(yearPromises);
+            
+            for (let i = 0; i < yearResults.length; i++) {
+                const yearData = yearResults[i];
+                const year = metadata.years.filter(y => y !== skipYear && !loadedYears.has(y))[i];
+                
+                if (!yearData) continue;
                 
                 try {
-                    const yearData = await loadYearData(year);
                     
                     // Eğer yıl zaten yüklüyse (null döndü), atla
                     if (!yearData) {
