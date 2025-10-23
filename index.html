@@ -15629,7 +15629,8 @@
             }
         }
         
-        function showDashboardAfterAuth(user) {
+        // Global scope'a taşı
+        window.showDashboardAfterAuth = function(user) {
             const authForm = document.getElementById('authForm');
             const otpForm = document.getElementById('otpForm');
             const loadingScreen = document.getElementById('loadingScreen');
@@ -15649,7 +15650,8 @@
             }
         }
         
-        function updateUserInfo(user) {
+        // Global scope'a taşı
+        window.updateUserInfo = function(user) {
             const userNameElement = document.getElementById('currentUserName');
             const userInfoElement = document.getElementById('userInfo');
             const userTypeElement = document.getElementById('userType');
