@@ -28,43 +28,6 @@
         // Email servisi ayarları
         const EMAIL_SERVICE_URL = 'http://localhost:3001'; // Güvenli port
         
-        // Şifre ile giriş fonksiyonu
-        function loginWithPassword() {
-            const email = document.getElementById('authEmailInput').value.trim();
-            const password = document.getElementById('authPasswordInput').value.trim();
-            
-            // Domain kontrolü
-            const allowedDomains = ['zuhalmuzik.com'];
-            const emailDomain = email.split('@')[1];
-            
-            if (!allowedDomains.includes(emailDomain)) {
-                showAuthError('❌ Bu email adresi yetkili değil. Sadece @zuhalmuzik.com uzantılı emailler kullanılabilir.');
-                return;
-            }
-            
-            if (!email) {
-                showAuthError('❌ Email adresinizi girin');
-                return;
-            }
-            
-            if (!password) {
-                showAuthError('❌ Şifrenizi girin');
-                return;
-            }
-            
-            // Basit şifre kontrolü
-            const validPasswords = ['zuhal2024', 'muzik2024', 'admin123'];
-            
-            if (!validPasswords.includes(password)) {
-                showAuthError('❌ Geçersiz şifre');
-                return;
-            }
-            
-            // Şifre doğru, OTP gönder
-            console.log('✅ Şifre doğru, OTP gönderiliyor...');
-            sendOTPCode(email);
-        }
-        
         // Email servisi fonksiyonları
         async function sendOTPCode(email) {
             try {
@@ -1290,7 +1253,7 @@
         <div style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); max-width: 400px; width: 90%;">
             <div style="text-align: center; margin-bottom: 30px;">
                 <h2 style="color: #333; margin-bottom: 10px;">🔐 Zuhal Müzik Dashboard</h2>
-                <p style="color: #666;">Email ve şifre ile giriş yapın</p>
+                <p style="color: #666;">Email ile giriş yapın</p>
             </div>
             
             <div id="authError" style="display: none; background: #fee; color: #c33; padding: 10px; border-radius: 5px; margin-bottom: 20px; text-align: center;"></div>
@@ -1300,14 +1263,9 @@
                        style="width: 100%; padding: 15px; border: 2px solid #e1e5e9; border-radius: 10px; font-size: 1em; outline: none; transition: border-color 0.3s ease;">
             </div>
             
-            <div style="margin-bottom: 20px;">
-                <input type="password" id="authPasswordInput" placeholder="Şifrenizi girin" 
-                       style="width: 100%; padding: 15px; border: 2px solid #e1e5e9; border-radius: 10px; font-size: 1em; outline: none; transition: border-color 0.3s ease;">
-            </div>
-            
-            <button id="authLoginBtn" onclick="loginWithPassword()" 
+            <button id="authLoginBtn" onclick="sendOTPCode(document.getElementById('authEmailInput').value)" 
                     style="width: 100%; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 1.1em; font-weight: 600; cursor: pointer; transition: transform 0.2s ease;">
-                🔐 Giriş Yap
+                📧 Doğrulama Kodu Gönder
             </button>
         </div>
     </div>
@@ -5669,8 +5627,18 @@
                     contentHtml += '</div>';
                     contentHtml += '<div style="text-align: center; font-size: 1.5em; margin: 15px 0; font-weight: bold;">✅ Hedef Gerçekleşti!</div>';
                     
-                    // %130 Hedefi için bilgiler
+                    // %100 Hedefi için bilgiler
+                    const remaining100 = Math.max(0, store.target - store.achieved);
+                    const dailyRequired100 = store.daysLeft > 0 ? remaining100 / store.daysLeft : 0;
+                    
                     contentHtml += '<div style="font-size: 0.95em; opacity: 0.95; margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.15); border-radius: 10px;">';
+                    contentHtml += '<div style="margin-bottom: 8px;">🎯 <strong>%100 Hedefi için:</strong></div>';
+                    contentHtml += '<div style="margin-bottom: 5px;">📊 Gerçekleşen: <strong>$' + store.achieved.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + '</strong></div>';
+                    contentHtml += '<div style="margin-bottom: 5px;">📈 Kalan: <strong>$' + remaining100.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + '</strong></div>';
+                    contentHtml += '<div style="margin-bottom: 5px;">📅 Kalan Gün: <strong>' + store.daysLeft + '</strong></div>';
+                    contentHtml += '<div style="margin-bottom: 15px;">💰 Günlük Gerekli: <strong>$' + dailyRequired100.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + '</strong></div>';
+                    
+                    // %130 Hedefi için bilgiler
                     contentHtml += '<div style="margin-bottom: 8px;">🎯 <strong>%130 Hedefi için:</strong></div>';
                     contentHtml += '<div style="margin-bottom: 5px;">📊 Gerçekleşen: <strong>$' + store.achieved.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + '</strong></div>';
                     contentHtml += '<div style="margin-bottom: 5px;">📈 Kalan: <strong>$' + remaining130.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + '</strong></div>';
