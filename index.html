@@ -31,6 +31,15 @@
         // Email servisi fonksiyonları
         async function sendOTPCode(email) {
             try {
+                // Domain kontrolü
+                const allowedDomains = ['zuhalmuzik.com'];
+                const emailDomain = email.split('@')[1];
+                
+                if (!allowedDomains.includes(emailDomain)) {
+                    showAuthError('❌ Bu email adresi yetkili değil. Sadece @zuhalmuzik.com uzantılı emailler kullanılabilir.');
+                    return;
+                }
+                
                 showAuthLoading();
                 
                 const response = await fetch(`${EMAIL_SERVICE_URL}/send-otp`, {
@@ -1250,7 +1259,7 @@
             <div id="authError" style="display: none; background: #fee; color: #c33; padding: 10px; border-radius: 5px; margin-bottom: 20px; text-align: center;"></div>
             
             <div style="margin-bottom: 20px;">
-                <input type="email" id="authEmailInput" placeholder="Email adresinizi girin" 
+                <input type="email" id="authEmailInput" placeholder="ornek@zuhalmuzik.com" 
                        style="width: 100%; padding: 15px; border: 2px solid #e1e5e9; border-radius: 10px; font-size: 1em; outline: none; transition: border-color 0.3s ease;">
             </div>
             

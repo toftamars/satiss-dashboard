@@ -119,6 +119,19 @@ app.post('/send-otp', async (req, res) => {
             return res.status(400).json({ error: 'Email adresi gerekli' });
         }
         
+        // Domain kontrolü - sadece zuhalmuzik.com uzantılı emaillere izin ver
+        const allowedDomains = ['zuhalmuzik.com'];
+        const emailDomain = email.split('@')[1];
+        
+        if (!allowedDomains.includes(emailDomain)) {
+            console.log(`❌ Yetkisiz domain: ${emailDomain}`);
+            return res.status(403).json({ 
+                error: 'Bu email adresi yetkili değil. Sadece @zuhalmuzik.com uzantılı emailler kullanılabilir.' 
+            });
+        }
+        
+        console.log(`✅ Yetkili domain: ${emailDomain}`);
+        
         const otpCode = generateOTP();
         const expiresAt = Date.now() + (60 * 60 * 1000); // 1 saat
         
@@ -213,6 +226,19 @@ app.post('/send-login-link', async (req, res) => {
         if (!email) {
             return res.status(400).json({ error: 'Email adresi gerekli' });
         }
+        
+        // Domain kontrolü - sadece zuhalmuzik.com uzantılı emaillere izin ver
+        const allowedDomains = ['zuhalmuzik.com'];
+        const emailDomain = email.split('@')[1];
+        
+        if (!allowedDomains.includes(emailDomain)) {
+            console.log(`❌ Yetkisiz domain: ${emailDomain}`);
+            return res.status(403).json({ 
+                error: 'Bu email adresi yetkili değil. Sadece @zuhalmuzik.com uzantılı emailler kullanılabilir.' 
+            });
+        }
+        
+        console.log(`✅ Yetkili domain: ${emailDomain}`);
         
         const loginToken = generateSecureToken();
         const expiresAt = Date.now() + (60 * 60 * 1000); // 1 saat
