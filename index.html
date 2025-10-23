@@ -12,8 +12,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <!-- SheetJS for Excel Export -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <!-- Auth0 SDK -->
-    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
     <!-- Chart.js for Graphs -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
@@ -25,51 +23,6 @@
     <script defer src="js/ai-analyzer-enhanced.js"></script>
     <!-- Enhanced Time Analysis -->
     <script defer src="js/time-analysis-enhanced.js"></script>
-    <!-- Auth0 Configuration -->
-    <script>
-        // Auth0 Configuration - BU DEĞERLERİ DEĞİŞTİRİN!
-        const AUTH0_DOMAIN = 'dev-4mdaunh4sfseo62j.us.auth0.com';
-        const AUTH0_CLIENT_ID = '5fHjrs7bhFEPDQD6UiidyHECYU3CAqNJ';
-        
-        // Auth0 client oluştur
-        let auth0Client = null;
-        
-        // Auth0'ı başlat
-        async function initAuth0() {
-            try {
-                auth0Client = await auth0.createAuth0Client({
-                    domain: AUTH0_DOMAIN,
-                    clientId: AUTH0_CLIENT_ID,
-                    authorizationParams: {
-                        redirect_uri: 'https://toftamars.github.io/satiss-dashboard/'
-                    }
-                });
-                
-                // Global olarak erişilebilir yap
-                window.auth0Client = auth0Client;
-                
-                console.log('🚀 Auth0 başlatıldı!');
-                
-                // Auth state kontrolü
-                const isAuthenticated = await auth0Client.isAuthenticated();
-                if (isAuthenticated) {
-                    console.log('✅ Kullanıcı zaten giriş yapmış');
-                    const user = await auth0Client.getUser();
-                    showDashboardAfterAuth(user);
-                } else {
-                    console.log('❌ Kullanıcı giriş yapmamış');
-                    showAuthAfterLoading();
-                }
-                
-            } catch (error) {
-                console.error('❌ Auth0 başlatma hatası:', error);
-                showAuthAfterLoading();
-            }
-        }
-        
-        // Sayfa yüklendiğinde Auth0'ı başlat
-        initAuth0();
-    </script>
     <!-- Login Kontrolü -->
     <script>
         // Sayfa yüklendiğinde oturum kontrolü
@@ -1190,31 +1143,6 @@
     </style>
 </head>
     <body>
-        <!-- Auth0 Authentication Form -->
-    <div id="authForm" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center;">
-        <div style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); max-width: 400px; width: 90%;">
-            <div style="text-align: center; margin-bottom: 30px;">
-                <h2 style="color: #333; margin-bottom: 10px;">🔐 Zuhal Müzik Dashboard</h2>
-                <p style="color: #666;">Giriş yapın</p>
-            </div>
-            
-            <div id="authError" style="display: none; background: #fee; color: #c33; padding: 10px; border-radius: 5px; margin-bottom: 20px; text-align: center;"></div>
-            
-            <div style="margin-bottom: 20px;">
-                <input type="email" id="authEmailInput" placeholder="Email adresinizi girin" 
-                       style="width: 100%; padding: 15px; border: 2px solid #e1e5e9; border-radius: 10px; font-size: 1em; outline: none; transition: border-color 0.3s ease;">
-            </div>
-            <div style="margin-bottom: 20px;">
-                <input type="password" id="authPasswordInput" placeholder="Şifrenizi girin" 
-                       style="width: 100%; padding: 15px; border: 2px solid #e1e5e9; border-radius: 10px; font-size: 1em; outline: none; transition: border-color 0.3s ease;">
-            </div>
-            <button id="authLoginBtn" onclick="auth0Login()" 
-                    style="width: 100%; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 1.1em; font-weight: 600; cursor: pointer; transition: transform 0.2s ease; margin-bottom: 10px;">
-                🔐 Giriş Yap
-            </button>
-        </div>
-    </div>
-
     <!-- Loading Screen -->
         <div id="loadingScreen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white;">
             <div style="text-align: center;">
@@ -15452,126 +15380,12 @@
             });
         });
 
-        // Auth0 Authentication Functions
-        async function auth0Login() {
-            try {
-                const email = document.getElementById('authEmailInput').value.trim();
-                const password = document.getElementById('authPasswordInput').value.trim();
-                
-                if (!email) {
-                    showAuthError('Email adresinizi girin');
-                    return;
-                }
-                
-                if (!password) {
-                    showAuthError('Şifrenizi girin');
-                    return;
-                }
-                
-                showAuthLoading();
-                
-                // Auth0 ile giriş yap
-                await auth0Client.loginWithPassword({
-                    email: email,
-                    password: password
-                });
-                
-                // Başarılı giriş
-                const user = await auth0Client.getUser();
-                console.log('✅ Auth0 giriş başarılı:', user.email);
-                showDashboardAfterAuth(user);
-                
-            } catch (error) {
-                console.error('❌ Auth0 giriş hatası:', error);
-                
-                let errorMessage = 'Giriş yapılamadı.';
-                
-                switch (error.error) {
-                    case 'invalid_grant':
-                        errorMessage = 'Email veya şifre yanlış.';
-                        break;
-                    case 'too_many_attempts':
-                        errorMessage = 'Çok fazla deneme. Lütfen bekleyin.';
-                        break;
-                    default:
-                        errorMessage = error.description || error.message;
-                }
-                
-                showAuthError(errorMessage);
-            }
-        }
-        
-        function showAuthError(message) {
-            const errorDiv = document.getElementById('authError');
-            if (errorDiv) {
-                errorDiv.textContent = message;
-                errorDiv.style.display = 'block';
-            }
-        }
-        
-        function showAuthLoading() {
-            const loginBtn = document.getElementById('authLoginBtn');
-            if (loginBtn) {
-                loginBtn.textContent = '⏳ Yükleniyor...';
-                loginBtn.disabled = true;
-            }
-        }
-        
-        function showAuthAfterLoading() {
-            const authForm = document.getElementById('authForm');
-            const loadingScreen = document.getElementById('loadingScreen');
-            
-            if (loadingScreen) loadingScreen.style.display = 'none';
-            if (authForm) authForm.style.display = 'flex';
-        }
-        
-        function showDashboardAfterAuth(user) {
-            const authForm = document.getElementById('authForm');
-            const loadingScreen = document.getElementById('loadingScreen');
-            const mainContainer = document.getElementById('mainContainer');
-            
-            if (authForm) authForm.style.display = 'none';
-            if (loadingScreen) loadingScreen.style.display = 'none';
-            if (mainContainer) mainContainer.style.display = 'block';
-            
-            // Kullanıcı bilgilerini güncelle
-            updateUserInfo(user);
-            
-            // Dashboard'ı yükle
-            if (typeof loadData === 'function') {
-                loadData();
-            }
-        }
-        
-        function updateUserInfo(user) {
-            const userNameElement = document.getElementById('currentUserName');
-            const userInfoElement = document.getElementById('userInfo');
-            const userTypeElement = document.getElementById('userType');
-            
-            if (userNameElement) {
-                userNameElement.textContent = user.name || user.email?.split('@')[0] || 'Kullanıcı';
-            }
-            
-            if (userInfoElement) {
-                userInfoElement.textContent = user.name || user.email?.split('@')[0] || 'Kullanıcı';
-            }
-            
-            if (userTypeElement) {
-                userTypeElement.textContent = '👤 Kullanıcı';
-            }
-        }
-        
-        async function logout() {
-            try {
-                await auth0Client.logout({
-                    logoutParams: {
-                        returnTo: window.location.origin
-                    }
-                });
-            } catch (error) {
-                console.error('❌ Çıkış hatası:', error);
-                // Fallback: sayfayı yenile
-                window.location.reload();
+        // Çıkış fonksiyonu
+        function logout() {
+            if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
+                sessionStorage.removeItem('session');
+                localStorage.removeItem('session'); // Eski session'ları da temizle
+                window.location.href = 'auth-advanced.html';
             }
         }
 
