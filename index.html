@@ -25,6 +25,93 @@
     <script defer src="js/time-analysis-enhanced.js"></script>
     <!-- Email Servisi Konfigürasyonu -->
     <script>
+        // ===== GLOBAL AUTHENTICATION FUNCTIONS =====
+        // Bu fonksiyonlar sayfa yüklenir yüklenmez tanımlanır
+        window.showDashboardAfterAuth = function(user) {
+            const authForm = document.getElementById('authForm');
+            const otpForm = document.getElementById('otpForm');
+            const loadingScreen = document.getElementById('loadingScreen');
+            const mainContainer = document.getElementById('mainContainer');
+            
+            if (authForm) authForm.style.display = 'none';
+            if (otpForm) otpForm.style.display = 'none';
+            if (loadingScreen) loadingScreen.style.display = 'none';
+            if (mainContainer) mainContainer.style.display = 'block';
+            
+            // Kullanıcı bilgilerini güncelle
+            window.updateUserInfo(user);
+            
+            // Dashboard'ı yükle
+            if (typeof loadData === 'function') {
+                loadData();
+            }
+        };
+        
+        window.updateUserInfo = function(user) {
+            const userNameElement = document.getElementById('currentUserName');
+            const userInfoElement = document.getElementById('userInfo');
+            const userTypeElement = document.getElementById('userType');
+            
+            if (userNameElement) {
+                userNameElement.textContent = user.name || user.email?.split('@')[0] || 'Kullanıcı';
+            }
+            
+            if (userInfoElement) {
+                userInfoElement.textContent = user.name || user.email?.split('@')[0] || 'Kullanıcı';
+            }
+            
+            if (userTypeElement) {
+                userTypeElement.textContent = '👤 Kullanıcı';
+            }
+        };
+        
+        window.showAuthForm = function() {
+            const authForm = document.getElementById('authForm');
+            const otpForm = document.getElementById('otpForm');
+            const loadingScreen = document.getElementById('loadingScreen');
+            const mainContainer = document.getElementById('mainContainer');
+            
+            if (authForm) authForm.style.display = 'block';
+            if (otpForm) otpForm.style.display = 'none';
+            if (loadingScreen) loadingScreen.style.display = 'none';
+            if (mainContainer) mainContainer.style.display = 'none';
+        };
+        
+        window.showOTPForm = function(email) {
+            const authForm = document.getElementById('authForm');
+            const otpForm = document.getElementById('otpForm');
+            
+            if (authForm) authForm.style.display = 'none';
+            if (otpForm) {
+                otpForm.style.display = 'block';
+                document.getElementById('otpEmailDisplay').textContent = email;
+            }
+        };
+        
+        window.showAuthLoading = function() {
+            const loginBtn = document.getElementById('authLoginBtn');
+            if (loginBtn) {
+                loginBtn.textContent = '⏳ Yükleniyor...';
+                loginBtn.disabled = true;
+            }
+        };
+        
+        window.showAuthError = function(message, type = 'error') {
+            const errorDiv = document.getElementById('authError');
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                errorDiv.style.background = type === 'success' ? '#d4edda' : '#f8d7da';
+                errorDiv.style.color = type === 'success' ? '#155724' : '#721c24';
+            }
+        };
+        
+        window.logout = function() {
+            sessionStorage.clear();
+            localStorage.clear();
+            window.showAuthForm();
+        };
+        
         // Email servisi ayarları
         const EMAIL_SERVICE_URL = 'http://localhost:3001'; // Güvenli port
         
@@ -88,7 +175,7 @@
                     sessionStorage.setItem('userEmail', email);
                     sessionStorage.setItem('loginTime', Date.now().toString());
                     
-                    showDashboardAfterAuth(result.user);
+                    window.showDashboardAfterAuth(result.user);
                 } else {
                     throw new Error(result.error || 'Geçersiz OTP');
                 }
@@ -124,7 +211,7 @@
                     
                     // Loading tamamlandıktan sonra dashboard'ı göster
                     setTimeout(() => {
-                        showDashboardAfterAuth(user);
+                        window.showDashboardAfterAuth(user);
                     }, 3000); // 3 saniye loading
                     return;
                 } else {
@@ -15626,46 +15713,6 @@
                 errorDiv.style.display = 'block';
                 errorDiv.style.background = type === 'success' ? '#d4edda' : '#f8d7da';
                 errorDiv.style.color = type === 'success' ? '#155724' : '#721c24';
-            }
-        }
-        
-        // Global scope'a taşı
-        window.showDashboardAfterAuth = function(user) {
-            const authForm = document.getElementById('authForm');
-            const otpForm = document.getElementById('otpForm');
-            const loadingScreen = document.getElementById('loadingScreen');
-            const mainContainer = document.getElementById('mainContainer');
-            
-            if (authForm) authForm.style.display = 'none';
-            if (otpForm) otpForm.style.display = 'none';
-            if (loadingScreen) loadingScreen.style.display = 'none';
-            if (mainContainer) mainContainer.style.display = 'block';
-            
-            // Kullanıcı bilgilerini güncelle
-            updateUserInfo(user);
-            
-            // Dashboard'ı yükle
-            if (typeof loadData === 'function') {
-                loadData();
-            }
-        }
-        
-        // Global scope'a taşı
-        window.updateUserInfo = function(user) {
-            const userNameElement = document.getElementById('currentUserName');
-            const userInfoElement = document.getElementById('userInfo');
-            const userTypeElement = document.getElementById('userType');
-            
-            if (userNameElement) {
-                userNameElement.textContent = user.name || user.email?.split('@')[0] || 'Kullanıcı';
-            }
-            
-            if (userInfoElement) {
-                userInfoElement.textContent = user.name || user.email?.split('@')[0] || 'Kullanıcı';
-            }
-            
-            if (userTypeElement) {
-                userTypeElement.textContent = '👤 Kullanıcı';
             }
         }
         
