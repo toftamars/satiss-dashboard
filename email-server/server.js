@@ -45,8 +45,8 @@ function createOTPEmailTemplate(otpCode) {
     return `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 450px; margin: 0 auto; background: #ffffff; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; text-align: center; color: white;">
-                <h1 style="margin: 0; font-size: 1.8em; font-weight: 700; letter-spacing: 1px;">🔐 Zuhal Müzik</h1>
-                <p style="margin: 8px 0 0 0; font-size: 1em; opacity: 0.95; font-weight: 500;">Dashboard Doğrulama</p>
+                <h1 style="margin: 0; font-size: 1.8em; font-weight: 700; letter-spacing: 1px; color: #000000;">🔐 Zuhal Müzik</h1>
+                <p style="margin: 8px 0 0 0; font-size: 1em; opacity: 0.95; font-weight: 500; color: #000000;">Dashboard Doğrulama</p>
             </div>
             <div style="padding: 30px; background: white;">
                 <h2 style="color: #2d3748; text-align: center; margin-bottom: 20px; font-size: 1.4em; font-weight: 600;">Giriş Kodunuz</h2>

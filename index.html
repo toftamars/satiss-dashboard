@@ -2951,10 +2951,10 @@
 
         async function loadYearData(year) {
             // Çift yükleme önleme kontrolü
-            if (loadedYears.has(year)) {
+            if (loadedYears.has(year) && loadedDataCache[year]) {
                 console.log(`⏭️ ${year} zaten yüklü, cache'den döndürülüyor...`);
                 // Cache'den veriyi döndür
-                return loadedDataCache[year] || null;
+                return loadedDataCache[year];
             }
             
             // Hemen ekle - race condition önleme
@@ -3266,11 +3266,13 @@
                     console.warn('⚠️ Veri bulunamadı, boş array kullanılıyor');
                     console.log('🔍 Metadata:', metadata);
                     console.log('🔍 Latest data:', latestData);
+                    console.log('🔍 Latest year:', latestYear);
                     
                     // Eğer veri yoksa, diğer yılları dene
                     for (let year of metadata.years) {
                         console.log(`🔄 ${year} yılını deniyor...`);
                         const yearData = await loadYearData(year);
+                        console.log(`📊 ${year} data:`, yearData);
                         if (yearData?.details && yearData.details.length > 0) {
                             console.log(`✅ ${year} yılında veri bulundu: ${yearData.details.length} kayıt`);
                             allData = yearData.details.map(item => applyDiscountLogic(item));
@@ -3281,6 +3283,7 @@
                     
                     if (allData.length === 0) {
                         console.error('❌ Hiçbir yılda veri bulunamadı!');
+                        console.log('🔍 Tüm yıllar:', metadata.years);
                         return;
                     }
                 } else {
