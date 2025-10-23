@@ -32,7 +32,7 @@
             
             if (isLoggedIn !== 'true' || !username) {
                 // Giriş yapılmamış, login sayfasına yönlendir
-                window.location.href = 'login.html';
+                // Login kontrolü kaldırıldı
             }
         })();
     </script>
@@ -2547,7 +2547,7 @@
         function logout() {
             if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
                 sessionStorage.clear();
-                window.location.href = 'login.html';
+                // Login kontrolü kaldırıldı
             }
         }
 
