@@ -2737,6 +2737,7 @@
         let baseData = []; // Kanal filtresi öncesi tüm veri
         let metadata = null;
         let loadedYears = new Set();
+        let loadedDataCache = {}; // Yüklenen verileri cache'le
         let inventoryData = null; // Envanter verileri
         let inventoryCharts = {}; // Envanter grafikleri
         let stockLocations = {}; // Stok konumu ve mağaza eşleşmesi
@@ -2951,8 +2952,9 @@
         async function loadYearData(year) {
             // Çift yükleme önleme kontrolü
             if (loadedYears.has(year)) {
-                console.log(`⏭️ ${year} zaten yüklü, atlanıyor...`);
-                return null;
+                console.log(`⏭️ ${year} zaten yüklü, cache'den döndürülüyor...`);
+                // Cache'den veriyi döndür
+                return loadedDataCache[year] || null;
             }
             
             // Hemen ekle - race condition önleme
@@ -3011,6 +3013,9 @@
                 if (!yearData?.details) {
                     console.warn(`⚠️ ${year} verisi boş veya geçersiz`);
                 }
+                
+                // Cache'e kaydet
+                loadedDataCache[year] = yearData;
                 
                 // loadedYears.add(year) zaten fonksiyon başında yapıldı
                 return yearData;
@@ -3250,6 +3255,8 @@
                 
                 const latestData = await loadYearData(latestYear);
                 console.log(`📊 Latest data:`, latestData);
+                console.log(`📊 Latest data type:`, typeof latestData);
+                console.log(`📊 Latest data details:`, latestData?.details);
                 
                 // İlk veriyi yükle ve indirim ürünlerini negatif yap
                 const rawData = latestData?.details || [];
