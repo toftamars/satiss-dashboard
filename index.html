@@ -73,6 +73,12 @@
                 
                 if (result.success) {
                     console.log('✅ OTP doğrulandı:', email);
+                    
+                    // Session bilgilerini kaydet
+                    sessionStorage.setItem('isLoggedIn', 'true');
+                    sessionStorage.setItem('userEmail', email);
+                    sessionStorage.setItem('loginTime', Date.now().toString());
+                    
                     showDashboardAfterAuth(result.user);
                 } else {
                     throw new Error(result.error || 'Geçersiz OTP');
@@ -89,12 +95,41 @@
         // Sayfa yüklendiğinde oturum kontrolü
         (function() {
             const isLoggedIn = sessionStorage.getItem('isLoggedIn');
-            const username = sessionStorage.getItem('username');
+            const loginTime = sessionStorage.getItem('loginTime');
             
-            if (isLoggedIn !== 'true' || !username) {
-                // Giriş yapılmamış, login sayfasına yönlendir
-                // Login kontrolü kaldırıldı
+            // Session süresi kontrolü (1 saat)
+            const oneHour = 60 * 60 * 1000; // 1 saat
+            const now = Date.now();
+            
+            if (isLoggedIn && loginTime) {
+                const timeDiff = now - parseInt(loginTime);
+                
+                if (timeDiff < oneHour) {
+                    // Session geçerli, dashboard'ı göster
+                    console.log('✅ Geçerli session bulundu');
+                    const userEmail = sessionStorage.getItem('userEmail');
+                    const user = {
+                        email: userEmail,
+                        name: userEmail?.split('@')[0] || 'Kullanıcı'
+                    };
+                    
+                    // Loading tamamlandıktan sonra dashboard'ı göster
+                    setTimeout(() => {
+                        showDashboardAfterAuth(user);
+                    }, 2000);
+                    return;
+                } else {
+                    // Session süresi dolmuş, temizle
+                    console.log('⏰ Session süresi dolmuş, temizleniyor');
+                    sessionStorage.clear();
+                }
             }
+            
+            // Session yok veya süresi dolmuş, auth formunu göster
+            console.log('🔐 Session bulunamadı, auth formu gösteriliyor');
+            setTimeout(() => {
+                showAuthForm();
+            }, 2000);
         })();
     </script>
     <style>

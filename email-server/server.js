@@ -54,7 +54,7 @@ function createOTPEmailTemplate(otpCode) {
                     <div style="font-size: 2.2em; font-weight: bold; color: #667eea; letter-spacing: 3px; margin: 8px 0;">${otpCode}</div>
                 </div>
                 <p style="color: #666; text-align: center; margin-bottom: 15px; font-size: 0.9em;">
-                    Bu kod 10 dakika geçerlidir. Dashboard'a giriş yapmak için bu kodu kullanın.
+                    Bu kod 1 saat geçerlidir. Dashboard'a giriş yapmak için bu kodu kullanın.
                 </p>
                 <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 12px; border-radius: 5px; margin: 15px 0;">
                     <p style="margin: 0; color: #856404; font-size: 0.85em;">
@@ -120,7 +120,7 @@ app.post('/send-otp', async (req, res) => {
         }
         
         const otpCode = generateOTP();
-        const expiresAt = Date.now() + (10 * 60 * 1000); // 10 dakika
+        const expiresAt = Date.now() + (60 * 60 * 1000); // 1 saat
         
         // OTP'yi sakla
         otpStorage.set(email, {
