@@ -36,7 +36,7 @@
                 const emailDomain = email.split('@')[1];
                 
                 if (!allowedDomains.includes(emailDomain)) {
-                    showAuthError('❌ Bu email adresi yetkili değil. Sadece @zuhalmuzik.com uzantılı emailler kullanılabilir.');
+                    showAuthError('❌ Yetkisiz e-mail');
                     return;
                 }
                 
@@ -125,7 +125,7 @@
                     // Loading tamamlandıktan sonra dashboard'ı göster
                     setTimeout(() => {
                         showDashboardAfterAuth(user);
-                    }, 2000);
+                    }, 3000); // 3 saniye loading
                     return;
                 } else {
                     // Session süresi dolmuş, temizle
@@ -138,7 +138,7 @@
             console.log('🔐 Session bulunamadı, auth formu gösteriliyor');
             setTimeout(() => {
                 showAuthForm();
-            }, 2000);
+            }, 3000); // 3 saniye loading
         })();
     </script>
     <style>
