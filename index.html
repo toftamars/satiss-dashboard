@@ -1801,6 +1801,12 @@
                             <canvas id="productCityChart"></canvas>
                         </div>
                         
+                        <!-- Top Districts -->
+                        <div class="chart-container">
+                            <h3 style="text-align: center; margin-bottom: 20px;">📍 En Çok Satılan İlçeler</h3>
+                            <canvas id="productDistrictChart"></canvas>
+                        </div>
+                        
                         <!-- Top Sales Persons -->
                         <div class="chart-container">
                             <h3 style="text-align: center; margin-bottom: 20px;">👤 En Çok Satan Temsilciler</h3>
@@ -2159,6 +2165,13 @@
                             </div>
                             <div class="checkbox-container" id="filterStoreDay"></div>
                         </div>
+                        <div class="filter-group">
+                            <label>Kategori <span class="selected-count" id="countStoreCategory"></span></label>
+                            <div class="filter-search-box">
+                                <input type="text" class="filter-search-input" placeholder="🔍 Ara..." oninput="filterCheckboxes('filterStoreCategory', this.value)">
+                            </div>
+                            <div class="checkbox-container" id="filterStoreCategory"></div>
+                        </div>
                     </div>
                     <div style="text-align: center; margin-top: 20px;">
                         <button onclick="clearStoreFilters()" 
@@ -2282,6 +2295,10 @@
                             <canvas id="storeCategoryChart"></canvas>
                         </div>
                         <div class="chart-container">
+                            <h3 id="storeDistrictChartTitle" style="text-align: center; margin-bottom: 20px;">📍 En Çok Satış Yapılan İlk 5 İlçe</h3>
+                            <canvas id="storeDistrictChart"></canvas>
+                        </div>
+                        <div class="chart-container">
                             <h3 id="storeSalespersonChartTitle" style="text-align: center; margin-bottom: 20px;">👨‍💼 Satış Temsilcileri</h3>
                             <canvas id="storeSalespersonChart"></canvas>
                         </div>
@@ -2387,6 +2404,10 @@
                         <div class="summary-card">
                             <h3 style="font-size: 1em; margin-bottom: 10px;">📊 Ortalama Sepet</h3>
                             <p id="cityAvgBasket" style="font-size: 1.8em; font-weight: bold;">$0</p>
+                        </div>
+                        <div class="summary-card">
+                            <h3 style="font-size: 1em; margin-bottom: 10px;">📅 Günlük Ortalama</h3>
+                            <p id="cityDailyAverage" style="font-size: 1.8em; font-weight: bold;">$0</p>
                         </div>
                         <div class="summary-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                             <h3 style="font-size: 1em; margin-bottom: 10px; color: white;">🏙️ Nüfus (2024)</h3>
@@ -2558,6 +2579,7 @@
         let loadedYears = new Set();
         let inventoryData = null; // Envanter verileri
         let inventoryCharts = {}; // Envanter grafikleri
+        let stockLocations = {}; // Stok konumu ve mağaza eşleşmesi
         
         // Global Satış Kanalı Filtresi State
         let activeChannels = {
@@ -2676,6 +2698,94 @@
                 console.error('❌ Metadata hatası:', error);
                 return null;
             }
+        }
+
+        async function loadStockLocations() {
+            try {
+                const response = await fetch('data/stock-locations.json');
+                if (!response.ok) throw new Error('Stock locations yüklenemedi');
+                const data = await response.json();
+                stockLocations = data.stock_locations || {};
+                console.log('✅ Stok konumları yüklendi:', Object.keys(stockLocations).length, 'lokasyon');
+                return stockLocations;
+            } catch (error) {
+                console.error('❌ Stock locations hatası:', error);
+                return {};
+            }
+        }
+
+        // Mağaza ismini normalize eden fonksiyon (stock-locations mapping için)
+        function normalizeStoreName(storeName) {
+            if (!storeName) return '';
+            
+            // Küçük harfe çevir ve boşlukları temizle
+            const normalized = storeName.toLowerCase().trim();
+            
+            // Mapping tablosu (satış verisindeki mağaza isimleri -> stock-locations'daki değerler)
+            const storeMapping = {
+                'kentpark': 'KENTPARK',
+                'akasya': 'AKASYA',
+                'tünel': 'TÜNEL',
+                'izmir': 'İzmir',
+                'kızılay': 'KIZILAY',
+                'hilltown': 'Hilltown',
+                'kanyon': 'KANYON',
+                'antalya': 'ANTALYA',
+                'adana': 'ADANA',
+                'bursa': 'BURSA',
+                'uniq': 'UNIQ',
+                'mavibahçe': 'MAVİBAHÇE',
+                'temaworld': 'TEMAWORLD',
+                'bodrum': 'BODRUM',
+                'outlet': 'OUTLET'
+            };
+            
+            // Eşleşme ara
+            for (const [key, value] of Object.entries(storeMapping)) {
+                if (normalized.includes(key)) {
+                    return value;
+                }
+            }
+            
+            return storeName; // Eşleşme yoksa orijinal ismi döndür
+        }
+
+        // Belirli bir mağaza ve ürün için mevcut stok miktarını hesaplayan fonksiyon
+        function getCurrentStock(storeName, productCode) {
+            if (!inventoryData || inventoryData.length === 0) {
+                return 0;
+            }
+            
+            // Mağaza ismini normalize et
+            const normalizedStore = normalizeStoreName(storeName);
+            
+            // stock-locations'da bu mağazaya karşılık gelen location_id'leri bul
+            const matchingLocations = [];
+            for (const [locationId, mappedStore] of Object.entries(stockLocations)) {
+                if (mappedStore === normalizedStore) {
+                    matchingLocations.push(locationId);
+                }
+            }
+            
+            if (matchingLocations.length === 0) {
+                console.warn(`⚠️ "${storeName}" için stok konumu bulunamadı`);
+                return 0;
+            }
+            
+            // Inventory verilerinde bu lokasyonlarda ve bu üründe ne kadar stok var?
+            let totalStock = 0;
+            inventoryData.forEach(item => {
+                const itemLocation = item.location || '';
+                const itemProduct = (item.product_name || item.product || '').toLowerCase();
+                const searchProduct = productCode.toLowerCase();
+                
+                // Lokasyon eşleşmesi ve ürün eşleşmesi
+                if (matchingLocations.includes(itemLocation) && itemProduct.includes(searchProduct)) {
+                    totalStock += parseFloat(item.quantity || 0);
+                }
+            });
+            
+            return totalStock;
         }
 
         async function loadYearData(year) {
@@ -2924,8 +3034,9 @@
             const dailyAverage = uniqueDates.length > 0 ? totalUSD / uniqueDates.length : 0;
             document.getElementById('dailyAverage').textContent = '$' + dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             
-            // Sepet Ortalaması Hesapla (Toplam USD / Toplam İşlem)
-            const basketAverage = allData.length > 0 ? totalUSD / allData.length : 0;
+            // Sepet Ortalaması Hesapla (Toplam USD / Satış Fatura Sayısı - İadeler Hariç)
+            const uniqueInvoices = new Set(allData.filter(item => item.move_type === 'out_invoice').map(item => item.move_name).filter(Boolean)).size;
+            const basketAverage = uniqueInvoices > 0 ? totalUSD / uniqueInvoices : 0;
             document.getElementById('basketAverage').textContent = '$' + basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             
             // Filtreleri yeniden doldur
@@ -3002,8 +3113,9 @@
                 const dailyAverage = uniqueDates.length > 0 ? totalUSD / uniqueDates.length : 0;
                 document.getElementById('dailyAverage').textContent = '$' + dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 
-                // Sepet Ortalaması Hesapla (Toplam USD / Toplam İşlem)
-                const basketAverage = allData.length > 0 ? totalUSD / allData.length : 0;
+                // Sepet Ortalaması Hesapla (Toplam USD / Fatura Sayısı)
+                const uniqueInvoices = new Set(allData.map(item => item.move_name).filter(Boolean)).size;
+                const basketAverage = uniqueInvoices > 0 ? totalUSD / uniqueInvoices : 0;
                 document.getElementById('basketAverage').textContent = '$' + basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 
                 populateFilters();
@@ -3020,8 +3132,16 @@
                 // Ürün filtrelerini initialize et
                 initializeProductFilters();
                 
-                // Dashboard'ı yükle
-                loadDashboard();
+                // Dashboard'ı yükle - veri tamamen yüklendikten sonra
+                console.log('📊 İlk veri yükleme tamamlandı, dashboard yükleniyor...');
+                setTimeout(() => {
+                    if (allData && allData.length > 0) {
+                        loadDashboard();
+                        console.log('✅ Dashboard yüklendi');
+                    } else {
+                        console.warn('⚠️ Dashboard yüklenemedi - veri yok');
+                    }
+                }, 500);
                 
                 // Diğer yılları arka planda yükle
                 setTimeout(() => loadRemainingYears(latestYear), 2000);
@@ -3100,8 +3220,9 @@
                         const dailyAverage = uniqueDates.length > 0 ? totalUSD / uniqueDates.length : 0;
                         document.getElementById('dailyAverage').textContent = '$' + dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                         
-                        // Sepet Ortalaması Hesapla (Toplam USD / Toplam İşlem)
-                        const basketAverage = allData.length > 0 ? totalUSD / allData.length : 0;
+                        // Sepet Ortalaması Hesapla (Toplam USD / Fatura Sayısı)
+                        const uniqueInvoices = new Set(allData.map(item => item.move_name).filter(Boolean)).size;
+                        const basketAverage = uniqueInvoices > 0 ? totalUSD / uniqueInvoices : 0;
                         document.getElementById('basketAverage').textContent = '$' + basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                         
                         // Dashboard'ı güncelle - sadece grafikleri yenile, veri yükleme yapma
@@ -4878,6 +4999,11 @@
                 } else {
                     console.log('✅ Envanter verileri zaten yüklü');
                 }
+                // Stok konumlarını yükle
+                if (Object.keys(stockLocations).length === 0) {
+                    console.log('🔄 Stok konumları yükleniyor...');
+                    loadStockLocations();
+                }
             }
         }
         
@@ -6289,14 +6415,16 @@
             const uniqueDates = new Set(allData.map(item => item.date).filter(Boolean)).size;
             const dailyAverage = uniqueDates > 0 ? totalSales / uniqueDates : 0;
             
-            // Sepet Ortalaması = Toplam USD / Toplam Kayıt Sayısı (her satır bir işlem)
-            const basketAverage = allData.length > 0 ? totalSales / allData.length : 0;
+            // Sepet Ortalaması = Toplam USD / Satış Fatura Sayısı (İadeler Hariç)
+            const uniqueInvoices = new Set(allData.filter(item => item.move_type === 'out_invoice').map(item => item.move_name).filter(Boolean)).size;
+            const basketAverage = uniqueInvoices > 0 ? totalSales / uniqueInvoices : 0;
             
             console.log('📅 Benzersiz Gün Sayısı (Tüm Zamanlar):', uniqueDates);
             console.log('💰 Toplam Satış:', totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2}));
-            console.log('📦 Toplam Kayıt:', allData.length.toLocaleString('tr-TR'));
-            console.log('📊 Günlük Ortalama:', dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2}));
-            console.log('🛒 Sepet Ortalaması:', basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2}));
+            console.log('📦 Toplam Kayıt Sayısı:', allData.length.toLocaleString('tr-TR'));
+            console.log('🧾 Toplam Fatura Sayısı:', uniqueInvoices.toLocaleString('tr-TR'));
+            console.log('📊 Günlük Ortalama:', dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2}), '(Toplam Satış /', uniqueDates, 'gün)');
+            console.log('🛒 Sepet Ortalaması:', basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2}), '(Toplam Satış /', uniqueInvoices, 'fatura)');
             
             // UI güncelle
             document.getElementById('dashTotalSales').textContent = '$' + totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2});
@@ -7862,6 +7990,7 @@
         
         let productStoreChartInstance = null;
         let productCityChartInstance = null;
+        let productDistrictChartInstance = null;
         let productSalesPersonChartInstance = null;
         let productMonthlyChartInstance = null;
         
@@ -8103,6 +8232,7 @@
             // Grafikleri render et
             renderProductStoreChart(results);
             renderProductCityChart(results);
+            renderProductDistrictChart(results);
             renderProductSalesPersonChart(results);
             renderProductMonthlyChart(results);
             renderProductDetailTable(results);
@@ -8188,7 +8318,7 @@
         function renderProductCityChart(data) {
             const cityData = {};
             data.forEach(item => {
-                const city = item.city || 'Bilinmiyor';
+                const city = item.partner_city || 'Bilinmiyor'; // partner_city = İL bilgisi
                 if (!cityData[city]) cityData[city] = {sales: 0, qty: 0};
                 cityData[city].sales += parseFloat(item.usd_amount || 0);
                 cityData[city].qty += parseFloat(item.quantity || 0);
@@ -8237,6 +8367,80 @@
                                 label: function(context) {
                                     const label = context.dataset.label || '';
                                     if (label === 'Satış (USD)') {
+                                        return label + ': $' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                    } else {
+                                        return label + ': ' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('tr-TR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderProductDistrictChart(data) {
+            const districtData = {};
+            data.forEach(item => {
+                const district = item.city || 'Bilinmiyor'; // city = İLÇE bilgisi
+                if (!districtData[district]) districtData[district] = {sales: 0, qty: 0};
+                districtData[district].sales += parseFloat(item.usd_amount || 0);
+                districtData[district].qty += parseFloat(item.quantity || 0);
+            });
+            
+            const sorted = Object.entries(districtData).sort((a, b) => b[1].sales - a[1].sales).slice(0, 10);
+            const labels = sorted.map(item => item[0]);
+            const salesValues = sorted.map(item => item[1].sales);
+            const qtyValues = sorted.map(item => item[1].qty);
+            
+            const ctx = document.getElementById('productDistrictChart');
+            if (!ctx) return;
+            
+            if (productDistrictChartInstance) {
+                productDistrictChartInstance.destroy();
+            }
+            
+            productDistrictChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Satış (USD - KDV Hariç)',
+                        data: salesValues,
+                        backgroundColor: 'rgba(245, 87, 108, 0.6)',
+                        borderColor: 'rgba(245, 87, 108, 1)',
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Miktar',
+                        data: qtyValues,
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: true, position: 'top'},
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    if (label === 'Satış (USD - KDV Hariç)') {
                                         return label + ': $' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2});
                                     } else {
                                         return label + ': ' + context.parsed.x.toLocaleString('tr-TR', {minimumFractionDigits: 2});
@@ -10616,6 +10820,7 @@
         // ==================== STORE ANALYSIS TAB ====================
         let storeBrandChartInstance = null;
         let storeCategoryChartInstance = null;
+        let storeDistrictChartInstance = null;
         let storeSalespersonChartInstance = null;
         let storeMonthlyChartInstance = null;
         let lastStoreTopProductsData = null;
@@ -10626,6 +10831,7 @@
             const years = new Set();
             const months = new Set();
             const days = new Set();
+            const categories = new Set();
             
             allData.forEach(item => {
                 if (item.date) {
@@ -10636,11 +10842,16 @@
                         days.add(dateParts[2]); // DD
                     }
                 }
+                // Sadece category_2 (Kategori 2) bilgilerini al
+                if (item.category_2 && item.category_2.trim() && item.category_2.toLowerCase() !== 'all') {
+                    categories.add(item.category_2);
+                }
             });
             
             populateMultiSelect('filterStoreYear', Array.from(years).sort().reverse(), 'countStoreYear');
             populateMultiSelect('filterStoreMonth', Array.from(months).sort(), 'countStoreMonth');
             populateMultiSelect('filterStoreDay', Array.from(days).sort(), 'countStoreDay');
+            populateMultiSelect('filterStoreCategory', Array.from(categories).sort(), 'countStoreCategory');
         }
         
         function clearStoreFilters() {
@@ -10648,15 +10859,18 @@
             const yearCheckboxes = document.querySelectorAll('#filterStoreYear input[type="checkbox"]');
             const monthCheckboxes = document.querySelectorAll('#filterStoreMonth input[type="checkbox"]');
             const dayCheckboxes = document.querySelectorAll('#filterStoreDay input[type="checkbox"]');
+            const categoryCheckboxes = document.querySelectorAll('#filterStoreCategory input[type="checkbox"]');
             
             yearCheckboxes.forEach(cb => cb.checked = false);
             monthCheckboxes.forEach(cb => cb.checked = false);
             dayCheckboxes.forEach(cb => cb.checked = false);
+            categoryCheckboxes.forEach(cb => cb.checked = false);
             
             // Sayaçları güncelle
             updateSelectionCount('filterStoreYear', 'countStoreYear');
             updateSelectionCount('filterStoreMonth', 'countStoreMonth');
             updateSelectionCount('filterStoreDay', 'countStoreDay');
+            updateSelectionCount('filterStoreCategory', 'countStoreCategory');
             
             console.log('✅ Mağaza filtreleri temizlendi');
         }
@@ -10818,18 +11032,20 @@
                 .map(cb => cb.value);
             const dayFilter = Array.from(document.querySelectorAll('#filterStoreDay input[type="checkbox"]:checked'))
                 .map(cb => cb.value);
+            const categoryFilter = Array.from(document.querySelectorAll('#filterStoreCategory input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
             
             // TEK VEYA ÇOKLU MAĞAZA MODU
             if (storesToSearch.length === 1) {
                 // TEK MAĞAZA - Mevcut görünüm
-                renderSingleStoreView(storesToSearch[0], yearFilter, monthFilter, dayFilter);
+                renderSingleStoreView(storesToSearch[0], yearFilter, monthFilter, dayFilter, categoryFilter);
             } else {
                 // ÇOKLU MAĞAZA - Karşılaştırma görünümü
-                renderMultipleStoresView(storesToSearch, yearFilter, monthFilter, dayFilter);
+                renderMultipleStoresView(storesToSearch, yearFilter, monthFilter, dayFilter, categoryFilter);
             }
         }
         
-        function renderSingleStoreView(storeName, yearFilter, monthFilter, dayFilter) {
+        function renderSingleStoreView(storeName, yearFilter, monthFilter, dayFilter, categoryFilter = []) {
             // Mağaza verilerini filtrele
             const storeData = allData.filter(item => {
                 // Mağaza adı kontrolü (case-insensitive exact match)
@@ -10862,6 +11078,11 @@
                 if (dayFilter.length > 0) {
                     const itemDay = item.date.substring(8, 10);
                     if (!dayFilter.includes(itemDay)) return false;
+                }
+                
+                // Kategori filtresi (category_2)
+                if (categoryFilter.length > 0) {
+                    if (!item.category_2 || !categoryFilter.includes(item.category_2)) return false;
                 }
                 
                 return true;
@@ -10914,6 +11135,7 @@
             // Grafikleri render et
             renderStoreBrandChart(storeData);
             renderStoreCategoryChart(storeData);
+            renderStoreDistrictChart(storeData);
             renderStoreSalespersonChart(storeData);
             renderStoreMonthlyChart(storeData);
             renderStoreTopProducts(storeData);
@@ -10937,7 +11159,7 @@
             });
         }
         
-        function renderMultipleStoresView(stores, yearFilter, monthFilter, dayFilter) {
+        function renderMultipleStoresView(stores, yearFilter, monthFilter, dayFilter, categoryFilter = []) {
             // Her mağaza için veri topla
             const storesData = stores.map(storeName => {
                 const data = allData.filter(item => {
@@ -10971,6 +11193,11 @@
                     if (dayFilter.length > 0) {
                         const itemDay = item.date.substring(8, 10);
                         if (!dayFilter.includes(itemDay)) return false;
+                    }
+                    
+                    // Kategori filtresi (category_2)
+                    if (categoryFilter.length > 0) {
+                        if (!item.category_2 || !categoryFilter.includes(item.category_2)) return false;
                     }
                     
                     return true;
@@ -11637,6 +11864,51 @@
             });
         }
         
+        function renderStoreDistrictChart(data) {
+            const districtData = {};
+            data.forEach(item => {
+                const district = item.city || 'Bilinmiyor'; // city = İLÇE bilgisi
+                if (!districtData[district]) districtData[district] = 0;
+                districtData[district] += parseFloat(item.usd_amount || 0);
+            });
+            
+            const sorted = Object.entries(districtData).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const ctx = document.getElementById('storeDistrictChart');
+            if (!ctx) return;
+            if (storeDistrictChartInstance) storeDistrictChartInstance.destroy();
+            
+            storeDistrictChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(item => item[0]),
+                    datasets: [{
+                        label: 'Satış (USD)',
+                        data: sorted.map(item => item[1]),
+                        backgroundColor: 'rgba(245, 87, 108, 0.6)',
+                        borderColor: 'rgba(245, 87, 108, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: false}
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + (value / 1000).toFixed(0) + 'K';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
         function renderStoreSalespersonChart(data) {
             const spData = {};
             data.forEach(item => {
@@ -11801,9 +12073,12 @@
                                 📦 Ürün Miktarı <span style="font-size: 0.8em;">▼</span>
                             </th>
                             <th style="padding: 15px; text-align: right; cursor: pointer;" onclick="sortStoreSpTable(4)">
-                                👥 Farklı Müşteri <span style="font-size: 0.8em;">▼</span>
+                                🧾 Fatura Adeti <span style="font-size: 0.8em;">▼</span>
                             </th>
                             <th style="padding: 15px; text-align: right; cursor: pointer;" onclick="sortStoreSpTable(5)">
+                                👥 Farklı Müşteri <span style="font-size: 0.8em;">▼</span>
+                            </th>
+                            <th style="padding: 15px; text-align: right; cursor: pointer;" onclick="sortStoreSpTable(6)">
                                 🛒 Sepet Ortalaması <span style="font-size: 0.8em;">▼</span>
                             </th>
                             <th style="padding: 15px; text-align: right;">
@@ -11828,6 +12103,7 @@
                         <td style="padding: 12px;"><strong>${sp}</strong></td>
                         <td style="padding: 12px; text-align: right; color: #667eea; font-weight: bold;">$${stats.sales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
                         <td style="padding: 12px; text-align: right;">${stats.qty.toLocaleString('tr-TR', {minimumFractionDigits: 0})}</td>
+                        <td style="padding: 12px; text-align: right; color: #38ef7d; font-weight: bold;">${stats.invoiceCount.toLocaleString('tr-TR')}</td>
                         <td style="padding: 12px; text-align: right; color: #764ba2; font-weight: bold;">${stats.uniqueCustomers.toLocaleString('tr-TR')}</td>
                         <td style="padding: 12px; text-align: right;">$${avgInvoice.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
                         <td style="padding: 12px; text-align: right;">
@@ -11884,12 +12160,15 @@
                 } else if (column === 3) { // Miktar
                     valA = parseFloat(cellsA[3].textContent.replace(/[^0-9,.-]/g, '').replace(',', '.'));
                     valB = parseFloat(cellsB[3].textContent.replace(/[^0-9,.-]/g, '').replace(',', '.'));
-                } else if (column === 4) { // Farklı Müşteri
+                } else if (column === 4) { // Fatura Adeti
                     valA = parseInt(cellsA[4].textContent.replace(/[^0-9]/g, ''));
                     valB = parseInt(cellsB[4].textContent.replace(/[^0-9]/g, ''));
-                } else if (column === 5) { // Sepet Ortalaması
-                    valA = parseFloat(cellsA[5].textContent.replace(/[^0-9,.-]/g, '').replace(',', '.'));
-                    valB = parseFloat(cellsB[5].textContent.replace(/[^0-9,.-]/g, '').replace(',', '.'));
+                } else if (column === 5) { // Farklı Müşteri
+                    valA = parseInt(cellsA[5].textContent.replace(/[^0-9]/g, ''));
+                    valB = parseInt(cellsB[5].textContent.replace(/[^0-9]/g, ''));
+                } else if (column === 6) { // Sepet Ortalaması
+                    valA = parseFloat(cellsA[6].textContent.replace(/[^0-9,.-]/g, '').replace(',', '.'));
+                    valB = parseFloat(cellsB[6].textContent.replace(/[^0-9,.-]/g, '').replace(',', '.'));
                 }
                 
                 return storeSpSortAsc ? (valA - valB) : (valB - valA);
@@ -12797,7 +13076,15 @@
             const totalQty = cityData.reduce((sum, item) => sum + parseFloat(item.quantity || 0), 0);
             const uniqueCustomers = new Set(cityData.map(item => item.partner)).size;
             const uniqueDates = new Set(cityData.map(item => item.date)).size;
-            const avgBasket = totalSales / Math.max(uniqueDates, 1);
+            const uniqueInvoices = new Set(cityData.filter(item => item.move_type === 'out_invoice').map(item => item.move_name).filter(Boolean)).size;
+            const avgBasket = totalSales / Math.max(uniqueInvoices, 1); // Gerçek sepet ortalaması: Sadece satış faturaları (İadeler hariç)
+            const dailyAverage = totalSales / Math.max(uniqueDates, 1); // Günlük ortalama satış
+            
+            console.log('🌍 Şehir Analizi - Sepet Ortalaması Hesaplama:');
+            console.log('   📦 Toplam Kayıt:', cityData.length);
+            console.log('   🧾 Fatura Sayısı:', uniqueInvoices);
+            console.log('   💰 Toplam Satış:', totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2}));
+            console.log('   🛒 Sepet Ortalaması:', avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2}), '(', totalSales.toLocaleString('tr-TR'), '/', uniqueInvoices, ')');
             
             // En çok satış yapan temsilci
             const salespersonData = {};
@@ -12826,6 +13113,7 @@
             document.getElementById('cityTotalQty').textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             document.getElementById('cityCustomerCount').textContent = uniqueCustomers;
             document.getElementById('cityAvgBasket').textContent = '$' + avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            document.getElementById('cityDailyAverage').textContent = '$' + dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2});
             
             // Nüfus ve kişi başı satış
             if (cityPopulation > 0) {
@@ -13585,6 +13873,7 @@
                                         <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Mağaza</th>
                                         <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Geçmiş Satış</th>
                                         <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Pay (%)</th>
+                                        <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Mevcut Stok</th>
                                         <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Önerilen Stok</th>
                                     </tr>
                                 </thead>
