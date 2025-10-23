@@ -2677,8 +2677,14 @@
         // Çıkış fonksiyonu
         function logout() {
             if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
+                // Session ve local storage'ı temizle
                 sessionStorage.clear();
-                // Login kontrolü kaldırıldı
+                localStorage.clear();
+                
+                // Authentication formunu göster
+                showAuthForm();
+                
+                console.log('✅ Çıkış yapıldı');
             }
         }
 
@@ -3196,18 +3202,42 @@
                 
                 // En yeni yılı yükle (genellikle 2025)
                 const latestYear = metadata.years[metadata.years.length - 1];
+                console.log(`📅 En yeni yıl: ${latestYear}`);
+                
                 const latestData = await loadYearData(latestYear);
+                console.log(`📊 Latest data:`, latestData);
                 
                 // İlk veriyi yükle ve indirim ürünlerini negatif yap
                 const rawData = latestData?.details || [];
+                console.log(`📈 Raw data length: ${rawData.length}`);
+                
                 if (!rawData || rawData.length === 0) {
                     console.warn('⚠️ Veri bulunamadı, boş array kullanılıyor');
+                    console.log('🔍 Metadata:', metadata);
+                    console.log('🔍 Latest data:', latestData);
+                    
+                    // Eğer veri yoksa, diğer yılları dene
+                    for (let year of metadata.years) {
+                        console.log(`🔄 ${year} yılını deniyor...`);
+                        const yearData = await loadYearData(year);
+                        if (yearData?.details && yearData.details.length > 0) {
+                            console.log(`✅ ${year} yılında veri bulundu: ${yearData.details.length} kayıt`);
+                            allData = yearData.details.map(item => applyDiscountLogic(item));
+                            baseData = [...allData];
+                            break;
+                        }
+                    }
+                    
+                    if (allData.length === 0) {
+                        console.error('❌ Hiçbir yılda veri bulunamadı!');
+                        return;
+                    }
+                } else {
+                    // Normal veri işleme
+                    allData = rawData.map(item => applyDiscountLogic(item));
+                    baseData = [...allData];
                 }
-                const discountProducts = rawData.filter(item => isDiscountProduct(item));
-                
-                // Tüm verileri işle - indirim ürünleri negatif olarak
-                allData = rawData.map(item => applyDiscountLogic(item));
-                baseData = [...allData]; // Kanal filtresi için orijinal veriyi sakla
+                const discountProducts = allData.filter(item => isDiscountProduct(item));
                 filteredData = [...allData];
                 
                 console.log(`💰 ${discountProducts.length} indirim ürünü negatif değer olarak işlendi (toplam kayıt: ${rawData.length})`);
