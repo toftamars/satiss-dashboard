@@ -26,7 +26,7 @@
     <!-- Email Servisi Konfigürasyonu -->
     <script>
         // Email servisi ayarları
-        const EMAIL_SERVICE_URL = 'http://localhost:995'; // Yerel sunucu
+        const EMAIL_SERVICE_URL = 'http://localhost:3001'; // Güvenli port
         
         // Email servisi fonksiyonları
         async function sendOTPCode(email) {
@@ -2991,7 +2991,10 @@
                 // JSON'a çevir
                 const yearData = JSON.parse(decompressed);
                 
-                console.log(`✅ ${year} yüklendi: ${yearData.details?.length || 0} kayıt`);
+                console.log(`✅ ${year} yüklendi: ${yearData?.details?.length || 0} kayıt`);
+                if (!yearData?.details) {
+                    console.warn(`⚠️ ${year} verisi boş veya geçersiz`);
+                }
                 
                 // loadedYears.add(year) zaten fonksiyon başında yapıldı
                 return yearData;
@@ -3230,7 +3233,10 @@
                 const latestData = await loadYearData(latestYear);
                 
                 // İlk veriyi yükle ve indirim ürünlerini negatif yap
-                const rawData = latestData.details || [];
+                const rawData = latestData?.details || [];
+                if (!rawData || rawData.length === 0) {
+                    console.warn('⚠️ Veri bulunamadı, boş array kullanılıyor');
+                }
                 const discountProducts = rawData.filter(item => isDiscountProduct(item));
                 
                 // Tüm verileri işle - indirim ürünleri negatif olarak
@@ -3330,7 +3336,7 @@
                     }
                     
                     // Verileri birleştir ve indirim ürünlerini negatif yap
-                    if (yearData.details && Array.isArray(yearData.details)) {
+                    if (yearData?.details && Array.isArray(yearData.details)) {
                         const yearRawData = yearData.details;
                         const yearDiscountCount = yearRawData.filter(item => isDiscountProduct(item)).length;
                         
