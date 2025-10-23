@@ -43,27 +43,27 @@ function generateSecureToken() {
 // Email template'leri
 function createOTPEmailTemplate(otpCode) {
     return `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; color: white;">
-                <h1 style="margin: 0; font-size: 2em;">🔐 Zuhal Müzik Dashboard</h1>
-                <p style="margin: 10px 0 0 0; opacity: 0.9;">Doğrulama Kodu</p>
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; background: #ffffff;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center; color: white;">
+                <h1 style="margin: 0; font-size: 1.5em; font-weight: bold;">🔐 Zuhal Müzik Dashboard</h1>
+                <p style="margin: 5px 0 0 0; font-size: 0.9em; opacity: 0.9;">Doğrulama Kodu</p>
             </div>
-            <div style="padding: 30px; background: white;">
-                <h2 style="color: #333; text-align: center; margin-bottom: 20px;">Giriş Kodunuz</h2>
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center; margin: 20px 0;">
-                    <div style="font-size: 3em; font-weight: bold; color: #667eea; letter-spacing: 5px; margin: 10px 0;">${otpCode}</div>
+            <div style="padding: 25px; background: white;">
+                <h2 style="color: #333; text-align: center; margin-bottom: 15px; font-size: 1.2em;">Giriş Kodunuz</h2>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; margin: 15px 0;">
+                    <div style="font-size: 2.2em; font-weight: bold; color: #667eea; letter-spacing: 3px; margin: 8px 0;">${otpCode}</div>
                 </div>
-                <p style="color: #666; text-align: center; margin-bottom: 20px;">
+                <p style="color: #666; text-align: center; margin-bottom: 15px; font-size: 0.9em;">
                     Bu kod 10 dakika geçerlidir. Dashboard'a giriş yapmak için bu kodu kullanın.
                 </p>
-                <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                    <p style="margin: 0; color: #856404; font-size: 0.9em;">
+                <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 12px; border-radius: 5px; margin: 15px 0;">
+                    <p style="margin: 0; color: #856404; font-size: 0.85em;">
                         ⚠️ Güvenlik için bu kodu kimseyle paylaşmayın.
                     </p>
                 </div>
             </div>
-            <div style="background: #333; padding: 20px; text-align: center; color: white;">
-                <p style="margin: 0; font-size: 0.9em;">
+            <div style="background: #333; padding: 15px; text-align: center; color: white;">
+                <p style="margin: 0; font-size: 0.8em;">
                     Zuhal Müzik Ekibi<br>
                     Bu email otomatik olarak gönderilmiştir.
                 </p>
