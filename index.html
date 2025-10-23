@@ -42,8 +42,17 @@
             window.updateUserInfo(user);
             
             // Dashboard'ı yükle
-            if (typeof loadData === 'function') {
-                loadData();
+            if (typeof window.loadData === 'function') {
+                window.loadData();
+            } else {
+                console.log('⚠️ loadData fonksiyonu henüz yüklenmedi, 2 saniye bekleniyor...');
+                setTimeout(() => {
+                    if (typeof window.loadData === 'function') {
+                        window.loadData();
+                    } else {
+                        console.error('❌ loadData fonksiyonu bulunamadı!');
+                    }
+                }, 2000);
             }
         };
         
@@ -1363,6 +1372,9 @@
             <div style="text-align: center; margin-bottom: 30px;">
                 <h2 style="color: #333; margin-bottom: 10px;">📧 Doğrulama Kodu</h2>
                 <p style="color: #666;">Email kutunuzdan 6 haneli kodu girin</p>
+                <p style="color: #888; font-size: 0.9em; margin-top: 10px;">
+                    <span id="otpEmailDisplay" style="font-weight: bold; color: #333;"></span> adresine gönderildi
+                </p>
             </div>
             
             <div style="margin-bottom: 20px;">
@@ -3323,7 +3335,8 @@
             }, 500); // Tüm işlemler bittikten 500ms sonra kapat
         }
 
-        async function loadData() {
+        // Global scope'a taşı
+        window.loadData = async function() {
             try {
                 // Loading progress'i güncelle
                 dataLoadProgress.dataFiles = true;
