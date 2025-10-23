@@ -23,6 +23,94 @@
     <script defer src="js/ai-analyzer-enhanced.js"></script>
     <!-- Enhanced Time Analysis -->
     <script defer src="js/time-analysis-enhanced.js"></script>
+    <!-- Email Servisi Konfigürasyonu -->
+    <script>
+        // Email servisi ayarları
+        const EMAIL_SERVICE_URL = 'https://your-server.com'; // Kendi sunucunuzun URL'i
+        
+        // Email servisi fonksiyonları
+        async function sendOTPCode(email) {
+            try {
+                showAuthLoading();
+                
+                const response = await fetch(`${EMAIL_SERVICE_URL}/send-otp`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: email })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('✅ OTP gönderildi:', email);
+                    showAuthError('✅ Doğrulama kodu emailinize gönderildi!', 'success');
+                    showOTPForm(email);
+                } else {
+                    throw new Error(result.error || 'OTP gönderilemedi');
+                }
+                
+            } catch (error) {
+                console.error('❌ OTP gönderme hatası:', error);
+                showAuthError('Email gönderilemedi: ' + error.message);
+            }
+        }
+        
+        async function verifyOTPCode(email, otp) {
+            try {
+                showAuthLoading();
+                
+                const response = await fetch(`${EMAIL_SERVICE_URL}/verify-otp`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: email, otp: otp })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('✅ OTP doğrulandı:', email);
+                    showDashboardAfterAuth(result.user);
+                } else {
+                    throw new Error(result.error || 'Geçersiz OTP');
+                }
+                
+            } catch (error) {
+                console.error('❌ OTP doğrulama hatası:', error);
+                showAuthError(error.message);
+            }
+        }
+        
+        async function sendLoginLink(email) {
+            try {
+                showAuthLoading();
+                
+                const response = await fetch(`${EMAIL_SERVICE_URL}/send-login-link`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: email })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('✅ Login link gönderildi:', email);
+                    showAuthError('✅ Giriş linki emailinize gönderildi!', 'success');
+                } else {
+                    throw new Error(result.error || 'Login link gönderilemedi');
+                }
+                
+            } catch (error) {
+                console.error('❌ Login link gönderme hatası:', error);
+                showAuthError('Email gönderilemedi: ' + error.message);
+            }
+        }
+    </script>
     <!-- Login Kontrolü -->
     <script>
         // Sayfa yüklendiğinde oturum kontrolü
@@ -1143,6 +1231,62 @@
     </style>
 </head>
     <body>
+    <!-- Email Authentication Form -->
+    <div id="authForm" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); max-width: 400px; width: 90%;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2 style="color: #333; margin-bottom: 10px;">🔐 Zuhal Müzik Dashboard</h2>
+                <p style="color: #666;">Email ile giriş yapın</p>
+            </div>
+            
+            <div id="authError" style="display: none; background: #fee; color: #c33; padding: 10px; border-radius: 5px; margin-bottom: 20px; text-align: center;"></div>
+            
+            <div style="margin-bottom: 20px;">
+                <input type="email" id="authEmailInput" placeholder="Email adresinizi girin" 
+                       style="width: 100%; padding: 15px; border: 2px solid #e1e5e9; border-radius: 10px; font-size: 1em; outline: none; transition: border-color 0.3s ease;">
+            </div>
+            
+            <button id="authLoginBtn" onclick="sendOTPCode(document.getElementById('authEmailInput').value)" 
+                    style="width: 100%; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 1.1em; font-weight: 600; cursor: pointer; transition: transform 0.2s ease; margin-bottom: 10px;">
+                📧 Doğrulama Kodu Gönder
+            </button>
+            
+            <div style="text-align: center;">
+                <button onclick="sendLoginLink(document.getElementById('authEmailInput').value)" 
+                        style="padding: 10px 20px; background: #f59e0b; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9em;">
+                    🔗 Giriş Linki Gönder
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- OTP Form -->
+    <div id="otpForm" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); max-width: 400px; width: 90%;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2 style="color: #333; margin-bottom: 10px;">📧 Doğrulama Kodu</h2>
+                <p style="color: #666;">Email kutunuzdan 6 haneli kodu girin</p>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <input type="text" id="otpInput" placeholder="6 haneli doğrulama kodunu girin" 
+                       style="width: 100%; padding: 15px; border: 2px solid #e1e5e9; border-radius: 10px; font-size: 1em; outline: none; transition: border-color 0.3s ease; text-align: center; letter-spacing: 2px;">
+            </div>
+            
+            <button onclick="verifyOTPCode(document.getElementById('authEmailInput').value, document.getElementById('otpInput').value)" 
+                    style="width: 100%; padding: 15px; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white; border: none; border-radius: 10px; font-size: 1.1em; font-weight: 600; cursor: pointer; transition: transform 0.2s ease; margin-bottom: 10px;">
+                ✅ Doğrula
+            </button>
+            
+            <div style="text-align: center;">
+                <button onclick="showAuthForm()" 
+                        style="padding: 10px 20px; background: #e5e7eb; color: #666; border: none; border-radius: 8px; cursor: pointer;">
+                    🔄 Geri Dön
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Loading Screen -->
         <div id="loadingScreen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white;">
             <div style="text-align: center;">
@@ -15380,14 +15524,88 @@
             });
         });
 
-        // Çıkış fonksiyonu
-        function logout() {
-            if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
-                sessionStorage.removeItem('session');
-                localStorage.removeItem('session'); // Eski session'ları da temizle
-                window.location.href = 'auth-advanced.html';
+        // Authentication UI Fonksiyonları
+        function showAuthForm() {
+            const authForm = document.getElementById('authForm');
+            const otpForm = document.getElementById('otpForm');
+            const loadingScreen = document.getElementById('loadingScreen');
+            
+            if (authForm) authForm.style.display = 'flex';
+            if (otpForm) otpForm.style.display = 'none';
+            if (loadingScreen) loadingScreen.style.display = 'none';
+        }
+        
+        function showOTPForm(email) {
+            const authForm = document.getElementById('authForm');
+            const otpForm = document.getElementById('otpForm');
+            
+            if (authForm) authForm.style.display = 'none';
+            if (otpForm) otpForm.style.display = 'flex';
+        }
+        
+        function showAuthLoading() {
+            const loginBtn = document.getElementById('authLoginBtn');
+            if (loginBtn) {
+                loginBtn.textContent = '⏳ Yükleniyor...';
+                loginBtn.disabled = true;
             }
         }
+        
+        function showAuthError(message, type = 'error') {
+            const errorDiv = document.getElementById('authError');
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                errorDiv.style.background = type === 'success' ? '#d4edda' : '#f8d7da';
+                errorDiv.style.color = type === 'success' ? '#155724' : '#721c24';
+            }
+        }
+        
+        function showDashboardAfterAuth(user) {
+            const authForm = document.getElementById('authForm');
+            const otpForm = document.getElementById('otpForm');
+            const loadingScreen = document.getElementById('loadingScreen');
+            const mainContainer = document.getElementById('mainContainer');
+            
+            if (authForm) authForm.style.display = 'none';
+            if (otpForm) otpForm.style.display = 'none';
+            if (loadingScreen) loadingScreen.style.display = 'none';
+            if (mainContainer) mainContainer.style.display = 'block';
+            
+            // Kullanıcı bilgilerini güncelle
+            updateUserInfo(user);
+            
+            // Dashboard'ı yükle
+            if (typeof loadData === 'function') {
+                loadData();
+            }
+        }
+        
+        function updateUserInfo(user) {
+            const userNameElement = document.getElementById('currentUserName');
+            const userInfoElement = document.getElementById('userInfo');
+            const userTypeElement = document.getElementById('userType');
+            
+            if (userNameElement) {
+                userNameElement.textContent = user.name || user.email?.split('@')[0] || 'Kullanıcı';
+            }
+            
+            if (userInfoElement) {
+                userInfoElement.textContent = user.name || user.email?.split('@')[0] || 'Kullanıcı';
+            }
+            
+            if (userTypeElement) {
+                userTypeElement.textContent = '👤 Kullanıcı';
+            }
+        }
+        
+        // Sayfa yüklendiğinde authentication formunu göster
+        document.addEventListener('DOMContentLoaded', function() {
+            // Loading tamamlandıktan sonra auth formunu göster
+            setTimeout(() => {
+                showAuthForm();
+            }, 2000);
+        });
 
         // Kullanıcı bilgilerini güncelle
         function updateUserInfo() {
