@@ -116,9 +116,27 @@
         };
         
         window.logout = function() {
+            // Session ve local storage'ı temizle
             sessionStorage.clear();
             localStorage.clear();
-            window.showAuthForm();
+            
+            // Tüm formları gizle
+            const authForm = document.getElementById('authForm');
+            const otpForm = document.getElementById('otpForm');
+            const loadingScreen = document.getElementById('loadingScreen');
+            const mainContainer = document.getElementById('mainContainer');
+            
+            if (authForm) authForm.style.display = 'none';
+            if (otpForm) otpForm.style.display = 'none';
+            if (loadingScreen) loadingScreen.style.display = 'none';
+            if (mainContainer) mainContainer.style.display = 'none';
+            
+            // Auth formunu göster
+            setTimeout(() => {
+                window.showAuthForm();
+            }, 500);
+            
+            console.log('✅ Çıkış yapıldı, session temizlendi');
         };
         
         // Email servisi ayarları
@@ -211,7 +229,7 @@
                 
                 if (timeDiff < oneHour) {
                     // Session geçerli, dashboard'ı göster
-                    console.log('✅ Geçerli session bulundu');
+                    console.log('✅ Geçerli session bulundu, kalan süre:', Math.round((oneHour - timeDiff) / 60000), 'dakika');
                     const userEmail = sessionStorage.getItem('userEmail');
                     const user = {
                         email: userEmail,
@@ -233,7 +251,7 @@
             // Session yok veya süresi dolmuş, auth formunu göster
             console.log('🔐 Session bulunamadı, auth formu gösteriliyor');
             setTimeout(() => {
-                showAuthForm();
+                window.showAuthForm();
             }, 3000); // 3 saniye loading
         })();
     </script>
