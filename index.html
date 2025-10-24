@@ -8400,6 +8400,12 @@
         // Load data on page load
         loadData();
         
+        // ==================== VERİ YÖNETİMİ ====================
+        
+        // Yıl yükleme kontrolü için
+        let loadedYears = new Set();
+        let loadedDataCache = {};
+        
         // ==================== ÜRÜN ANALİZİ ====================
         
         let productStoreChartInstance = null;
@@ -15796,7 +15802,13 @@
 
         // Authentication UI Fonksiyonları
         function showAuthForm() {
-            window.showAuthForm();
+            const authForm = document.getElementById('authForm');
+            const otpForm = document.getElementById('otpForm');
+            const dashboard = document.getElementById('dashboard');
+            
+            if (authForm) authForm.style.display = 'flex';
+            if (otpForm) otpForm.style.display = 'none';
+            if (dashboard) dashboard.style.display = 'none';
         }
         
         function showOTPForm(email) {
