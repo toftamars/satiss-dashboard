@@ -1,10 +1,59 @@
 // ==================== DATA LOADING MODULE ====================
 // Veri yükleme, metadata, cache yönetimi
 
+// ===== LOADING PROGRESS MANAGEMENT =====
+window.updateLoadingProgress = function(percentage, message) {
+    console.log(`📊 Loading: ${percentage}% - ${message}`);
+    
+    // Progress bar'ı güncelle
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const loadingMessage = document.getElementById('loadingMessage');
+    
+    if (progressBar) {
+        progressBar.style.width = percentage + '%';
+    }
+    
+    if (progressText) {
+        progressText.textContent = Math.round(percentage) + '%';
+    }
+    
+    if (loadingMessage) {
+        loadingMessage.textContent = message;
+    }
+    
+    // Step'leri güncelle
+    updateLoadingSteps(percentage);
+};
+
+window.updateLoadingSteps = function(percentage) {
+    const steps = [
+        { id: 'step1', threshold: 10, text: '🔄 Sayfa başlatılıyor...' },
+        { id: 'step2', threshold: 30, text: '📊 Veri dosyaları yükleniyor...' },
+        { id: 'step3', threshold: 60, text: '🎯 Hedefler yükleniyor...' },
+        { id: 'step4', threshold: 90, text: '✅ Hazırlanıyor...' }
+    ];
+    
+    steps.forEach(step => {
+        const element = document.getElementById(step.id);
+        if (element) {
+            if (percentage >= step.threshold) {
+                element.style.display = 'block';
+                element.style.opacity = '1';
+                element.style.color = '#4ade80';
+                element.textContent = step.text;
+            }
+        }
+    });
+};
+
 // ===== GLOBAL DATA LOADING FUNCTION =====
 window.loadData = async function() {
     console.log('🚀 loadData fonksiyonu çağrıldı');
     try {
+        // Gerçekçi loading başlat
+        updateLoadingProgress(10, '🔄 Sayfa başlatılıyor...');
+        
         // Loading progress'i güncelle
         if (typeof dataLoadProgress !== 'undefined') {
             dataLoadProgress.dataFiles = true;
@@ -22,11 +71,13 @@ window.loadData = async function() {
         }
         
         // Hedefleri yükle (paralel olarak)
+        updateLoadingProgress(20, '🎯 Hedefler yükleniyor...');
         if (typeof loadCentralTargets === 'function') {
             loadCentralTargets();
         }
         
         // İlk olarak metadata'yı yükle
+        updateLoadingProgress(30, '📊 Metadata yükleniyor...');
         const metadata = await loadMetadata();
         console.log('📊 Metadata yüklendi:', metadata);
         
@@ -35,12 +86,17 @@ window.loadData = async function() {
         }
         
         // Tüm yılları yükle
+        updateLoadingProgress(40, '📦 Veri dosyaları yükleniyor...');
         await loadAllYearsData(metadata);
         
         // Özet kartlarını güncelle
+        updateLoadingProgress(90, '📊 Özet kartları güncelleniyor...');
         if (typeof window.updateDashboardSummaryCards === 'function') {
             window.updateDashboardSummaryCards();
         }
+        
+        // Final loading
+        updateLoadingProgress(95, '✅ Son hazırlıklar...');
         
         console.log('✅ Veri yükleme tamamlandı');
         
@@ -115,19 +171,32 @@ window.loadYearData = async function(year) {
 window.loadAllYearsData = async function(metadata) {
     console.log('⏳ Tüm yıllar yükleniyor...');
     const yearsToLoad = metadata.years;
+    const totalYears = yearsToLoad.length;
+    let loadedYears = 0;
     
     // En son yılı önce yükle
     const latestYear = Math.max(...yearsToLoad);
+    updateLoadingProgress(50, `📦 ${latestYear} yılı yükleniyor...`);
     await loadYearData(latestYear);
+    loadedYears++;
     
-    // Diğer yılları arka planda yükle
+    // Progress güncelle
+    const progress = 50 + (loadedYears / totalYears) * 30;
+    updateLoadingProgress(progress, `📦 ${latestYear} yılı yüklendi (${loadedYears}/${totalYears})`);
+    
+    // Diğer yılları sırayla yükle
     for (const year of yearsToLoad.sort((a, b) => b - a)) {
         if (year !== latestYear) {
-            loadYearData(year).catch(error => console.error(`⚠️ ${year} arka plan yükleme hatası:`, error));
+            updateLoadingProgress(50 + (loadedYears / totalYears) * 30, `📦 ${year} yılı yükleniyor...`);
+            await loadYearData(year);
+            loadedYears++;
+            
+            const currentProgress = 50 + (loadedYears / totalYears) * 30;
+            updateLoadingProgress(currentProgress, `📦 ${year} yılı yüklendi (${loadedYears}/${totalYears})`);
         }
     }
     
-    console.log('✅ Tüm yıllar yükleme işlemi başlatıldı.');
+    console.log('✅ Tüm yıllar yükleme işlemi tamamlandı.');
     
     // Data status'ü güncelle
     const allYears = metadata.years.sort().join(', ');

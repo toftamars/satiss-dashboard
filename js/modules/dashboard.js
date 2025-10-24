@@ -162,6 +162,9 @@ window.checkLoadingComplete = function() {
         if (progress >= 100) {
             console.log('✅ Tüm veriler yüklendi, loading ekranı kapatılıyor...');
             
+            // Final progress update
+            updateLoadingProgress(100, '🎉 Hazır!');
+            
             // Loading ekranını kapat
             setTimeout(() => {
                 const loadingScreen = document.getElementById('loadingScreen');
