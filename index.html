@@ -15699,6 +15699,8 @@
         }
         
         function startRealLoading() {
+            console.log('🚀 startRealLoading başlatıldı');
+            
             // Step 1: Session kontrolü
             const sessionData = sessionStorage.getItem('otpVerified');
             const sessionExpiry = sessionStorage.getItem('sessionExpiry');
@@ -15717,8 +15719,13 @@
             dataLoadProgress.pageInit = true;
             checkLoadingComplete();
             
-            // Gerçek veri yükleme işlemini başlat
-            loadData();
+            // Gerçek veri yükleme işlemini başlat - HER DURUMDA
+            console.log('📊 loadData fonksiyonu çağrılıyor...');
+            if (typeof window.loadData === 'function') {
+                window.loadData();
+            } else {
+                console.error('❌ loadData fonksiyonu bulunamadı!');
+            }
         }
 
         // Sayfa yüklendiğinde ve tab değiştiğinde çalıştır
