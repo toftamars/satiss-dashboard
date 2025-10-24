@@ -1526,7 +1526,7 @@
                        style="width: 100%; padding: 15px; border: 2px solid #e1e5e9; border-radius: 10px; font-size: 1em; outline: none; transition: border-color 0.3s ease; text-align: center; letter-spacing: 2px;">
             </div>
             
-            <button onclick="verifyOTPCode(document.getElementById('authEmailInput').value, document.getElementById('otpInput').value)" 
+            <button id="otpVerifyBtn" onclick="verifyOTPCodeWithLoading()" 
                     style="width: 100%; padding: 15px; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white; border: none; border-radius: 10px; font-size: 1.1em; font-weight: 600; cursor: pointer; transition: transform 0.2s ease; margin-bottom: 10px;">
                 ✅ Doğrula
             </button>
@@ -15822,6 +15822,45 @@
             if (loginBtn) {
                 loginBtn.textContent = '⏳ Yükleniyor...';
                 loginBtn.disabled = true;
+            }
+        }
+        
+        function showOTPLoading() {
+            const otpBtn = document.getElementById('otpVerifyBtn');
+            if (otpBtn) {
+                otpBtn.textContent = '⏳ Doğrulanıyor...';
+                otpBtn.disabled = true;
+                otpBtn.style.background = 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)';
+            }
+        }
+        
+        function hideOTPLoading() {
+            const otpBtn = document.getElementById('otpVerifyBtn');
+            if (otpBtn) {
+                otpBtn.textContent = '✅ Doğrula';
+                otpBtn.disabled = false;
+                otpBtn.style.background = 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)';
+            }
+        }
+        
+        async function verifyOTPCodeWithLoading() {
+            const email = document.getElementById('authEmailInput').value;
+            const otp = document.getElementById('otpInput').value;
+            
+            if (!email || !otp) {
+                showAuthError('❌ Email ve OTP kodu gerekli');
+                return;
+            }
+            
+            showOTPLoading();
+            
+            try {
+                await verifyOTPCode(email, otp);
+            } catch (error) {
+                console.error('OTP doğrulama hatası:', error);
+                showAuthError('Doğrulama hatası: ' + error.message);
+            } finally {
+                hideOTPLoading();
             }
         }
         
