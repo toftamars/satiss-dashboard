@@ -3501,7 +3501,7 @@
                 const discountProducts = allData.filter(item => isDiscountProduct(item));
                 filteredData = [...allData];
                 
-                console.log(`💰 ${discountProducts.length} indirim ürünü negatif değer olarak işlendi (toplam kayıt: ${rawData.length})`);
+                console.log(`💰 ${discountProducts.length} indirim ürünü negatif değer olarak işlendi (toplam kayıt: ${allRawData.length})`);
                 
                 // Update info cards
                 document.getElementById('dataStatus').innerHTML = `<span class="status-badge status-success">✅ ${latestYear}</span>`;
