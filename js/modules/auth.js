@@ -1,35 +1,45 @@
-// ==================== AUTHENTICATION MODULE ====================
-// Dashboard authentication ve user management
+/**
+ * @fileoverview Authentication Module
+ * @description Handles user authentication, session management, and dashboard access
+ * @version 1.0.0
+ * @author Zuhal Müzik Dashboard Team
+ */
 
-// ===== CRITICAL FUNCTIONS - EARLY DEFINITION =====
+/**
+ * Shows dashboard after successful authentication
+ * @param {Object} user - User object
+ * @param {string} user.email - User email
+ * @param {string} user.name - User name
+ */
 window.showDashboardAfterAuth = function(user) {
-    console.log('🚀 showDashboardAfterAuth çağrıldı');
-    const loadingScreen = document.getElementById('loadingScreen');
-    const mainContainer = document.getElementById('mainContainer');
+    console.log('🚀 showDashboardAfterAuth called');
     
-    // Loading ekranı ve main container'ı koru - checkLoadingComplete() kontrol edecek
-    // Loading ekranı tüm veriler yüklenene kadar açık kalacak
-    
-    // Kullanıcı bilgilerini güncelle
     if (user) {
         window.updateUserInfo(user);
     }
     
-    // Dashboard'ı yükle - loadData fonksiyonu zaten sayfa yüklendiğinde çalışacak
-    console.log('✅ Dashboard başlatıldı, loadData fonksiyonu sayfa yüklendiğinde çalışacak');
+    console.log('✅ Dashboard initialized');
 };
 
+/**
+ * Updates user information in the UI
+ * @param {Object} user - User object
+ * @param {string} user.email - User email
+ * @param {string} user.name - User name
+ */
 window.updateUserInfo = function(user) {
     const userNameElement = document.getElementById('currentUserName');
     const userInfoElement = document.getElementById('userInfo');
     const userTypeElement = document.getElementById('userType');
     
+    const displayName = user.name || user.email?.split('@')[0] || 'Kullanıcı';
+    
     if (userNameElement) {
-        userNameElement.textContent = user.name || user.email?.split('@')[0] || 'Kullanıcı';
+        userNameElement.textContent = displayName;
     }
     
     if (userInfoElement) {
-        userInfoElement.textContent = user.name || user.email?.split('@')[0] || 'Kullanıcı';
+        userInfoElement.textContent = displayName;
     }
     
     if (userTypeElement) {
@@ -37,38 +47,40 @@ window.updateUserInfo = function(user) {
     }
 };
 
+/**
+ * Logs out user and reloads the page
+ */
 window.logout = function() {
-    // Session ve local storage'ı temizle
     sessionStorage.clear();
     localStorage.clear();
-    
-    // Sayfayı yenile
     location.reload();
-    
-    console.log('✅ Çıkış yapıldı, sayfa yenileniyor');
+    console.log('✅ Logged out');
 };
 
-// Sayfa yüklendiğinde direkt dashboard aç
+/**
+ * Initializes authentication and dashboard
+ * Sets up demo user session for direct dashboard access
+ */
 window.initAuth = function() {
-    console.log('🚀 Dashboard direkt açılıyor...');
+    console.log('🚀 Initializing dashboard...');
     
-    // Mock user data
     const user = {
         email: 'demo@zuhalmuzik.com',
         name: 'Demo Kullanıcı'
     };
     
-    // Session bilgilerini ayarla
+    const now = Date.now();
+    const expiryTime = now + (24 * 60 * 60 * 1000); // 24 hours
+    
     sessionStorage.setItem('isLoggedIn', 'true');
-    sessionStorage.setItem('loginTime', Date.now().toString());
+    sessionStorage.setItem('loginTime', now.toString());
     sessionStorage.setItem('userEmail', user.email);
     sessionStorage.setItem('username', user.name);
     sessionStorage.setItem('otpVerified', 'true');
-    sessionStorage.setItem('sessionExpiry', (Date.now() + 24 * 60 * 60 * 1000).toString());
+    sessionStorage.setItem('sessionExpiry', expiryTime.toString());
     
-    // Dashboard'ı başlat
     setTimeout(() => {
-        console.log('🚀 Dashboard başlatılıyor...');
+        console.log('🚀 Starting dashboard...');
         window.showDashboardAfterAuth(user);
     }, 100);
 };

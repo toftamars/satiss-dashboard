@@ -1,33 +1,60 @@
-// ==================== INITIALIZATION MODULE ====================
-// Sayfa başlatma, event listeners, DOMContentLoaded
+/**
+ * @fileoverview Initialization Module
+ * @description Handles page initialization, event listeners, and session management
+ * @version 1.0.0
+ * @author Zuhal Müzik Dashboard Team
+ */
 
-// Sayfa yüklendiğinde çalışacak fonksiyon
+/**
+ * Session check interval in milliseconds (5 minutes)
+ * @const {number}
+ */
+const SESSION_CHECK_INTERVAL = 5 * 60 * 1000;
+
+/**
+ * Main initialization function
+ * Runs when DOM content is loaded
+ */
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 DOM Content Loaded');
     
-    // Auth başlat
     if (typeof window.initAuth === 'function') {
         window.initAuth();
     }
     
-    // Loading başlat
     if (typeof window.startRealLoading === 'function') {
         window.startRealLoading();
     }
     
-    // UI başlat
     if (typeof window.initMobileTableScrollHint === 'function') {
         window.initMobileTableScrollHint();
     }
     
-    // Kullanıcı bilgilerini güncelle
+    updateUsernameDisplay();
+    setupTabObserver();
+    setupSessionCheck();
+    
+    console.log('✅ Initialization complete');
+});
+
+/**
+ * Updates username display from session storage
+ */
+function updateUsernameDisplay() {
     const username = sessionStorage.getItem('username');
     const currentUserNameElement = document.getElementById('currentUserName');
-    if (username && currentUserNameElement) {
-        currentUserNameElement.textContent = username.charAt(0).toUpperCase() + username.slice(1);
-    }
     
-    // Tab değişimlerinde mobile scroll hint'i güncelle
+    if (username && currentUserNameElement) {
+        const capitalizedName = username.charAt(0).toUpperCase() + username.slice(1);
+        currentUserNameElement.textContent = capitalizedName;
+    }
+}
+
+/**
+ * Sets up mutation observer for tab changes
+ * Updates mobile scroll hints when tabs change
+ */
+function setupTabObserver() {
     const observer = new MutationObserver(function() {
         if (typeof window.initMobileTableScrollHint === 'function') {
             window.initMobileTableScrollHint();
@@ -38,27 +65,32 @@ document.addEventListener('DOMContentLoaded', function() {
         childList: true,
         subtree: true
     });
-    
-    // Oturum süresi kontrolü (her 5 dakikada bir)
+}
+
+/**
+ * Sets up periodic session expiry check
+ * Logs out user if session has expired
+ */
+function setupSessionCheck() {
     setInterval(function() {
         const session = localStorage.getItem('session');
-        if (session) {
-            try {
-                const sessionData = JSON.parse(session);
-                if (new Date().getTime() > sessionData.expiry) {
-                    alert('Oturum süreniz doldu. Lütfen tekrar giriş yapın.');
-                    if (typeof window.logout === 'function') {
-                        window.logout();
-                    }
+        if (!session) return;
+        
+        try {
+            const sessionData = JSON.parse(session);
+            const now = new Date().getTime();
+            
+            if (now > sessionData.expiry) {
+                alert('Oturum süreniz doldu. Lütfen tekrar giriş yapın.');
+                if (typeof window.logout === 'function') {
+                    window.logout();
                 }
-            } catch (error) {
-                console.error('Session kontrolü hatası:', error);
             }
+        } catch (error) {
+            console.error('Session check error:', error);
         }
-    }, 5 * 60 * 1000); // Her 5 dakikada bir kontrol et
-    
-    console.log('✅ Initialization complete');
-});
+    }, SESSION_CHECK_INTERVAL);
+}
 
 console.log('✅ Init module loaded');
 
