@@ -288,6 +288,9 @@
             }
         };
         
+        // Email servisi ayarları
+        const EMAIL_SERVICE_URL = 'http://localhost:3001'; // Güvenli port
+        
         // Email servisi fonksiyonları
         async function sendOTPCode(email) {
             try {
@@ -3479,15 +3482,25 @@
                 document.getElementById('channelLoadingSpinner').style.display = 'none';
             }, 500); // Tüm işlemler bittikten 500ms sonra kapat
         }
-
-        }
         
         // Hedefleri yükle
         async function loadCentralTargets() {
+            try {
+                console.log('🎯 Hedefler yükleniyor...');
                 
-                if (!metadata || !metadata.years || metadata.years.length === 0) {
-                    throw new Error('Geçerli yıl verisi bulunamadı');
-                }
+                // Hedefleri yükle
+                const response = await fetch('data/targets.json');
+                if (!response.ok) throw new Error('Hedefler yüklenemedi');
+                const targetsData = await response.json();
+                
+                console.log('✅ Hedefler yüklendi:', targetsData);
+                return targetsData;
+                
+            } catch (error) {
+                console.error('❌ Hedef yükleme hatası:', error);
+                return null;
+            }
+        }
                 
                 // TÜM YILLARI PARALEL YÜKLE (İlk girişte hepsi)
                 console.log(`📅 Tüm yıllar yükleniyor: ${metadata.years.join(', ')}`);
