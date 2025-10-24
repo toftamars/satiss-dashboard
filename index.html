@@ -363,8 +363,17 @@
             
             // Dashboard'ı başlat
             setTimeout(() => {
-                window.showDashboardAfterAuth(user);
-            }, 100);
+                if (typeof window.showDashboardAfterAuth === 'function') {
+                    window.showDashboardAfterAuth(user);
+                } else {
+                    console.error('❌ showDashboardAfterAuth fonksiyonu bulunamadı!');
+                    // Alternatif: Direkt dashboard'ı göster
+                    const loadingScreen = document.getElementById('loadingScreen');
+                    const mainContainer = document.getElementById('mainContainer');
+                    if (loadingScreen) loadingScreen.style.display = 'none';
+                    if (mainContainer) mainContainer.style.display = 'block';
+                }
+            }, 500); // 100ms'den 500ms'ye çıkardık
         })();
     </script>
     <style>
@@ -15701,7 +15710,11 @@
             if (sessionData === 'true' && sessionExpiry && new Date().getTime() < parseInt(sessionExpiry)) {
                 // Session geçerli, dashboard'ı göster
                 console.log('✅ Geçerli session bulundu, dashboard yükleniyor...');
-                showDashboardAfterAuth();
+                if (typeof window.showDashboardAfterAuth === 'function') {
+                    window.showDashboardAfterAuth();
+                } else {
+                    console.error('❌ showDashboardAfterAuth fonksiyonu bulunamadı!');
+                }
             } else {
                 // Session yok veya süresi dolmuş, direkt dashboard aç
                 console.log('🔐 Session yok veya süresi dolmuş, direkt dashboard açılıyor...');
