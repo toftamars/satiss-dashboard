@@ -23,19 +23,362 @@
     <script defer src="js/ai-analyzer-enhanced.js"></script>
     <!-- Enhanced Time Analysis -->
     <script defer src="js/time-analysis-enhanced.js"></script>
-    <!-- ==================== MODULAR JAVASCRIPT MODULES ==================== -->
-    <!-- Config: Global değişkenler ve konfigürasyon -->
-    <script src="js/modules/config.js"></script>
-    <!-- Auth: Authentication ve user management -->
-    <script src="js/modules/auth.js"></script>
-    <!-- Data Loader: Veri yükleme, metadata, cache yönetimi -->
-    <script src="js/modules/data-loader.js"></script>
-    <!-- Dashboard: Dashboard UI, özet kartları, loading yönetimi -->
-    <script src="js/modules/dashboard.js"></script>
-    <!-- UI: Tab switching, sidebar, vb. -->
-    <script src="js/modules/ui.js"></script>
-    <!-- Init: Sayfa başlatma, event listeners -->
-    <script defer src="js/modules/init.js"></script>
+    <!-- Email Servisi Konfigürasyonu -->
+    <script>
+        // ===== CRITICAL FUNCTIONS - EARLY DEFINITION =====
+        // Bu fonksiyonlar sayfa yüklenir yüklenmez tanımlanır
+        window.showDashboardAfterAuth = function(user) {
+            console.log('🚀 showDashboardAfterAuth çağrıldı');
+            const loadingScreen = document.getElementById('loadingScreen');
+            const mainContainer = document.getElementById('mainContainer');
+            
+            // Loading ekranı ve main container'ı koru - checkLoadingComplete() kontrol edecek
+            // Loading ekranı tüm veriler yüklenene kadar açık kalacak
+            
+            // Kullanıcı bilgilerini güncelle
+            if (user) {
+                window.updateUserInfo(user);
+            }
+            
+            // Dashboard'ı yükle - loadData fonksiyonu zaten sayfa yüklendiğinde çalışacak
+            console.log('✅ Dashboard başlatıldı, loadData fonksiyonu sayfa yüklendiğinde çalışacak');
+        };
+        
+        window.updateUserInfo = function(user) {
+            const userNameElement = document.getElementById('currentUserName');
+            const userInfoElement = document.getElementById('userInfo');
+            const userTypeElement = document.getElementById('userType');
+            
+            if (userNameElement) {
+                userNameElement.textContent = user.name || user.email?.split('@')[0] || 'Kullanıcı';
+            }
+            
+            if (userInfoElement) {
+                userInfoElement.textContent = user.name || user.email?.split('@')[0] || 'Kullanıcı';
+            }
+            
+            if (userTypeElement) {
+                userTypeElement.textContent = '👤 Kullanıcı';
+            }
+        };
+        
+        console.log('✅ Kritik fonksiyonlar tanımlandı');
+    </script>
+    <script>
+        
+        // Authentication fonksiyonları kaldırıldı - Direkt dashboard erişimi
+        
+        window.showAuthLoading = function() {
+            const loginBtn = document.getElementById('authLoginBtn');
+            if (loginBtn) {
+                loginBtn.textContent = '⏳ Yükleniyor...';
+                loginBtn.disabled = true;
+            }
+        };
+        
+        window.showAuthError = function(message, type = 'error') {
+            const errorDiv = document.getElementById('authError');
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                errorDiv.style.background = type === 'success' ? '#d4edda' : '#f8d7da';
+                errorDiv.style.color = type === 'success' ? '#155724' : '#721c24';
+            }
+        };
+        
+        window.logout = function() {
+            // Session ve local storage'ı temizle
+            sessionStorage.clear();
+            localStorage.clear();
+            
+            // Sayfayı yenile
+            location.reload();
+            
+            console.log('✅ Çıkış yapıldı, sayfa yenileniyor');
+        };
+        
+        // ===== GLOBAL DATA LOADING FUNCTION =====
+        // Bu fonksiyon sayfa yüklenir yüklenmez tanımlanır
+        window.loadData = async function() {
+            console.log('🚀 loadData fonksiyonu çağrıldı');
+            try {
+                // Loading progress'i güncelle
+                if (typeof dataLoadProgress !== 'undefined') {
+                    dataLoadProgress.dataFiles = true;
+                    checkLoadingComplete();
+                }
+                
+                if (document.getElementById('dataStatus')) {
+                    document.getElementById('dataStatus').innerHTML = '<span class="status-badge" style="background:#ffc107;color:#000;">⏳ Yükleniyor...</span>';
+                }
+                
+                // tableContainer artık Dashboard'da yok, null check ekledik
+                const tableContainer = document.getElementById('tableContainer');
+                if (tableContainer) {
+                    tableContainer.innerHTML = '<div style="text-align:center;padding:50px;font-size:1.2em;">⏳ Veriler yükleniyor, lütfen bekleyin...</div>';
+                }
+                
+                // Hedefleri yükle (paralel olarak)
+                if (typeof loadCentralTargets === 'function') {
+                    loadCentralTargets();
+                }
+                
+                // İlk olarak metadata'yı yükle
+                const metadata = await loadMetadata();
+                console.log('📊 Metadata yüklendi:', metadata);
+                
+                if (!metadata || !metadata.years || metadata.years.length === 0) {
+                    throw new Error('Geçerli yıl verisi bulunamadı');
+                }
+                
+                // Tüm yılları yükle
+                await loadAllYearsData(metadata);
+                
+                // Özet kartlarını güncelle
+                if (typeof updateDashboardSummaryCards === 'function') {
+                    updateDashboardSummaryCards();
+                }
+                
+                console.log('✅ Veri yükleme tamamlandı');
+                
+            } catch (error) {
+                console.error('❌ Veri yükleme hatası:', error);
+                if (document.getElementById('dataStatus')) {
+                    document.getElementById('dataStatus').innerHTML = '<span class="status-badge" style="background:#dc3545;color:#fff;">❌ Hata</span>';
+                }
+            }
+        };
+        
+        // ===== DASHBOARD SUMMARY CARDS UPDATE FUNCTION =====
+        window.updateDashboardSummaryCards = function() {
+            console.log('📊 Özet kartları güncelleniyor...');
+            
+            try {
+                let totalSales = 0;
+                let totalQty = 0;
+                let totalCustomers = new Set();
+                let totalProducts = new Set();
+                let totalStores = new Set();
+                let totalSalespeople = new Set();
+                let totalTransactions = 0;
+                
+                // Tüm yılların verilerini topla
+                for (const year in loadedDataCache) {
+                    const yearData = loadedDataCache[year];
+                    if (yearData && yearData.details) {
+                        yearData.details.forEach(record => {
+                            // Satış tutarı (KDV hariç)
+                            const salesAmount = parseFloat(record['Satış Tutarı (KDV Hariç)']) || 0;
+                            totalSales += salesAmount;
+                            
+                            // Miktar
+                            const qty = parseFloat(record['Miktar']) || 0;
+                            totalQty += qty;
+                            
+                            // Müşteri
+                            if (record['Müşteri']) {
+                                totalCustomers.add(record['Müşteri']);
+                            }
+                            
+                            // Ürün
+                            if (record['Ürün']) {
+                                totalProducts.add(record['Ürün']);
+                            }
+                            
+                            // Mağaza
+                            if (record['Mağaza']) {
+                                totalStores.add(record['Mağaza']);
+                            }
+                            
+                            // Temsilci
+                            if (record['Temsilci']) {
+                                totalSalespeople.add(record['Temsilci']);
+                            }
+                            
+                            // İşlem sayısı (her kayıt bir işlem)
+                            totalTransactions++;
+                        });
+                    }
+                }
+                
+                // Günlük ortalama hesapla (toplam gün sayısı)
+                const totalDays = Object.keys(loadedDataCache).length * 365; // Yaklaşık
+                const dailyAverage = totalDays > 0 ? totalSales / totalDays : 0;
+                
+                // Sepet ortalaması hesapla
+                const basketAverage = totalTransactions > 0 ? totalSales / totalTransactions : 0;
+                
+                // DOM elementlerini güncelle
+                const elements = {
+                    dashTotalSales: document.getElementById('dashTotalSales'),
+                    dashTotalQty: document.getElementById('dashTotalQty'),
+                    dashTotalCustomers: document.getElementById('dashTotalCustomers'),
+                    dashTotalProducts: document.getElementById('dashTotalProducts'),
+                    dashTotalStores: document.getElementById('dashTotalStores'),
+                    dashTotalSalespeople: document.getElementById('dashTotalSalespeople'),
+                    dashDailyAverage: document.getElementById('dashDailyAverage'),
+                    dashBasketAverage: document.getElementById('dashBasketAverage')
+                };
+                
+                // Değerleri güncelle
+                if (elements.dashTotalSales) {
+                    elements.dashTotalSales.textContent = '$' + totalSales.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                }
+                
+                if (elements.dashTotalQty) {
+                    elements.dashTotalQty.textContent = totalQty.toLocaleString('tr-TR');
+                }
+                
+                if (elements.dashTotalCustomers) {
+                    elements.dashTotalCustomers.textContent = totalCustomers.size.toLocaleString('tr-TR');
+                }
+                
+                if (elements.dashTotalProducts) {
+                    elements.dashTotalProducts.textContent = totalProducts.size.toLocaleString('tr-TR');
+                }
+                
+                if (elements.dashTotalStores) {
+                    elements.dashTotalStores.textContent = totalStores.size.toLocaleString('tr-TR');
+                }
+                
+                if (elements.dashTotalSalespeople) {
+                    elements.dashTotalSalespeople.textContent = totalSalespeople.size.toLocaleString('tr-TR');
+                }
+                
+                if (elements.dashDailyAverage) {
+                    elements.dashDailyAverage.textContent = '$' + dailyAverage.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                }
+                
+                if (elements.dashBasketAverage) {
+                    elements.dashBasketAverage.textContent = '$' + basketAverage.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                }
+                
+                console.log('✅ Özet kartları güncellendi:', {
+                    totalSales: totalSales,
+                    totalQty: totalQty,
+                    totalCustomers: totalCustomers.size,
+                    totalProducts: totalProducts.size,
+                    totalStores: totalStores.size,
+                    totalSalespeople: totalSalespeople.size,
+                    dailyAverage: dailyAverage,
+                    basketAverage: basketAverage
+                });
+                
+            } catch (error) {
+                console.error('❌ Özet kartları güncelleme hatası:', error);
+            }
+        };
+        
+        // ===== CACHE VERSION FUNCTIONS =====
+        function getDailyVersion() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}${month}${day}`;
+        }
+        
+        function getHourlyVersion() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hour = String(now.getHours()).padStart(2, '0');
+            return `${year}${month}${day}${hour}`;
+        }
+
+        // ===== GLOBAL METADATA LOADING FUNCTION =====
+        window.loadMetadata = async function() {
+            try {
+                // Akıllı Cache: Metadata için saatlik versiyon
+                const version = getHourlyVersion();
+                const response = await fetch(`data-metadata.json?v=${version}`, {
+                    headers: {
+                        'Cache-Control': 'public, max-age=3600' // 1 saat cache
+                    }
+                });
+                if (!response.ok) throw new Error('Metadata yüklenemedi');
+                metadata = await response.json();
+                console.log('✅ Metadata yüklendi:', metadata);
+                return metadata;
+            } catch (error) {
+                console.error('❌ Metadata yükleme hatası:', error);
+                throw error;
+            }
+        };
+        
+        // ===== GLOBAL YEAR DATA LOADING FUNCTION =====
+        window.loadYearData = async function(year) {
+            if (loadedYears.has(year) && loadedDataCache[year]) {
+                console.log(`⏭️ ${year} zaten yüklü, cache'den döndürülüyor...`);
+                return loadedDataCache[year];
+            }
+            
+            try {
+                console.log(`📦 ${year} yükleniyor...`);
+                
+                // GZIP dosyasını indir - Akıllı Cache ile
+                const version = getDailyVersion(); // Günlük versiyon
+                const response = await fetch(`data-${year}.json.gz?v=${version}`, {
+                    headers: {
+                        'Cache-Control': 'public, max-age=86400' // 24 saat cache
+                    }
+                });
+                if (!response.ok) throw new Error(`${year} verisi bulunamadı`);
+                
+                // ArrayBuffer olarak al
+                const arrayBuffer = await response.arrayBuffer();
+                
+                // GZIP'i aç
+                const decompressed = pako.ungzip(new Uint8Array(arrayBuffer), { to: 'string' });
+                
+                // JSON parse et
+                const yearData = JSON.parse(decompressed);
+                
+                // Cache'e kaydet
+                loadedYears.add(year);
+                loadedDataCache[year] = yearData;
+                
+                console.log(`✅ ${year} yılı yüklendi: ${yearData.details?.length || 0} kayıt`);
+                return yearData;
+                
+            } catch (error) {
+                console.error(`❌ ${year} yükleme hatası:`, error);
+                throw error;
+            }
+        };
+        
+        // Email servisi fonksiyonları kaldırıldı - Direkt dashboard erişimi
+        
+        // verifyOTPCode fonksiyonu kaldırıldı - Direkt dashboard erişimi
+    </script>
+    <!-- Login Kontrolü -->
+    <script>
+        // Sayfa yüklendiğinde direkt dashboard aç
+        (function() {
+            console.log('🚀 Dashboard direkt açılıyor...');
+            
+            // Mock user data
+            const user = {
+                email: 'demo@zuhalmuzik.com',
+                name: 'Demo Kullanıcı'
+            };
+            
+            // Session bilgilerini ayarla
+            sessionStorage.setItem('isLoggedIn', 'true');
+            sessionStorage.setItem('loginTime', Date.now().toString());
+            sessionStorage.setItem('userEmail', user.email);
+            sessionStorage.setItem('username', user.name);
+            sessionStorage.setItem('otpVerified', 'true');
+            sessionStorage.setItem('sessionExpiry', (Date.now() + 24 * 60 * 60 * 1000).toString());
+            
+            // Dashboard'ı başlat
+            setTimeout(() => {
+                console.log('🚀 Dashboard başlatılıyor...');
+                window.showDashboardAfterAuth(user);
+            }, 100);
+        })();
+    </script>
     <style>
         * {
             margin: 0;
