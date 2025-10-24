@@ -36,1120 +36,6 @@
     <script src="js/modules/ui.js"></script>
     <!-- Init: Sayfa başlatma, event listeners -->
     <script defer src="js/modules/init.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-            position: relative;
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-
-        .user-info {
-            position: absolute;
-            top: 20px;
-            right: 30px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 10px 20px;
-            border-radius: 25px;
-            backdrop-filter: blur(10px);
-        }
-
-        .user-name {
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .logout-btn {
-            background: rgba(255, 255, 255, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            color: white;
-            padding: 6px 16px;
-            border-radius: 15px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .logout-btn:hover {
-            background: rgba(255, 255, 255, 0.4);
-            transform: translateY(-1px);
-        }
-
-        .info-box {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            padding: 30px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .info-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .info-card h3 {
-            font-size: 0.9em;
-            color: #6c757d;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .info-card p {
-            font-size: 1.5em;
-            color: #212529;
-            font-weight: 600;
-        }
-
-        .search-section {
-            padding: 30px;
-            background: white;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .search-box {
-            display: flex;
-            gap: 10px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .search-box input {
-            flex: 1;
-            padding: 15px 20px;
-            font-size: 1.1em;
-            border: 2px solid #dee2e6;
-            border-radius: 10px;
-            outline: none;
-            transition: all 0.3s;
-        }
-
-        .search-box input:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .search-box button {
-            padding: 15px 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .search-box button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .filters-section {
-            padding: 30px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .filters-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .filter-group label {
-            display: block;
-            font-size: 0.9em;
-            font-weight: 600;
-            color: #495057;
-            margin-bottom: 5px;
-        }
-
-        .filter-group select {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
-            font-size: 1em;
-            outline: none;
-            transition: all 0.3s;
-            min-height: 42px;
-        }
-
-        .filter-group select[multiple] {
-            display: none; /* Gizle, checkbox kullanacağız */
-        }
-        
-        .filter-search-box {
-            position: relative;
-            margin-bottom: 8px;
-        }
-        
-        .filter-search-input {
-            width: 100%;
-            padding: 8px 30px 8px 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 0.9em;
-            box-sizing: border-box;
-        }
-        
-        .filter-search-input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .filter-search-clear {
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: #999;
-            cursor: pointer;
-            font-size: 1.2em;
-            padding: 0;
-            width: 20px;
-            height: 20px;
-            display: none;
-        }
-        
-        .filter-search-clear:hover {
-            color: #333;
-        }
-        
-        .checkbox-container {
-            max-height: 200px;
-            overflow-y: auto;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
-            padding: 10px;
-            background: white;
-        }
-        
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            padding: 8px;
-            cursor: pointer;
-            border-radius: 5px;
-            transition: background 0.2s;
-        }
-        
-        .checkbox-item.hidden {
-            display: none;
-        }
-        
-        .checkbox-item:hover {
-            background: #f8f9fa;
-        }
-        
-        .checkbox-item input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            margin-right: 10px;
-            cursor: pointer;
-            accent-color: #667eea;
-        }
-        
-        .checkbox-item label {
-            cursor: pointer;
-            flex: 1;
-            margin: 0;
-            font-size: 0.95em;
-        }
-
-        .filter-group select:focus {
-            border-color: #667eea;
-        }
-        
-        .selected-count {
-            font-size: 0.85em;
-            color: #667eea;
-            margin-top: 3px;
-            font-weight: 600;
-        }
-
-        .filter-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-
-        .filter-buttons button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-apply {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-reset {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-apply:hover {
-            background: #218838;
-        }
-
-        .btn-reset:hover {
-            background: #5a6268;
-        }
-
-        .content {
-            padding: 30px;
-        }
-
-        .summary-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .summary-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .summary-card h3 {
-            font-size: 0.9em;
-            opacity: 0.9;
-            margin-bottom: 10px;
-        }
-
-        .summary-card p {
-            font-size: 2em;
-            font-weight: 700;
-        }
-
-        .table-wrapper {
-            overflow-x: auto;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            min-width: 1200px;
-        }
-
-        .data-table thead {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .data-table th {
-            padding: 15px 10px;
-            text-align: left;
-            font-weight: 600;
-            cursor: pointer;
-            user-select: none;
-            white-space: nowrap;
-            font-size: 0.9em;
-        }
-
-        .data-table th:hover {
-            background: rgba(255,255,255,0.1);
-        }
-
-        .data-table td {
-            padding: 10px;
-            border-bottom: 1px solid #dee2e6;
-            font-size: 0.9em;
-            max-width: 250px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .data-table td:hover {
-            overflow: visible;
-            white-space: normal;
-            word-wrap: break-word;
-            position: relative;
-            z-index: 5;
-            background: #fff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-
-        .data-table tbody tr:hover {
-            background: #f8f9fa;
-        }
-
-        .data-table td.numeric {
-            text-align: right;
-            font-family: 'Courier New', monospace;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 50px;
-            font-size: 1.2em;
-            color: #6c757d;
-        }
-
-        .error {
-            text-align: center;
-            padding: 50px;
-            color: #dc3545;
-            font-size: 1.2em;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.85em;
-            font-weight: 600;
-        }
-
-        .status-success {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status-warning {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .status-error {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        
-        /* Tab System */
-        .tabs {
-            display: flex;
-            background: #f8f9fa;
-            border-bottom: 2px solid #dee2e6;
-            padding: 0 30px;
-        }
-        
-        .tab {
-            padding: 15px 30px;
-            cursor: pointer;
-            border: none;
-            background: transparent;
-            font-size: 1.1em;
-            font-weight: 600;
-            color: #6c757d;
-            transition: all 0.3s;
-            border-bottom: 3px solid transparent;
-        }
-        
-        .tab:hover {
-            color: #667eea;
-            background: rgba(102, 126, 234, 0.1);
-        }
-        
-        .tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-            background: white;
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        /* Voice Search */
-        .voice-btn {
-            padding: 15px 20px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.5em;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .voice-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
-        }
-        
-        .voice-btn.listening {
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-        
-        /* Target Tracking */
-        .target-section {
-            background: #f8f9fa;
-            padding: 30px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-        }
-        
-        .target-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        
-        .target-card {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        
-        .target-card h3 {
-            font-size: 1.2em;
-            color: #495057;
-            margin-bottom: 15px;
-        }
-        
-        .target-input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
-            font-size: 1.1em;
-            margin-bottom: 15px;
-        }
-        
-        .progress-bar {
-            width: 100%;
-            height: 30px;
-            background: #e9ecef;
-            border-radius: 15px;
-            overflow: hidden;
-            margin: 15px 0;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            transition: width 0.5s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-        }
-        
-        .target-stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .target-stat {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .target-stat label {
-            font-size: 0.85em;
-            color: #6c757d;
-            display: block;
-            margin-bottom: 5px;
-        }
-        
-        .target-stat value {
-            font-size: 1.3em;
-            font-weight: 700;
-            color: #212529;
-        }
-        
-        /* Customer Analysis */
-        .customer-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .customer-card {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
-        }
-        
-        .customer-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-        }
-        
-        .customer-rank {
-            display: inline-block;
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 40px;
-            font-weight: 700;
-            font-size: 1.2em;
-            margin-right: 15px;
-        }
-        
-        .chart-container {
-            position: relative;
-            height: 400px;
-            margin: 30px 0;
-        }
-        
-        /* Export Button */
-        .export-btn {
-            padding: 12px 25px;
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-left: 10px;
-        }
-        
-        .export-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(17, 153, 142, 0.3);
-        }
-        
-        /* AI Analysis Panel */
-        .analysis-panel {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 15px;
-            margin: 30px 0;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-        
-        .analysis-section {
-            background: rgba(255,255,255,0.1);
-            padding: 20px;
-            border-radius: 10px;
-            margin: 15px 0;
-            backdrop-filter: blur(10px);
-        }
-        
-        .analysis-section h3 {
-            margin: 0 0 15px 0;
-            font-size: 1.3em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .insight-item {
-            background: rgba(255,255,255,0.15);
-            padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
-            border-left: 4px solid;
-        }
-        
-        .insight-positive {
-            border-left-color: #38ef7d;
-        }
-        
-        .insight-negative {
-            border-left-color: #f5576c;
-        }
-        
-        .insight-neutral {
-            border-left-color: #ffd700;
-        }
-        
-        .insight-icon {
-            font-size: 1.5em;
-            margin-right: 10px;
-        }
-        
-        .recommendation {
-            background: rgba(255,255,255,0.2);
-            padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
-            display: flex;
-            align-items: start;
-            gap: 15px;
-        }
-        
-        .recommendation-icon {
-            font-size: 2em;
-            flex-shrink: 0;
-        }
-        
-        .metric-highlight {
-            display: inline-block;
-            background: rgba(255,255,255,0.3);
-            padding: 3px 10px;
-            border-radius: 5px;
-            font-weight: 700;
-            margin: 0 5px;
-        }
-        
-        /* ==================== MOBİL İYİLEŞTİRMELER ==================== */
-        /* PC görünümüne DOKUNMAZ - Sadece mobilde aktif */
-        
-        @media (max-width: 768px) {
-            /* Body ve Container */
-            body {
-                padding: 10px;
-            }
-            
-            .container {
-                border-radius: 10px;
-            }
-            
-            /* Header */
-            .header h1 {
-                font-size: 1.5em;
-                margin-bottom: 5px;
-            }
-            
-            .header p {
-                font-size: 0.9em;
-            }
-            
-            .header {
-                padding: 20px 15px;
-            }
-            
-            /* Info Cards */
-            .info-cards {
-                grid-template-columns: 1fr;
-                gap: 10px;
-                padding: 15px;
-            }
-            
-            .info-card {
-                padding: 15px;
-            }
-            
-            .info-card h3 {
-                font-size: 0.9em;
-            }
-            
-            .info-card p {
-                font-size: 1.2em;
-            }
-            
-            /* Tab Navigation - Yatay Scroll */
-            .tabs {
-                overflow-x: auto;
-                overflow-y: hidden;
-                white-space: nowrap;
-                -webkit-overflow-scrolling: touch;
-                padding: 10px 5px;
-                gap: 5px;
-                scrollbar-width: thin;
-            }
-            
-            .tabs::-webkit-scrollbar {
-                height: 4px;
-            }
-            
-            .tabs::-webkit-scrollbar-thumb {
-                background: #667eea;
-                border-radius: 2px;
-            }
-            
-            .tab {
-                display: inline-block;
-                padding: 12px 20px;
-                font-size: 0.85em;
-                min-width: auto;
-                white-space: nowrap;
-            }
-            
-            /* Content */
-            .content {
-                padding: 15px;
-            }
-            
-            .content h2 {
-                font-size: 1.3em;
-                margin-bottom: 15px;
-            }
-            
-            .content h3 {
-                font-size: 1.1em;
-                margin-bottom: 10px;
-            }
-            
-            /* Summary Cards */
-            .summary-cards {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-            
-            .summary-card {
-                padding: 15px;
-            }
-            
-            .summary-card h3 {
-                font-size: 0.9em;
-            }
-            
-            .summary-card p {
-                font-size: 1.3em;
-            }
-            
-            /* Filters */
-            .filters {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-            
-            .filter-group {
-                padding: 12px;
-            }
-            
-            .filter-group label {
-                font-size: 0.9em;
-            }
-            
-            .filter-group select,
-            .filter-group input {
-                font-size: 0.9em;
-                padding: 10px;
-            }
-            
-            /* Multi-select dropdowns */
-            .multi-select-dropdown {
-                max-height: 200px;
-            }
-            
-            .checkbox-item {
-                padding: 10px 8px;
-            }
-            
-            .checkbox-item label {
-                font-size: 0.9em;
-            }
-            
-            /* Search Section */
-            .search-section {
-                padding: 15px;
-            }
-            
-            .search-box input {
-                font-size: 0.9em;
-                padding: 12px;
-            }
-            
-            .search-box button {
-                padding: 12px 20px;
-                font-size: 0.9em;
-            }
-            
-            /* Buttons */
-            button {
-                padding: 12px 20px;
-                font-size: 0.9em;
-                min-height: 44px; /* Touch-friendly */
-            }
-            
-            /* Charts */
-            .chart-container {
-                min-height: 250px;
-                padding: 15px;
-                margin-bottom: 20px;
-            }
-            
-            .chart-container h3 {
-                font-size: 1em;
-                margin-bottom: 10px;
-            }
-            
-            /* Charts Grid - Tek sütun */
-            .content > div[style*="grid-template-columns"] {
-                grid-template-columns: 1fr !important;
-                gap: 15px !important;
-            }
-            
-            /* Tables - Yatay Scroll */
-            table {
-                font-size: 0.85em;
-                display: block;
-                overflow-x: auto;
-                white-space: nowrap;
-                -webkit-overflow-scrolling: touch;
-            }
-            
-            table thead,
-            table tbody,
-            table tr {
-                display: table;
-                width: 100%;
-                table-layout: fixed;
-            }
-            
-            table th,
-            table td {
-                padding: 8px !important;
-                min-width: 80px;
-            }
-            
-            /* Customer Cards */
-            .customer-card {
-                margin-bottom: 15px;
-            }
-            
-            .customer-grid {
-                grid-template-columns: 1fr !important;
-                gap: 15px !important;
-            }
-            
-            /* Target Section */
-            .target-section {
-                padding: 15px;
-            }
-            
-            .target-input-group {
-                grid-template-columns: 1fr !important;
-                gap: 15px;
-            }
-            
-            .target-input-group input {
-                font-size: 0.9em;
-                padding: 10px;
-            }
-            
-            /* Progress Bars */
-            .progress-item {
-                margin-bottom: 15px;
-            }
-            
-            /* AI Analysis Panel */
-            .analysis-panel {
-                padding: 20px 15px;
-            }
-            
-            .analysis-section {
-                margin: 15px 0;
-            }
-            
-            .insight-item {
-                padding: 12px;
-                margin: 8px 0;
-                font-size: 0.9em;
-            }
-            
-            .recommendation {
-                padding: 12px;
-                margin: 10px 0;
-                font-size: 0.9em;
-            }
-            
-            /* Product/Customer Search Results */
-            #productResultsContainer,
-            #customerProfileContainer,
-            #customerProfileMainContainer,
-            #salespersonProfileContainer,
-            #cityAnalysisContainer {
-                padding: 10px;
-            }
-            
-            /* Responsive Grid Layouts */
-            div[style*="grid-template-columns: repeat(auto-fit"] {
-                grid-template-columns: 1fr !important;
-            }
-            
-            /* Input Fields */
-            input[type="text"],
-            input[type="number"],
-            select,
-            textarea {
-                font-size: 16px !important; /* Prevent zoom on iOS */
-            }
-            
-            /* Sticky Tab Menu */
-            .tabs {
-                position: sticky;
-                top: 0;
-                z-index: 100;
-                background: white;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            }
-            
-            /* Voice Button */
-            #voiceButton {
-                width: 44px;
-                height: 44px;
-                padding: 10px;
-            }
-            
-            /* Excel Export Button */
-            button[onclick*="exportToExcel"] {
-                width: 100%;
-                margin-top: 10px;
-            }
-            
-            /* Debug Panel */
-            #debugPanel {
-                font-size: 0.8em;
-                padding: 10px;
-            }
-            
-            /* Scroll Hint for Tables */
-            table::after {
-                content: "← Kaydırın →";
-                display: block;
-                text-align: center;
-                padding: 10px;
-                background: #f8f9fa;
-                color: #6c757d;
-                font-size: 0.85em;
-                border-top: 1px solid #dee2e6;
-            }
-            
-            /* Hide table scroll hint after first scroll */
-            table.scrolled::after {
-                display: none;
-            }
-            
-            /* Compact spacing for mobile */
-            .content > * {
-                margin-bottom: 20px;
-            }
-            
-            /* Modal/Alert improvements */
-            .swal2-popup {
-                width: 90% !important;
-                font-size: 0.9em !important;
-            }
-        }
-        
-        /* Tablet (768px - 1024px) */
-        @media (min-width: 769px) and (max-width: 1024px) {
-            .container {
-                max-width: 100%;
-            }
-            
-            .tabs {
-                overflow-x: auto;
-                white-space: nowrap;
-            }
-            
-            .tab {
-                font-size: 0.9em;
-                padding: 12px 20px;
-            }
-            
-            .content {
-                padding: 20px;
-            }
-            
-            /* 2 sütun layout for tablets */
-            .filters {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            div[style*="grid-template-columns: repeat(auto-fit"] {
-                grid-template-columns: repeat(2, 1fr) !important;
-            }
-        }
-        
-        /* Landscape Mobile */
-        @media (max-width: 768px) and (orientation: landscape) {
-            .header h1 {
-                font-size: 1.3em;
-            }
-            
-            .chart-container {
-                min-height: 200px;
-            }
-            
-            /* 2 sütun for landscape */
-            .summary-cards {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-    </style>
-</head>
-    <body>
-    <!-- Email Authentication Form - DISABLED -->
-    <!-- Auth forms removed - Direct dashboard access enabled -->
-
-    <!-- Loading Screen -->
-        <div id="loadingScreen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white;">
-            <div style="text-align: center;">
-                <!-- Animated Icon -->
                 <div id="loadingIcon" style="font-size: 4em; margin-bottom: 20px; animation: pulse 2s infinite;">📊</div>
                 <h1 style="margin: 0 0 10px 0; font-size: 2.5em; animation: fadeInUp 1s ease;">Zuhal Müzik Raporlama</h1>
                 <p style="margin: 0 0 30px 0; font-size: 1.2em; opacity: 0.9; animation: fadeInUp 1s ease 0.2s both;">Hoş Geldiniz! Veriler yükleniyor...</p>
@@ -1173,40 +59,6 @@
                 </div>
             </div>
         </div>
-
-        <style>
-            @keyframes pulse {
-                0%, 100% { transform: scale(1); }
-                50% { transform: scale(1.1); }
-            }
-            
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(30px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-            
-            @keyframes shimmer {
-                0% { transform: translateX(-100%); }
-                100% { transform: translateX(100%); }
-            }
-            
-            #loadingScreen .loading-step {
-                opacity: 0.5;
-                transition: opacity 0.3s ease;
-            }
-            
-            #loadingScreen .loading-step.active {
-                opacity: 1;
-                color: #4ade80;
-            }
-        </style>
-
         <div class="container" style="display: none;" id="mainContainer">
         <div class="header">
             <h1>📊 Zuhal Müzik Raporlama</h1>
@@ -1216,7 +68,6 @@
                 <button class="logout-btn" onclick="logout()">🚪 Çıkış</button>
             </div>
         </div>
-
         <!-- Global Satış Kanalı Filtresi -->
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
             <h3 style="color: white; margin: 0 0 15px 0; font-size: 1.3em;">🏢 Satış Kanalı Filtresi</h3>
@@ -1250,7 +101,6 @@
                 📊 Aktif: Tüm Kanallar
             </div>
         </div>
-
         <!-- Loading Spinner for Channel Filter -->
         <div id="channelLoadingSpinner" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center;">
             <div style="text-align: center;">
@@ -1259,14 +109,10 @@
                 <div style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-top: 10px;">Lütfen bekleyin</div>
             </div>
         </div>
-
-        <style>
             @keyframes spin {
                 0% { transform: rotate(0deg); }
                 100% { transform: rotate(360deg); }
             }
-        </style>
-
         <div class="info-box">
             <div class="info-card">
                 <h3>📊 Veri Durumu</h3>
@@ -1293,7 +139,6 @@
                 <p id="basketAverage">-</p>
             </div>
         </div>
-
         <!-- Tab Navigation -->
         <div class="tabs">
             <button class="tab active" onclick="switchTab('dashboard')">🏠 Dashboard</button>
@@ -1306,7 +151,6 @@
             <button class="tab" onclick="switchTab('time')">⏰ Zaman Analizi</button>
             <button class="tab" onclick="switchTab('product')">🎸 Ürün, Marka ve Kategori Analizi</button>
         </div>
-
         <!-- Dashboard Tab -->
         <div id="dashboardTab" class="tab-content active">
             <div class="content">
@@ -1360,7 +204,6 @@
                         <small style="opacity: 0.9; font-size: 0.85em;">Günlük veri versiyonu</small>
                     </div>
                 </div>
-
                 <!-- Yıllık Karşılaştırma -->
                 <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 40px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -1404,7 +247,6 @@
                         <canvas id="dashTopProductsChart" style="height: 500px; max-height: 500px;"></canvas>
                     </div>
                 </div>
-
                 <!-- AI Dashboard Analizi -->
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; margin-bottom: 40px;">
                     <h3 style="color: white; margin-bottom: 20px;">🤖 AI Dashboard Analizi</h3>
@@ -1413,7 +255,6 @@
         </div>
         </div>
         <!-- End Dashboard Tab -->
-
         <!-- Targets Tab -->
         <div id="targetsTab" class="tab-content">
             <div class="content">
@@ -1460,7 +301,6 @@
             </div>
         </div>
         <!-- End Targets Tab -->
-
         <!-- Customers Tab -->
         <div id="customersTab" class="tab-content">
             <div class="content">
@@ -1592,7 +432,6 @@
             </div>
         </div>
         <!-- End Customers Tab -->
-
         <!-- Time Analysis Tab -->
         <div id="timeTab" class="tab-content">
             <div class="content">
@@ -1700,7 +539,6 @@
             </div>
         </div>
         <!-- End Time Analysis Tab -->
-
         <!-- Product Analysis Tab -->
         <div id="productTab" class="tab-content">
             <div class="content">
@@ -1850,7 +688,6 @@
             </div>
         </div>
         <!-- End Product Analysis Tab -->
-
         <!-- Customer Search Tab -->
         <div id="customerSearchTab" class="tab-content">
             <div class="content">
@@ -1967,7 +804,6 @@
             </div>
         </div>
         <!-- End Customer Search Tab -->
-
         <!-- Salesperson Analysis Tab -->
         <div id="salespersonTab" class="tab-content">
             <div class="content">
@@ -2143,7 +979,6 @@
             </div>
         </div>
         <!-- End Salesperson Analysis Tab -->
-
         <!-- Store Analysis Tab -->
         <div id="storeTab" class="tab-content">
             <div class="content">
@@ -2346,7 +1181,6 @@
             </div>
         </div>
         <!-- End Store Analysis Tab -->
-
         <!-- City Analysis Tab -->
         <div id="cityTab" class="tab-content">
             <div class="content">
@@ -2465,7 +1299,6 @@
             </div>
         </div>
         <!-- End City Analysis Tab -->
-
         <!-- Stock Distribution Tab -->
         <div id="stockTab" class="tab-content">
             <div class="content">
@@ -2560,9 +1393,7 @@
             </div>
         </div>
         <!-- End Stock Distribution Tab -->
-
     </div>
-
     <script>
         // Sayfa yüklendiğinde kullanıcı adını göster
         window.addEventListener('DOMContentLoaded', function() {
@@ -2571,7 +1402,6 @@
                 document.getElementById('currentUserName').textContent = username.charAt(0).toUpperCase() + username.slice(1);
             }
         });
-
         // Çıkış fonksiyonu
         function logout() {
             if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
@@ -2585,7 +1415,6 @@
                 console.log('✅ Çıkış yapıldı, sayfa yenileniyor');
             }
         }
-
         let inventoryData = null; // Envanter verileri
         let inventoryCharts = {}; // Envanter grafikleri
         let stockLocations = {}; // Stok konumu ve mağaza eşleşmesi
@@ -2685,7 +1514,6 @@
         }
         
         // Google Sheets fonksiyonu kaldırıldı - artık targets.json kullanılıyor
-
         // GZIP Decompression ve Yıl Yükleme Fonksiyonları
         async function loadStockLocations() {
             try {
@@ -2700,7 +1528,6 @@
                 return {};
             }
         }
-
         // Mağaza ismini normalize eden fonksiyon (stock-locations mapping için)
         function normalizeStoreName(storeName) {
             if (!storeName) return '';
@@ -2736,7 +1563,6 @@
             
             return storeName; // Eşleşme yoksa orijinal ismi döndür
         }
-
         // Belirli bir mağaza ve ürün için mevcut stok miktarını hesaplayan fonksiyon
         function getCurrentStock(storeName, productCode) {
             if (!inventoryData || inventoryData.length === 0) {
@@ -2774,7 +1600,6 @@
             
             return totalStock;
         }
-
         async function loadYearData(year) {
             // Çift yükleme önleme kontrolü
             if (loadedYears.has(year) && loadedDataCache[year]) {
@@ -2848,7 +1673,6 @@
                 throw error;
             }
         }
-
         // Hedefleri yükle (GitHub'dan - Kalıcı çözüm)
         let centralTargets = {yearly: {}, monthly: {}};
         
@@ -2874,7 +1698,6 @@
                 return false;
             }
         }
-
         // Global Kanal Filtresi Fonksiyonu (window scope'una ekle)
         window.handleChannelFilter = function(clickedId) {
             console.log('🔄 handleChannelFilter çağrıldı, tıklanan:', clickedId);
@@ -3152,7 +1975,6 @@
                 }
             }
         }
-
         async function loadRemainingYears(skipYear) {
             if (!metadata || !metadata.years) return;
             
@@ -3657,7 +2479,6 @@
             
             console.log(`🔍 Arama sonucu: ${filtered.length} kayıt bulundu, ${displayData.length} gösteriliyor`);
         }
-
         function populateFilters() {
             const brands = new Set();
             const cat1 = new Set();
@@ -3703,7 +2524,6 @@
             populateMultiSelect('filterMonth', Array.from(months).sort(), 'countMonth');
             populateMultiSelect('filterDay', Array.from(days).sort(), 'countDay');
         }
-
         function populateMultiSelect(id, values, countId) {
             const container = document.getElementById(id);
             if (!container) return;
@@ -3782,7 +2602,6 @@
                 }
             });
         }
-
         function applyFilters() {
             const brands = getSelectedValues('filterBrand');
             const cat1s = getSelectedValues('filterCategory1'); // category_2 verisi
@@ -3899,7 +2718,6 @@
             updateSummary();
             renderTable();
         }
-
         function resetFilters() {
             // Tüm checkbox'ların seçimlerini temizle
             ['filterBrand', 'filterCategory1', 'filterCategory2', 'filterCategory3', 'filterCategory4',
@@ -3926,7 +2744,6 @@
             updateSummary();
             renderTable();
         }
-
         // 🤖 AI AGENT - Gelişmiş Doğal Dil İşleme Motoru
         function applySmartSearch() {
             const query = document.getElementById('smartSearch').value.trim();
@@ -4636,7 +3453,6 @@
             debugInfo.innerHTML = html;
             debugPanel.style.display = 'block';
         }
-
         function updateSummary() {
             console.log('updateSummary - Filtrelenmis veri sayisi:', filteredData.length);
             
@@ -4663,7 +3479,6 @@
                 performAIAnalysis();
             }
         }
-
         // Chart.js instances
         let topCategoryChart = null;
         let topBrandChart = null;
@@ -4920,7 +3735,6 @@
                 }
             });
         }
-
         // ==================== TAB SYSTEM ====================
         function switchTab(tabName) {
             console.log('🔄 switchTab çağrıldı:', tabName);
@@ -6057,7 +4871,6 @@
             
             console.log('✅ Yıllık Müşteri Trendi grafiği oluşturuldu');
         }
-
         // ==================== AI ANALYSIS & INSIGHTS ====================
         function performAIAnalysis() {
             console.log('🤖 AI Analiz başlatılıyor...');
@@ -6394,7 +5207,6 @@
             
             return insights;
         }
-
         // ==================== DASHBOARD ====================
         let dashYearlyChartInstance = null;
         let dashTopStoresChartInstance = null;
@@ -6403,7 +5215,6 @@
         let dashTopCategoriesChartInstance = null;
         let dashTopCitiesChartInstance = null;
         let dashTopProductsChartInstance = null;
-
         function loadDashboard() {
             console.log('🏠 Dashboard yükleniyor...');
             
@@ -6453,10 +5264,8 @@
             // AI Analizi
             performDashboardAIAnalysis();
         }
-
         let dashYearlyMetricType = 'sales'; // Default: satış
         let dashYearlyDataCache = null; // Veriyi cache'le
-
         function changeDashYearlyMetric(type) {
             dashYearlyMetricType = type;
             
@@ -6479,7 +5288,6 @@
             // Grafiği yeniden çiz
             renderDashYearlyChart();
         }
-
         function renderDashYearlyChart() {
             const ctx = document.getElementById('dashYearlyChart');
             if (!ctx) return;
@@ -6606,7 +5414,6 @@
                 }
             });
         }
-
         function renderDashTopStoresChart(data) {
             const ctx = document.getElementById('dashTopStoresChart');
             if (!ctx) return;
@@ -6662,7 +5469,6 @@
                 }
             });
         }
-
         function renderDashTopSalespeopleChart(data) {
             const ctx = document.getElementById('dashTopSalespeopleChart');
             if (!ctx) return;
@@ -6718,7 +5524,6 @@
                 }
             });
         }
-
         function renderDashTopBrandsChart(data) {
             const ctx = document.getElementById('dashTopBrandsChart');
             if (!ctx) return;
@@ -6785,7 +5590,6 @@
                 plugins: [ChartDataLabels]
             });
         }
-
         function renderDashTopCategoriesChart(data) {
             const ctx = document.getElementById('dashTopCategoriesChart');
             if (!ctx) return;
@@ -6860,7 +5664,6 @@
                 plugins: [ChartDataLabels]
             });
         }
-
         function renderDashTopCitiesChart(data) {
             const ctx = document.getElementById('dashTopCitiesChart');
             if (!ctx) return;
@@ -6916,7 +5719,6 @@
                 }
             });
         }
-
         function renderDashTopProductsChart(data) {
             const ctx = document.getElementById('dashTopProductsChart');
             if (!ctx) return;
@@ -7000,7 +5802,6 @@
                 }
             });
         }
-
         function performDashboardAIAnalysis() {
             console.log('🤖 Gelişmiş AI Analiz başlatılıyor...');
             
@@ -7299,7 +6100,6 @@
             
             document.getElementById('dashAIAnalysis').innerHTML = analysis;
         }
-
         // ==================== TIME ANALYSIS ====================
         let hourlyChartInstance = null;
         let monthlyTrendChartInstance = null;
@@ -7985,7 +6785,6 @@
             panel.innerHTML = html;
             panel.style.display = 'block';
         }
-
         // Load data on page load - artık otomatik yükleniyor, bu satır gereksiz
         // window.loadData() çağrısı DOMContentLoaded event'inde yapılıyor
         
@@ -11639,21 +10438,16 @@
         
         function performMultipleStoresAIAnalysis(storesData) {
             console.log('🤖 Çoklu mağaza karşılaştırmalı AI analizi başlatılıyor...', storesData);
-
             const insights = {positive: [], negative: [], neutral: [], recommendations: [], categories: []};
-
             // Mağaza isimlerini al
             const names = storesData.map(st => st.name).join(', ');
-
             insights.neutral.push(`🔍 <strong>${storesData.length} Mağaza Detaylı Karşılaştırma:</strong> ${names}`);
-
             // === SATIŞ PERFORMANSI ANALİZİ ===
             const sortedBySales = [...storesData].sort((a, b) => b.totalSales - a.totalSales);
             const totalAllSales = sortedBySales.reduce((sum, st) => sum + st.totalSales, 0);
             const avgSales = totalAllSales / sortedBySales.length;
             
             insights.positive.push(`🏆 <strong>Satış Lideri:</strong> ${sortedBySales[0].name} - $${sortedBySales[0].totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} (Toplam satışın %${((sortedBySales[0].totalSales / totalAllSales) * 100).toFixed(1)}'i)`);
-
             if (sortedBySales.length > 1) {
                 const gap = sortedBySales[0].totalSales - sortedBySales[1].totalSales;
                 const gapPercent = (gap / sortedBySales[1].totalSales * 100).toFixed(1);
@@ -11665,13 +10459,11 @@
                     insights.negative.push(`⚠️ <strong>Ortalama Altı Performans:</strong> ${belowAvg.map(st => st.name).join(', ')} ortalama satışın ($${avgSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}) altında`);
                 }
             }
-
             if (sortedBySales.length > 2) {
                 const lastStore = sortedBySales[sortedBySales.length - 1];
                 const gapToLeader = sortedBySales[0].totalSales - lastStore.totalSales;
                 insights.negative.push(`📉 <strong>En Düşük Performans:</strong> ${lastStore.name} - $${lastStore.totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})} (Liderden %${((gapToLeader / sortedBySales[0].totalSales) * 100).toFixed(1)} daha az)`);
             }
-
             // === MİKTAR & SEPETAnalizi ===
             const sortedByQty = [...storesData].sort((a, b) => b.totalQty - a.totalQty);
             const sortedByBasket = [...storesData].sort((a, b) => b.avgBasket - a.avgBasket);
@@ -11684,7 +10476,6 @@
             if (lowBasket.length > 0) {
                 insights.negative.push(`⚠️ <strong>Düşük Sepet Ortalaması:</strong> ${lowBasket.map(st => `${st.name} ($${st.avgBasket.toFixed(2)})`).join(', ')} - Cross-selling fırsatı var`);
             }
-
             // === KATEGORİ ANALİZİ ===
             const categoryAnalysis = {};
             storesData.forEach(store => {
@@ -11715,7 +10506,6 @@
                     insights.categories.push(`📂 <strong>${category}:</strong> ${leader[0]} lider ($${leader[1].toLocaleString('tr-TR', {minimumFractionDigits: 2})}, %${percentage})`);
                 }
             });
-
             // === ÖNERİLER ===
             insights.recommendations.push(`🎯 <strong>${sortedBySales[0].name}</strong> en iyi uygulamalarını (satış teknikleri, ürün yerleşimi, müşteri hizmetleri) diğer mağazalarla paylaşmalı`);
             
@@ -11733,53 +10523,43 @@
             if (topCategories.length > 0) {
                 insights.recommendations.push(`📊 <strong>En çok satan 3 kategori:</strong> ${topCategories.map(([cat, _]) => cat).join(', ')} - Bu kategorilerde stok ve teşhir optimizasyonu yapın`);
             }
-
             if (sortedBySales.length > 1) {
                 const lowPerformers = sortedBySales.slice(Math.ceil(sortedBySales.length / 2));
                 if (lowPerformers.length > 0) {
                     insights.recommendations.push(`📚 <strong>${lowPerformers.map(st => st.name).join(', ')}</strong> için: Trafik analizi, personel verimliliği, ürün çeşitliliği ve fiyatlandırma stratejilerini gözden geçirin`);
                 }
             }
-
             insights.recommendations.push(`🤝 <strong>Aylık Performans Toplantıları:</strong> Mağaza müdürleri arası best practice paylaşımı ve sorun çözme workshopları düzenleyin`);
             insights.recommendations.push(`📊 <strong>Müşteri Geri Bildirimleri:</strong> Her mağaza için NPS (Net Promoter Score) ve müşteri memnuniyeti anketleri yaparak performans farklılıklarının nedenlerini analiz edin`);
-
             // HTML oluştur
             let html = '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; color: white; margin-bottom: 30px;">';
             html += '<h3 style="margin: 0 0 20px 0; font-size: 1.8em;">🤖 Karşılaştırmalı AI Performans Analizi</h3>';
-
             if (insights.positive.length > 0) {
                 html += '<div style="margin-bottom: 20px;"><h4 style="color: #4ade80; margin-bottom: 10px;">✅ Güçlü Yönler:</h4><ul style="margin: 0; padding-left: 20px;">';
                 insights.positive.forEach(item => html += `<li style="margin-bottom: 8px;">${item}</li>`);
                 html += '</ul></div>';
             }
-
             if (insights.negative.length > 0) {
                 html += '<div style="margin-bottom: 20px;"><h4 style="color: #fbbf24; margin-bottom: 10px;">⚠️ Gelişim Alanları:</h4><ul style="margin: 0; padding-left: 20px;">';
                 insights.negative.forEach(item => html += `<li style="margin-bottom: 8px;">${item}</li>`);
                 html += '</ul></div>';
             }
-
             if (insights.neutral.length > 0) {
                 html += '<div style="margin-bottom: 20px;"><h4 style="color: #e0e7ff; margin-bottom: 10px;">📊 Genel Durum:</h4><ul style="margin: 0; padding-left: 20px;">';
                 insights.neutral.forEach(item => html += `<li style="margin-bottom: 8px;">${item}</li>`);
                 html += '</ul></div>';
             }
-
             if (insights.categories.length > 0) {
                 html += '<div style="margin-bottom: 20px;"><h4 style="color: #fcd34d; margin-bottom: 10px;">📂 Kategori Liderlikleri:</h4><ul style="margin: 0; padding-left: 20px;">';
                 insights.categories.forEach(item => html += `<li style="margin-bottom: 8px;">${item}</li>`);
                 html += '</ul></div>';
             }
-
             if (insights.recommendations.length > 0) {
                 html += '<div><h4 style="color: #a78bfa; margin-bottom: 10px;">💡 Stratejik Öneriler:</h4><ul style="margin: 0; padding-left: 20px;">';
                 insights.recommendations.forEach(item => html += `<li style="margin-bottom: 8px;">${item}</li>`);
                 html += '</ul></div>';
             }
-
             html += '</div>';
-
             // Çoklu mağaza karşılaştırması için özel div'e yaz
             const multipleAIContent = document.getElementById('multipleStoresAIContent');
             if (multipleAIContent) {
@@ -15391,7 +14171,6 @@
                 console.error('❌ loadData fonksiyonu bulunamadı!');
             }
         }
-
         // Sayfa yüklendiğinde ve tab değiştiğinde çalıştır
         document.addEventListener('DOMContentLoaded', function() {
             // Gerçek loading'i başlat
@@ -15409,7 +14188,6 @@
                 subtree: true
             });
         });
-
         // Authentication UI Fonksiyonları kaldırıldı - Direkt dashboard erişimi
         
         function showAuthLoading() {
@@ -15455,7 +14233,6 @@
             // Bu fonksiyon artık gerekli değil - session kontrolü zaten yapılıyor
             console.log('📝 DOMContentLoaded - Session kontrolü zaten yapıldı');
         });
-
         // Kullanıcı bilgilerini güncelle
         function updateUserInfo() {
             if (window.currentUser && window.currentUserType) {
@@ -15472,12 +14249,10 @@
         
         // Sayfa yüklenince kullanıcı bilgilerini güncelle
         updateUserInfo();
-
         // Güvenlik bilgilerini göster
         function showSecurityInfo() {
             const session = localStorage.getItem('session');
             if (!session) return;
-
             try {
                 const key = 'zuhal-muzik-secret-key-2024';
                 const bytes = CryptoJS.AES.decrypt(session, key);
@@ -15503,7 +14278,6 @@
                 alert('Güvenlik bilgileri alınamadı.');
             }
         }
-
         // Sayfa yüklendiğinde kullanıcı bilgilerini güncelle
         document.addEventListener('DOMContentLoaded', function() {
             updateUserInfo();
@@ -15529,4 +14303,3 @@
     </div>
 </body>
 </html>
-
