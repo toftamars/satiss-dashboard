@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors({
-    origin: ['https://toftamars.github.io', 'https://your-frontend-domain.com'],
+    origin: ['https://toftamars.github.io', 'https://mail.trmail.info'],
     credentials: true
 }));
 app.use(express.json());
