@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Data files
+data/
+*.json.gz
+
+# Build outputs
+dist/
+build/
+
+# External libraries (CDN'den yüklenen)
+*.min.js
+
+# Test outputs
+coverage/
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
