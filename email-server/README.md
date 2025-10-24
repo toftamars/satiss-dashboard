@@ -70,22 +70,96 @@ Body: { "token": "abc123..." }
 - Maksimum 3 deneme hakkı
 - Rate limiting aktif
 
-## Deployment
+## Canlı Ortam Kurulumu
 
-### Heroku
+### 1. Frontend Konfigürasyonu
+`index.html` dosyasında email servis URL'ini güncelleyin:
+```javascript
+const EMAIL_SERVICE_URL = 'https://your-email-server-domain.com';
+```
+
+### 2. CORS Ayarları
+`server.js` dosyasında CORS origin'lerini güncelleyin:
+```javascript
+origin: ['https://toftamars.github.io', 'https://your-frontend-domain.com']
+```
+
+### 3. Environment Değişkenleri
+`.env` dosyası oluşturun:
+```env
+EMAIL_HOST=mail.zuhalmuzik.com
+EMAIL_PORT=587
+EMAIL_USER=noreply@zuhalmuzik.com
+EMAIL_PASS=your-secure-password
+EMAIL_FROM=Zuhal Müzik <noreply@zuhalmuzik.com>
+FRONTEND_URL=https://toftamars.github.io/satiss-dashboard
+PORT=3000
+NODE_ENV=production
+JWT_SECRET=your-production-secret
+```
+
+### 4. Deployment
+
+#### Heroku
 ```bash
 heroku create zuhal-muzik-email
 heroku config:set EMAIL_HOST=mail.zuhalmuzik.com
 heroku config:set EMAIL_USER=noreply@zuhalmuzik.com
 heroku config:set EMAIL_PASS=your-password
+heroku config:set FRONTEND_URL=https://toftamars.github.io/satiss-dashboard
+heroku config:set NODE_ENV=production
 git push heroku main
 ```
 
-### VPS
+#### VPS (PM2 ile)
 ```bash
-# PM2 ile çalıştırma
+# PM2'yi global olarak yükle
 npm install -g pm2
-pm2 start server.js --name "email-service"
+
+# Uygulamayı başlat
+pm2 start server.js --name "zuhal-email-service"
+
+# Sistem başlangıcında otomatik başlatma
 pm2 startup
 pm2 save
+
+# Logları görüntüle
+pm2 logs zuhal-email-service
+```
+
+#### Nginx Reverse Proxy
+```nginx
+server {
+    listen 80;
+    server_name your-email-server-domain.com;
+    
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+### 5. SSL Sertifikası
+```bash
+# Let's Encrypt ile SSL
+sudo certbot --nginx -d your-email-server-domain.com
+```
+
+### 6. Test Etme
+```bash
+# Health check
+curl https://your-email-server-domain.com/health
+
+# OTP test
+curl -X POST https://your-email-server-domain.com/send-otp \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@zuhalmuzik.com"}'
 ```
