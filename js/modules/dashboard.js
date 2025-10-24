@@ -4,6 +4,7 @@
 // ===== DASHBOARD SUMMARY CARDS UPDATE FUNCTION =====
 window.updateDashboardSummaryCards = function() {
     console.log('📊 Özet kartları güncelleniyor...');
+    console.log('📦 loadedDataCache:', Object.keys(window.loadedDataCache || {}));
     
     try {
         let totalSales = 0;
@@ -15,7 +16,7 @@ window.updateDashboardSummaryCards = function() {
         let totalTransactions = 0;
         
         // Tüm yılların verilerini topla
-        for (const year in loadedDataCache) {
+        for (const year in window.loadedDataCache) {
             const yearData = loadedDataCache[year];
             if (yearData && yearData.details) {
                 yearData.details.forEach(record => {
