@@ -173,49 +173,8 @@
                     throw new Error('Geçerli yıl verisi bulunamadı');
                 }
                 
-                // TÜM YILLARI PARALEL YÜKLE (İlk girişte hepsi)
-                console.log(`📅 Tüm yıllar yükleniyor: ${metadata.years.join(', ')}`);
-                
-                // Tüm yılları paralel olarak yükle
-                const yearPromises = metadata.years.map(year => loadYearData(year));
-                const yearResults = await Promise.all(yearPromises);
-                
-                // Tüm verileri birleştir
-                let allRawData = [];
-                let totalRecords = 0;
-                
-                for (let i = 0; i < metadata.years.length; i++) {
-                    const year = metadata.years[i];
-                    const yearData = yearResults[i];
-                    
-                    if (yearData?.details && yearData.details.length > 0) {
-                        console.log(`✅ ${year} yılı yüklendi: ${yearData.details.length} kayıt`);
-                        allRawData = allRawData.concat(yearData.details);
-                        totalRecords += yearData.details.length;
-                    } else {
-                        console.warn(`⚠️ ${year} yılında veri bulunamadı`);
-                    }
-                }
-                
-                console.log(`📊 Toplam yüklenen kayıt: ${totalRecords}`);
-                
-                if (allRawData.length === 0) {
-                    console.error('❌ Hiçbir yılda veri bulunamadı!');
-                    return;
-                }
-                
-                // Tüm verileri işle
-                allData = allRawData.map(item => applyDiscountLogic(item));
-                baseData = [...allData];
-                const discountProducts = allData.filter(item => isDiscountProduct(item));
-                filteredData = [...allData];
-                
-                console.log(`💰 ${discountProducts.length} indirim ürünü negatif değer olarak işlendi (toplam kayıt: ${allRawData.length})`);
-                
-                // Dashboard'ı yükle
-                setTimeout(() => {
-                    loadDashboard();
-                }, 500);
+                // Tüm yılları yükle
+                await loadAllYearsData(metadata);
                 
                 console.log('✅ Veri yükleme tamamlandı');
                 
@@ -227,6 +186,24 @@
             }
         };
         
+        // ===== CACHE VERSION FUNCTIONS =====
+        function getDailyVersion() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}${month}${day}`;
+        }
+        
+        function getHourlyVersion() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hour = String(now.getHours()).padStart(2, '0');
+            return `${year}${month}${day}${hour}`;
+        }
+
         // ===== GLOBAL METADATA LOADING FUNCTION =====
         window.loadMetadata = async function() {
             try {
@@ -3003,23 +2980,6 @@
             }
         }
 
-        // Akıllı Cache Sistemi
-        function getDailyVersion() {
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const day = String(today.getDate()).padStart(2, '0');
-            return `${year}${month}${day}`;
-        }
-        
-        function getHourlyVersion() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hour = String(now.getHours()).padStart(2, '0');
-            return `${year}${month}${day}-${hour}`;
-        }
         let inventoryData = null; // Envanter verileri
         let inventoryCharts = {}; // Envanter grafikleri
         let stockLocations = {}; // Stok konumu ve mağaza eşleşmesi
@@ -3501,8 +3461,10 @@
                 return null;
             }
         }
-                
-                // TÜM YILLARI PARALEL YÜKLE (İlk girişte hepsi)
+        
+        // TÜM YILLARI PARALEL YÜKLE (İlk girişte hepsi)
+        async function loadAllYearsData(metadata) {
+            try {
                 console.log(`📅 Tüm yıllar yükleniyor: ${metadata.years.join(', ')}`);
                 
                 // Tüm yılları paralel olarak yükle
