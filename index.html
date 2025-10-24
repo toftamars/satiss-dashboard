@@ -3504,6 +3504,7 @@
                 console.log(`💰 ${discountProducts.length} indirim ürünü negatif değer olarak işlendi (toplam kayıt: ${allRawData.length})`);
                 
                 // Update info cards
+                const latestYear = metadata.years[metadata.years.length - 1]; // En son yıl
                 document.getElementById('dataStatus').innerHTML = `<span class="status-badge status-success">✅ ${latestYear}</span>`;
                 document.getElementById('lastUpdate').textContent = metadata.last_update || '-';
                 document.getElementById('totalRecords').textContent = allData.length.toLocaleString('tr-TR');
