@@ -25,10 +25,10 @@
     <script defer src="js/time-analysis-enhanced.js"></script>
     <!-- Email Servisi Konfigürasyonu -->
     <script>
-        // ===== GLOBAL AUTHENTICATION FUNCTIONS =====
+        // ===== CRITICAL FUNCTIONS - EARLY DEFINITION =====
         // Bu fonksiyonlar sayfa yüklenir yüklenmez tanımlanır
-        // ===== DASHBOARD DIRECT ACCESS =====
         window.showDashboardAfterAuth = function(user) {
+            console.log('🚀 showDashboardAfterAuth çağrıldı');
             const loadingScreen = document.getElementById('loadingScreen');
             const mainContainer = document.getElementById('mainContainer');
             
@@ -61,6 +61,10 @@
                 userTypeElement.textContent = '👤 Kullanıcı';
             }
         };
+        
+        console.log('✅ Kritik fonksiyonlar tanımlandı');
+    </script>
+    <script>
         
         // Authentication fonksiyonları kaldırıldı - Direkt dashboard erişimi
         
@@ -363,17 +367,9 @@
             
             // Dashboard'ı başlat
             setTimeout(() => {
-                if (typeof window.showDashboardAfterAuth === 'function') {
-                    window.showDashboardAfterAuth(user);
-                } else {
-                    console.error('❌ showDashboardAfterAuth fonksiyonu bulunamadı!');
-                    // Alternatif: Direkt dashboard'ı göster
-                    const loadingScreen = document.getElementById('loadingScreen');
-                    const mainContainer = document.getElementById('mainContainer');
-                    if (loadingScreen) loadingScreen.style.display = 'none';
-                    if (mainContainer) mainContainer.style.display = 'block';
-                }
-            }, 500); // 100ms'den 500ms'ye çıkardık
+                console.log('🚀 Dashboard başlatılıyor...');
+                window.showDashboardAfterAuth(user);
+            }, 100);
         })();
     </script>
     <style>
@@ -15710,11 +15706,7 @@
             if (sessionData === 'true' && sessionExpiry && new Date().getTime() < parseInt(sessionExpiry)) {
                 // Session geçerli, dashboard'ı göster
                 console.log('✅ Geçerli session bulundu, dashboard yükleniyor...');
-                if (typeof window.showDashboardAfterAuth === 'function') {
-                    window.showDashboardAfterAuth();
-                } else {
-                    console.error('❌ showDashboardAfterAuth fonksiyonu bulunamadı!');
-                }
+                window.showDashboardAfterAuth();
             } else {
                 // Session yok veya süresi dolmuş, direkt dashboard aç
                 console.log('🔐 Session yok veya süresi dolmuş, direkt dashboard açılıyor...');
