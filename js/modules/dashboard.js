@@ -4,7 +4,13 @@
 // ===== DASHBOARD SUMMARY CARDS UPDATE FUNCTION =====
 window.updateDashboardSummaryCards = function() {
     console.log('📊 Özet kartları güncelleniyor...');
-    console.log('📦 loadedDataCache:', Object.keys(window.loadedDataCache || {}));
+    console.log('📦 loadedDataCache keys:', Object.keys(window.loadedDataCache || {}));
+    
+    // Cache boş mu kontrol et
+    if (!window.loadedDataCache || Object.keys(window.loadedDataCache).length === 0) {
+        console.warn('⚠️ loadedDataCache boş! Özet kartları güncellenemedi.');
+        return;
+    }
     
     try {
         let totalSales = 0;
@@ -17,7 +23,7 @@ window.updateDashboardSummaryCards = function() {
         
         // Tüm yılların verilerini topla
         for (const year in window.loadedDataCache) {
-            const yearData = loadedDataCache[year];
+            const yearData = window.loadedDataCache[year];
             if (yearData && yearData.details) {
                 yearData.details.forEach(record => {
                     // Satış tutarı (KDV hariç)

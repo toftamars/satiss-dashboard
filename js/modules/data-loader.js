@@ -89,12 +89,6 @@ window.loadData = async function() {
         updateLoadingProgress(40, '📦 Veri dosyaları yükleniyor...');
         await loadAllYearsData(metadata);
         
-        // Özet kartlarını güncelle
-        updateLoadingProgress(90, '📊 Özet kartları güncelleniyor...');
-        if (typeof window.updateDashboardSummaryCards === 'function') {
-            window.updateDashboardSummaryCards();
-        }
-        
         // Final loading
         updateLoadingProgress(95, '✅ Son hazırlıklar...');
         
@@ -201,6 +195,15 @@ window.loadAllYearsData = async function(metadata) {
     // Data status'ü güncelle
     const allYears = metadata.years.sort().join(', ');
     document.getElementById('dataStatus').innerHTML = `<span class="status-badge status-success">✅ Tüm Yıllar (${allYears})</span>`;
+    
+    // KALICI ÇÖZÜM: Özet kartlarını burada güncelle
+    console.log('📊 Özet kartları güncelleniyor (loadAllYearsData sonrası)...');
+    if (typeof window.updateDashboardSummaryCards === 'function') {
+        // setTimeout ile DOM'un hazır olmasını bekle
+        setTimeout(() => {
+            window.updateDashboardSummaryCards();
+        }, 500);
+    }
     
     // Loading progress'i tamamla
     dataLoadProgress.ready = true;
