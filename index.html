@@ -130,13 +130,131 @@
                 // Tüm yılları yükle
                 await loadAllYearsData(metadata);
                 
-                console.log('✅ Veri yükleme tamamlandı');
+                // Özet kartlarını güncelle
+                if (typeof updateDashboardSummaryCards === 'function') {
+                    updateDashboardSummaryCards();
+                }
+                
+            }
+        };
+        
+        // ===== DASHBOARD SUMMARY CARDS UPDATE FUNCTION =====
+        window.updateDashboardSummaryCards = function() {
+            console.log('📊 Özet kartları güncelleniyor...');
+            
+            try {
+                let totalSales = 0;
+                let totalQty = 0;
+                let totalCustomers = new Set();
+                let totalProducts = new Set();
+                let totalStores = new Set();
+                let totalSalespeople = new Set();
+                let totalTransactions = 0;
+                
+                // Tüm yılların verilerini topla
+                for (const year in loadedDataCache) {
+                    const yearData = loadedDataCache[year];
+                    if (yearData && yearData.details) {
+                        yearData.details.forEach(record => {
+                            // Satış tutarı (KDV hariç)
+                            const salesAmount = parseFloat(record['Satış Tutarı (KDV Hariç)']) || 0;
+                            totalSales += salesAmount;
+                            
+                            // Miktar
+                            const qty = parseFloat(record['Miktar']) || 0;
+                            totalQty += qty;
+                            
+                            // Müşteri
+                            if (record['Müşteri']) {
+                                totalCustomers.add(record['Müşteri']);
+                            }
+                            
+                            // Ürün
+                            if (record['Ürün']) {
+                                totalProducts.add(record['Ürün']);
+                            }
+                            
+                            // Mağaza
+                            if (record['Mağaza']) {
+                                totalStores.add(record['Mağaza']);
+                            }
+                            
+                            // Temsilci
+                            if (record['Temsilci']) {
+                                totalSalespeople.add(record['Temsilci']);
+                            }
+                            
+                            // İşlem sayısı (her kayıt bir işlem)
+                            totalTransactions++;
+                        });
+                    }
+                }
+                
+                // Günlük ortalama hesapla (toplam gün sayısı)
+                const totalDays = Object.keys(loadedDataCache).length * 365; // Yaklaşık
+                const dailyAverage = totalDays > 0 ? totalSales / totalDays : 0;
+                
+                // Sepet ortalaması hesapla
+                const basketAverage = totalTransactions > 0 ? totalSales / totalTransactions : 0;
+                
+                // DOM elementlerini güncelle
+                const elements = {
+                    dashTotalSales: document.getElementById('dashTotalSales'),
+                    dashTotalQty: document.getElementById('dashTotalQty'),
+                    dashTotalCustomers: document.getElementById('dashTotalCustomers'),
+                    dashTotalProducts: document.getElementById('dashTotalProducts'),
+                    dashTotalStores: document.getElementById('dashTotalStores'),
+                    dashTotalSalespeople: document.getElementById('dashTotalSalespeople'),
+                    dashDailyAverage: document.getElementById('dashDailyAverage'),
+                    dashBasketAverage: document.getElementById('dashBasketAverage')
+                };
+                
+                // Değerleri güncelle
+                if (elements.dashTotalSales) {
+                    elements.dashTotalSales.textContent = '$' + totalSales.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                }
+                
+                if (elements.dashTotalQty) {
+                    elements.dashTotalQty.textContent = totalQty.toLocaleString('tr-TR');
+                }
+                
+                if (elements.dashTotalCustomers) {
+                    elements.dashTotalCustomers.textContent = totalCustomers.size.toLocaleString('tr-TR');
+                }
+                
+                if (elements.dashTotalProducts) {
+                    elements.dashTotalProducts.textContent = totalProducts.size.toLocaleString('tr-TR');
+                }
+                
+                if (elements.dashTotalStores) {
+                    elements.dashTotalStores.textContent = totalStores.size.toLocaleString('tr-TR');
+                }
+                
+                if (elements.dashTotalSalespeople) {
+                    elements.dashTotalSalespeople.textContent = totalSalespeople.size.toLocaleString('tr-TR');
+                }
+                
+                if (elements.dashDailyAverage) {
+                    elements.dashDailyAverage.textContent = '$' + dailyAverage.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                }
+                
+                if (elements.dashBasketAverage) {
+                    elements.dashBasketAverage.textContent = '$' + basketAverage.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                }
+                
+                console.log('✅ Özet kartları güncellendi:', {
+                    totalSales: totalSales,
+                    totalQty: totalQty,
+                    totalCustomers: totalCustomers.size,
+                    totalProducts: totalProducts.size,
+                    totalStores: totalStores.size,
+                    totalSalespeople: totalSalespeople.size,
+                    dailyAverage: dailyAverage,
+                    basketAverage: basketAverage
+                });
                 
             } catch (error) {
-                console.error('❌ Veri yükleme hatası:', error);
-                if (document.getElementById('dataStatus')) {
-                    document.getElementById('dataStatus').innerHTML = '<span class="status-badge" style="background:#dc3545;color:#fff;">❌ Hata</span>';
-                }
+                console.error('❌ Özet kartları güncelleme hatası:', error);
             }
         };
         
