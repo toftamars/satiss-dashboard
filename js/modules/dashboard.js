@@ -61,7 +61,7 @@ window.updateDashboardSummaryCards = function() {
         }
         
         // Günlük ortalama hesapla (toplam gün sayısı)
-        const totalDays = Object.keys(loadedDataCache).length * 365; // Yaklaşık
+        const totalDays = Object.keys(window.loadedDataCache).length * 365; // Yaklaşık
         const dailyAverage = totalDays > 0 ? totalSales / totalDays : 0;
         
         // Sepet ortalaması hesapla

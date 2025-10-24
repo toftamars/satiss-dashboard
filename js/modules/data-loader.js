@@ -124,9 +124,9 @@ window.loadMetadata = async function() {
 
 // ===== GLOBAL YEAR DATA LOADING FUNCTION =====
 window.loadYearData = async function(year) {
-    if (loadedYears.has(year) && loadedDataCache[year]) {
+    if (loadedYears.has(year) && window.loadedDataCache[year]) {
         console.log(`⏭️ ${year} zaten yüklü, cache'den döndürülüyor...`);
-        return loadedDataCache[year];
+        return window.loadedDataCache[year];
     }
     
     try {
@@ -150,7 +150,7 @@ window.loadYearData = async function(year) {
         
         // Cache'e kaydet
         loadedYears.add(year);
-        loadedDataCache[year] = yearData;
+        window.loadedDataCache[year] = yearData;
         
         console.log(`✅ ${year} yılı yüklendi: ${yearData.details?.length || 0} kayıt`);
         return yearData;
