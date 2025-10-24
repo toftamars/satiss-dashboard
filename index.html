@@ -15774,7 +15774,22 @@
         }
         
         function startRealLoading() {
-            // Step 1: Sayfa başlatılıyor
+            // Step 1: Session kontrolü
+            const sessionData = sessionStorage.getItem('otpVerified');
+            const sessionExpiry = sessionStorage.getItem('sessionExpiry');
+            
+            if (sessionData === 'true' && sessionExpiry && new Date().getTime() < parseInt(sessionExpiry)) {
+                // Session geçerli, dashboard'ı göster
+                console.log('✅ Geçerli session bulundu, dashboard yükleniyor...');
+                showDashboardAfterAuth();
+            } else {
+                // Session yok veya süresi dolmuş, auth formunu göster
+                console.log('🔐 Session yok veya süresi dolmuş, auth formu gösteriliyor...');
+                showAuthForm();
+                return; // Veri yükleme yapma
+            }
+            
+            // Step 2: Sayfa başlatılıyor
             dataLoadProgress.pageInit = true;
             checkLoadingComplete();
             
