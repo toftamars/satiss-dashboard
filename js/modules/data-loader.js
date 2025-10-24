@@ -38,8 +38,8 @@ window.loadData = async function() {
         await loadAllYearsData(metadata);
         
         // Özet kartlarını güncelle
-        if (typeof updateDashboardSummaryCards === 'function') {
-            updateDashboardSummaryCards();
+        if (typeof window.updateDashboardSummaryCards === 'function') {
+            window.updateDashboardSummaryCards();
         }
         
         console.log('✅ Veri yükleme tamamlandı');
