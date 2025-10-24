@@ -1,5 +1,34 @@
 {
-  "devDependencies": {
-    "html-minifier": "^4.0.0"
-  }
+  "name": "zuhal-muzik-dashboard",
+  "version": "1.0.0",
+  "description": "Müzik Enstrüman Sektörü için Kapsamlı Veri Analiz ve Raporlama Platformu",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "dev": "python -m http.server 8000",
+    "lint": "echo 'Linting not configured yet'",
+    "test": "echo 'Tests not configured yet'",
+    "build": "echo 'Build not configured yet'",
+    "deploy": "git push origin main"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zuhalmuzik/zuhal-muzik-dashboard.git"
+  },
+  "keywords": [
+    "dashboard",
+    "analytics",
+    "reporting",
+    "music",
+    "sales",
+    "data-visualization",
+    "chart",
+    "business-intelligence"
+  ],
+  "author": "Zuhal Müzik Dashboard Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zuhalmuzik/zuhal-muzik-dashboard/issues"
+  },
+  "homepage": "https://zuhalmuzik.github.io/zuhal-muzik-dashboard"
 }
