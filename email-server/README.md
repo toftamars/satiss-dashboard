@@ -75,7 +75,7 @@ Body: { "token": "abc123..." }
 ### 1. Frontend Konfigürasyonu
 `index.html` dosyasında email servis URL'ini güncelleyin:
 ```javascript
-const EMAIL_SERVICE_URL = 'https://your-email-server-domain.com';
+const EMAIL_SERVICE_URL = 'https://mail.trmail.info/';
 ```
 
 ### 2. CORS Ayarları
@@ -131,7 +131,7 @@ pm2 logs zuhal-email-service
 ```nginx
 server {
     listen 80;
-    server_name your-email-server-domain.com;
+    server_name mail.trmail.info;
     
     location / {
         proxy_pass http://localhost:3000;
@@ -150,16 +150,16 @@ server {
 ### 5. SSL Sertifikası
 ```bash
 # Let's Encrypt ile SSL
-sudo certbot --nginx -d your-email-server-domain.com
+sudo certbot --nginx -d mail.trmail.info
 ```
 
 ### 6. Test Etme
 ```bash
 # Health check
-curl https://your-email-server-domain.com/health
+curl https://mail.trmail.info/health
 
 # OTP test
-curl -X POST https://your-email-server-domain.com/send-otp \
+curl -X POST https://mail.trmail.info/send-otp \
   -H "Content-Type: application/json" \
   -d '{"email":"test@zuhalmuzik.com"}'
 ```
