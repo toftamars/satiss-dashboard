@@ -186,12 +186,74 @@ class InputValidator {
             return '';
         }
         
-        // Script tag'lerini ve event handler'ları temizle
+        // Kapsamlı XSS koruması
         return str
+            // Script tag'lerini temizle (tüm varyantlar)
             .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+            .replace(/<script[^>]*>.*?<\/script>/gi, '')
+            .replace(/<script[^>]*\/>/gi, '')
+            
+            // Event handler'ları temizle
             .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
-            .replace(/javascript:/gi, '')
-            .replace(/data:text\/html/gi, '');
+            .replace(/on\w+\s*=\s*[^>\s]+/gi, '')
+            
+            // JavaScript protokolü ve tehlikeli URL'ler
+            .replace(/javascript\s*:/gi, '')
+            .replace(/vbscript\s*:/gi, '')
+            .replace(/data\s*:\s*text\/html/gi, '')
+            .replace(/data\s*:\s*text\/javascript/gi, '')
+            .replace(/data\s*:\s*text\/vbscript/gi, '')
+            
+            // Tehlikeli HTML tag'leri
+            .replace(/<iframe\b[^>]*>.*?<\/iframe>/gi, '')
+            .replace(/<object\b[^>]*>.*?<\/object>/gi, '')
+            .replace(/<embed\b[^>]*>.*?<\/embed>/gi, '')
+            .replace(/<applet\b[^>]*>.*?<\/applet>/gi, '')
+            .replace(/<form\b[^>]*>.*?<\/form>/gi, '')
+            .replace(/<input\b[^>]*>/gi, '')
+            .replace(/<textarea\b[^>]*>.*?<\/textarea>/gi, '')
+            .replace(/<select\b[^>]*>.*?<\/select>/gi, '')
+            
+            // Tehlikeli attribute'lar
+            .replace(/\s*style\s*=\s*["'][^"']*["']/gi, '')
+            .replace(/\s*class\s*=\s*["'][^"']*["']/gi, '')
+            .replace(/\s*id\s*=\s*["'][^"']*["']/gi, '')
+            
+            // HTML entity'leri ve Unicode escape'leri
+            .replace(/&#x?[0-9a-fA-F]+;/g, '')
+            .replace(/&[a-zA-Z][a-zA-Z0-9]*;/g, '')
+            
+            // Tehlikeli karakterler
+            .replace(/[<>]/g, '')
+            .replace(/['"]/g, '')
+            
+            // Çoklu boşlukları temizle
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    /**
+     * Gelişmiş XSS koruması (DOMPurify ile)
+     */
+    static sanitizeXSSAdvanced(str) {
+        if (!str || typeof str !== 'string') {
+            return '';
+        }
+        
+        // DOMPurify varsa kullan
+        if (typeof DOMPurify !== 'undefined') {
+            return DOMPurify.sanitize(str, {
+                ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br'],
+                ALLOWED_ATTR: [],
+                KEEP_CONTENT: true,
+                SANITIZE_DOM: true,
+                FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'applet', 'form', 'input', 'textarea', 'select'],
+                FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'onchange', 'onsubmit', 'style', 'class', 'id']
+            });
+        }
+        
+        // DOMPurify yoksa temel koruma
+        return this.preventXSS(str);
     }
 
     /**
@@ -303,6 +365,8 @@ window.InputValidator = InputValidator;
 window.validateEmail = (email) => InputValidator.validateEmail(email);
 window.sanitizeString = (str) => InputValidator.sanitizeString(str);
 window.sanitizeHTML = (html) => InputValidator.sanitizeHTML(html);
+window.sanitizeXSS = (str) => InputValidator.preventXSS(str);
+window.sanitizeXSSAdvanced = (str) => InputValidator.sanitizeXSSAdvanced(str);
 window.validateNumber = (num, min, max) => InputValidator.validateNumber(num, min, max);
 
 console.log('✅ Input Validator module loaded successfully');
