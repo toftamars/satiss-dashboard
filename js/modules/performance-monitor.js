@@ -95,18 +95,26 @@ class PerformanceMonitor {
      * Memory usage izle
      */
     startMemoryMonitoring() {
+        // İlk kontrol
+        if (performance.memory) {
+            const memory = performance.memory;
+            this.metrics.memoryUsage = memory.usedJSHeapSize / 1024 / 1024; // MB
+            console.log(`📊 Memory kullanımı: ${this.metrics.memoryUsage.toFixed(2)}MB`);
+        }
+        
+        // Periyodik kontrol - daha az sıklıkta ve daha yüksek threshold
         setInterval(() => {
             if (performance.memory) {
                 const memory = performance.memory;
                 this.metrics.memoryUsage = memory.usedJSHeapSize / 1024 / 1024; // MB
                 
-                // Yüksek memory kullanımı uyarısı
-                if (this.metrics.memoryUsage > 100) {
-                    console.warn(`⚠️ Yüksek memory kullanımı: ${this.metrics.memoryUsage.toFixed(2)}MB`);
+                // Kritik memory kullanımı uyarısı (500MB üzeri)
+                if (this.metrics.memoryUsage > 500) {
+                    console.warn(`⚠️ Kritik memory kullanımı: ${this.metrics.memoryUsage.toFixed(2)}MB`);
                     this.reportHighMemory(this.metrics.memoryUsage);
                 }
             }
-        }, 30000); // 30 saniyede bir kontrol
+        }, 120000); // 2 dakikada bir kontrol
     }
 
     /**
