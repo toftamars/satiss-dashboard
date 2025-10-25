@@ -81,7 +81,9 @@ class UIManager {
                 this.loadSalespersonData();
                 break;
             case 'store':
-                this.loadStoreData();
+                if (window.MagazaAnalizi) {
+                    window.MagazaAnalizi.loadMagazaAnalizi();
+                }
                 break;
             case 'city':
                 this.loadCityData();
