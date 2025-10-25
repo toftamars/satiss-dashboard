@@ -27,11 +27,6 @@
     <!-- Enhanced Time Analysis -->
     <script defer src="js/time-analysis-enhanced.js"></script>
     <!-- Email Servisi Konfigürasyonu -->
-    <script type="module">
-        // ===== LOGGER IMPORT =====
-        import { logger } from './js/modules/logger.js';
-        window.logger = logger; // Global erişim için
-    </script>
     <script>
         // ===== GLOBAL AUTHENTICATION FUNCTIONS =====
         // Bu fonksiyonlar sayfa yüklenir yüklenmez tanımlanır
@@ -44,7 +39,7 @@
             if (userInfo && userName && user) {
                 userName.textContent = `👤 ${user.name || user.username}`;
                 userInfo.style.display = 'block';
-                logger.log('✅ Kullanıcı bilgisi güncellendi:', user.name || user.username);
+                console.log('✅ Kullanıcı bilgisi güncellendi:', user.name || user.username);
             }
         };
         
@@ -66,12 +61,12 @@
             if (typeof window.loadData === 'function') {
                 window.loadData();
             } else {
-                logger.log('⚠️ loadData fonksiyonu henüz yüklenmedi, 2 saniye bekleniyor...');
+                console.log('⚠️ loadData fonksiyonu henüz yüklenmedi, 2 saniye bekleniyor...');
                 setTimeout(() => {
                     if (typeof window.loadData === 'function') {
                         window.loadData();
                     } else {
-                        logger.error('❌ loadData fonksiyonu bulunamadı!');
+                        console.error('❌ loadData fonksiyonu bulunamadı!');
                     }
                 }, 2000);
             }
@@ -82,7 +77,7 @@
             
             if (currentUserName && user) {
                 currentUserName.textContent = user.name || user.username || user.email || 'Kullanıcı';
-                logger.log('✅ Kullanıcı bilgisi güncellendi:', user.name || user.username || user.email);
+                console.log('✅ Kullanıcı bilgisi güncellendi:', user.name || user.username || user.email);
             }
         };
         
@@ -139,14 +134,14 @@
                 window.showAuthForm();
             }, 500);
             
-            logger.log('✅ Çıkış yapıldı, session temizlendi');
+            console.log('✅ Çıkış yapıldı, session temizlendi');
         };
         
         // ===== GLOBAL DATA LOADING FUNCTION =====
         // Bu fonksiyon sayfa yüklenir yüklenmez tanımlanır
         window.loadData = async function() {
-            logger.log('🚀 loadData fonksiyonu çağrıldı');
-            logger.log('🔍 Veri yükleme başlatılıyor...');
+            console.log('🚀 loadData fonksiyonu çağrıldı');
+            console.log('🔍 Veri yükleme başlatılıyor...');
             try {
                 // Loading progress'i güncelle
                 if (typeof dataLoadProgress !== 'undefined') {
@@ -170,9 +165,9 @@
                 }
                 
                 // İlk olarak metadata'yı yükle
-                logger.log('📊 Metadata yükleniyor...');
+                console.log('📊 Metadata yükleniyor...');
                 const metadata = await loadMetadata();
-                logger.log('📊 Metadata yüklendi:', metadata);
+                console.log('📊 Metadata yüklendi:', metadata);
                 
                 if (!metadata) {
                     throw new Error('Metadata yüklenemedi');
@@ -185,21 +180,21 @@
                 // Tüm yılları yükle
                 await loadAllYearsData(metadata);
                 
-                logger.log('✅ Veri yükleme tamamlandı');
+                console.log('✅ Veri yükleme tamamlandı');
                 
                 // Dashboard'ı yükle - veri tamamen yüklendikten sonra
-                logger.log('📊 İlk veri yükleme tamamlandı, dashboard yükleniyor...');
+                console.log('📊 İlk veri yükleme tamamlandı, dashboard yükleniyor...');
                 setTimeout(() => {
                     if (allData && allData.length > 0) {
                         loadDashboard();
-                        logger.log('✅ Dashboard yüklendi');
+                        console.log('✅ Dashboard yüklendi');
                     } else {
-                        logger.warn('⚠️ Dashboard yüklenemedi - veri yok');
+                        console.warn('⚠️ Dashboard yüklenemedi - veri yok');
                     }
                 }, 500);
                 
             } catch (error) {
-                logger.error('❌ Veri yükleme hatası:', error);
+                console.error('❌ Veri yükleme hatası:', error);
                 if (document.getElementById('dataStatus')) {
                     document.getElementById('dataStatus').innerHTML = '<span class="status-badge" style="background:#dc3545;color:#fff;">❌ Hata</span>';
                 }
@@ -232,10 +227,10 @@
                 });
                 if (!response.ok) throw new Error('Metadata yüklenemedi');
                 metadata = await response.json();
-                logger.log('✅ Metadata yüklendi:', metadata);
+                console.log('✅ Metadata yüklendi:', metadata);
                 return metadata;
             } catch (error) {
-                logger.error('❌ Metadata yükleme hatası:', error);
+                console.error('❌ Metadata yükleme hatası:', error);
                 throw error;
             }
         };
@@ -243,12 +238,12 @@
         // ===== GLOBAL YEAR DATA LOADING FUNCTION =====
         window.loadYearData = async function(year) {
             if (loadedYears.has(year) && loadedDataCache[year]) {
-                logger.log(`⏭️ ${year} zaten yüklü, cache'den döndürülüyor...`);
+                console.log(`⏭️ ${year} zaten yüklü, cache'den döndürülüyor...`);
                 return loadedDataCache[year];
             }
             
             try {
-                logger.log(`📦 ${year} yükleniyor...`);
+                console.log(`📦 ${year} yükleniyor...`);
                 
                 // GZIP dosyasını indir - Akıllı Cache ile
                 const version = getDailyVersion(); // Günlük versiyon
@@ -272,11 +267,11 @@
                 loadedYears.add(year);
                 loadedDataCache[year] = yearData;
                 
-                logger.log(`✅ ${year} yılı yüklendi: ${yearData.details?.length || 0} kayıt`);
+                console.log(`✅ ${year} yılı yüklendi: ${yearData.details?.length || 0} kayıt`);
                 return yearData;
                 
             } catch (error) {
-                logger.error(`❌ ${year} yükleme hatası:`, error);
+                console.error(`❌ ${year} yükleme hatası:`, error);
                 throw error;
             }
         };
@@ -299,7 +294,7 @@
                 
                 if (timeDiff < oneHour) {
                     // Session geçerli, dashboard'ı göster
-                    logger.log('✅ Geçerli session bulundu, kalan süre:', Math.round((oneHour - timeDiff) / 60000), 'dakika');
+                    console.log('✅ Geçerli session bulundu, kalan süre:', Math.round((oneHour - timeDiff) / 60000), 'dakika');
                     const userEmail = sessionStorage.getItem('userEmail');
                     const user = {
                         email: userEmail,
@@ -313,13 +308,13 @@
                     return;
                 } else {
                     // Session süresi dolmuş, temizle
-                    logger.log('⏰ Session süresi dolmuş, temizleniyor');
+                    console.log('⏰ Session süresi dolmuş, temizleniyor');
                     sessionStorage.clear();
                 }
             }
             
             // Session yok veya süresi dolmuş, auth formunu göster
-            logger.log('🔐 Session bulunamadı, auth formu gösteriliyor');
+            console.log('🔐 Session bulunamadı, auth formu gösteriliyor');
             setTimeout(() => {
                 window.showAuthForm();
             }, 3000); // 3 saniye loading
@@ -2973,10 +2968,10 @@
                 if (!response.ok) throw new Error('Stock locations yüklenemedi');
                 const data = await response.json();
                 stockLocations = data.stock_locations || {};
-                logger.log('✅ Stok konumları yüklendi:', Object.keys(stockLocations).length, 'lokasyon');
+                console.log('✅ Stok konumları yüklendi:', Object.keys(stockLocations).length, 'lokasyon');
                 return stockLocations;
             } catch (error) {
-                logger.error('❌ Stock locations hatası:', error);
+                console.error('❌ Stock locations hatası:', error);
                 return {};
             }
         }
@@ -2992,7 +2987,7 @@
         async function loadYearData(year) {
             // Çift yükleme önleme kontrolü
             if (loadedYears.has(year) && loadedDataCache[year]) {
-                logger.log(`⏭️ ${year} zaten yüklü, cache'den döndürülüyor...`);
+                console.log(`⏭️ ${year} zaten yüklü, cache'den döndürülüyor...`);
                 // Cache'den veriyi döndür
                 return loadedDataCache[year];
             }
@@ -3025,7 +3020,7 @@
                         const stream = blob.stream().pipeThrough(ds);
                         decompressed = await new Response(stream).text();
                     } catch (e) {
-                        logger.warn('DecompressionStream başarısız, pako kullanılıyor:', e);
+                        console.warn('DecompressionStream başarısız, pako kullanılıyor:', e);
                         // Fallback to pako
                         const uint8Array = new Uint8Array(arrayBuffer);
                         const decompressedArray = pako.inflate(uint8Array);
@@ -3045,9 +3040,9 @@
                 // JSON'a çevir
                 const yearData = JSON.parse(decompressed);
                 
-                logger.log(`✅ ${year} yüklendi: ${yearData?.details?.length || 0} kayıt`);
+                console.log(`✅ ${year} yüklendi: ${yearData?.details?.length || 0} kayıt`);
                 if (!yearData?.details) {
-                    logger.warn(`⚠️ ${year} verisi boş veya geçersiz`);
+                    console.warn(`⚠️ ${year} verisi boş veya geçersiz`);
                 }
                 
                 // Cache'e kaydet
@@ -3057,7 +3052,7 @@
                 return yearData;
                 
             } catch (error) {
-                logger.error(`❌ ${year} yükleme hatası:`, error);
+                console.error(`❌ ${year} yükleme hatası:`, error);
                 throw error;
             }
         }
@@ -3067,11 +3062,11 @@
         
         async function loadCentralTargets() {
             try {
-                logger.log('🎯 Merkezi hedefler yükleniyor...');
+                console.log('🎯 Merkezi hedefler yükleniyor...');
                 const response = await fetch('data/targets.json?' + Date.now()); // Cache bypass
                 if (response.ok) {
                     centralTargets = await response.json();
-                    logger.log('✅ Merkezi hedefler yüklendi:', centralTargets);
+                    console.log('✅ Merkezi hedefler yüklendi:', centralTargets);
                     
                     // Loading progress'i güncelle
                     dataLoadProgress.targets = true;
@@ -3079,20 +3074,20 @@
                     
                     return true;
                 } else {
-                    logger.warn('⚠️ targets.json yüklenemedi, varsayılan hedefler kullanılacak');
+                    console.warn('⚠️ targets.json yüklenemedi, varsayılan hedefler kullanılacak');
                     return false;
                 }
             } catch (error) {
-                logger.error('❌ Hedef yükleme hatası:', error);
+                console.error('❌ Hedef yükleme hatası:', error);
                 return false;
             }
         }
 
         // Global Kanal Filtresi Fonksiyonu (window scope'una ekle)
         window.handleChannelFilter = function(clickedId) {
-            logger.log('🔄 handleChannelFilter çağrıldı, tıklanan:', clickedId);
-            logger.log('📊 baseData boyutu:', baseData.length);
-            logger.log('📊 allData boyutu:', allData.length);
+            console.log('🔄 handleChannelFilter çağrıldı, tıklanan:', clickedId);
+            console.log('📊 baseData boyutu:', baseData.length);
+            console.log('📊 allData boyutu:', allData.length);
             
             const channelAll = document.getElementById('channelAll').checked;
             const channelRetail = document.getElementById('channelRetail').checked;
@@ -3101,7 +3096,7 @@
             const channelCorporate = document.getElementById('channelCorporate').checked;
             const channelCentral = document.getElementById('channelCentral').checked;
             
-            logger.log('✅ Checkbox durumları:', {channelAll, channelRetail, channelWholesale, channelOnline, channelCorporate, channelCentral});
+            console.log('✅ Checkbox durumları:', {channelAll, channelRetail, channelWholesale, channelOnline, channelCorporate, channelCentral});
             
             // Eğer Tümü tıklandıysa, diğerlerini kapat
             if (clickedId === 'channelAll' && channelAll) {
@@ -3140,9 +3135,9 @@
         };
         
         function applyChannelFilter() {
-            logger.log('🏢 applyChannelFilter başladı');
-            logger.log('📊 activeChannels:', activeChannels);
-            logger.log('📊 baseData uzunluk:', baseData.length);
+            console.log('🏢 applyChannelFilter başladı');
+            console.log('📊 activeChannels:', activeChannels);
+            console.log('📊 baseData uzunluk:', baseData.length);
             
             // Spinner'ı göster
             const spinner = document.getElementById('channelLoadingSpinner');
@@ -3171,7 +3166,7 @@
                 // Tümü seçiliyse tüm veriyi kullan
                 if (activeChannels.all) {
                     allData = [...baseData];
-                    logger.log('✅ Tümü seçili, allData uzunluk:', allData.length);
+                    console.log('✅ Tümü seçili, allData uzunluk:', allData.length);
                     document.getElementById('channelFilterInfo').textContent = '📊 Aktif: Tüm Kanallar (19)';
                 } else {
                 // Seçili kanallara göre filtrele
@@ -3266,7 +3261,7 @@
         // TÜM YILLARI PARALEL YÜKLE (İlk girişte hepsi)
         async function loadAllYearsData(metadata) {
             try {
-                logger.log(`📅 Tüm yıllar yükleniyor: ${metadata.years.join(', ')}`);
+                console.log(`📅 Tüm yıllar yükleniyor: ${metadata.years.join(', ')}`);
                 
                 // Tüm yılları paralel olarak yükle
                 const yearPromises = metadata.years.map(year => loadYearData(year));
@@ -3281,18 +3276,18 @@
                     const yearData = yearResults[i];
                     
                     if (yearData?.details && yearData.details.length > 0) {
-                        logger.log(`✅ ${year} yılı yüklendi: ${yearData.details.length} kayıt`);
+                        console.log(`✅ ${year} yılı yüklendi: ${yearData.details.length} kayıt`);
                         allRawData = allRawData.concat(yearData.details);
                         totalRecords += yearData.details.length;
                     } else {
-                        logger.warn(`⚠️ ${year} yılında veri bulunamadı`);
+                        console.warn(`⚠️ ${year} yılında veri bulunamadı`);
                     }
                 }
                 
-                logger.log(`📊 Toplam yüklenen kayıt: ${totalRecords}`);
+                console.log(`📊 Toplam yüklenen kayıt: ${totalRecords}`);
                 
                 if (allRawData.length === 0) {
-                    logger.error('❌ Hiçbir yılda veri bulunamadı!');
+                    console.error('❌ Hiçbir yılda veri bulunamadı!');
                     return;
                 }
                 
@@ -3302,7 +3297,7 @@
                 const discountProducts = allData.filter(item => isDiscountProduct(item));
                 filteredData = [...allData];
                 
-                logger.log(`💰 ${discountProducts.length} indirim ürünü negatif değer olarak işlendi (toplam kayıt: ${allRawData.length})`);
+                console.log(`💰 ${discountProducts.length} indirim ürünü negatif değer olarak işlendi (toplam kayıt: ${allRawData.length})`);
                 
                 // Update info cards
                 const latestYear = metadata.years[metadata.years.length - 1]; // En son yıl
@@ -3342,20 +3337,20 @@
                 initializeProductFilters();
                 
                 // Dashboard'ı yükle - veri tamamen yüklendikten sonra
-                logger.log('📊 İlk veri yükleme tamamlandı, dashboard yükleniyor...');
+                console.log('📊 İlk veri yükleme tamamlandı, dashboard yükleniyor...');
                 setTimeout(() => {
                     if (allData && allData.length > 0) {
                         loadDashboard();
-                        logger.log('✅ Dashboard yüklendi');
+                        console.log('✅ Dashboard yüklendi');
                     } else {
-                        logger.warn('⚠️ Dashboard yüklenemedi - veri yok');
+                        console.warn('⚠️ Dashboard yüklenemedi - veri yok');
                     }
                 }, 500);
                 
                 // Tüm yıllar zaten yüklendi, ek yükleme gerekmez
                 
             } catch (error) {
-                logger.error('Error loading data:', error);
+                console.error('Error loading data:', error);
                 document.getElementById('dataStatus').innerHTML = '<span class="status-badge status-error">❌ Hata</span>';
                 // tableContainer null check
                 const tableContainerError = document.getElementById('tableContainer');
@@ -3368,13 +3363,13 @@
         async function loadRemainingYears(skipYear) {
             if (!metadata || !metadata.years) return;
             
-            logger.log('📦 Diğer yıllar arka planda yükleniyor...');
+            console.log('📦 Diğer yıllar arka planda yükleniyor...');
             
             // Paralel yükleme için Promise.all kullan
             const yearPromises = metadata.years
                 .filter(year => year !== skipYear && !loadedYears.has(year))
                 .map(year => loadYearData(year).catch(err => {
-                    logger.error(`❌ ${year} yükleme hatası:`, err);
+                    console.error(`❌ ${year} yükleme hatası:`, err);
                     return null;
                 }));
             
@@ -3404,7 +3399,7 @@
                         baseData = [...allData]; // Kanal filtresi için güncelle
                         filteredData = [...allData];
                         
-                        logger.log(`💰 ${year}: ${yearDiscountCount} indirim ürünü negatif değer olarak işlendi (toplam: ${yearRawData.length})`);
+                        console.log(`💰 ${year}: ${yearDiscountCount} indirim ürünü negatif değer olarak işlendi (toplam: ${yearRawData.length})`);
                         
                         // Filtreleri ve tabloyu güncelle
                         populateFilters();
@@ -3438,11 +3433,11 @@
                     }
                     
                 } catch (error) {
-                    logger.error(`⚠️ ${year} yüklenemedi:`, error);
+                    console.error(`⚠️ ${year} yüklenemedi:`, error);
                 }
             }
             
-            logger.log('✅ Tüm yıllar yüklendi!');
+            console.log('✅ Tüm yıllar yüklendi!');
             const allYears = metadata.years.sort().join(', ');
             document.getElementById('dataStatus').innerHTML = `<span class="status-badge status-success">✅ Tüm Yıllar (${allYears})</span>`;
             
@@ -3453,7 +3448,7 @@
         
         // ==================== INVENTORY DATA LOADING ====================
         async function loadInventoryData() {
-            logger.log('📦 Envanter verileri yükleniyor...');
+            console.log('📦 Envanter verileri yükleniyor...');
             
             // Loading state'i göster
             document.getElementById('inventoryLoading').style.display = 'block';
@@ -3473,13 +3468,13 @@
                 // Veri yapısını kontrol et (object içinde inventory array'i var)
                 if (parsedData.inventory && Array.isArray(parsedData.inventory)) {
                     inventoryData = parsedData.inventory;
-                    logger.log(`✅ Envanter verileri yüklendi: ${inventoryData.length} kayıt`);
-                    logger.log(`📊 Toplam miktar: ${parsedData.total_quantity}`);
-                    logger.log(`💰 Toplam değer: $${parsedData.total_value}`);
+                    console.log(`✅ Envanter verileri yüklendi: ${inventoryData.length} kayıt`);
+                    console.log(`📊 Toplam miktar: ${parsedData.total_quantity}`);
+                    console.log(`💰 Toplam değer: $${parsedData.total_value}`);
                 } else if (Array.isArray(parsedData)) {
                     // Eğer direkt array ise
                     inventoryData = parsedData;
-                    logger.log(`✅ Envanter verileri yüklendi: ${inventoryData.length} kayıt`);
+                    console.log(`✅ Envanter verileri yüklendi: ${inventoryData.length} kayıt`);
                 } else {
                     throw new Error('Beklenmeyen veri formatı: inventory array bulunamadı');
                 }
@@ -3488,7 +3483,7 @@
                 renderInventoryDashboard();
                 
             } catch (error) {
-                logger.error('❌ Envanter verileri yüklenemedi:', error);
+                console.error('❌ Envanter verileri yüklenemedi:', error);
                 document.getElementById('inventoryLoading').innerHTML = `
                     <div style="text-align: center; padding: 60px;">
                         <div style="font-size: 4em; margin-bottom: 20px;">⚠️</div>
@@ -3504,11 +3499,11 @@
         
         function renderInventoryDashboard() {
             if (!inventoryData || inventoryData.length === 0) {
-                logger.warn('⚠️ Envanter verisi yok!');
+                console.warn('⚠️ Envanter verisi yok!');
                 return;
             }
             
-            logger.log('📊 Envanter dashboard oluşturuluyor...');
+            console.log('📊 Envanter dashboard oluşturuluyor...');
             
             // Loading'i gizle, content'i göster
             document.getElementById('inventoryLoading').style.display = 'none';
@@ -3517,17 +3512,17 @@
             // İlk yüklemede tüm ürünleri göster
             filterStockAnalysis();
             
-            logger.log('✅ Envanter dashboard oluşturuldu!');
+            console.log('✅ Envanter dashboard oluşturuldu!');
         }
         
         function filterStockAnalysis() {
             if (!inventoryData || inventoryData.length === 0 || !allData || allData.length === 0) {
-                logger.warn('⚠️ Envanter veya satış verisi yok!');
+                console.warn('⚠️ Envanter veya satış verisi yok!');
                 document.getElementById('stockAnalysisTableContainer').innerHTML = '<p style="text-align: center; color: #f5576c; padding: 40px;">⚠️ Veri henüz yüklenmedi. Lütfen bekleyin...</p>';
                 return;
             }
             
-            logger.log('🔍 Stok analizi filtreleniyor...');
+            console.log('🔍 Stok analizi filtreleniyor...');
             
             // Filtre değerlerini al
             const searchBrand = (document.getElementById('stockSearchBrand')?.value || '').toLowerCase().trim();
@@ -3553,7 +3548,7 @@
                 return true;
             });
             
-            logger.log(`📦 Filtrelenmiş envanter: ${filtered.length} ürün`);
+            console.log(`📦 Filtrelenmiş envanter: ${filtered.length} ürün`);
             
             // Her ürün için mağaza bazlı stok ve satış analizi
             const storeAnalysis = {};
@@ -3674,7 +3669,7 @@
             }
             
             container.innerHTML = html;
-            logger.log('✅ Stok analiz tablosu oluşturuldu!');
+            console.log('✅ Stok analiz tablosu oluşturuldu!');
         }
         
         function clearStockFilters() {
@@ -3684,7 +3679,7 @@
             document.getElementById('stockSearchCat3').value = '';
             document.getElementById('stockSearchCat4').value = '';
             filterStockAnalysis();
-            logger.log('🗑️ Stok filtreleri temizlendi');
+            console.log('🗑️ Stok filtreleri temizlendi');
         }
         
         function renderInventoryCharts() {
@@ -3826,7 +3821,7 @@
                 </tr>
             `).join('');
             
-            logger.log(`✅ Envanter tablosu oluşturuldu: ${displayData.length} kayıt`);
+            console.log(`✅ Envanter tablosu oluşturuldu: ${displayData.length} kayıt`);
         }
         
         function filterInventoryTable() {
@@ -3867,7 +3862,7 @@
                 </tr>
             `).join('');
             
-            logger.log(`🔍 Arama sonucu: ${filtered.length} kayıt bulundu, ${displayData.length} gösteriliyor`);
+            console.log(`🔍 Arama sonucu: ${filtered.length} kayıt bulundu, ${displayData.length} gösteriliyor`);
         }
 
         function populateFilters() {
@@ -3933,15 +3928,15 @@
                 return;
             }
             
-            logger.log('🤖 AI AGENT BAŞLATILIYOR...');
-            logger.log('📝 Sorgu:', query);
+            console.log('🤖 AI AGENT BAŞLATILIYOR...');
+            console.log('📝 Sorgu:', query);
             
             // Önce filtreleri sıfırla
             resetFilters();
             
             // AI Agent analizi
             const aiAnalysis = analyzeQueryWithAI(query);
-            logger.log('🧠 AI Analiz Sonucu:', aiAnalysis);
+            console.log('🧠 AI Analiz Sonucu:', aiAnalysis);
             
             // Filtreleri uygula
             applyAIFilters(aiAnalysis);
@@ -3949,7 +3944,7 @@
             // Veriyi filtrele
             filteredData = filterDataWithAI(allData, aiAnalysis);
             
-            logger.log(`✅ AI Agent Sonucu: ${filteredData.length} kayıt bulundu`);
+            console.log(`✅ AI Agent Sonucu: ${filteredData.length} kayıt bulundu`);
             
             // Gelişmiş soru tipleri için özel analiz
             if (aiAnalysis.queryType !== 'basic') {
@@ -4005,7 +4000,7 @@
                 analysis.question.object = personSoldMatch[3]; // ürün, marka, kategori
                 analysis.question.action = 'sattı';
                 analysis.intent = 'analyze';
-                logger.log('🎯 Tespit: Kişi analizi -', analysis.question.subject, 'hangi', analysis.question.object, 'sattı?');
+                console.log('🎯 Tespit: Kişi analizi -', analysis.question.subject, 'hangi', analysis.question.object, 'sattı?');
             }
             
             // 2. "X hangi Y aldı?" pattern (Şehir/Müşteri bazlı)
@@ -4019,7 +4014,7 @@
                 analysis.question.object = cityBoughtMatch[3];
                 analysis.question.action = 'aldı';
                 analysis.intent = 'analyze';
-                logger.log('🎯 Tespit: Şehir/Müşteri analizi -', analysis.question.subject, 'hangi', analysis.question.object, 'aldı?');
+                console.log('🎯 Tespit: Şehir/Müşteri analizi -', analysis.question.subject, 'hangi', analysis.question.object, 'aldı?');
             }
             
             // 3. "Hangi X'de Y daha çok satıyor/satar?" pattern (Öneri)
@@ -4032,7 +4027,7 @@
                 analysis.question.action = 'satmalı';
                 analysis.intent = 'recommendation';
                 analysis.needsGPT = true; // Öneri için GPT kullanılabilir
-                logger.log('🎯 Tespit: Ürün konumlandırma önerisi');
+                console.log('🎯 Tespit: Ürün konumlandırma önerisi');
             }
             
             // 4. "X için en iyi Y nedir?" pattern
@@ -4045,7 +4040,7 @@
                 analysis.question.subject = bestForMatch[1].trim();
                 analysis.question.object = bestForMatch[2];
                 analysis.intent = 'recommendation';
-                logger.log('🎯 Tespit: En iyi yer önerisi -', analysis.question.subject, 'için');
+                console.log('🎯 Tespit: En iyi yer önerisi -', analysis.question.subject, 'için');
             }
             
             // 5. "Hangi X Y'de popüler/çok satıyor?" pattern
@@ -4057,7 +4052,7 @@
                 analysis.question.type = 'what_popular_where';
                 analysis.question.object = popularWhereMatch[1];
                 analysis.intent = 'analyze';
-                logger.log('🎯 Tespit: Popülerlik analizi');
+                console.log('🎯 Tespit: Popülerlik analizi');
             }
             
             // 1. MAĞAZA TESPİTİ (Fuzzy matching ile)
@@ -4429,7 +4424,7 @@
         
         // 🎯 GELİŞMİŞ ANALİZ (Kişi, Şehir, Öneri Sorguları)
         function performAdvancedAnalysis(analysis, data) {
-            logger.log('🎯 Gelişmiş analiz başlatılıyor:', analysis.queryType);
+            console.log('🎯 Gelişmiş analiz başlatılıyor:', analysis.queryType);
             
             const debugPanel = document.getElementById('debugPanel');
             const debugInfo = document.getElementById('debugInfo');
@@ -4730,7 +4725,7 @@
             const store = document.getElementById('targetYearStore').value;
             const target = parseFloat(document.getElementById('yearlyTarget').value) || 0;
             
-            logger.log('💾 saveYearlyTarget çağrıldı:', {year, store, target});
+            console.log('💾 saveYearlyTarget çağrıldı:', {year, store, target});
             
             if (target <= 0) {
                 alert('⚠️ Lütfen geçerli bir hedef girin!');
@@ -4739,7 +4734,7 @@
             
             // Mevcut hedefleri al
             let yearlyTargets = JSON.parse(localStorage.getItem('yearlyTargets') || '{}');
-            logger.log('📂 Mevcut localStorage:', yearlyTargets);
+            console.log('📂 Mevcut localStorage:', yearlyTargets);
             
             // 🔧 ESKİ FORMAT TESPİTİ VE OTOMATİK TEMİZLİK
             // Eski format: {2025: 5750000} -> sayı
@@ -4748,7 +4743,7 @@
             for (const [y, value] of Object.entries(yearlyTargets)) {
                 if (typeof value === 'number') {
                     needsMigration = true;
-                    logger.warn('⚠️ Eski localStorage formatı tespit edildi! Otomatik temizleniyor...');
+                    console.warn('⚠️ Eski localStorage formatı tespit edildi! Otomatik temizleniyor...');
                     break;
                 }
             }
@@ -4760,7 +4755,7 @@
                     if (typeof value === 'number') {
                         // Eski format: sayı -> yeni format: {TÜM MAĞAZALAR: sayı}
                         migratedTargets[y] = {'TÜM MAĞAZALAR': value};
-                        logger.log(`🔄 ${y} yılı formatı güncellendi:`, value, '→', migratedTargets[y]);
+                        console.log(`🔄 ${y} yılı formatı güncellendi:`, value, '→', migratedTargets[y]);
                     } else {
                         // Zaten yeni format
                         migratedTargets[y] = value;
@@ -4768,7 +4763,7 @@
                 }
                 yearlyTargets = migratedTargets;
                 localStorage.setItem('yearlyTargets', JSON.stringify(yearlyTargets));
-                logger.log('✅ Eski format temizlendi ve yeni formata dönüştürüldü!');
+                console.log('✅ Eski format temizlendi ve yeni formata dönüştürüldü!');
             }
             
             // Yıl yoksa oluştur
@@ -4780,8 +4775,8 @@
             yearlyTargets[year][store] = target;
             localStorage.setItem('yearlyTargets', JSON.stringify(yearlyTargets));
             
-            logger.log('✅ localStorage\'a kaydedildi:', yearlyTargets);
-            logger.log('🔍 Kontrol: localStorage.getItem:', localStorage.getItem('yearlyTargets'));
+            console.log('✅ localStorage\'a kaydedildi:', yearlyTargets);
+            console.log('🔍 Kontrol: localStorage.getItem:', localStorage.getItem('yearlyTargets'));
             
             // Hesapla
             calculateTargets();
@@ -4797,7 +4792,7 @@
             const month = document.getElementById('targetFilterMonth').value || ''; // Boş string'i garantile
             const container = document.getElementById('allStoresTargetsContainer');
             
-            logger.log('📊 Tüm mağazalar hedef listesi yükleniyor:', {year, month, monthType: typeof month, monthLength: month.length});
+            console.log('📊 Tüm mağazalar hedef listesi yükleniyor:', {year, month, monthType: typeof month, monthLength: month.length});
             
             // Tüm mağazaları bul
             const allStores = new Set();
@@ -4840,10 +4835,10 @@
                     // AYLIK HEDEF - Önce centralTargets (GitHub), sonra Google Sheets, sonra localStorage
                     if (centralTargets.monthly && centralTargets.monthly[year]) {
                         const targetKey = findTargetKey(centralTargets.monthly[year], cleanStoreName);
-                        // logger.log(`🔍 Mağaza: "${storeName}" → Temiz: "${cleanStoreName}" → Hedef Anahtarı: "${targetKey}"`);
+                        // console.log(`🔍 Mağaza: "${storeName}" → Temiz: "${cleanStoreName}" → Hedef Anahtarı: "${targetKey}"`);
                         if (targetKey && centralTargets.monthly[year][targetKey] && centralTargets.monthly[year][targetKey][month]) {
                             target = centralTargets.monthly[year][targetKey][month];
-                            // logger.log(`✅ Hedef bulundu: $${target}`);
+                            // console.log(`✅ Hedef bulundu: $${target}`);
                         }
                     }
                     
@@ -4936,7 +4931,7 @@
             // Önce hedefli, sonra hedefsiz mağazalar
             const sortedStoresData = [...storesWithTarget, ...storesWithoutTarget];
             
-            logger.log(`📊 Toplam ${storesData.length} mağaza, ${storesWithTarget.length} hedefli, ${storesWithoutTarget.length} hedefsiz`);
+            console.log(`📊 Toplam ${storesData.length} mağaza, ${storesWithTarget.length} hedefli, ${storesWithoutTarget.length} hedefsiz`);
             
             // Renk belirleme fonksiyonu
             function getPerformanceColor(percentage) {
@@ -5082,15 +5077,15 @@
                 `;
             }
             
-            logger.log(`📊 HTML oluşturuldu, container bulundu: ${!!container}, HTML uzunluğu: ${html.length}`);
-            logger.log(`📊 HTML başlangıcı:`, html.substring(0, 200));
+            console.log(`📊 HTML oluşturuldu, container bulundu: ${!!container}, HTML uzunluğu: ${html.length}`);
+            console.log(`📊 HTML başlangıcı:`, html.substring(0, 200));
             
             try {
                 container.innerHTML = html;
-                logger.log(`✅ HTML container'a yazıldı!`);
+                console.log(`✅ HTML container'a yazıldı!`);
             } catch (error) {
-                logger.error(`❌ HTML yazma hatası:`, error);
-                logger.log(`❌ Hatalı HTML:`, html.substring(0, 500));
+                console.error(`❌ HTML yazma hatası:`, error);
+                console.log(`❌ Hatalı HTML:`, html.substring(0, 500));
             }
         }
         
@@ -5101,7 +5096,7 @@
             
             // Eğer elementler yoksa (yeni hedef sistemi kullanılıyorsa), çık
             if (!yearElement || !storeElement) {
-                logger.log('ℹ️ Eski hedef sistemi elementleri bulunamadı, yeni sistem kullanılıyor');
+                console.log('ℹ️ Eski hedef sistemi elementleri bulunamadı, yeni sistem kullanılıyor');
                 return;
             }
             
@@ -5122,7 +5117,7 @@
             
             const yearlyTargets = {[store]: yearlyTarget};
             
-            logger.log('📊 loadYearlyTarget çağrıldı:', {year, store, cleanStoreName, yearlyTarget});
+            console.log('📊 loadYearlyTarget çağrıldı:', {year, store, cleanStoreName, yearlyTarget});
             
             // Hedef inputunu temizle
             const targetInput = document.getElementById('yearlyTarget');
@@ -5131,9 +5126,9 @@
             // Eğer bu mağaza için hedef varsa doldur
             if (yearlyTargets[store]) {
                 targetInput.value = yearlyTargets[store];
-                logger.log('✅ Yıllık hedef yüklendi (Google Sheets):', yearlyTargets[store]);
+                console.log('✅ Yıllık hedef yüklendi (Google Sheets):', yearlyTargets[store]);
             } else {
-                logger.log('⚠️ Bu mağaza için kaydedilmiş hedef yok');
+                console.log('⚠️ Bu mağaza için kaydedilmiş hedef yok');
             }
             
             calculateTargets();
@@ -5146,7 +5141,7 @@
             const store = document.getElementById('targetMonthStore').value;
             const target = parseFloat(document.getElementById('monthlyTarget').value) || 0;
             
-            logger.log('💾 saveMonthlyTarget çağrıldı:', {year, month, store, target});
+            console.log('💾 saveMonthlyTarget çağrıldı:', {year, month, store, target});
             
             if (target <= 0) {
                 alert('⚠️ Lütfen geçerli bir hedef girin!');
@@ -5155,7 +5150,7 @@
             
             // Mevcut hedefleri al
             let monthlyTargets = JSON.parse(localStorage.getItem('monthlyTargets') || '{}');
-            logger.log('📂 Mevcut aylık localStorage:', monthlyTargets);
+            console.log('📂 Mevcut aylık localStorage:', monthlyTargets);
             
             // Yıl yoksa oluştur
             if (!monthlyTargets[year]) {
@@ -5171,7 +5166,7 @@
             monthlyTargets[year][store][month] = target;
             localStorage.setItem('monthlyTargets', JSON.stringify(monthlyTargets));
             
-            logger.log('✅ Aylık localStorage\'a kaydedildi:', monthlyTargets);
+            console.log('✅ Aylık localStorage\'a kaydedildi:', monthlyTargets);
             
             // Hesapla
             calculateTargets();
@@ -5196,7 +5191,7 @@
             
             // Eğer elementler yoksa (yeni hedef sistemi kullanılıyorsa), çık
             if (!yearElement || !monthElement || !storeElement) {
-                logger.log('ℹ️ Eski hedef sistemi elementleri bulunamadı, yeni sistem kullanılıyor');
+                console.log('ℹ️ Eski hedef sistemi elementleri bulunamadı, yeni sistem kullanılıyor');
                 return;
             }
             
@@ -5211,7 +5206,7 @@
             const localTarget = JSON.parse(localStorage.getItem('monthlyTargets') || '{}')[year]?.[store]?.[month];
             const target = localTarget;
             
-            logger.log('📊 loadMonthlyTarget çağrıldı:', {year, month, store, localTarget});
+            console.log('📊 loadMonthlyTarget çağrıldı:', {year, month, store, localTarget});
             
             // Hedef inputunu temizle
             const targetInput = document.getElementById('monthlyTarget');
@@ -5220,9 +5215,9 @@
             // Eğer bu mağaza ve ay için hedef varsa doldur
             if (target) {
                 targetInput.value = target;
-                logger.log(`✅ Aylık hedef yüklendi (localStorage):`, target);
+                console.log(`✅ Aylık hedef yüklendi (localStorage):`, target);
             } else {
-                logger.log('⚠️ Bu mağaza ve ay için kaydedilmiş hedef yok');
+                console.log('⚠️ Bu mağaza ve ay için kaydedilmiş hedef yok');
             }
             
             calculateTargets();
@@ -5550,7 +5545,7 @@
             const ctx = document.getElementById('customerTrendChart');
             if (!ctx) return;
             
-            logger.log('📊 Yıllık Müşteri Trendi oluşturuluyor...');
+            console.log('📊 Yıllık Müşteri Trendi oluşturuluyor...');
             
             // Yıllara göre müşteri sayısı (Dashboard gibi)
             const yearlyCustomers = {};
@@ -5570,8 +5565,8 @@
             const sortedYears = Array.from(years).sort();
             const customerCounts = sortedYears.map(year => yearlyCustomers[year].size);
             
-            logger.log('📊 Yıllar:', sortedYears);
-            logger.log('📊 Müşteri sayıları:', customerCounts);
+            console.log('📊 Yıllar:', sortedYears);
+            console.log('📊 Müşteri sayıları:', customerCounts);
             
             if (customerTrendChart) {
                 customerTrendChart.destroy();
@@ -5635,12 +5630,12 @@
                 plugins: [ChartDataLabels]
             });
             
-            logger.log('✅ Yıllık Müşteri Trendi grafiği oluşturuldu');
+            console.log('✅ Yıllık Müşteri Trendi grafiği oluşturuldu');
         }
 
         // ==================== AI ANALYSIS & INSIGHTS ====================
         function performAIAnalysis() {
-            logger.log('🤖 AI Analiz başlatılıyor...');
+            console.log('🤖 AI Analiz başlatılıyor...');
             
             const panel = document.getElementById('aiAnalysisPanel');
             if (!panel || filteredData.length === 0) return;
@@ -5985,10 +5980,10 @@
         let dashTopProductsChartInstance = null;
 
         function loadDashboard() {
-            logger.log('🏠 Dashboard yükleniyor...');
+            console.log('🏠 Dashboard yükleniyor...');
             
             if (!allData || allData.length === 0) {
-                logger.warn('⚠️ Veri yok, dashboard yüklenemedi');
+                console.warn('⚠️ Veri yok, dashboard yüklenemedi');
                 return;
             }
             
@@ -6010,109 +6005,109 @@
             const basketAverage = uniqueInvoices > 0 ? totalSales / uniqueInvoices : 0;
             
             // Debug: Fatura sayısı kontrolü
-            logger.log('🔍 Fatura sayısı debug:');
-            logger.log('   📊 Toplam kayıt:', allData.length);
-            logger.log('   📋 out_invoice kayıtları:', allData.filter(item => item.move_type === 'out_invoice').length);
-            logger.log('   🧾 Benzersiz satış fatura sayısı (out_invoice):', uniqueInvoices);
-            logger.log('   💰 Toplam satış:', totalSales);
-            logger.log('   🛒 Sepet ortalaması:', basketAverage);
-            logger.log('   🧮 Hesaplama: Toplam Satış / Satış Fatura (out_invoice) =', totalSales, '/', uniqueInvoices, '=', basketAverage);
+            console.log('🔍 Fatura sayısı debug:');
+            console.log('   📊 Toplam kayıt:', allData.length);
+            console.log('   📋 out_invoice kayıtları:', allData.filter(item => item.move_type === 'out_invoice').length);
+            console.log('   🧾 Benzersiz satış fatura sayısı (out_invoice):', uniqueInvoices);
+            console.log('   💰 Toplam satış:', totalSales);
+            console.log('   🛒 Sepet ortalaması:', basketAverage);
+            console.log('   🧮 Hesaplama: Toplam Satış / Satış Fatura (out_invoice) =', totalSales, '/', uniqueInvoices, '=', basketAverage);
             
             // Veri yapısı kontrolü
             if (allData.length > 0) {
                 const sampleItem = allData[0];
-                logger.log('🔍 Veri yapısı kontrolü:');
-                logger.log('   📋 move_type örnekleri:', [...new Set(allData.slice(0, 10).map(item => item.move_type))]);
-                logger.log('   🧾 move_name örnekleri:', [...new Set(allData.slice(0, 10).map(item => item.move_name))]);
-                logger.log('   📊 Örnek kayıt:', sampleItem);
+                console.log('🔍 Veri yapısı kontrolü:');
+                console.log('   📋 move_type örnekleri:', [...new Set(allData.slice(0, 10).map(item => item.move_type))]);
+                console.log('   🧾 move_name örnekleri:', [...new Set(allData.slice(0, 10).map(item => item.move_name))]);
+                console.log('   📊 Örnek kayıt:', sampleItem);
                 
                 // out_invoice kontrolü
                 const outInvoiceItems = allData.filter(item => item.move_type === 'out_invoice');
-                logger.log('🔍 out_invoice kontrolü:');
-                logger.log('   📋 out_invoice kayıt sayısı:', outInvoiceItems.length);
-                logger.log('   🧾 out_invoice move_name örnekleri:', [...new Set(outInvoiceItems.slice(0, 5).map(item => item.move_name))]);
+                console.log('🔍 out_invoice kontrolü:');
+                console.log('   📋 out_invoice kayıt sayısı:', outInvoiceItems.length);
+                console.log('   🧾 out_invoice move_name örnekleri:', [...new Set(outInvoiceItems.slice(0, 5).map(item => item.move_name))]);
                 
                 if (outInvoiceItems.length > 0) {
-                    logger.log('   📊 out_invoice örnek kayıt:', outInvoiceItems[0]);
+                    console.log('   📊 out_invoice örnek kayıt:', outInvoiceItems[0]);
                 } else {
-                    logger.log('   ❌ out_invoice kayıt bulunamadı!');
+                    console.log('   ❌ out_invoice kayıt bulunamadı!');
                 }
             }
             
-            logger.log('📅 Benzersiz Gün Sayısı (Tüm Zamanlar):', uniqueDates);
-            logger.log('💰 Toplam Satış:', totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2}));
-            logger.log('📦 Toplam Kayıt Sayısı:', allData.length.toLocaleString('tr-TR'));
-            logger.log('🧾 Toplam Fatura Sayısı:', uniqueInvoices.toLocaleString('tr-TR'));
+            console.log('📅 Benzersiz Gün Sayısı (Tüm Zamanlar):', uniqueDates);
+            console.log('💰 Toplam Satış:', totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2}));
+            console.log('📦 Toplam Kayıt Sayısı:', allData.length.toLocaleString('tr-TR'));
+            console.log('🧾 Toplam Fatura Sayısı:', uniqueInvoices.toLocaleString('tr-TR'));
             
             // Dashboard özet kartlarını güncelle
-            logger.log('🔄 Dashboard özet kartları güncelleniyor...');
+            console.log('🔄 Dashboard özet kartları güncelleniyor...');
             
             // Toplam Satış
             const dashTotalSales = document.getElementById('dashTotalSales');
             if (dashTotalSales) {
                 dashTotalSales.textContent = '$' + totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                logger.log('✅ Toplam Satış güncellendi:', totalSales);
+                console.log('✅ Toplam Satış güncellendi:', totalSales);
             }
             
             // Toplam Ürün
             const dashTotalQty = document.getElementById('dashTotalQty');
             if (dashTotalQty) {
                 dashTotalQty.textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
-                logger.log('✅ Toplam Ürün güncellendi:', totalQty);
+                console.log('✅ Toplam Ürün güncellendi:', totalQty);
             }
             
             // Toplam Müşteri
             const dashTotalCustomers = document.getElementById('dashTotalCustomers');
             if (dashTotalCustomers) {
                 dashTotalCustomers.textContent = uniqueCustomers.toLocaleString('tr-TR');
-                logger.log('✅ Toplam Müşteri güncellendi:', uniqueCustomers);
+                console.log('✅ Toplam Müşteri güncellendi:', uniqueCustomers);
             }
             
             // Toplam Ürün Çeşidi
             const dashTotalProducts = document.getElementById('dashTotalProducts');
             if (dashTotalProducts) {
                 dashTotalProducts.textContent = uniqueProducts.toLocaleString('tr-TR');
-                logger.log('✅ Toplam Ürün Çeşidi güncellendi:', uniqueProducts);
+                console.log('✅ Toplam Ürün Çeşidi güncellendi:', uniqueProducts);
             }
             
             // Toplam Mağaza
             const dashTotalStores = document.getElementById('dashTotalStores');
             if (dashTotalStores) {
                 dashTotalStores.textContent = uniqueStores.toLocaleString('tr-TR');
-                logger.log('✅ Toplam Mağaza güncellendi:', uniqueStores);
+                console.log('✅ Toplam Mağaza güncellendi:', uniqueStores);
             }
             
             // Toplam Temsilci
             const dashTotalSalespeople = document.getElementById('dashTotalSalespeople');
             if (dashTotalSalespeople) {
                 dashTotalSalespeople.textContent = uniqueSalespeople.toLocaleString('tr-TR');
-                logger.log('✅ Toplam Temsilci güncellendi:', uniqueSalespeople);
+                console.log('✅ Toplam Temsilci güncellendi:', uniqueSalespeople);
             }
             
             // Toplam Fatura Sayısı
             const dashTotalInvoices = document.getElementById('dashTotalInvoices');
             if (dashTotalInvoices) {
                 dashTotalInvoices.textContent = uniqueInvoices.toLocaleString('tr-TR');
-                logger.log('✅ Toplam Fatura Sayısı güncellendi:', uniqueInvoices);
+                console.log('✅ Toplam Fatura Sayısı güncellendi:', uniqueInvoices);
             }
             
             // Günlük Ortalama
             const dashDailyAverage = document.getElementById('dashDailyAverage');
             if (dashDailyAverage) {
                 dashDailyAverage.textContent = '$' + dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                logger.log('✅ Günlük Ortalama güncellendi:', dailyAverage);
+                console.log('✅ Günlük Ortalama güncellendi:', dailyAverage);
             }
             
             // Sepet Ortalaması
             const dashBasketAverage = document.getElementById('dashBasketAverage');
             if (dashBasketAverage) {
                 dashBasketAverage.textContent = '$' + basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                logger.log('✅ Sepet Ortalaması güncellendi:', basketAverage);
+                console.log('✅ Sepet Ortalaması güncellendi:', basketAverage);
             }
             
-            logger.log('✅ Dashboard özet kartları güncellendi!');
-            logger.log('📊 Günlük Ortalama:', dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2}), '(Toplam Satış /', uniqueDates, 'gün)');
-            logger.log('🛒 Sepet Ortalaması:', basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2}), '(Toplam Satış /', uniqueInvoices, 'fatura)');
+            console.log('✅ Dashboard özet kartları güncellendi!');
+            console.log('📊 Günlük Ortalama:', dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2}), '(Toplam Satış /', uniqueDates, 'gün)');
+            console.log('🛒 Sepet Ortalaması:', basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2}), '(Toplam Satış /', uniqueInvoices, 'fatura)');
             
             
             // Yıllık karşılaştırma
@@ -6678,7 +6673,7 @@
         }
 
         function performDashboardAIAnalysis() {
-            logger.log('🤖 Gelişmiş AI Analiz başlatılıyor...');
+            console.log('🤖 Gelişmiş AI Analiz başlatılıyor...');
             
             const currentYear = new Date().getFullYear();
             const lastYear = currentYear - 1;
@@ -6696,7 +6691,7 @@
             const latestMonthName = latestMonth ? monthNames[parseInt(latestMonth) - 1] : '';
             const dataUpdateInfo = `${latestDay} ${latestMonthName} ${latestYear}`;
             
-            logger.log('📅 Son veri güncelleme tarihi:', dataUpdateInfo);
+            console.log('📅 Son veri güncelleme tarihi:', dataUpdateInfo);
             
             // ========== YILLIK KARŞILAŞTIRMA (İVME BAZLI) ==========
             const totalSalesThisYear = thisYearData.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
@@ -6887,12 +6882,12 @@
             const lastMonthName = monthNames[parseInt(lastMonth) - 1];
             
             // ========== GELİŞMİŞ AI ANALİZ HTML ÇIKTISI ==========
-            logger.log('📊 Veri güncelleme:', dataUpdateInfo);
-            logger.log(`⏱️ ${currentYear}: ${daysPassedThisYear} gün geçti, ${daysRemainingThisYear} gün kaldı`);
-            logger.log('📊 Günlük ortalama:', dailyAvgLastYear.toFixed(0), '→', dailyAvgThisYear.toFixed(0), `(${dailyGrowth > 0 ? '+' : ''}${dailyGrowth.toFixed(1)}%)`);
-            logger.log('🎯 Yıl sonu tahmini:', projectedYearEndSales.toFixed(0), `(${projectedGrowth > 0 ? '+' : ''}${projectedGrowth.toFixed(1)}%)`);
-            logger.log('📈 Basit karşılaştırma (YANILTICI):', yearGrowth.toFixed(1) + '%');
-            logger.log('📊 Aylık ivme:', monthGrowth.toFixed(1) + '%');
+            console.log('📊 Veri güncelleme:', dataUpdateInfo);
+            console.log(`⏱️ ${currentYear}: ${daysPassedThisYear} gün geçti, ${daysRemainingThisYear} gün kaldı`);
+            console.log('📊 Günlük ortalama:', dailyAvgLastYear.toFixed(0), '→', dailyAvgThisYear.toFixed(0), `(${dailyGrowth > 0 ? '+' : ''}${dailyGrowth.toFixed(1)}%)`);
+            console.log('🎯 Yıl sonu tahmini:', projectedYearEndSales.toFixed(0), `(${projectedGrowth > 0 ? '+' : ''}${projectedGrowth.toFixed(1)}%)`);
+            console.log('📈 Basit karşılaştırma (YANILTICI):', yearGrowth.toFixed(1) + '%');
+            console.log('📊 Aylık ivme:', monthGrowth.toFixed(1) + '%');
             
             const analysis = `
                 <!-- Veri Güncelleme Tarihi -->
@@ -6985,14 +6980,14 @@
         let salesPersonTimeChartInstance = null;
         
         function analyzeTime() {
-            logger.log('⏰ Zaman analizi başlatılıyor...');
+            console.log('⏰ Zaman analizi başlatılıyor...');
             
             // Kategori 1 filtresini uygula
             const category1Filter = document.getElementById('timeCategory1Filter')?.value || '';
             
             if (category1Filter) {
                 filteredData = allData.filter(item => item.category_2 === category1Filter);
-                logger.log(`📁 Kategori filtresi: "${category1Filter}" - ${filteredData.length} kayıt`);
+                console.log(`📁 Kategori filtresi: "${category1Filter}" - ${filteredData.length} kayıt`);
             } else {
                 filteredData = [...allData];
             }
@@ -7314,7 +7309,7 @@
                 category1Select.value = '';
             }
             
-            logger.log('🔄 Zaman analizi filtreleri temizlendi');
+            console.log('🔄 Zaman analizi filtreleri temizlendi');
             analyzeTime();
         }
         
@@ -7472,7 +7467,7 @@
         }
         
         function performTimeAIAnalysis() {
-            logger.log('🤖 Zaman AI analizi başlatılıyor...');
+            console.log('🤖 Zaman AI analizi başlatılıyor...');
             
             const panel = document.getElementById('timeInsightsPanel');
             if (!panel || filteredData.length === 0) return;
@@ -7811,7 +7806,7 @@
         function clearProductDateFilters() {
             document.getElementById('productDateStart').value = '';
             document.getElementById('productDateEnd').value = '';
-            logger.log('🔄 Ürün tarih filtreleri temizlendi');
+            console.log('🔄 Ürün tarih filtreleri temizlendi');
         }
         
         function searchProduct() {
@@ -7826,7 +7821,7 @@
                 return;
             }
             
-            logger.log('🔍 Arama kriteri:', {searchTerm, selectedCategory, selectedStore, dateStart, dateEnd});
+            console.log('🔍 Arama kriteri:', {searchTerm, selectedCategory, selectedStore, dateStart, dateEnd});
             
             // Arama (ürün adı, marka, kategori, veya ürün kodu)
             const searchLower = searchTerm.toLowerCase();
@@ -7887,7 +7882,7 @@
                 return matchesSearch && matchesCategory && matchesDate && matchesStore;
             });
             
-            logger.log('📊 Bulunan kayıt sayısı:', results.length);
+            console.log('📊 Bulunan kayıt sayısı:', results.length);
             
             if (results.length === 0) {
                 // Sonuç yok
@@ -8480,7 +8475,7 @@
         
         // 🤖 ÜRÜN ANALİZİ AI DEĞERLENDİRME
         function performProductAIAnalysis(data) {
-            logger.log('🤖 Ürün analizi AI değerlendirmesi başlatılıyor...');
+            console.log('🤖 Ürün analizi AI değerlendirmesi başlatılıyor...');
             
             // Veri analizi
             const totalSales = data.reduce((sum, item) => sum + parseFloat(item.usd_amount || 0), 0);
@@ -8803,7 +8798,7 @@
             localStorage.setItem('gpt_monthly_queries', queryCostTracker.monthlyQueries.toString());
             localStorage.setItem('gpt_monthly_cost', queryCostTracker.monthlyCost.toFixed(4));
             
-            logger.log(`💰 GPT Maliyet: $${cost.toFixed(4)} | Aylık Toplam: $${queryCostTracker.monthlyCost.toFixed(2)} (${queryCostTracker.monthlyQueries} sorgu)`);
+            console.log(`💰 GPT Maliyet: $${cost.toFixed(4)} | Aylık Toplam: $${queryCostTracker.monthlyCost.toFixed(2)} (${queryCostTracker.monthlyQueries} sorgu)`);
             
             return cost;
         }
@@ -8813,9 +8808,9 @@
             // ÖNEMLİ: Bu fonksiyon şu anda placeholder. 
             // Gerçek kullanım için backend API endpoint'i gerekli.
             
-            logger.log('🤖 GPT API çağrısı hazırlanıyor...');
-            logger.log('📝 Sorgu:', query);
-            logger.log('📊 Context boyutu:', JSON.stringify(context).length, 'karakter');
+            console.log('🤖 GPT API çağrısı hazırlanıyor...');
+            console.log('📝 Sorgu:', query);
+            console.log('📊 Context boyutu:', JSON.stringify(context).length, 'karakter');
             
             // Backend endpoint
             const BACKEND_URL = 'YOUR_BACKEND_URL_HERE'; // Buraya backend URL'i eklenecek
@@ -8857,7 +8852,7 @@
                 };
                 
             } catch (error) {
-                logger.error('❌ GPT API Hatası:', error);
+                console.error('❌ GPT API Hatası:', error);
                 return {
                     success: false,
                     error: error.message
@@ -8901,10 +8896,10 @@
         // Konsol komutu: Maliyet istatistiklerini göster
         window.showGPTStats = function() {
             checkMonthlyReset();
-            logger.log('💰 GPT Maliyet İstatistikleri:');
-            logger.log('Bu Ay:', queryCostTracker.monthlyQueries, 'sorgu, $' + queryCostTracker.monthlyCost.toFixed(2));
-            logger.log('Toplam:', queryCostTracker.totalQueries, 'sorgu, $' + queryCostTracker.totalCost.toFixed(2));
-            logger.log('Ortalama:', '$' + (queryCostTracker.monthlyCost / Math.max(queryCostTracker.monthlyQueries, 1)).toFixed(4), 'per sorgu');
+            console.log('💰 GPT Maliyet İstatistikleri:');
+            console.log('Bu Ay:', queryCostTracker.monthlyQueries, 'sorgu, $' + queryCostTracker.monthlyCost.toFixed(2));
+            console.log('Toplam:', queryCostTracker.totalQueries, 'sorgu, $' + queryCostTracker.totalCost.toFixed(2));
+            console.log('Ortalama:', '$' + (queryCostTracker.monthlyCost / Math.max(queryCostTracker.monthlyQueries, 1)).toFixed(4), 'per sorgu');
         };
         
         // Konsol komutu: Maliyet sıfırla
@@ -8922,13 +8917,13 @@
                     monthlyCost: 0,
                     lastResetDate: new Date().toISOString().slice(0, 7)
                 };
-                logger.log('✅ GPT maliyet istatistikleri sıfırlandı.');
+                console.log('✅ GPT maliyet istatistikleri sıfırlandı.');
             }
         };
         
-        logger.log('✅ GPT Backend hazır! Kullanım:');
-        logger.log('   showGPTStats() - Maliyet istatistiklerini göster');
-        logger.log('   resetGPTStats() - Maliyet istatistiklerini sıfırla');
+        console.log('✅ GPT Backend hazır! Kullanım:');
+        console.log('   showGPTStats() - Maliyet istatistiklerini göster');
+        console.log('   resetGPTStats() - Maliyet istatistiklerini sıfırla');
         
         // ==================== CUSTOMER SEARCH IN MAIN TAB ====================
         let customerBrandChartMainInstance = null;
@@ -8942,7 +8937,7 @@
                 return;
             }
             
-            logger.log('🔍 Müşteri aranıyor:', searchQuery);
+            console.log('🔍 Müşteri aranıyor:', searchQuery);
             
             // Müşteri verilerini filtrele (fuzzy matching)
             const customerData = allData.filter(item => 
@@ -9017,7 +9012,7 @@
             document.getElementById('topCustomersSection').style.display = 'block';
             document.getElementById('customerChartsSection').style.display = 'grid';
             
-            logger.log('✅ Müşteri araması temizlendi, Top 30 ve grafikler gösteriliyor');
+            console.log('✅ Müşteri araması temizlendi, Top 30 ve grafikler gösteriliyor');
         }
         
         function renderCustomerBrandChartMain(data) {
@@ -9248,7 +9243,7 @@
         }
         
         function performCustomerAIAnalysisMain(data, profile) {
-            logger.log('🤖 Müşteri AI analizi başlatılıyor...', profile);
+            console.log('🤖 Müşteri AI analizi başlatılıyor...', profile);
             
             // Veri analizi
             const brandData = {};
@@ -9505,7 +9500,7 @@
         
         function populateCityDropdownForCustomerSearch() {
             // Artık kullanılmıyor - Müşteri arama Müşteri Analizi içinde
-            logger.log('⚠️ Bu fonksiyon artık kullanılmıyor');
+            console.log('⚠️ Bu fonksiyon artık kullanılmıyor');
         }
         
         // ==================== AUTOCOMPLETE FUNCTIONS ====================
@@ -10051,7 +10046,7 @@
                 }
             }
             
-            logger.log('🔍 Müşteriler aranıyor:', customersToSearch);
+            console.log('🔍 Müşteriler aranıyor:', customersToSearch);
             
             // TEK VEYA ÇOKLU MÜŞTERİ MODU
             if (customersToSearch.length === 1) {
@@ -10380,7 +10375,7 @@
         }
         
         function performCustomerAIAnalysis(data, profile) {
-            logger.log('🤖 Müşteri AI analizi başlatılıyor...');
+            console.log('🤖 Müşteri AI analizi başlatılıyor...');
             
             const insights = {
                 positive: [],
@@ -10557,12 +10552,12 @@
             updateSelectionCount('filterStoreDay', 'countStoreDay');
             updateSelectionCount('filterStoreCategory', 'countStoreCategory');
             
-            logger.log('✅ Mağaza filtreleri temizlendi');
+            console.log('✅ Mağaza filtreleri temizlendi');
         }
         
         // ÇOKLU SATIŞ TEMSİLCİSİ AI ANALİZİ
         function performMultipleSalespersonsAIAnalysis(salespersonsData) {
-            logger.log('🤖 Çoklu satış temsilcisi karşılaştırmalı AI analizi başlatılıyor...');
+            console.log('🤖 Çoklu satış temsilcisi karşılaştırmalı AI analizi başlatılıyor...');
             
             const insights = {positive: [], negative: [], neutral: [], recommendations: []};
             
@@ -10708,7 +10703,7 @@
                 }
             }
             
-            logger.log('🔍 Mağazalar aranıyor:', storesToSearch);
+            console.log('🔍 Mağazalar aranıyor:', storesToSearch);
             
             // Filtre değerlerini al
             const yearFilter = Array.from(document.querySelectorAll('#filterStoreYear input[type="checkbox"]:checked'))
@@ -11201,11 +11196,11 @@
         function renderStoreComparisonCategoryCharts(storesData) {
             const container = document.getElementById('storeComparisonCategoryCharts');
             if (!container) {
-                logger.error('❌ storeComparisonCategoryCharts container bulunamadı!');
+                console.error('❌ storeComparisonCategoryCharts container bulunamadı!');
                 return;
             }
             
-            logger.log('📊 Kategori karşılaştırması başlatılıyor...', storesData.length, 'mağaza');
+            console.log('📊 Kategori karşılaştırması başlatılıyor...', storesData.length, 'mağaza');
             
             // ÖNCE TABLO OLUŞTUR
             renderStoreCategoryComparisonTable(storesData);
@@ -11219,12 +11214,12 @@
             storesData.forEach((store, idx) => {
                 // Kategori 1 verilerini topla
                 const categoryData = {};
-                logger.log(`   🏪 ${store.name}: ${store.data.length} kayıt`);
+                console.log(`   🏪 ${store.name}: ${store.data.length} kayıt`);
                 
                 // İlk birkaç kayıtta category_1 var mı kontrol et
                 if (store.data.length > 0) {
                     const sample = store.data[0];
-                    logger.log(`      Örnek veri:`, {
+                    console.log(`      Örnek veri:`, {
                         category_1: sample.category_1,
                         category_2: sample.category_2,
                         product: sample.product
@@ -11245,7 +11240,7 @@
                     categoryData[cat] += parseFloat(item.usd_amount || 0);
                 });
                 
-                logger.log(`      Kategori sayısı: ${Object.keys(categoryData).length}`);
+                console.log(`      Kategori sayısı: ${Object.keys(categoryData).length}`);
                 
                 // En yüksek 10 kategoriyi al
                 const sorted = Object.entries(categoryData)
@@ -11314,7 +11309,7 @@
         }
         
         function performMultipleStoresAIAnalysis(storesData) {
-            logger.log('🤖 Çoklu mağaza karşılaştırmalı AI analizi başlatılıyor...', storesData);
+            console.log('🤖 Çoklu mağaza karşılaştırmalı AI analizi başlatılıyor...', storesData);
 
             const insights = {positive: [], negative: [], neutral: [], recommendations: [], categories: []};
 
@@ -11460,9 +11455,9 @@
             const multipleAIContent = document.getElementById('multipleStoresAIContent');
             if (multipleAIContent) {
                 multipleAIContent.innerHTML = html;
-                logger.log('✅ Çoklu mağaza AI analizi HTML eklendi');
+                console.log('✅ Çoklu mağaza AI analizi HTML eklendi');
             } else {
-                logger.error('❌ multipleStoresAIContent bulunamadı!');
+                console.error('❌ multipleStoresAIContent bulunamadı!');
             }
             
             // Eski tek mağaza div'ini de güncelle (fallback)
@@ -11866,7 +11861,7 @@
             const insights = {positive: [], negative: [], neutral: [], recommendations: [], warnings: []};
             
             // ==================== YILLIK TREND VE GELECEK YIL HED EF ÖNERİSİ ====================
-            logger.log('📊 Yıllık trend analizi başlatılıyor...');
+            console.log('📊 Yıllık trend analizi başlatılıyor...');
             
             // Yıllık satış verileri
             const yearlyData = {};
@@ -12340,7 +12335,7 @@
         function populateCitySelect() {
             // Veri yüklenmemişse uyarı ver
             if (!allData || allData.length === 0) {
-                logger.warn('⚠️ Şehir listesi doldurulamadı: Veri henüz yüklenmedi');
+                console.warn('⚠️ Şehir listesi doldurulamadı: Veri henüz yüklenmedi');
                 return;
             }
             
@@ -12351,14 +12346,14 @@
             
             const select = document.getElementById('citySelect');
             if (!select) {
-                logger.error('❌ citySelect elementi bulunamadı');
+                console.error('❌ citySelect elementi bulunamadı');
                 return;
             }
             
             select.innerHTML = '<option value="">-- Şehir Seçin --</option>';
             
             if (cities.size === 0) {
-                logger.warn('⚠️ Hiç şehir verisi bulunamadı');
+                console.warn('⚠️ Hiç şehir verisi bulunamadı');
                 select.innerHTML += '<option value="" disabled>Şehir verisi bulunamadı</option>';
                 return;
             }
@@ -12370,8 +12365,8 @@
                 select.appendChild(option);
             });
             
-            logger.log('✅ Şehir dropdown dolduruldu:', cities.size, 'şehir');
-            logger.log('📋 Dropdown içeriği:', select.innerHTML.substring(0, 500));
+            console.log('✅ Şehir dropdown dolduruldu:', cities.size, 'şehir');
+            console.log('📋 Dropdown içeriği:', select.innerHTML.substring(0, 500));
         }
         
         let targetStoresPopulated = false; // Sadece bir kez doldur
@@ -12379,13 +12374,13 @@
         function populateTargetStoreDropdowns() {
             // Veri yoksa veya zaten doldurulduysa çık
             if (!allData || allData.length === 0) {
-                logger.warn('⚠️ Mağaza dropdown doldurulamıyor: Veri yok');
+                console.warn('⚠️ Mağaza dropdown doldurulamıyor: Veri yok');
                 return;
             }
             
             // ZATEN DOLDURULDUYSA BİR DAHA DOLDURMA (kullanıcı seçimini korur)
             if (targetStoresPopulated) {
-                logger.log('✅ Mağaza dropdown zaten dolduruldu, tekrar doldurulmayacak');
+                console.log('✅ Mağaza dropdown zaten dolduruldu, tekrar doldurulmayacak');
                 return;
             }
             
@@ -12447,7 +12442,7 @@
             }
             
             targetStoresPopulated = true;
-            logger.log('✅ Hedef takip mağaza dropdownları dolduruldu:', stores.size, 'mağaza');
+            console.log('✅ Hedef takip mağaza dropdownları dolduruldu:', stores.size, 'mağaza');
         }
         
         // ==================== İLÇE NORMALIZASYON SİSTEMİ ====================
@@ -12547,7 +12542,7 @@
             }
             
             if (bestMatch !== districtName) {
-                logger.log(`🔧 İlçe düzeltildi: "${districtName}" → "${bestMatch}" (distance: ${bestScore})`);
+                console.log(`🔧 İlçe düzeltildi: "${districtName}" → "${bestMatch}" (distance: ${bestScore})`);
             }
             
             return bestMatch;
@@ -12561,7 +12556,7 @@
             document.getElementById('cityDateStart').value = '';
             document.getElementById('cityDateEnd').value = '';
             document.getElementById('cityAnalysisContainer').style.display = 'none';
-            logger.log('🗑️ Şehir ve ilçe filtreleri temizlendi');
+            console.log('🗑️ Şehir ve ilçe filtreleri temizlendi');
         }
         
         // Şehir seçildiğinde ilçeleri doldur
@@ -12569,7 +12564,7 @@
             const selectedCity = document.getElementById('citySelect').value;
             const districtSelect = document.getElementById('districtSelect');
             
-            logger.log('📍 Şehir değişti:', selectedCity);
+            console.log('📍 Şehir değişti:', selectedCity);
             
             if (!selectedCity) {
                 // Şehir seçimi iptal edildi
@@ -12589,8 +12584,8 @@
                 }
             });
             
-            logger.log('🏘️ Ham ilçe sayısı:', rawDistricts.size);
-            logger.log('📋 İlk 10 ilçe örneği:', Array.from(rawDistricts).slice(0, 10));
+            console.log('🏘️ Ham ilçe sayısı:', rawDistricts.size);
+            console.log('📋 İlk 10 ilçe örneği:', Array.from(rawDistricts).slice(0, 10));
             
             // İlçeleri normalize et (yanlış yazımları düzelt)
             const districtArray = Array.from(rawDistricts);
@@ -12605,7 +12600,7 @@
             });
             
             const sortedDistricts = Array.from(normalizedDistricts.keys()).sort();
-            logger.log('🏘️ Normalize edilmiş ilçe sayısı:', sortedDistricts.length);
+            console.log('🏘️ Normalize edilmiş ilçe sayısı:', sortedDistricts.length);
             
             // İlçe dropdown'ını doldur
             districtSelect.innerHTML = '<option value="">-- Tüm İlçeler --</option>';
@@ -12718,7 +12713,7 @@
                 return;
             }
             
-            logger.log('🌍 Şehir analizi:', selectedCity, selectedDistrict ? `/ ${selectedDistrict}` : '', 'Tarih:', dateStart, '-', dateEnd);
+            console.log('🌍 Şehir analizi:', selectedCity, selectedDistrict ? `/ ${selectedDistrict}` : '', 'Tarih:', dateStart, '-', dateEnd);
             
             // Seçilen şehirdeki tüm ilçeleri topla (normalize için)
             const allDistrictsInCity = [];
@@ -12765,11 +12760,11 @@
             const avgBasket = totalSales / Math.max(uniqueInvoices, 1); // Gerçek sepet ortalaması: Sadece satış faturaları (İadeler hariç)
             const dailyAverage = totalSales / Math.max(uniqueDates, 1); // Günlük ortalama satış
             
-            logger.log('🌍 Şehir Analizi - Sepet Ortalaması Hesaplama:');
-            logger.log('   📦 Toplam Kayıt:', cityData.length);
-            logger.log('   🧾 Fatura Sayısı:', uniqueInvoices);
-            logger.log('   💰 Toplam Satış:', totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2}));
-            logger.log('   🛒 Sepet Ortalaması:', avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2}), '(', totalSales.toLocaleString('tr-TR'), '/', uniqueInvoices, ')');
+            console.log('🌍 Şehir Analizi - Sepet Ortalaması Hesaplama:');
+            console.log('   📦 Toplam Kayıt:', cityData.length);
+            console.log('   🧾 Fatura Sayısı:', uniqueInvoices);
+            console.log('   💰 Toplam Satış:', totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2}));
+            console.log('   🛒 Sepet Ortalaması:', avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2}), '(', totalSales.toLocaleString('tr-TR'), '/', uniqueInvoices, ')');
             
             // En çok satış yapan temsilci
             const salespersonData = {};
@@ -13164,7 +13159,7 @@
         }
         
         function performCityAIAnalysis(data, cityName, stats) {
-            logger.log('🤖 Şehir AI analizi başlatılıyor...');
+            console.log('🤖 Şehir AI analizi başlatılıyor...');
             
             // Marka analizi
             const brandData = {};
@@ -13312,7 +13307,7 @@
                 return;
             }
             
-            logger.log('📄 Excel dosyası okunuyor...');
+            console.log('📄 Excel dosyası okunuyor...');
             
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -13323,7 +13318,7 @@
                     const sheet = workbook.Sheets[sheetName];
                     const json = XLSX.utils.sheet_to_json(sheet);
                     
-                    logger.log('📊 Excel verisi:', json);
+                    console.log('📊 Excel verisi:', json);
                     
                     // Veriyi işle
                     stockList = [];
@@ -13345,11 +13340,11 @@
                         return;
                     }
                     
-                    logger.log('✅ Stok listesi yüklendi:', stockList.length, 'ürün');
+                    console.log('✅ Stok listesi yüklendi:', stockList.length, 'ürün');
                     renderStockList();
                     
                 } catch (error) {
-                    logger.error('❌ Excel okuma hatası:', error);
+                    console.error('❌ Excel okuma hatası:', error);
                     alert('Excel dosyası okunamadı! Lütfen dosya formatını kontrol edin.');
                 }
             };
@@ -13382,7 +13377,7 @@
             document.getElementById('manualProductCode').value = '';
             document.getElementById('manualStockQty').value = '';
             
-            logger.log('✅ Stok eklendi:', productCode, qty);
+            console.log('✅ Stok eklendi:', productCode, qty);
             renderStockList();
         }
         
@@ -13449,13 +13444,13 @@
                 return;
             }
             
-            logger.log('🤖 AI stok dağılım analizi başlatılıyor...');
+            console.log('🤖 AI stok dağılım analizi başlatılıyor...');
             
             // Tarih filtrelerini al
             const dateStart = document.getElementById('stockDateStart').value;
             const dateEnd = document.getElementById('stockDateEnd').value;
             
-            logger.log('📅 Tarih Filtreleri:', {dateStart, dateEnd});
+            console.log('📅 Tarih Filtreleri:', {dateStart, dateEnd});
             
             const recommendations = [];
             
@@ -13531,7 +13526,7 @@
         function clearStockDateFilters() {
             document.getElementById('stockDateStart').value = '';
             document.getElementById('stockDateEnd').value = '';
-            logger.log('🔄 Stok tarih filtreleri temizlendi');
+            console.log('🔄 Stok tarih filtreleri temizlendi');
         }
         
         function renderStockDistributionResults(recommendations) {
@@ -13662,7 +13657,7 @@
             updateSelectionCount('filterSalespersonMonth', 'countSalespersonMonth');
             updateSelectionCount('filterSalespersonDay', 'countSalespersonDay');
             
-            logger.log('✅ Satış temsilcisi filtreleri temizlendi');
+            console.log('✅ Satış temsilcisi filtreleri temizlendi');
         }
         
         function searchSalespersonProfile() {
@@ -13728,7 +13723,7 @@
                 }
             }
             
-            logger.log('🔍 Satış temsilcileri aranıyor:', salespersonsToSearch);
+            console.log('🔍 Satış temsilcileri aranıyor:', salespersonsToSearch);
             
             // Filtre değerlerini al (checkbox'lardan)
             const yearFilter = Array.from(document.querySelectorAll('#filterSalespersonYear input[type="checkbox"]:checked'))
@@ -13738,7 +13733,7 @@
             const dayFilter = Array.from(document.querySelectorAll('#filterSalespersonDay input[type="checkbox"]:checked'))
                 .map(cb => cb.value);
             
-            logger.log('📅 Filtreler:', {yearFilter, monthFilter, dayFilter});
+            console.log('📅 Filtreler:', {yearFilter, monthFilter, dayFilter});
             
             // Tek veya çoklu temsilci moduna göre işlem yap
             if (salespersonsToSearch.length === 1) {
@@ -14586,7 +14581,7 @@
         }
         
         function performSalespersonAIAnalysis(data, profile) {
-            logger.log('🤖 Satış temsilcisi AI analizi başlatılıyor...');
+            console.log('🤖 Satış temsilcisi AI analizi başlatılıyor...');
             
             const insights = {positive: [], negative: [], neutral: [], recommendations: []};
             
@@ -15045,11 +15040,11 @@
             
             if (sessionData === 'true' && sessionExpiry && new Date().getTime() < parseInt(sessionExpiry)) {
                 // Session geçerli, dashboard'ı göster
-                logger.log('✅ Geçerli session bulundu, dashboard yükleniyor...');
+                console.log('✅ Geçerli session bulundu, dashboard yükleniyor...');
                 showDashboardAfterAuth();
             } else {
                 // Session yok veya süresi dolmuş, auth formunu göster
-                logger.log('🔐 Session yok veya süresi dolmuş, auth formu gösteriliyor...');
+                console.log('🔐 Session yok veya süresi dolmuş, auth formu gösteriliyor...');
                 showAuthForm();
                 return; // Veri yükleme yapma
             }
@@ -15120,7 +15115,7 @@
         // Sayfa yüklendiğinde authentication formunu göster
         document.addEventListener('DOMContentLoaded', function() {
             // Bu fonksiyon artık gerekli değil - session kontrolü zaten yapılıyor
-            logger.log('📝 DOMContentLoaded - Session kontrolü zaten yapıldı');
+            console.log('📝 DOMContentLoaded - Session kontrolü zaten yapıldı');
         });
 
         // Kullanıcı bilgilerini güncelle
