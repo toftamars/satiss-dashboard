@@ -26,3 +26,13 @@ npm-debug.log*
 firebase-adminsdk-*.json
 serviceAccountKey.json
 coverage/
+
+# Sensitive configuration files
+config.json
+.env
+.env.local
+.env.production
+
+# API Keys and secrets
+*api_key*
+*secret*

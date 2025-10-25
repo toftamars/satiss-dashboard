@@ -1,9 +1,9 @@
 {
   "odoo": {
-    "url": "https://erp.zuhalmuzik.com",
-    "database": "zuhalmuzik",
-    "username": "alper.tofta@zuhalmuzik.com",
-    "api_key": "83649d0b62c654cc28ae657d480467040d16460f"
+    "url": "${ODOO_URL}",
+    "database": "${ODOO_DATABASE}",
+    "username": "${ODOO_USERNAME}",
+    "api_key": "${ODOO_API_KEY}"
   },
   "github": {
     "repo_path": ".",
@@ -15,3 +15,4 @@
     "log_file": "update_log.txt"
   }
 }
+
