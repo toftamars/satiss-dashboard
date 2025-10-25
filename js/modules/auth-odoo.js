@@ -73,12 +73,16 @@ class OdooAuth {
         
         // Dashboard'ı yükle
         if (typeof window.loadData === 'function') {
+            console.log('🚀 loadData fonksiyonu çağrılıyor...');
             window.loadData();
         } else {
             console.log('⚠️ loadData fonksiyonu henüz yüklenmedi, 2 saniye bekleniyor...');
             setTimeout(() => {
                 if (typeof window.loadData === 'function') {
+                    console.log('🚀 loadData fonksiyonu çağrılıyor (gecikmeli)...');
                     window.loadData();
+                } else {
+                    console.error('❌ loadData fonksiyonu bulunamadı!');
                 }
             }, 2000);
         }

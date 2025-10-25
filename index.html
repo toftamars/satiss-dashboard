@@ -155,6 +155,7 @@
         // Bu fonksiyon sayfa yüklenir yüklenmez tanımlanır
         window.loadData = async function() {
             console.log('🚀 loadData fonksiyonu çağrıldı');
+            console.log('🔍 Veri yükleme başlatılıyor...');
             try {
                 // Loading progress'i güncelle
                 if (typeof dataLoadProgress !== 'undefined') {
@@ -178,8 +179,13 @@
                 }
                 
                 // İlk olarak metadata'yı yükle
+                console.log('📊 Metadata yükleniyor...');
                 const metadata = await loadMetadata();
                 console.log('📊 Metadata yüklendi:', metadata);
+                
+                if (!metadata) {
+                    throw new Error('Metadata yüklenemedi');
+                }
                 
                 if (!metadata || !metadata.years || metadata.years.length === 0) {
                     throw new Error('Geçerli yıl verisi bulunamadı');
