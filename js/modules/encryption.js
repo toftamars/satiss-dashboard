@@ -41,9 +41,10 @@ class EncryptionManager {
             return storedKey;
         }
         
-        // 3. Development fallback (GÜVENSİZ!)
-        console.warn('⚠️ GÜVENSİZ: Development encryption key kullanılıyor!');
-        console.warn('🔐 Production için ENCRYPTION_SECRET_KEY ayarlayın!');
+        // 3. Development fallback
+        if (window.location.hostname === 'localhost') {
+            console.warn('⚠️ Development encryption key kullanılıyor');
+        }
         return 'ZUHAL_MUZIK_SECRET_KEY_2024_CHANGE_THIS_IN_PRODUCTION';
     }
 
