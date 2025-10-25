@@ -43,17 +43,27 @@ class ProgressiveLoader {
             this.updateProgress(20, '📊 Özet veriler yükleniyor...');
             
             // Sadece özet yükle (hızlı!)
-            const summary = await window.LazyLoader.loadInitialSummary();
+            let summary;
+            if (window.LazyLoader) {
+                summary = await window.LazyLoader.loadInitialSummary();
+            } else if (window.DataLoader) {
+                // Fallback: metadata yükle
+                summary = await window.DataLoader.loadMetadata();
+            }
             
             // Özet kartları hemen göster
-            this.showSummaryCards(summary);
+            if (summary) {
+                this.showSummaryCards(summary);
+            }
             
             this.updateProgress(40, '✅ Özet hazır!');
             
             return summary;
         } catch (error) {
             console.error('❌ Özet yükleme hatası:', error);
-            throw error;
+            // Hata olsa bile devam et
+            this.updateProgress(40, '⚠️ Özet yüklenemedi, devam ediliyor...');
+            return null;
         }
     }
 
@@ -85,11 +95,17 @@ class ProgressiveLoader {
         try {
             this.updateProgress(80, '📦 Detaylı veriler yükleniyor...');
             
-            // Mevcut ay/yıl verilerini yükle
-            const currentYear = new Date().getFullYear();
-            const currentMonth = new Date().getMonth() + 1;
+            let data;
             
-            const data = await window.LazyLoader.loadMonth(currentYear, currentMonth);
+            // Lazy Loading varsa kullan
+            if (window.LazyLoader) {
+                const currentYear = new Date().getFullYear();
+                const currentMonth = new Date().getMonth() + 1;
+                data = await window.LazyLoader.loadMonth(currentYear, currentMonth);
+            } else if (window.DataLoader) {
+                // Fallback: Normal data loader
+                data = await window.DataLoader.loadAllData();
+            }
             
             this.updateProgress(100, '✅ Hazır!');
             
@@ -101,6 +117,12 @@ class ProgressiveLoader {
             return data;
         } catch (error) {
             console.error('❌ Tam veri yükleme hatası:', error);
+            
+            // Hata olsa bile loading screen'i gizle
+            setTimeout(() => {
+                this.hideLoadingScreen();
+            }, 1000);
+            
             throw error;
         }
     }

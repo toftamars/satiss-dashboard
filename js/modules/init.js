@@ -95,13 +95,17 @@ class AppInitializer {
     }
 
     /**
-     * Uygulama verilerini yükle
+     * Uygulama verilerini yükle (Progressive Loading ile)
      */
     async loadApplicationData() {
-        console.log('📊 Uygulama verileri yükleniyor...');
+        console.log('📊 Uygulama verileri yükleniyor (Progressive)...');
         
         try {
-            if (window.DataLoader) {
+            // Progressive Loading kullan
+            if (window.ProgressiveLoader) {
+                await window.ProgressiveLoader.startProgressiveLoading();
+            } else if (window.DataLoader) {
+                // Fallback: Normal yükleme
                 const result = await window.DataLoader.loadAllData();
                 console.log('✅ Veri yükleme tamamlandı:', result);
                 
@@ -115,6 +119,12 @@ class AppInitializer {
             }
         } catch (error) {
             console.error('❌ Veri yükleme hatası:', error);
+            
+            // Error handler'a gönder
+            if (window.ErrorHandler) {
+                window.ErrorHandler.handleError(error);
+            }
+            
             throw error;
         }
     }
