@@ -1,55 +1,41 @@
 {
   "name": "satiss-dashboard",
   "version": "1.0.0",
-  "description": "Sales Dashboard with Odoo Integration",
+  "description": "Zuhal Müzik Satış Dashboard - Odoo ERP Entegrasyonu",
+  "main": "index.html",
   "type": "module",
-  "main": "index.js",
   "scripts": {
     "dev": "vite",
     "build": "npm run build:css && vite build",
     "build:css": "postcss styles.css -o dist/styles.min.css",
     "preview": "vite preview",
-    "start": "vite",
-    "lint": "eslint js/**/*.js",
-    "lint:fix": "eslint js/**/*.js --fix",
-    "format": "prettier --write 'js/**/*.js'",
-    "format:check": "prettier --check 'js/**/*.js'",
-    "prepare": "husky"
-  },
-  "directories": {
-    "doc": "docs"
-  },
-  "devDependencies": {
-    "@sentry/browser": "^10.22.0",
-    "cssnano": "^7.1.1",
-    "eslint": "^9.38.0",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.4",
-    "html-minifier": "^4.0.0",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.2.6",
-    "postcss": "^8.5.6",
-    "postcss-cli": "^11.0.1",
-    "prettier": "^3.6.2",
-    "vite": "^7.1.12"
+    "deploy": "./scripts/auto-deploy.sh",
+    "deploy:quick": "git add -A && git commit -m 'Quick update' --no-verify && npm run build && git add dist/ && git commit -m 'Build update' --no-verify && git push origin main && git push origin main:gh-pages --force && echo '✅ Deploy tamamlandı!'"
   },
   "dependencies": {
-    "jose": "^4.15.9"
+    "jose": "^5.9.6"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/toftamars/satiss-dashboard.git"
+  "devDependencies": {
+    "@sentry/browser": "^8.47.0",
+    "cssnano": "^7.0.6",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "html-minifier": "^4.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.11",
+    "postcss": "^8.4.49",
+    "postcss-cli": "^11.0.0",
+    "prettier": "^3.4.2",
+    "vite": "^7.1.12"
   },
   "keywords": [
     "dashboard",
-    "sales",
+    "analytics",
     "odoo",
-    "analytics"
+    "erp",
+    "sales"
   ],
-  "author": "Zuhal Müzik",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/toftamars/satiss-dashboard/issues"
-  },
-  "homepage": "https://github.com/toftamars/satiss-dashboard#readme"
+  "author": "Tofta",
+  "license": "MIT"
 }
