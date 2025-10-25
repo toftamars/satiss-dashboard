@@ -80,7 +80,9 @@ class UIManager {
                 }
                 break;
             case 'salesperson':
-                this.loadSalespersonData();
+                if (window.SatisTemsilcisi) {
+                    window.SatisTemsilcisi.loadSatisTemsilcisi();
+                }
                 break;
             case 'store':
                 if (window.MagazaAnalizi) {

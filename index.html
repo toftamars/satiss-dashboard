@@ -76,6 +76,7 @@
     <script src="js/modules/hedef-takip.js"></script>
     <script src="js/modules/magaza-analizi.js"></script>
     <script src="js/modules/musteri-analizi.js"></script>
+    <script src="js/modules/satis-temsilcisi.js"></script>
     <script src="js/modules/ui.js"></script>
     
     <!-- Initialization -->
@@ -360,10 +361,23 @@
             </div>
         </div>
 
+        <!-- Satış Temsilcisi Tab -->
         <div id="salespersonTab" class="tab-content">
             <div class="content">
-                <h2>👨‍💼 Satış Temsilcisi</h2>
-                <p>Satış temsilcisi modülü geliştiriliyor...</p>
+                <h2 style="margin-bottom: 30px;">👨‍💼 Satış Temsilcisi Performans Analizi</h2>
+                
+                <!-- Karşılaştırma Grafiği -->
+                <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 30px;">
+                    <h3 style="margin: 0 0 20px 0;">📊 Top 10 Satış Temsilcisi</h3>
+                    <canvas id="salespersonComparisonChart" style="max-height: 500px;"></canvas>
+                </div>
+                
+                <!-- Temsilci Detayları -->
+                <div id="salespersonAnalysisContainer" style="min-height: 200px;">
+                    <div style="text-align: center; padding: 40px; color: #6b7280;">
+                        <p>Yükleniyor...</p>
+                    </div>
+                </div>
             </div>
         </div>
 
