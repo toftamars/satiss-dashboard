@@ -170,6 +170,8 @@ class OdooAuth {
                     loginTime: now
                 });
                 
+                console.log('✅ Session kaydedildi, kullanıcı:', username);
+                
                 // Mock response
                 const mockResult = {
                     success: true,
@@ -250,6 +252,8 @@ class OdooAuth {
                 timestamp: Date.now()
             };
             
+            console.log('🔍 Session kaydediliyor:', session);
+            
             sessionStorage.setItem(this.sessionKey, JSON.stringify(session));
             sessionStorage.setItem('userId', sessionData.user.id);
             sessionStorage.setItem('userName', sessionData.user.name);
@@ -257,6 +261,8 @@ class OdooAuth {
             sessionStorage.setItem('authToken', sessionData.token);
             
             console.log('✅ Session kaydedildi:', sessionData.user.name);
+            console.log('✅ Session key:', this.sessionKey);
+            console.log('✅ Session data:', JSON.stringify(session));
         } catch (error) {
             console.error('❌ Session kaydetme hatası:', error);
         }
@@ -268,11 +274,15 @@ class OdooAuth {
     checkSession() {
         try {
             console.log('🔍 Session kontrolü yapılıyor...');
+            console.log('🔍 Session key:', this.sessionKey);
+            console.log('🔍 Session duration:', this.sessionDuration / 60000, 'dakika');
+            
             const sessionData = sessionStorage.getItem(this.sessionKey);
             console.log('🔍 Session data:', sessionData);
             
             if (!sessionData) {
-                console.log('❌ Session data yok');
+                console.log('❌ Session data yok - sessionStorage boş');
+                console.log('🔍 Tüm sessionStorage:', sessionStorage);
                 return { valid: false };
             }
 
@@ -283,6 +293,8 @@ class OdooAuth {
             console.log('🔍 Time diff:', timeDiff, 'ms');
             console.log('🔍 Session duration:', this.sessionDuration, 'ms');
             console.log('🔍 Time diff < session duration:', timeDiff < this.sessionDuration);
+            console.log('🔍 Time diff dakika:', Math.round(timeDiff / 60000));
+            console.log('🔍 Session duration dakika:', Math.round(this.sessionDuration / 60000));
 
             if (timeDiff < this.sessionDuration) {
                 // Session geçerli
@@ -299,6 +311,8 @@ class OdooAuth {
                 // Session süresi dolmuş
                 console.log('⏰ Session süresi dolmuş (120 dakika)');
                 console.log('⏰ Time diff:', timeDiff, 'ms > Session duration:', this.sessionDuration, 'ms');
+                console.log('⏰ Time diff dakika:', Math.round(timeDiff / 60000));
+                console.log('⏰ Session duration dakika:', Math.round(this.sessionDuration / 60000));
                 this.logout();
                 return { valid: false };
             }
