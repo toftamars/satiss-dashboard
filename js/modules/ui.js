@@ -105,7 +105,9 @@ class UIManager {
                 }
                 break;
             case 'product':
-                this.loadProductData();
+                if (window.UrunAnalizi) {
+                    window.UrunAnalizi.loadUrunAnalizi();
+                }
                 break;
             default:
                 console.warn(`⚠️ Bilinmeyen tab: ${tabName}`);
