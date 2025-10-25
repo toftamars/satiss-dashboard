@@ -27,15 +27,23 @@ class EncryptionManager {
      * Secret key al (production'da .env'den gelecek)
      */
     getSecretKey() {
-        // Production'da environment variable'dan al
+        // 1. Önce environment variable'dan al (en güvenli)
         const envKey = window.Config?.encryption?.secretKey;
-        
-        if (envKey) {
+        if (envKey && envKey !== 'ZUHAL_MUZIK_SECRET_KEY_2024_CHANGE_THIS_IN_PRODUCTION') {
+            console.log('✅ Production encryption key kullanılıyor');
             return envKey;
         }
         
-        // Development için varsayılan (GÜVENSİZ - sadece development)
-        console.warn('⚠️ Development encryption key kullanılıyor!');
+        // 2. LocalStorage'dan al (daha güvenli)
+        const storedKey = localStorage.getItem('encryption_key');
+        if (storedKey && storedKey.length > 32) {
+            console.log('✅ Stored encryption key kullanılıyor');
+            return storedKey;
+        }
+        
+        // 3. Development fallback (GÜVENSİZ!)
+        console.warn('⚠️ GÜVENSİZ: Development encryption key kullanılıyor!');
+        console.warn('🔐 Production için ENCRYPTION_SECRET_KEY ayarlayın!');
         return 'ZUHAL_MUZIK_SECRET_KEY_2024_CHANGE_THIS_IN_PRODUCTION';
     }
 
@@ -239,3 +247,4 @@ window.decryptData = (data) => window.EncryptionManager.decrypt(data);
 window.hashData = (data) => window.EncryptionManager.hash(data);
 
 console.log('🔐 Encryption module loaded successfully');
+

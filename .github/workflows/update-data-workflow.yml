@@ -2,8 +2,22 @@ name: Odoo Veri Güncelleme
 
 on:
   workflow_dispatch:  # Manuel çalıştırma (sağ üstte "Run workflow" butonu)
+    inputs:
+      sync_mode:
+        description: 'Sync Mode'
+        required: true
+        default: 'incremental'
+        type: choice
+        options:
+          - incremental  # Hızlı: Son 6 ay değişenler (2 dakika)
+          - full         # Yavaş: Tüm veriler (50 dakika)
+      days:
+        description: 'Incremental için gün sayısı (varsayılan: 180)'
+        required: false
+        default: '180'
+        type: string
   schedule:
-    - cron: '0 2 * * *'  # Her gece saat 05:00 İstanbul saati (UTC 02:00) - AKTİF
+    - cron: '0 2 * * *'  # Her gece saat 05:00 İstanbul saati (UTC 02:00) - Otomatik Incremental
 
 jobs:
   update-data:
@@ -25,11 +39,19 @@ jobs:
       run: |
         pip install requests
     
+    - name: Sync Mode Bilgisi
+      run: |
+        echo "🔄 Sync Mode: ${{ github.event.inputs.sync_mode || 'incremental' }}"
+        echo "📅 Days: ${{ github.event.inputs.days || '180' }}"
+        echo "🤖 Trigger: ${{ github.event_name }}"
+        
     - name: Odoo'dan veri çek
       env:
         ODOO_URL: ${{ secrets.ODOO_URL }}
         ODOO_USERNAME: ${{ secrets.ODOO_USERNAME }}
         ODOO_API_KEY: ${{ secrets.ODOO_API_KEY }}
+        SYNC_MODE: ${{ github.event.inputs.sync_mode || 'incremental' }}
+        SYNC_DAYS: ${{ github.event.inputs.days || '180' }}
       run: |
         python3 << 'EOF'
         import os
