@@ -75,7 +75,9 @@ class UIManager {
                 }
                 break;
             case 'customers':
-                this.loadCustomersData();
+                if (window.MusteriAnalizi) {
+                    window.MusteriAnalizi.loadMusteriAnalizi();
+                }
                 break;
             case 'salesperson':
                 this.loadSalespersonData();
