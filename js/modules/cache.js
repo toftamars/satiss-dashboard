@@ -282,13 +282,25 @@ class CacheManager {
             }
         }
 
-        // LRU cleanup if still needed
-        if (itemsToDelete.length === 0) {
+        // LRU cleanup if cache is still too large after expired cleanup
+        let totalSize = 0;
+        let itemCount = this.cache.size;
+        
+        // Calculate current cache size after expired cleanup
+        for (const [key, item] of this.cache) {
+            if (!itemsToDelete.includes(key)) {
+                totalSize += item.size;
+            }
+        }
+        
+        // If still over limits, perform LRU cleanup
+        if (totalSize > this.cacheConfig.maxCacheSize || itemCount > this.cacheConfig.maxItems) {
             const sortedItems = Array.from(this.cache.entries())
+                .filter(([key]) => !itemsToDelete.includes(key)) // Exclude already marked for deletion
                 .sort((a, b) => a[1].lastAccess - b[1].lastAccess);
             
-            const itemsToRemove = Math.floor(this.cache.size * 0.2); // %20 temizle
-            for (let i = 0; i < itemsToRemove; i++) {
+            const itemsToRemove = Math.floor(sortedItems.length * 0.2); // %20 temizle
+            for (let i = 0; i < itemsToRemove && i < sortedItems.length; i++) {
                 itemsToDelete.push(sortedItems[i][0]);
             }
         }
