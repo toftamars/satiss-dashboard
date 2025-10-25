@@ -46,7 +46,7 @@ export class ConfigLoader {
      */
     static async _loadConfig() {
         try {
-            // 1. Environment variables'ı kontrol et (Vercel, production)
+            // 1. Environment variables'ı kontrol et (production)
             if (this._hasEnvironmentVariables()) {
                 console.log('✅ Environment variables kullanılıyor');
                 return this._loadFromEnvironment();
@@ -67,12 +67,12 @@ export class ConfigLoader {
      * @private
      */
     static _hasEnvironmentVariables() {
-        // Node.js environment (GitHub Actions, Vercel serverless)
+        // Node.js environment (GitHub Actions)
         if (typeof process !== 'undefined' && process.env) {
             return !!(process.env.ODOO_URL && process.env.ODOO_API_KEY);
         }
 
-        // Browser environment - Vercel'den inject edilen env vars
+        // Browser environment - inject edilen env vars
         if (typeof window !== 'undefined' && window.__ENV__) {
             return !!(window.__ENV__.ODOO_URL && window.__ENV__.ODOO_API_KEY);
         }

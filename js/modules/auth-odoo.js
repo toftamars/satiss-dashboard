@@ -1,11 +1,13 @@
 /**
  * 🔐 Odoo Authentication Module
  * Odoo kullanıcı doğrulama ve session yönetimi
+ * ✅ Direkt Odoo bağlantısı (Vercel kaldırıldı)
  */
 
 class OdooAuth {
     constructor() {
-        this.apiUrl = 'https://zuhal-mu.vercel.app/api/odoo-login';
+        this.odooUrl = 'https://erp.zuhalmuzik.com';
+        this.odooDb = 'erp.zuhalmuzik.com';
         this.sessionKey = 'odoo_session';
         this.sessionDuration = 120 * 60 * 1000; // 120 dakika (2 saat)
         this.init();
@@ -129,46 +131,53 @@ class OdooAuth {
             }
 
             console.log('🔐 Odoo login başlatılıyor...');
+            console.log('URL:', this.odooUrl);
+            console.log('DB:', this.odooDb);
             console.log('Username:', username);
 
-            // Direkt Odoo API'ye istek
-            const odooUrl = 'https://erp.zuhalmuzik.com';
-            const odooDb = 'erp.zuhalmuzik.com';
-            
+            // ✅ Direkt Odoo API'ye istek (Vercel kaldırıldı)
             const authPayload = {
                 jsonrpc: '2.0',
                 method: 'call',
                 params: {
-                    db: odooDb,
+                    db: this.odooDb,
                     login: username,
-                    password: password
+                    password: password,
+                    totp_token: totpCode // Odoo 2FA field
                 },
                 id: 1
             };
 
-            // Basit login sistemi (CORS proxy olmadan)
-            // ✅ GERÇEK ODOO API KULLAN
-            const response = await fetch(this.apiUrl, {
+            console.log('📡 Odoo\'ya direkt istek atılıyor...');
+            
+            const response = await fetch(`${this.odooUrl}/web/session/authenticate`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
-                body: JSON.stringify({
-                    username,
-                    password,
-                    totp: totpCode
-                })
+                body: JSON.stringify(authPayload),
+                credentials: 'include' // Cookie desteği
             });
 
             if (!response.ok) {
+                console.error('❌ Odoo HTTP hatası:', response.status);
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
             const result = await response.json();
+            console.log('📡 Odoo response:', JSON.stringify(result).substring(0, 200));
 
-            if (result.success && result.token) {
+            // Odoo response kontrolü
+            if (result.result && result.result.uid) {
+                const userId = result.result.uid;
+                const userName = result.result.name || username;
+                const sessionId = result.result.session_id;
+                
                 console.log('✅ Odoo authentication başarılı!');
-                console.log('User:', result.user.name);
+                console.log('User ID:', userId);
+                console.log('User Name:', userName);
+                console.log('Session ID:', sessionId);
 
                 // Başarılı login - attempt count sıfırla
                 localStorage.setItem('lastLoginAttempt', now.toString());
@@ -176,21 +185,32 @@ class OdooAuth {
 
                 // Session kaydet
                 this.saveSession({
-                    token: result.token,
-                    user: result.user,
+                    token: sessionId, // Odoo session_id kullan
+                    user: {
+                        id: userId,
+                        name: userName,
+                        username: username,
+                        email: username
+                    },
                     loginTime: now
                 });
 
                 return {
                     success: true,
-                    user: result.user
+                    user: {
+                        id: userId,
+                        name: userName,
+                        username: username
+                    }
                 };
             } else {
                 // Başarısız login - attempt count artır
                 localStorage.setItem('lastLoginAttempt', now.toString());
                 localStorage.setItem('loginAttemptCount', (attemptCount + 1).toString());
                 
-                throw new Error(result.error || 'Giriş başarısız');
+                const errorMsg = result.error?.data?.message || result.error?.message || 'Geçersiz kullanıcı adı, şifre veya 2FA kodu';
+                console.error('❌ Odoo authentication başarısız:', errorMsg);
+                throw new Error(errorMsg);
             }
 
         } catch (error) {

@@ -5,7 +5,7 @@
  */
 
 import { AppData, DataLoadProgress } from './app-state.js';
-import { loadAllData, loadTargets } from './data-loader.js';
+import { dataLoader } from './data-loader.js';
 import { handleChannelFilter, getFilteredData } from './filters.js';
 import { formatCurrency, formatNumber } from './utils.js';
 

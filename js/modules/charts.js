@@ -6,7 +6,7 @@
 
 import { AppData } from './app-state.js';
 import { formatCurrency, formatNumber, groupBy, sumBy } from './utils.js';
-import { ErrorHandler } from './error-handler.js';
+import { errorHandler } from './error-handler.js';
 
 /**
  * Chart instance'larını sakla

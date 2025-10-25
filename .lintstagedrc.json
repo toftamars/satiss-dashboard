@@ -1,6 +1,5 @@
 {
   "*.js": [
-    "eslint --fix",
-    "prettier --write"
+    "eslint --fix --ignore-pattern 'dist/**' --ignore-pattern 'node_modules/**'"
   ]
 }

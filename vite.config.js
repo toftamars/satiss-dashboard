@@ -4,11 +4,16 @@ import { defineConfig } from 'vite';
 export default defineConfig({
     build: {
         rollupOptions: {
+            external: [
+                // CDN'den yüklenen kütüphaneler
+                'chart.js',
+                'pako',
+                'xlsx',
+                'crypto-js',
+                'dompurify'
+            ],
             output: {
                 manualChunks: {
-                    // Vendor chunks - External libraries
-                    'vendor-charts': ['chart.js'],
-
                     // Feature chunks - Modules
                     core: [
                         './js/modules/logger.js',
@@ -34,18 +39,8 @@ export default defineConfig({
                 }
             }
         },
-        // Minification
-        minify: 'terser',
-        terserOptions: {
-            compress: {
-                drop_console: true, // Production'da console.log'ları kaldır
-                drop_debugger: true,
-                pure_funcs: ['console.log', 'console.info', 'console.debug']
-            },
-            mangle: {
-                safari10: true
-            }
-        },
+        // Minification (esbuild - Vite default, daha hızlı)
+        minify: 'esbuild',
         // Source maps (development için)
         sourcemap: process.env.NODE_ENV === 'development',
         // Chunk size warnings

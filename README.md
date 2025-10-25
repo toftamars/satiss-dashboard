@@ -95,42 +95,39 @@ Tarayıcıda aç: `http://localhost:5173` (Vite) veya `http://localhost:8000`
 
 ## 📦 Production Deployment
 
-### Vercel Deployment (Önerilen)
+### GitHub Pages Deployment
 
-**Detaylı deployment guide için: [DEPLOYMENT.md](DEPLOYMENT.md)**
+**Direkt Odoo bağlantısı ile çalışır (Vercel kaldırıldı)**
 
-#### Method 1: GitHub Integration (Otomatik)
+#### Otomatik Deployment
 
 1. GitHub'a push yapın:
 \`\`\`bash
 git push origin main
 \`\`\`
 
-2. Vercel otomatik deploy eder
-3. Environment variables'ı Vercel Dashboard'dan ekleyin
+2. GitHub Actions otomatik deploy eder (gh-pages branch)
 
-#### Method 2: Vercel CLI
+#### Manuel Deployment
 
 \`\`\`bash
-# Vercel CLI kur
-npm install -g vercel
+# Build
+npm run build
 
-# Login
-vercel login
-
-# Deploy
-vercel --prod
+# Deploy to GitHub Pages
+git add dist -f
+git commit -m "Deploy to GitHub Pages"
+git subtree push --prefix dist origin gh-pages
 \`\`\`
 
 #### Environment Variables
 
-Vercel Dashboard → Settings → Environment Variables:
+GitHub Pages için .env dosyası:
 
 \`\`\`env
 NODE_ENV=production
-VITE_API_URL=https://zuhal-mu.vercel.app
 VITE_ODOO_URL=https://erp.zuhalmuzik.com
-VITE_ODOO_DB=zuhalmusic
+VITE_ODOO_DB=erp.zuhalmuzik.com
 VITE_SESSION_TIMEOUT=7200000
 VITE_ENABLE_PWA=true
 VITE_ENABLE_WORKERS=true
@@ -142,6 +139,7 @@ VITE_ENABLE_MONITORING=true
 - **Framework:** Vite
 - **Build Command:** `npm run build`
 - **Output Directory:** `dist`
+- **Deployment:** GitHub Pages (direkt Odoo bağlantısı)
 - **Node Version:** 18.x
 
 ### Production Build (Local)
@@ -196,7 +194,6 @@ satiss-dashboard/
 ├── manifest.json           # PWA manifest
 ├── vite.config.js          # Vite configuration
 ├── postcss.config.js       # PostCSS configuration
-├── vercel.json             # Vercel deployment config
 ├── js/
 │   ├── modules/            # 20 modül (4,600+ satır)
 │   │   ├── logger.js               # Logging sistemi
@@ -226,8 +223,6 @@ satiss-dashboard/
 │   ├── data-metadata.json          # Metadata
 │   ├── stock-locations.json        # Mağaza lokasyonları
 │   └── targets.json                # Hedefler
-├── api/
-│   └── odoo-login.js               # Vercel serverless function
 ├── .eslintrc.js                    # ESLint config
 ├── .prettierrc.json                # Prettier config
 ├── package.json                    # NPM dependencies
@@ -323,7 +318,7 @@ ISC License - Detaylar için [LICENSE](LICENSE) dosyasına bakın.
 
 - [Chart.js](https://www.chartjs.org/) - Grafik kütüphanesi
 - [Odoo](https://www.odoo.com/) - ERP sistemi
-- [Vercel](https://vercel.com/) - Hosting platform
+- [GitHub Pages](https://pages.github.com/) - Hosting platform
 
 ---
 
