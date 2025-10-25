@@ -34,7 +34,15 @@ class EncryptionManager {
             return envKey;
         }
         
-        // Development için varsayılan (GÜVENSİZ - sadece development)
+        // Production ortamında sabit key kullanmayı engelle
+        if (window.location.hostname !== 'localhost' && 
+            window.location.hostname !== '127.0.0.1' && 
+            !window.location.hostname.includes('localhost')) {
+            console.error('❌ Production ortamında encryption key tanımlanmamış!');
+            throw new Error('Encryption key production ortamında tanımlanmalıdır');
+        }
+        
+        // Development için varsayılan (sadece localhost)
         console.warn('⚠️ Development encryption key kullanılıyor!');
         return 'ZUHAL_MUZIK_SECRET_KEY_2024_CHANGE_THIS_IN_PRODUCTION';
     }
