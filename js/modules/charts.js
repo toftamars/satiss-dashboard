@@ -6,6 +6,7 @@
 
 import { AppData } from './app-state.js';
 import { formatCurrency, formatNumber, groupBy, sumBy } from './utils.js';
+import { ErrorHandler } from './error-handler.js';
 
 /**
  * Chart instance'larını sakla
@@ -56,8 +57,15 @@ function destroyChart(key) {
  * @param {string} metricType - 'sales' veya 'qty'
  */
 export function renderYearlyComparisonChart(metricType = 'sales') {
-    const ctx = document.getElementById('dashYearlyChart');
-    if (!ctx) return;
+    try {
+        const ctx = document.getElementById('dashYearlyChart');
+        if (!ctx) {
+            throw new Error('Chart canvas bulunamadı: dashYearlyChart');
+        }
+        
+        if (!AppData.allData || AppData.allData.length === 0) {
+            throw new Error('Veri yüklenmemiş');
+        }
     
     const yearlyMonthlyData = {};
     const yearlyMonthlyQty = {};
@@ -158,6 +166,9 @@ export function renderYearlyComparisonChart(metricType = 'sales') {
             }
         }
     });
+    } catch (error) {
+        ErrorHandler.handleChartError('dashYearly', error);
+    }
 }
 
 /**
