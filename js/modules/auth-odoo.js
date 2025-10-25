@@ -7,7 +7,7 @@ class OdooAuth {
     constructor() {
         this.apiUrl = 'https://zuhal-mu.vercel.app/api/odoo-login';
         this.sessionKey = 'odoo_session';
-        this.sessionDuration = 30 * 60 * 1000; // 30 dakika
+        this.sessionDuration = 120 * 60 * 1000; // 120 dakika (2 saat)
         this.init();
     }
 
@@ -27,6 +27,7 @@ class OdooAuth {
             
             if (session.valid) {
                 console.log('✅ Geçerli session bulundu, dashboard açılıyor...');
+                console.log(`⏰ Session süresi: ${session.remainingTime} dakika kaldı`);
                 
                 // Kullanıcı bilgisini göster
                 this.updateUserInfo(session.user);
@@ -273,6 +274,7 @@ class OdooAuth {
                 // Session geçerli
                 const remainingTime = Math.round((this.sessionDuration - timeDiff) / 60000);
                 console.log(`✅ Geçerli session, kalan: ${remainingTime} dakika`);
+                console.log(`⏰ Session süresi: ${this.sessionDuration / 60000} dakika (120 dakika)`);
 
                 return {
                     valid: true,
@@ -281,7 +283,7 @@ class OdooAuth {
                 };
             } else {
                 // Session süresi dolmuş
-                console.log('⏰ Session süresi dolmuş');
+                console.log('⏰ Session süresi dolmuş (120 dakika)');
                 this.logout();
                 return { valid: false };
             }
