@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Error Handler Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+</head>
+<body>
+    <h1>Error Handler Test Sayfası</h1>
+    <button onclick="testError1()">Test 1: Uncaught Error</button>
+    <button onclick="testError2()">Test 2: Promise Rejection</button>
+    <button onclick="testError3()">Test 3: Network Error</button>
+    <button onclick="testXSS()">Test 4: XSS Protection</button>
+    
+    <div id="result" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+    
+    <script type="module">
+        import { errorHandler } from './js/modules/error-handler.js';
+        import { sanitizeHTML, escapeHTML } from './js/modules/utils.js';
+        
+        window.testError1 = function() {
+            throw new Error('Bu bir test hatasıdır!');
+        };
+        
+        window.testError2 = function() {
+            Promise.reject('Promise rejection test');
+        };
+        
+        window.testError3 = function() {
+            fetch('https://invalid-url-that-does-not-exist.com')
+                .then(r => r.json());
+        };
+        
+        window.testXSS = function() {
+            const maliciousHTML = '<img src=x onerror="alert(\'XSS\')">';
+            const cleanHTML = sanitizeHTML(maliciousHTML);
+            
+            document.getElementById('result').innerHTML = `
+                <h3>XSS Test Sonucu:</h3>
+                <p><strong>Orijinal:</strong> ${escapeHTML(maliciousHTML)}</p>
+                <p><strong>Temizlenmiş:</strong> ${escapeHTML(cleanHTML)}</p>
+                <p><strong>Güvenli mi?</strong> ${cleanHTML === '' ? '✅ Evet' : '⚠️ Kontrol et'}</p>
+            `;
+        };
+        
+        console.log('✅ Test sayfası hazır');
+    </script>
+</body>
+</html>
