@@ -256,59 +256,7 @@
             }
         };
         
-        // Odoo Authentication API
-        const ODOO_AUTH_URL = 'https://your-project.vercel.app/api/odoo-login'; // Vercel deploy sonrası güncellenecek
-        
-        // Odoo Login fonksiyonu
-        async function odooLogin(username, password) {
-            try {
-                if (!username || !password) {
-                    showAuthError('❌ Kullanıcı adı ve şifre gerekli');
-                    return;
-                }
-                
-                showAuthLoading();
-                
-                console.log('🔐 Odoo login başlatılıyor...');
-                console.log('Username:', username);
-                
-                const response = await fetch(ODOO_AUTH_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({ 
-                        username: username, 
-                        password: password 
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success && result.token) {
-                    console.log('✅ Odoo authentication başarılı!');
-                    console.log('User:', result.user.name);
-                    
-                    // Session bilgilerini kaydet
-                    sessionStorage.setItem('isLoggedIn', 'true');
-                    sessionStorage.setItem('authToken', result.token);
-                    sessionStorage.setItem('userId', result.user.id);
-                    sessionStorage.setItem('userName', result.user.name);
-                    sessionStorage.setItem('userEmail', result.user.username);
-                    sessionStorage.setItem('loginTime', Date.now().toString());
-                    
-                    // Dashboard'ı göster
-                    window.showDashboardAfterAuth(result.user);
-                } else {
-                    throw new Error(result.error || 'Giriş başarısız');
-                }
-                
-            } catch (error) {
-                console.error('❌ Odoo login hatası:', error);
-                showAuthError(error.message || 'Giriş yapılamadı. Lütfen bilgilerinizi kontrol edin.');
-            }
-        }
+        // Odoo Authentication - Modül tarafından yönetiliyor (auth-odoo.js, ui-login.js)
     </script>
     <!-- Login Kontrolü -->
     <script>
@@ -1457,6 +1405,10 @@
             }
         }
     </style>
+    
+    <!-- Modular JavaScript Modules -->
+    <script type="module" src="js/modules/auth-odoo.js"></script>
+    <script type="module" src="js/modules/ui-login.js"></script>
 </head>
     <body>
     <!-- Odoo Login Form -->
