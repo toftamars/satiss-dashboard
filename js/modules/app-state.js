@@ -9,9 +9,11 @@
  */
 export const AppData = {
     allData: [],
+    filteredData: [],
     inventoryData: null,
     stockLocations: {},
-    metadata: null
+    metadata: null,
+    centralTargets: { yearly: {}, monthly: {} }
 };
 
 /**

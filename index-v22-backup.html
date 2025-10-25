@@ -2931,15 +2931,11 @@
             }
         }
 
-        // Global değişkenler artık modüllerde (app-state.js)
-        // AppData.inventoryData, AppData.stockLocations, etc.
-        
-        // Geriye uyumluluk için alias'lar
-        let inventoryData = null; // AppData.inventoryData'ya yönlendirilecek
+        let inventoryData = null; // Envanter verileri
         let inventoryCharts = {}; // Envanter grafikleri
-        let stockLocations = {}; // AppData.stockLocations'a yönlendirilecek
+        let stockLocations = {}; // Stok konumu ve mağaza eşleşmesi
         
-        // Global Satış Kanalı Filtresi State (ChannelFilters modülünde)
+        // Global Satış Kanalı Filtresi State
         let activeChannels = {
             all: true,
             retail: false,
@@ -2949,7 +2945,7 @@
             central: false
         };
         
-        // Gerçek veri yükleme takibi (DataLoadProgress modülünde)
+        // Gerçek veri yükleme takibi
         let dataLoadProgress = {
             pageInit: false,
             dataFiles: false,
@@ -2957,13 +2953,81 @@
             ready: false
         };
         
-        // İndirim fonksiyonları artık utils.js modülünde
-        // isDiscountProduct() ve applyDiscountLogic() kullanılabilir
+        // İndirim ürünlerini tespit eden yardımcı fonksiyon
+        function isDiscountProduct(item) {
+            const productName = (item.product || '').toLowerCase();
+            return productName.includes('[disc]') ||
+                   productName.includes('indirim') || 
+                   productName.includes('discount') ||
+                   productName.includes('toplam tutarda indirim');
+        }
+        
+        // İndirim ürünlerinin tutarını negatif yapan fonksiyon
+        function applyDiscountLogic(item) {
+            if (isDiscountProduct(item)) {
+                // İndirim ürünleri için tutar negatif, miktar pozitif
+                return {
+                    ...item,
+                    usd_amount: -Math.abs(parseFloat(item.usd_amount || 0)),
+                    quantity: Math.abs(parseFloat(item.quantity || 0)),
+                    _isDiscount: true  // İndirim işareti ekle (filtreleme için)
+                };
+            }
+            return item;
+        }
         
         // Hedefler artık targets.json'dan yükleniyor (Google Sheets kaldırıldı)
         
-        // Mağaza çalışma saatleri fonksiyonları artık utils.js modülünde
-        // STORE_WORKING_HOURS, getStoreWorkingHours(), isWithinWorkingHours() kullanılabilir
+        // MAĞAZA ÇALIŞMA SAATLERİ VE KAPALILIKLARI
+        const STORE_WORKING_HOURS = {
+            // Özel saatli mağazalar (10:00-20:00, Pazar kapalı)
+            'Tünel': { openHour: 10, closeHour: 20, closedDays: [0] }, // 0 = Pazar
+            'İzmir': { openHour: 10, closeHour: 20, closedDays: [0] },
+            'Antalya': { openHour: 10, closeHour: 20, closedDays: [0] },
+            'Kızılay': { openHour: 10, closeHour: 20, closedDays: [0] },
+            // Default: Tüm diğer mağazalar (10:00-22:00, 7 gün açık)
+            'default': { openHour: 10, closeHour: 22, closedDays: [] }
+        };
+        
+        // Mağaza çalışma saatlerini kontrol eden fonksiyon
+        function getStoreWorkingHours(storeName) {
+            // Mağaza adını temizle (kodları kaldır)
+            const cleanName = storeName.replace(/\[.*?\]\s*/g, '').trim();
+            
+            // Özel mağazalarda arama yap (kısmi eşleşme)
+            for (const [key, hours] of Object.entries(STORE_WORKING_HOURS)) {
+                if (key !== 'default' && cleanName.toLowerCase().includes(key.toLowerCase())) {
+                    return hours;
+                }
+            }
+            
+            // Bulunamazsa default döndür
+            return STORE_WORKING_HOURS.default;
+        }
+        
+        // Satış verisinin çalışma saatleri içinde olup olmadığını kontrol eden fonksiyon
+        function isWithinWorkingHours(item) {
+            const hours = getStoreWorkingHours(item.store || '');
+            const hour = item.create_hour;
+            const dayOfWeek = item.day_of_week;
+            
+            // Gün kontrolü (kapalı gün mü?)
+            if (dayOfWeek !== undefined && dayOfWeek !== null) {
+                const dayIndex = (dayOfWeek + 1) % 7; // 0=Pazar, 1=Pazartesi, ...
+                if (hours.closedDays.includes(dayIndex)) {
+                    return false; // Kapalı gün
+                }
+            }
+            
+            // Saat kontrolü (çalışma saatleri içinde mi?)
+            if (hour !== undefined && hour !== null) {
+                if (hour < hours.openHour || hour >= hours.closeHour) {
+                    return false; // Çalışma saatleri dışında
+                }
+            }
+            
+            return true; // Çalışma saatleri içinde
+        }
         
         // Google Sheets fonksiyonu kaldırıldı - artık targets.json kullanılıyor
 
