@@ -5,10 +5,11 @@
 
 const https = require('https');
 
-// Rate limiting (basit in-memory)
+// Rate limiting (güçlendirilmiş)
 const loginAttempts = new Map();
-const MAX_ATTEMPTS = 5;
-const ATTEMPT_WINDOW = 5 * 60 * 1000; // 5 dakika
+const MAX_ATTEMPTS = 3; // Daha sıkı
+const ATTEMPT_WINDOW = 15 * 60 * 1000; // 15 dakika
+const IP_BLOCK_DURATION = 60 * 60 * 1000; // 1 saat
 
 export default async function handler(req, res) {
   // CORS headers - GitHub Pages için
@@ -32,6 +33,18 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Request validation
+  const userAgent = req.headers['user-agent'];
+  if (!userAgent || userAgent.length < 10) {
+    return res.status(400).json({ error: 'Geçersiz request' });
+  }
+
+  // Referer kontrolü (GitHub Pages'den gelmeli)
+  const referer = req.headers.referer;
+  if (!referer || !referer.includes('toftamars.github.io')) {
+    return res.status(403).json({ error: 'Sadece GitHub Pages\'den erişim izni var' });
+  }
+
     try {
         const { username, password, totp } = req.body;
 
@@ -44,7 +57,7 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: '6 haneli 2FA kodu gerekli' });
         }
 
-    // Rate limiting kontrolü
+    // Rate limiting kontrolü (güçlendirilmiş)
     const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     const now = Date.now();
     
@@ -53,8 +66,10 @@ export default async function handler(req, res) {
       const recentAttempts = attempts.filter(time => now - time < ATTEMPT_WINDOW);
       
       if (recentAttempts.length >= MAX_ATTEMPTS) {
+        // IP'yi 1 saat blokla
+        loginAttempts.set(clientIp, [...recentAttempts, now + IP_BLOCK_DURATION]);
         return res.status(429).json({ 
-          error: 'Çok fazla deneme yapıldı. 5 dakika sonra tekrar deneyin.' 
+          error: 'IP adresiniz 1 saat boyunca bloklandı. Çok fazla deneme yapıldı.' 
         });
       }
       
