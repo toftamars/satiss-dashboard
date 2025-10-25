@@ -1,0 +1,43 @@
+# Cursor AI Rules - Sales Dashboard Project
+
+## Context
+Bu proje bir satış dashboard uygulamasıdır. Odoo ERP entegrasyonu ve Chart.js kullanımı vardır.
+
+## Important Files
+- SORUNLAR_VE_COZUMLER.md: Tüm sorunlar ve çözümler burada
+- CURSOR_KULLANIM_REHBERI.md: Bu dosyayı nasıl kullanacağın
+- README.md: Proje dokümantasyonu
+
+## Rules
+1. Yeni kod yazarken SORUNLAR_VE_COZUMLER.md'ye bak
+2. Her değişiklikte error handling ekle
+3. Console.log yerine logger kullan
+4. Yeni fonksiyon için test yaz
+5. Commit mesajları: "fix:", "feat:", "docs:" ile başla
+6. Environment variables kullan, hard-coded değer yok
+7. Türkçe yorum ve dokümantasyon
+
+## Code Style
+- Indent: 4 spaces
+- Quotes: Single quotes
+- Semicolons: Always
+- Max line length: 100
+- JSDoc comments for all functions
+
+## Security
+- ASLA API key commit etme
+- Her zaman environment variables kullan
+- Input validation yap
+- Error mesajlarında sensitive data gösterme
+
+## Performance
+- Lazy loading kullan
+- Büyük dosyalar için pagination
+- GZIP compression
+- Cache kullan
+
+## Testing
+- Her yeni fonksiyon için unit test
+- Coverage %60+
+- Jest framework
+- Test dosyası: filename.test.js
