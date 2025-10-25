@@ -7,12 +7,94 @@ class OdooAuth {
     constructor() {
         this.apiUrl = 'https://zuhal-mu.vercel.app/api/odoo-login';
         this.sessionKey = 'odoo_session';
-        this.sessionDuration = 60 * 60 * 1000; // 1 saat
+        this.sessionDuration = 30 * 60 * 1000; // 30 dakika
         this.init();
     }
 
     init() {
         console.log('🔐 OdooAuth initialized');
+        
+        // Sayfa yüklendiğinde session kontrolü yap
+        this.checkSessionOnLoad();
+    }
+
+    /**
+     * Sayfa yüklendiğinde session kontrolü
+     */
+    checkSessionOnLoad() {
+        try {
+            const session = this.checkSession();
+            
+            if (session.valid) {
+                console.log('✅ Geçerli session bulundu, dashboard açılıyor...');
+                
+                // Kullanıcı bilgisini göster
+                this.updateUserInfo(session.user);
+                
+                // Dashboard'ı göster
+                this.showDashboard();
+                
+                return true;
+            } else {
+                console.log('❌ Geçerli session yok, login gerekli');
+                this.showLoginForm();
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ Session kontrol hatası:', error);
+            this.showLoginForm();
+            return false;
+        }
+    }
+    
+    /**
+     * Kullanıcı bilgisini güncelle
+     */
+    updateUserInfo(user) {
+        const userInfo = document.getElementById('userInfo');
+        const userName = document.getElementById('userName');
+        
+        if (userInfo && userName && user) {
+            userName.textContent = `👤 ${user.name || user.username}`;
+            userInfo.style.display = 'block';
+            console.log('✅ Kullanıcı bilgisi güncellendi:', user.name || user.username);
+        }
+    }
+    
+    /**
+     * Dashboard'ı göster
+     */
+    showDashboard() {
+        const authForm = document.getElementById('authForm');
+        const mainContainer = document.getElementById('mainContainer');
+        
+        if (authForm) authForm.style.display = 'none';
+        if (mainContainer) mainContainer.style.display = 'block';
+        
+        // Dashboard'ı yükle
+        if (typeof window.loadData === 'function') {
+            window.loadData();
+        } else {
+            console.log('⚠️ loadData fonksiyonu henüz yüklenmedi, 2 saniye bekleniyor...');
+            setTimeout(() => {
+                if (typeof window.loadData === 'function') {
+                    window.loadData();
+                }
+            }, 2000);
+        }
+    }
+    
+    /**
+     * Login formunu göster
+     */
+    showLoginForm() {
+        const authForm = document.getElementById('authForm');
+        const mainContainer = document.getElementById('mainContainer');
+        const userInfo = document.getElementById('userInfo');
+        
+        if (authForm) authForm.style.display = 'flex';
+        if (mainContainer) mainContainer.style.display = 'none';
+        if (userInfo) userInfo.style.display = 'none';
     }
 
     /**
@@ -65,6 +147,17 @@ class OdooAuth {
                 // Başarılı login - attempt count sıfırla
                 localStorage.setItem('lastLoginAttempt', now.toString());
                 localStorage.setItem('loginAttemptCount', '0');
+                
+                // Session kaydet
+                this.saveSession({
+                    token: 'mock_token',
+                    user: {
+                        id: 1,
+                        name: username,
+                        username: username
+                    },
+                    loginTime: now
+                });
                 
                 // Mock response
                 const mockResult = {
@@ -137,36 +230,59 @@ class OdooAuth {
     }
 
     /**
+     * Session kaydet
+     */
+    saveSession(sessionData) {
+        try {
+            const session = {
+                ...sessionData,
+                timestamp: Date.now()
+            };
+            
+            sessionStorage.setItem(this.sessionKey, JSON.stringify(session));
+            sessionStorage.setItem('userId', sessionData.user.id);
+            sessionStorage.setItem('userName', sessionData.user.name);
+            sessionStorage.setItem('userEmail', sessionData.user.email || sessionData.user.username);
+            sessionStorage.setItem('authToken', sessionData.token);
+            
+            console.log('✅ Session kaydedildi:', sessionData.user.name);
+        } catch (error) {
+            console.error('❌ Session kaydetme hatası:', error);
+        }
+    }
+
+    /**
      * Session kontrolü
      */
     checkSession() {
-        const isLoggedIn = sessionStorage.getItem('isLoggedIn');
-        const loginTime = sessionStorage.getItem('loginTime');
+        try {
+            const sessionData = sessionStorage.getItem(this.sessionKey);
+            
+            if (!sessionData) {
+                return { valid: false };
+            }
 
-        if (!isLoggedIn || !loginTime) {
-            return { valid: false };
-        }
+            const session = JSON.parse(sessionData);
+            const timeDiff = Date.now() - session.timestamp;
 
-        const timeDiff = Date.now() - parseInt(loginTime);
+            if (timeDiff < this.sessionDuration) {
+                // Session geçerli
+                const remainingTime = Math.round((this.sessionDuration - timeDiff) / 60000);
+                console.log(`✅ Geçerli session, kalan: ${remainingTime} dakika`);
 
-        if (timeDiff < this.sessionDuration) {
-            // Session geçerli
-            const remainingTime = Math.round((this.sessionDuration - timeDiff) / 60000);
-            console.log(`✅ Geçerli session, kalan: ${remainingTime} dakika`);
-
-            return {
-                valid: true,
-                user: {
-                    id: sessionStorage.getItem('userId'),
-                    name: sessionStorage.getItem('userName'),
-                    email: sessionStorage.getItem('userEmail')
-                },
-                remainingTime: remainingTime
-            };
-        } else {
-            // Session süresi dolmuş
-            console.log('⏰ Session süresi dolmuş');
-            this.logout();
+                return {
+                    valid: true,
+                    user: session.user,
+                    remainingTime: remainingTime
+                };
+            } else {
+                // Session süresi dolmuş
+                console.log('⏰ Session süresi dolmuş');
+                this.logout();
+                return { valid: false };
+            }
+        } catch (error) {
+            console.error('❌ Session kontrol hatası:', error);
             return { valid: false };
         }
     }
