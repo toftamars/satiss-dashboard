@@ -13,7 +13,6 @@
     }
   ],
   "env": {
-    "ODOO_URL": "https://erp.zuhalmuzik.com"
+    "ALLOWED_USERS": "admin,tofta,rapor,analiz,dashboard"
   }
 }
-

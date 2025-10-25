@@ -1,0 +1,84 @@
+name: 🚀 Auto Deploy Chain
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy-github-pages:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    
+    steps:
+    - name: 📥 Checkout
+      uses: actions/checkout@v4
+      
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: 🔧 Install dependencies
+      run: npm ci
+      
+    - name: 🏗️ Build
+      run: npm run build
+      
+    - name: 📤 Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./
+        exclude_assets: |
+          node_modules
+          .git
+          .github
+          api
+        enable_jekyll: false
+        force_orphan: true
+        
+  deploy-vercel:
+    runs-on: ubuntu-latest
+    needs: deploy-github-pages
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 📥 Checkout
+      uses: actions/checkout@v4
+      
+    - name: 🚀 Deploy to Vercel
+      uses: amondnet/vercel-action@v25
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        working-directory: ./
+        vercel-args: '--prod'
+        
+  test-deployment:
+    runs-on: ubuntu-latest
+    needs: [deploy-github-pages, deploy-vercel]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 🧪 Test GitHub Pages
+      run: |
+        echo "Testing GitHub Pages deployment..."
+        curl -f https://toftamars.github.io/satiss-dashboard/ || exit 1
+        
+    - name: 🧪 Test Vercel API
+      run: |
+        echo "Testing Vercel API deployment..."
+        curl -f https://satiss-dashboard.vercel.app/api/odoo-login || exit 1
+        
+    - name: ✅ Deployment Success
+      run: |
+        echo "🎉 All deployments successful!"
+        echo "GitHub Pages: https://toftamars.github.io/satiss-dashboard/"
+        echo "Vercel API: https://satiss-dashboard.vercel.app/api/odoo-login"

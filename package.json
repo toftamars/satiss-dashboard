@@ -1,4 +1,12 @@
 {
+  "name": "satiss-dashboard",
+  "version": "1.0.0",
+  "description": "Sales Dashboard with Odoo Integration",
+  "scripts": {
+    "build": "echo 'Build completed'",
+    "start": "echo 'Starting server'",
+    "test": "echo 'Tests completed'"
+  },
   "devDependencies": {
     "html-minifier": "^4.0.0"
   }
