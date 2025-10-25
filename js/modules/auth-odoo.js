@@ -38,7 +38,8 @@ class OdooAuth {
                 params: {
                     db: odooDb,
                     login: username,
-                    password: password
+                    password: password,
+                    totp_token: totpCode
                 },
                 id: 1
             };
