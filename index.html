@@ -196,6 +196,17 @@
                 
                 console.log('✅ Veri yükleme tamamlandı');
                 
+                // Dashboard'ı yükle - veri tamamen yüklendikten sonra
+                console.log('📊 İlk veri yükleme tamamlandı, dashboard yükleniyor...');
+                setTimeout(() => {
+                    if (allData && allData.length > 0) {
+                        loadDashboard();
+                        console.log('✅ Dashboard yüklendi');
+                    } else {
+                        console.warn('⚠️ Dashboard yüklenemedi - veri yok');
+                    }
+                }, 500);
+                
             } catch (error) {
                 console.error('❌ Veri yükleme hatası:', error);
                 if (document.getElementById('dataStatus')) {
@@ -3122,7 +3133,6 @@
             loadedYears.add(year);
             
             try {
-                console.log(`📦 ${year} yükleniyor...`);
                 
                 // GZIP dosyasını indir - Akıllı Cache ile
                 const version = getDailyVersion(); // Günlük versiyon
@@ -3474,8 +3484,7 @@
                     }
                 }, 500);
                 
-                // Diğer yılları arka planda yükle
-                setTimeout(() => loadRemainingYears(latestYear), 2000);
+                // Tüm yıllar zaten yüklendi, ek yükleme gerekmez
                 
             } catch (error) {
                 console.error('Error loading data:', error);
@@ -6768,6 +6777,67 @@
             console.log('💰 Toplam Satış:', totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2}));
             console.log('📦 Toplam Kayıt Sayısı:', allData.length.toLocaleString('tr-TR'));
             console.log('🧾 Toplam Fatura Sayısı:', uniqueInvoices.toLocaleString('tr-TR'));
+            
+            // Dashboard özet kartlarını güncelle
+            console.log('🔄 Dashboard özet kartları güncelleniyor...');
+            
+            // Toplam Satış
+            const dashTotalSales = document.getElementById('dashTotalSales');
+            if (dashTotalSales) {
+                dashTotalSales.textContent = '$' + totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                console.log('✅ Toplam Satış güncellendi:', totalSales);
+            }
+            
+            // Toplam Ürün
+            const dashTotalQty = document.getElementById('dashTotalQty');
+            if (dashTotalQty) {
+                dashTotalQty.textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+                console.log('✅ Toplam Ürün güncellendi:', totalQty);
+            }
+            
+            // Toplam Müşteri
+            const dashTotalCustomers = document.getElementById('dashTotalCustomers');
+            if (dashTotalCustomers) {
+                dashTotalCustomers.textContent = uniqueCustomers.toLocaleString('tr-TR');
+                console.log('✅ Toplam Müşteri güncellendi:', uniqueCustomers);
+            }
+            
+            // Toplam Ürün Çeşidi
+            const dashTotalProducts = document.getElementById('dashTotalProducts');
+            if (dashTotalProducts) {
+                dashTotalProducts.textContent = uniqueProducts.toLocaleString('tr-TR');
+                console.log('✅ Toplam Ürün Çeşidi güncellendi:', uniqueProducts);
+            }
+            
+            // Toplam Mağaza
+            const dashTotalStores = document.getElementById('dashTotalStores');
+            if (dashTotalStores) {
+                dashTotalStores.textContent = uniqueStores.toLocaleString('tr-TR');
+                console.log('✅ Toplam Mağaza güncellendi:', uniqueStores);
+            }
+            
+            // Toplam Temsilci
+            const dashTotalSalespeople = document.getElementById('dashTotalSalespeople');
+            if (dashTotalSalespeople) {
+                dashTotalSalespeople.textContent = uniqueSalespeople.toLocaleString('tr-TR');
+                console.log('✅ Toplam Temsilci güncellendi:', uniqueSalespeople);
+            }
+            
+            // Günlük Ortalama
+            const dashDailyAverage = document.getElementById('dashDailyAverage');
+            if (dashDailyAverage) {
+                dashDailyAverage.textContent = '$' + dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                console.log('✅ Günlük Ortalama güncellendi:', dailyAverage);
+            }
+            
+            // Sepet Ortalaması
+            const dashBasketAverage = document.getElementById('dashBasketAverage');
+            if (dashBasketAverage) {
+                dashBasketAverage.textContent = '$' + basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                console.log('✅ Sepet Ortalaması güncellendi:', basketAverage);
+            }
+            
+            console.log('✅ Dashboard özet kartları güncellendi!');
             console.log('📊 Günlük Ortalama:', dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2}), '(Toplam Satış /', uniqueDates, 'gün)');
             console.log('🛒 Sepet Ortalaması:', basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2}), '(Toplam Satış /', uniqueInvoices, 'fatura)');
             
