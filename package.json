@@ -4,7 +4,8 @@
   "description": "Sales Dashboard with Odoo Integration",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run build:css && vite build",
+    "build:css": "postcss styles.css -o dist/styles.min.css",
     "preview": "vite preview",
     "start": "vite",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
@@ -17,12 +18,15 @@
     "prepare": "husky"
   },
   "devDependencies": {
+    "cssnano": "^7.1.1",
     "eslint": "^9.38.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
     "html-minifier": "^4.0.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.6",
+    "postcss": "^8.5.6",
+    "postcss-cli": "^11.0.1",
     "prettier": "^3.6.2",
     "vite": "^7.1.12"
   },
@@ -264,7 +268,6 @@
     "picomatch": "^2.3.1",
     "pirates": "^4.0.7",
     "pkg-dir": "^4.2.0",
-    "postcss": "^8.4.31",
     "preact": "^10.27.2",
     "preact-render-to-string": "^5.2.6",
     "prelude-ls": "^1.2.1",
