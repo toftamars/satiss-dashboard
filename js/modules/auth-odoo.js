@@ -5,8 +5,7 @@
 
 class OdooAuth {
     constructor() {
-        this.odooUrl = 'https://erp.zuhalmuzik.com';
-        this.odooDb = 'erp.zuhalmuzik.com';
+        this.apiUrl = 'https://odoo-auth-proxy.alpertofta.workers.dev';
         this.sessionKey = 'odoo_session';
         this.sessionDuration = 120 * 60 * 1000; // 120 dakika (2 saat)
         this.init();
@@ -28,27 +27,23 @@ class OdooAuth {
             console.log('🔐 Odoo login başlatılıyor...');
             console.log('Username:', username);
 
-            // AllOrigins CORS Proxy ile Odoo API
-            const odooPayload = {
-                jsonrpc: '2.0',
-                method: 'call',
-                params: {
-                    db: this.odooDb,
-                    login: username,
-                    password: password,
-                    totp_token: totpCode
-                },
-                id: 1
-            };
-
-            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(this.odooUrl + '/web/session/authenticate')}`;
-            
-            const response = await fetch(proxyUrl, {
+            // Direkt Odoo API
+            const response = await fetch(`${this.odooUrl}/web/session/authenticate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(odooPayload)
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    method: 'call',
+                    params: {
+                        db: this.odooDb,
+                        login: username,
+                        password: password,
+                        totp_token: totpCode
+                    },
+                    id: 1
+                })
             });
 
             if (!response.ok) {
@@ -56,13 +51,13 @@ class OdooAuth {
             }
 
             const result = await response.json();
-            console.log('📡 Odoo response:', result);
+            console.log('📡 Cloudflare Worker response:', result);
 
-            // Odoo JSON-RPC response: { jsonrpc, id, result: { uid, session_id } }
-            if (result.result && result.result.uid) {
-                const sessionId = result.result.session_id;
-                const userId = result.result.uid;
-                const userName = result.result.name || result.result.username || username;
+            // Cloudflare Worker response: { success, token, user }
+            if (result.success && result.token) {
+                const sessionId = result.token;
+                const userId = result.user.id;
+                const userName = result.user.name;
 
                 console.log('✅ Odoo authentication başarılı!');
                 console.log('User ID:', userId);
