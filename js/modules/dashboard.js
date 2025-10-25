@@ -33,10 +33,20 @@ class Dashboard {
         
         if (!window.DataLoader.allData || window.DataLoader.allData.length === 0) {
             console.warn('⚠️ Veri henüz yüklenmedi, 2 saniye sonra tekrar denenecek...');
-            setTimeout(() => this.updateDashboard(), 2000);
-        return;
-    }
-    
+            // Sonsuz döngü önleme - maksimum 10 deneme
+            if (!this.retryCount) this.retryCount = 0;
+            if (this.retryCount < 10) {
+                this.retryCount++;
+                setTimeout(() => this.updateDashboard(), 2000);
+            } else {
+                console.error('❌ Veri yükleme maksimum deneme sayısına ulaştı');
+                this.showDataLoadError();
+            }
+            return;
+        }
+        
+        // Başarılı yükleme sonrası retry sayacını sıfırla
+        this.retryCount = 0;
         console.log(`📊 Veri yüklendi: ${window.DataLoader.allData.length} kayıt`);
         
         // Özet verilerini hesapla
@@ -428,6 +438,30 @@ class Dashboard {
         const element = document.getElementById(id);
         if (element) {
             element.textContent = value;
+        }
+    }
+
+    /**
+     * Veri yükleme hatası göster
+     */
+    showDataLoadError() {
+        const container = document.getElementById('mainContainer');
+        if (container) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 50px; color: #ff6b6b;">
+                    <h2>❌ Veri Yükleme Hatası</h2>
+                    <p>Veriler yüklenirken bir hata oluştu. Lütfen sayfayı yenileyin.</p>
+                    <button onclick="window.location.reload()" style="
+                        background: #667eea; 
+                        color: white; 
+                        border: none; 
+                        padding: 12px 24px; 
+                        border-radius: 8px; 
+                        cursor: pointer;
+                        font-size: 16px;
+                    ">Sayfayı Yenile</button>
+                </div>
+            `;
         }
     }
 
