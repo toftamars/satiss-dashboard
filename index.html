@@ -2981,42 +2981,8 @@
         let normalizeStoreName;
 
         // Belirli bir mağaza ve ürün için mevcut stok miktarını hesaplayan fonksiyon
-        function getCurrentStock(storeName, productCode) {
-            if (!inventoryData || inventoryData.length === 0) {
-                return 0;
-            }
-            
-            // Mağaza ismini normalize et
-            const normalizedStore = normalizeStoreName(storeName);
-            
-            // stock-locations'da bu mağazaya karşılık gelen location_id'leri bul
-            const matchingLocations = [];
-            for (const [locationId, mappedStore] of Object.entries(stockLocations)) {
-                if (mappedStore === normalizedStore) {
-                    matchingLocations.push(locationId);
-                }
-            }
-            
-            if (matchingLocations.length === 0) {
-                console.warn(`⚠️ "${storeName}" için stok konumu bulunamadı`);
-                return 0;
-            }
-            
-            // Inventory verilerinde bu lokasyonlarda ve bu üründe ne kadar stok var?
-            let totalStock = 0;
-            inventoryData.forEach(item => {
-                const itemLocation = item.location || '';
-                const itemProduct = (item.product_name || item.product || '').toLowerCase();
-                const searchProduct = productCode.toLowerCase();
-                
-                // Lokasyon eşleşmesi ve ürün eşleşmesi
-                if (matchingLocations.includes(itemLocation) && itemProduct.includes(searchProduct)) {
-                    totalStock += parseFloat(item.quantity || 0);
-                }
-            });
-            
-            return totalStock;
-        }
+        // getCurrentStock fonksiyonu inventory-manager modülünden import edildi
+        let getCurrentStock;
 
         async function loadYearData(year) {
             // Çift yükleme önleme kontrolü
