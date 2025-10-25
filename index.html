@@ -3447,8 +3447,8 @@
                 const dailyAverage = uniqueDates.length > 0 ? totalUSD / uniqueDates.length : 0;
                 document.getElementById('dailyAverage').textContent = '$' + dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 
-                // Sepet Ortalaması Hesapla (Toplam USD / Fatura Sayısı)
-                const uniqueInvoices = new Set(allData.map(item => item.move_name).filter(Boolean)).size;
+                // Sepet Ortalaması Hesapla (Toplam USD / Satış Fatura Sayısı - Sadece out_invoice)
+                const uniqueInvoices = new Set(allData.filter(item => item.move_type === 'out_invoice').map(item => item.move_name).filter(Boolean)).size;
                 const basketAverage = uniqueInvoices > 0 ? totalUSD / uniqueInvoices : 0;
                 document.getElementById('basketAverage').textContent = '$' + basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 
@@ -3553,8 +3553,8 @@
                         const dailyAverage = uniqueDates.length > 0 ? totalUSD / uniqueDates.length : 0;
                         document.getElementById('dailyAverage').textContent = '$' + dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                         
-                        // Sepet Ortalaması Hesapla (Toplam USD / Fatura Sayısı)
-                        const uniqueInvoices = new Set(allData.map(item => item.move_name).filter(Boolean)).size;
+                        // Sepet Ortalaması Hesapla (Toplam USD / Satış Fatura Sayısı - Sadece out_invoice)
+                        const uniqueInvoices = new Set(allData.filter(item => item.move_type === 'out_invoice').map(item => item.move_name).filter(Boolean)).size;
                         const basketAverage = uniqueInvoices > 0 ? totalUSD / uniqueInvoices : 0;
                         document.getElementById('basketAverage').textContent = '$' + basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                         
@@ -6762,18 +6762,18 @@
             const uniqueDates = new Set(allData.map(item => item.date).filter(Boolean)).size;
             const dailyAverage = uniqueDates > 0 ? totalSales / uniqueDates : 0;
             
-            // Sepet Ortalaması = Toplam USD / Toplam Fatura Sayısı (Tüm Faturalar)
-            const uniqueInvoices = new Set(allData.map(item => item.move_name).filter(Boolean)).size;
+            // Sepet Ortalaması = Toplam USD / Satış Fatura Sayısı (Sadece out_invoice - İadeler Hariç)
+            const uniqueInvoices = new Set(allData.filter(item => item.move_type === 'out_invoice').map(item => item.move_name).filter(Boolean)).size;
             const basketAverage = uniqueInvoices > 0 ? totalSales / uniqueInvoices : 0;
             
             // Debug: Fatura sayısı kontrolü
             console.log('🔍 Fatura sayısı debug:');
             console.log('   📊 Toplam kayıt:', allData.length);
-            console.log('   📋 Tüm fatura kayıtları:', allData.filter(item => item.move_name).length);
-            console.log('   🧾 Benzersiz fatura sayısı:', uniqueInvoices);
+            console.log('   📋 out_invoice kayıtları:', allData.filter(item => item.move_type === 'out_invoice').length);
+            console.log('   🧾 Benzersiz satış fatura sayısı (out_invoice):', uniqueInvoices);
             console.log('   💰 Toplam satış:', totalSales);
             console.log('   🛒 Sepet ortalaması:', basketAverage);
-            console.log('   🧮 Hesaplama: Toplam Satış / Toplam Fatura =', totalSales, '/', uniqueInvoices, '=', basketAverage);
+            console.log('   🧮 Hesaplama: Toplam Satış / Satış Fatura (out_invoice) =', totalSales, '/', uniqueInvoices, '=', basketAverage);
             
             // Veri yapısı kontrolü
             if (allData.length > 0) {
