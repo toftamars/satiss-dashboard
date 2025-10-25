@@ -5,7 +5,7 @@
 
 class OdooAuth {
     constructor() {
-        this.apiUrl = 'https://satiss-dashboard.vercel.app/api/odoo-login';
+        this.apiUrl = 'https://zuhal-mu.vercel.app/api/odoo-login';
         this.sessionKey = 'odoo_session';
         this.sessionDuration = 60 * 60 * 1000; // 1 saat
         this.init();
