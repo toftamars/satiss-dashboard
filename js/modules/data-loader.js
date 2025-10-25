@@ -115,7 +115,7 @@ class DataLoader {
                 console.warn('⚠️ targets.json yüklenemedi, varsayılan hedefler kullanılacak');
                 return false;
             }
-    } catch (error) {
+        } catch (error) {
             console.error('❌ Hedef yükleme hatası:', error);
             return false;
         }

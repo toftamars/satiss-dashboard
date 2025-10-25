@@ -30,13 +30,29 @@ class EncryptionManager {
         // Production'da environment variable'dan al
         const envKey = window.Config?.encryption?.secretKey;
         
-        if (envKey) {
+        if (envKey && envKey.length >= 32) {
             return envKey;
         }
         
-        // Development için varsayılan (GÜVENSİZ - sadece development)
-        console.warn('⚠️ Development encryption key kullanılıyor!');
-        return 'ZUHAL_MUZIK_SECRET_KEY_2024_CHANGE_THIS_IN_PRODUCTION';
+        // Production'da key yoksa hata fırlat
+        if (window.Config?.environment === 'production') {
+            throw new Error('SECURITY ERROR: Encryption key not configured in production! Set Config.encryption.secretKey');
+        }
+        
+        // Development için dinamik key oluştur (her session'da farklı)
+        console.warn('⚠️ Development encryption key kullanılıyor - güvenli değil!');
+        
+        // SessionStorage'dan mevcut key'i kontrol et
+        let devKey = sessionStorage.getItem('dev_encryption_key');
+        if (!devKey) {
+            // Güvenli random key oluştur
+            const array = new Uint8Array(32);
+            crypto.getRandomValues(array);
+            devKey = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+            sessionStorage.setItem('dev_encryption_key', devKey);
+        }
+        
+        return devKey;
     }
 
     /**
