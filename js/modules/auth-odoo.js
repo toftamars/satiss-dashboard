@@ -16,12 +16,16 @@ class OdooAuth {
     }
 
     /**
-     * Odoo ile login
+     * Odoo ile login (2FA destekli)
      */
-    async login(username, password) {
+    async login(username, password, totpCode = null) {
         try {
             if (!username || !password) {
                 throw new Error('Kullanıcı adı ve şifre gerekli');
+            }
+            
+            if (!totpCode) {
+                throw new Error('2FA kodu gerekli');
             }
 
             console.log('🔐 Odoo login başlatılıyor...');
@@ -35,7 +39,8 @@ class OdooAuth {
                 credentials: 'include',
                 body: JSON.stringify({ 
                     username: username, 
-                    password: password 
+                    password: password,
+                    totp: totpCode
                 })
             });
 

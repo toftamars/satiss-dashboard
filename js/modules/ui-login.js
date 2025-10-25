@@ -111,7 +111,8 @@ class LoginUI {
     getCredentials() {
         return {
             username: this.usernameInput?.value.trim() || '',
-            password: this.passwordInput?.value || ''
+            password: this.passwordInput?.value || '',
+            totp: document.getElementById('odooTotp')?.value.trim() || ''
         };
     }
 
@@ -121,6 +122,7 @@ class LoginUI {
     clearForm() {
         if (this.usernameInput) this.usernameInput.value = '';
         if (this.passwordInput) this.passwordInput.value = '';
+        if (document.getElementById('odooTotp')) document.getElementById('odooTotp').value = '';
         this.clearError();
     }
 
@@ -132,15 +134,20 @@ class LoginUI {
             this.clearError();
             this.showLoading();
 
-            const { username, password } = this.getCredentials();
+            const { username, password, totp } = this.getCredentials();
 
             if (!username || !password) {
                 this.showError('❌ Kullanıcı adı ve şifre gerekli');
                 return;
             }
+            
+            if (!totp || totp.length !== 6) {
+                this.showError('❌ 6 haneli 2FA kodu gerekli');
+                return;
+            }
 
-            // OdooAuth ile login
-            const result = await window.OdooAuth.login(username, password);
+            // OdooAuth ile login (2FA ile)
+            const result = await window.OdooAuth.login(username, password, totp);
 
             if (result.success) {
                 this.showSuccess('✅ Giriş başarılı! Yönlendiriliyorsunuz...');

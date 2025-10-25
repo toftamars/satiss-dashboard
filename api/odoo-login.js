@@ -27,13 +27,17 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  try {
-    const { username, password } = req.body;
+    try {
+        const { username, password, totp } = req.body;
 
-    // Input validation
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Kullanıcı adı ve şifre gerekli' });
-    }
+        // Input validation
+        if (!username || !password) {
+            return res.status(400).json({ error: 'Kullanıcı adı ve şifre gerekli' });
+        }
+        
+        if (!totp || totp.length !== 6) {
+            return res.status(400).json({ error: '6 haneli 2FA kodu gerekli' });
+        }
 
     // Rate limiting kontrolü
     const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -64,14 +68,15 @@ export default async function handler(req, res) {
     console.log('DB:', ODOO_DB);
     console.log('Username:', username);
 
-    // Odoo authentication
+    // Odoo authentication (2FA destekli)
     const authPayload = {
       jsonrpc: '2.0',
       method: 'call',
       params: {
         db: ODOO_DB,
         login: username,
-        password: password
+        password: password,
+        totp: totp
       },
       id: 1
     };

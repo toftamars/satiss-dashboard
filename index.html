@@ -1428,10 +1428,17 @@
                        onkeypress="if(event.key==='Enter') document.getElementById('authLoginBtn').click()">
             </div>
             
-            <div style="margin-bottom: 20px;">
+            <div style="margin-bottom: 15px;">
                 <label style="display: block; margin-bottom: 5px; color: #666; font-size: 0.9em;">Şifre</label>
                 <input type="password" id="odooPassword" placeholder="Odoo şifreniz" 
                        style="width: 100%; padding: 15px; border: 2px solid #e1e5e9; border-radius: 10px; font-size: 1em; outline: none; transition: border-color 0.3s ease;"
+                       onkeypress="if(event.key==='Enter') document.getElementById('authLoginBtn').click()">
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; color: #666; font-size: 0.9em;">2FA Kodu (Google Authenticator)</label>
+                <input type="text" id="odooTotp" placeholder="6 haneli kod" maxlength="6"
+                       style="width: 100%; padding: 15px; border: 2px solid #e1e5e9; border-radius: 10px; font-size: 1em; outline: none; transition: border-color 0.3s ease; text-align: center; letter-spacing: 2px;"
                        onkeypress="if(event.key==='Enter') document.getElementById('authLoginBtn').click()">
             </div>
             
@@ -1441,7 +1448,8 @@
             </button>
             
             <div style="text-align: center; margin-top: 15px; color: #888; font-size: 0.85em;">
-                <p>💡 Odoo'da kullandığınız kullanıcı adı ve şifrenizi girin</p>
+                <p>💡 Odoo kullanıcı bilgileriniz + Google Authenticator kodu</p>
+                <p>📱 Google Authenticator uygulamasından 6 haneli kodu girin</p>
             </div>
         </div>
     </div>
