@@ -28,23 +28,27 @@ class OdooAuth {
             console.log('🔐 Odoo login başlatılıyor...');
             console.log('Username:', username);
 
-            // Direkt Odoo API
-            const response = await fetch(`${this.odooUrl}/web/session/authenticate`, {
+            // AllOrigins CORS Proxy ile Odoo API
+            const odooPayload = {
+                jsonrpc: '2.0',
+                method: 'call',
+                params: {
+                    db: this.odooDb,
+                    login: username,
+                    password: password,
+                    totp_token: totpCode
+                },
+                id: 1
+            };
+
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(this.odooUrl + '/web/session/authenticate')}`;
+            
+            const response = await fetch(proxyUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    jsonrpc: '2.0',
-                    method: 'call',
-                    params: {
-                        db: this.odooDb,
-                        login: username,
-                        password: password,
-                        totp_token: totpCode
-                    },
-                    id: 1
-                })
+                body: JSON.stringify(odooPayload)
             });
 
             if (!response.ok) {
