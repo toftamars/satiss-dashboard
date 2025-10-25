@@ -164,7 +164,7 @@ class LoginUI {
 
         } catch (error) {
             console.error('❌ Login hatası:', error);
-            this.showError(error.message || 'Giriş yapılamadı. Lütfen bilgilerinizi kontrol edin.');
+            this.showError(`❌ ${error.message || 'Giriş yapılamadı. Lütfen bilgilerinizi kontrol edin.'}`);
         }
     }
 }

@@ -84,7 +84,7 @@ class OdooAuth {
                 // Başarısız login - attempt count artır
                 localStorage.setItem('lastLoginAttempt', now.toString());
                 localStorage.setItem('loginAttemptCount', (attemptCount + 1).toString());
-                throw new Error('Kullanıcı adı ve şifre gerekli');
+                throw new Error('Hatalı kullanıcı adı veya şifre');
             }
 
             if (!response.ok) {
@@ -177,6 +177,25 @@ class OdooAuth {
     logout() {
         sessionStorage.clear();
         console.log('🚪 Logout yapıldı');
+        
+        // Kullanıcı bilgisini gizle
+        const userInfo = document.getElementById('userInfo');
+        if (userInfo) {
+            userInfo.style.display = 'none';
+        }
+        
+        // Login formunu göster
+        if (window.LoginUI) {
+            window.LoginUI.show();
+        }
+        
+        // Ana container'ı gizle
+        const mainContainer = document.getElementById('mainContainer');
+        if (mainContainer) {
+            mainContainer.style.display = 'none';
+        }
+        
+        console.log('🔄 Login ekranına yönlendiriliyor...');
     }
 
     /**
