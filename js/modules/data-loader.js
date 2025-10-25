@@ -122,16 +122,49 @@ class DataLoader {
     }
 
     /**
+     * Yıl yüklenmesini bekle
+     */
+    async waitForYearLoad(year) {
+        return new Promise((resolve, reject) => {
+            const checkInterval = setInterval(() => {
+                if (this.loadedDataCache[year]) {
+                    clearInterval(checkInterval);
+                    resolve(this.loadedDataCache[year]);
+                } else if (!this.loadingYears || !this.loadingYears.has(year)) {
+                    clearInterval(checkInterval);
+                    reject(new Error(`${year} yükleme işlemi başarısız oldu`));
+                }
+            }, 100);
+            
+            // 30 saniye timeout
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                reject(new Error(`${year} yükleme işlemi zaman aşımına uğradı`));
+            }, 30000);
+        });
+    }
+
+    /**
      * Belirli bir yılın verisini yükle
      */
     async loadYearData(year) {
-        // Çift yükleme önleme kontrolü
+        // Çift yükleme önleme kontrolü - önce kontrol et
         if (this.loadedYears.has(year) && this.loadedDataCache[year]) {
-        console.log(`⏭️ ${year} zaten yüklü, cache'den döndürülüyor...`);
+            console.log(`⏭️ ${year} zaten yüklü, cache'den döndürülüyor...`);
             return this.loadedDataCache[year];
-    }
+        }
         
-        // Hemen ekle - race condition önleme
+        // Yükleme işlemi devam ediyorsa bekle
+        if (this.loadingYears && this.loadingYears.has(year)) {
+            console.log(`⏳ ${year} yükleniyor, bekleniyor...`);
+            return this.waitForYearLoad(year);
+        }
+        
+        // Yükleme işlemini başlat - race condition önleme
+        if (!this.loadingYears) {
+            this.loadingYears = new Set();
+        }
+        this.loadingYears.add(year);
         this.loadedYears.add(year);
     
     try {
@@ -186,12 +219,24 @@ class DataLoader {
             }
         
         // Cache'e kaydet
-            this.loadedDataCache[year] = yearData;
+        this.loadedDataCache[year] = yearData;
+        
+        // Yükleme işlemini tamamlandı olarak işaretle
+        if (this.loadingYears) {
+            this.loadingYears.delete(year);
+        }
         
         return yearData;
         
     } catch (error) {
         console.error(`❌ ${year} yükleme hatası:`, error);
+        
+        // Hata durumunda loading state'i temizle
+        if (this.loadingYears) {
+            this.loadingYears.delete(year);
+        }
+        this.loadedYears.delete(year);
+        
         throw error;
     }
     }
