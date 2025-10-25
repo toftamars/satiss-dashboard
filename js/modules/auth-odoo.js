@@ -5,9 +5,10 @@
 
 class OdooAuth {
     constructor() {
-        this.apiUrl = 'https://zuhal-mu.vercel.app/api/odoo-login';
+        this.odooUrl = 'https://erp.zuhalmuzik.com';
+        this.odooDb = 'erp.zuhalmuzik.com';
         this.sessionKey = 'odoo_session';
-        this.sessionDuration = 60 * 60 * 1000; // 1 saat
+        this.sessionDuration = 120 * 60 * 1000; // 120 dakika (2 saat)
         this.init();
     }
 
