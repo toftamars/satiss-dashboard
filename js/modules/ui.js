@@ -90,7 +90,9 @@ class UIManager {
                 }
                 break;
             case 'city':
-                this.loadCityData();
+                if (window.SehirAnalizi) {
+                    window.SehirAnalizi.loadSehirAnalizi();
+                }
                 break;
             case 'stock':
                 this.loadStockData();

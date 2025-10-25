@@ -77,6 +77,7 @@
     <script src="js/modules/magaza-analizi.js"></script>
     <script src="js/modules/musteri-analizi.js"></script>
     <script src="js/modules/satis-temsilcisi.js"></script>
+    <script src="js/modules/sehir-analizi.js"></script>
     <script src="js/modules/ui.js"></script>
     
     <!-- Initialization -->
@@ -401,10 +402,23 @@
             </div>
         </div>
 
+        <!-- Şehir Analizi Tab -->
         <div id="cityTab" class="tab-content">
             <div class="content">
-                <h2>🌍 Şehir Analizi</h2>
-                <p>Şehir analizi modülü geliştiriliyor...</p>
+                <h2 style="margin-bottom: 30px;">🌍 Coğrafi Satış Analizi</h2>
+                
+                <!-- Karşılaştırma Grafiği -->
+                <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 30px;">
+                    <h3 style="margin: 0 0 20px 0;">📊 Top 15 Şehir Karşılaştırması</h3>
+                    <canvas id="cityComparisonChart" style="max-height: 400px;"></canvas>
+                </div>
+                
+                <!-- Şehir Detayları -->
+                <div id="cityAnalysisContainer" style="min-height: 200px;">
+                    <div style="text-align: center; padding: 40px; color: #6b7280;">
+                        <p>Yükleniyor...</p>
+                    </div>
+                </div>
             </div>
         </div>
 
