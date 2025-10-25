@@ -24,6 +24,19 @@ class OdooAuth {
                 throw new Error('Kullanıcı adı ve şifre gerekli');
             }
 
+            // Rate limiting kontrolü
+            const now = Date.now();
+            const lastAttempt = localStorage.getItem('lastLoginAttempt');
+            const attemptCount = parseInt(localStorage.getItem('loginAttemptCount') || '0');
+            
+            if (lastAttempt && (now - parseInt(lastAttempt)) < 5000) { // 5 saniye bekle
+                throw new Error('Çok hızlı deneme yapıyorsunuz. 5 saniye bekleyin.');
+            }
+            
+            if (attemptCount >= 3) {
+                throw new Error('Çok fazla deneme yapıldı. 10 dakika bekleyin.');
+            }
+
             console.log('🔐 Odoo login başlatılıyor...');
             console.log('Username:', username);
 
@@ -49,6 +62,10 @@ class OdooAuth {
             if (username && password) {
                 console.log('✅ Login başarılı (geçici)');
                 
+                // Başarılı login - attempt count sıfırla
+                localStorage.setItem('lastLoginAttempt', now.toString());
+                localStorage.setItem('loginAttemptCount', '0');
+                
                 // Mock response
                 const mockResult = {
                     success: true,
@@ -64,6 +81,9 @@ class OdooAuth {
                     user: mockResult.user
                 };
             } else {
+                // Başarısız login - attempt count artır
+                localStorage.setItem('lastLoginAttempt', now.toString());
+                localStorage.setItem('loginAttemptCount', (attemptCount + 1).toString());
                 throw new Error('Kullanıcı adı ve şifre gerekli');
             }
 
