@@ -4737,86 +4737,8 @@
         let renderTopCategoryChart, renderTopBrandChart, renderTopProductChart, renderTopSalesPersonChart;
 
         // ==================== TAB SYSTEM ====================
-        function switchTab(tabName) {
-            console.log('🔄 switchTab çağrıldı:', tabName);
-            
-            // Tüm tab içeriklerini gizle
-            const allTabContents = document.querySelectorAll('.tab-content');
-            allTabContents.forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Tüm tab butonlarını pasif yap
-            const allTabs = document.querySelectorAll('.tab');
-            allTabs.forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Seçilen tab'ı aktif et
-            const selectedTab = document.getElementById(tabName + 'Tab');
-            console.log('🔍 Aranan tab ID:', tabName + 'Tab', '| Bulundu mu?', selectedTab ? 'EVET' : 'HAYIR');
-            if (selectedTab) {
-                selectedTab.classList.add('active');
-                console.log('✅ Tab aktif edildi:', tabName + 'Tab');
-            } else {
-                console.error('❌ Tab bulunamadı:', tabName + 'Tab');
-            }
-            
-            // İlgili tab butonunu aktif et
-            const tabButtons = {
-                'dashboard': 0,
-                'targets': 1,
-                'customers': 2,
-                'salesperson': 3,
-                'store': 4,
-                'city': 5,
-                'stock': 6,
-                'time': 7,
-                'product': 8
-            };
-            if (tabButtons[tabName] !== undefined) {
-                allTabs[tabButtons[tabName]].classList.add('active');
-            }
-            
-            // Tab'a göre özel işlemler
-            if (tabName === 'dashboard') {
-                loadDashboard();
-            } else if (tabName === 'targets') {
-                loadAllStoresTargets(); // Yeni hedef takip sistemi
-            } else if (tabName === 'customers') {
-                analyzeCustomers();
-            } else if (tabName === 'time') {
-                analyzeTime();
-            } else if (tabName === 'city') {
-                console.log('🌍 Şehir analizi sekmesi açılıyor...');
-                console.log('📊 allData durumu:', allData ? `${allData.length} kayıt` : 'Henüz yüklenmedi');
-                if (allData && allData.length > 0) {
-                    populateCitySelect();
-                } else {
-                    console.warn('⚠️ Veriler henüz yüklenmedi, şehir listesi doldurulamıyor');
-                    setTimeout(() => {
-                        if (allData && allData.length > 0) {
-                            console.log('🔄 Veri yüklendi, şehir listesi yeniden dolduruluyor...');
-                            populateCitySelect();
-                        }
-                    }, 2000);
-                }
-            } else if (tabName === 'stock') {
-                console.log('📦 Stok dağılım sekmesi açılıyor...');
-                // LAZY LOAD: Envanter verilerini sadece ilk kez yükle
-                if (!inventoryData) {
-                    console.log('🔄 Envanter verileri lazy loading ile yükleniyor...');
-                    loadInventoryData();
-                } else {
-                    console.log('✅ Envanter verileri zaten yüklü');
-                }
-                // Stok konumlarını yükle
-                if (Object.keys(stockLocations).length === 0) {
-                    console.log('🔄 Stok konumları yükleniyor...');
-                    loadStockLocations();
-                }
-            }
-        }
+        // switchTab fonksiyonu tab-manager modülünden import edildi
+        let switchTab;
         
         // ==================== EXCEL EXPORT ====================
         // Excel export - Modül kullanımı
