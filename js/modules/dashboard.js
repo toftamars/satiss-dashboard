@@ -34,9 +34,9 @@ class Dashboard {
         if (!window.DataLoader.allData || window.DataLoader.allData.length === 0) {
             console.warn('⚠️ Veri henüz yüklenmedi, 2 saniye sonra tekrar denenecek...');
             setTimeout(() => this.updateDashboard(), 2000);
-            return;
-        }
-
+        return;
+    }
+    
         console.log(`📊 Veri yüklendi: ${window.DataLoader.allData.length} kayıt`);
         
         // Özet verilerini hesapla
@@ -368,13 +368,18 @@ class Dashboard {
                 <h4 style="color: #667eea; margin-bottom: 15px;">📊 Dashboard Analizi</h4>
                 <p><strong>Toplam Satış:</strong> $${analysis.totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</p>
                 <p><strong>Ortalama Sepet:</strong> $${analysis.avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</p>
-                <p><strong>En Başarılı Mağaza:</strong> ${analysis.topStore}</p>
-                <p><strong>En Popüler Kategori:</strong> ${analysis.topCategory}</p>
+                <p><strong>En Başarılı Mağaza:</strong> ${window.sanitizeString ? window.sanitizeString(analysis.topStore) : analysis.topStore}</p>
+                <p><strong>En Popüler Kategori:</strong> ${window.sanitizeString ? window.sanitizeString(analysis.topCategory) : analysis.topCategory}</p>
                 <p><strong>Toplam İşlem:</strong> ${analysis.totalRecords.toLocaleString('tr-TR')}</p>
             </div>
         `;
         
-        container.innerHTML = html;
+        // XSS koruması ile HTML ekle
+        if (window.sanitizeHTML) {
+            container.innerHTML = window.sanitizeHTML(html);
+        } else {
+            container.innerHTML = html;
+        }
     }
 
     /**
@@ -457,7 +462,7 @@ class Dashboard {
                 salesBtn.style.color = 'white';
                 qtyBtn.style.background = 'white';
                 qtyBtn.style.color = '#667eea';
-            } else {
+    } else {
                 qtyBtn.style.background = '#667eea';
                 qtyBtn.style.color = 'white';
                 salesBtn.style.background = 'white';

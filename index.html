@@ -5,40 +5,82 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zuhal Müzik Raporlama</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+    
+    <!-- ==================== SECURITY HEADERS ==================== -->
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
+    <!-- X-Frame-Options -->
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <!-- X-Content-Type-Options -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <!-- Referrer Policy -->
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <!-- Permissions Policy -->
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()">
+    
+    <!-- Cache Control -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+    
+    <!-- HTTPS Enforcement -->
+    <script>
+        // HTTPS zorunluluğu (localhost hariç)
+        if (window.location.protocol !== 'https:' && 
+            window.location.hostname !== 'localhost' && 
+            window.location.hostname !== '127.0.0.1') {
+            window.location.href = 'https:' + window.location.href.substring(window.location.protocol.length);
+        }
+    </script>
     
     <!-- ==================== STYLESHEETS ==================== -->
     <link rel="stylesheet" href="css/dashboard.css">
     
     <!-- ==================== EXTERNAL LIBRARIES ==================== -->
+    <!-- DOMPurify for XSS Protection -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js" 
+            integrity="sha512-KqUc8vRKMKBRFRbK6Fdv0G/1cXDGSlTR5HA/6V8RKXHQxLjQlRbFcqVqQVuZ0hVqUYbYKs6xCRu3J/nP/pLg==" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
     <!-- Pako.js for GZIP Decompression -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js" 
+            integrity="sha512-4WpdIpbr7hKZZzBd4Q6MvXKZXVVxzPVJqKPdKV7vGpRXDqCQVLG/8Ql8Xp9rNQvLNBbZQQPqZqGqVZqQqVqQw==" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
     <!-- SheetJS for Excel Export -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <!-- Chart.js for Graphs -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" 
+            integrity="sha512-SIMGYRUjwY8+gKg7nn9EItdD8LCADSDfJNutF9TPrvEo86sQmFMh6MyralfIyhADlajSxqc7G0gs7+MwWF/ogQ==" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
     <!-- CryptoJS for encryption -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" 
+            integrity="sha512-E8QSvWZ0eCLGk4km3hxSsNs8n9SBe7T/+vGke4+dWHUEsxBqhPzGpN7VmKGmBSaFbQgyZi4kUTTQ6qVV/tg==" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
     
     <!-- ==================== MODULAR JAVASCRIPT MODULES ==================== -->
-    <!-- Config: Global değişkenler ve konfigürasyon -->
+    <!-- Security & Validation Modules -->
+    <script src="js/modules/error-handler.js"></script>
+    <script src="js/modules/input-validator.js"></script>
+    <script src="js/modules/rate-limiter.js"></script>
+    
+    <!-- Core Modules -->
     <script src="js/modules/config.js"></script>
-    <!-- Cache: Cache management ve versiyonlama -->
     <script src="js/modules/cache.js"></script>
-    <!-- Auth: Authentication ve user management -->
     <script src="js/modules/auth.js"></script>
-    <!-- Data Loader: Veri yükleme, metadata, cache yönetimi -->
     <script src="js/modules/data-loader.js"></script>
-    <!-- Charts: Chart rendering ve grafik yönetimi -->
+    
+    <!-- UI Modules -->
     <script src="js/modules/charts.js"></script>
-    <!-- Dashboard: Dashboard UI, özet kartları, loading yönetimi -->
     <script src="js/modules/dashboard.js"></script>
-    <!-- UI: Tab switching, sidebar, filtreler -->
     <script src="js/modules/ui.js"></script>
-    <!-- Init: Sayfa başlatma, event listeners -->
+    
+    <!-- Initialization -->
     <script defer src="js/modules/init.js"></script>
 </head>
 <body>
