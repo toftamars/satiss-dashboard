@@ -7,16 +7,12 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
     
     <!-- ==================== SECURITY HEADERS ==================== -->
-    <!-- Content Security Policy - Relaxed for development -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://cdn.sheetjs.com https://js.sentry-cdn.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
-    <!-- X-Frame-Options -->
-    <meta http-equiv="X-Frame-Options" content="DENY">
+    <!-- Content Security Policy - Development mode (gevşek) -->
+    <!-- Production'da daha sıkı olacak -->
     <!-- X-Content-Type-Options -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <!-- Referrer Policy -->
-    <meta name="referrer" content="strict-origin-when-cross-origin">
-    <!-- Permissions Policy -->
-    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()">
+    <meta name="referrer" content="no-referrer-when-downgrade">
     
     <!-- Cache Control -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -50,17 +46,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" crossorigin="anonymous"></script>
     
     <!-- ==================== MONITORING & ANALYTICS ==================== -->
-    <!-- Sentry Error Tracking -->
+    <!-- Sentry Error Tracking - Devre dışı (şimdilik) -->
+    <!-- 
     <script src="https://js.sentry-cdn.com/YOUR_SENTRY_KEY.min.js" crossorigin="anonymous"></script>
+    -->
     <script>
         // Sentry initialization (production only)
+        // Şimdilik devre dışı - gerekirse aktif edilecek
+        /*
         if (window.location.hostname !== 'localhost' && typeof Sentry !== 'undefined') {
             Sentry.init({
                 dsn: "YOUR_SENTRY_DSN",
                 environment: window.location.hostname.includes('github.io') ? 'production' : 'staging',
                 tracesSampleRate: 1.0,
                 beforeSend(event) {
-                    // Filter out development errors
                     if (window.location.hostname === 'localhost') {
                         return null;
                     }
@@ -68,6 +67,7 @@
                 }
             });
         }
+        */
     </script>
     
     <!-- ==================== MODULAR JAVASCRIPT MODULES ==================== -->
