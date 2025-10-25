@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "description": "Sales Dashboard with Odoo Integration",
   "scripts": {
-    "build": "echo 'Vercel build process will handle API and static files'",
-    "start": "echo 'Starting server'",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "vite",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
     "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
@@ -21,7 +23,8 @@
     "html-minifier": "^4.0.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.6",
-    "prettier": "^3.6.2"
+    "prettier": "^3.6.2",
+    "vite": "^7.1.12"
   },
   "main": "index.js",
   "directories": {
