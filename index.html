@@ -6773,6 +6773,23 @@
             const uniqueInvoices = new Set(allData.filter(item => item.move_type === 'out_invoice').map(item => item.move_name).filter(Boolean)).size;
             const basketAverage = uniqueInvoices > 0 ? totalSales / uniqueInvoices : 0;
             
+            // Debug: Fatura sayısı kontrolü
+            console.log('🔍 Fatura sayısı debug:');
+            console.log('   📊 Toplam kayıt:', allData.length);
+            console.log('   📋 out_invoice kayıtları:', allData.filter(item => item.move_type === 'out_invoice').length);
+            console.log('   🧾 Benzersiz fatura sayısı:', uniqueInvoices);
+            console.log('   💰 Toplam satış:', totalSales);
+            console.log('   🛒 Sepet ortalaması:', basketAverage);
+            
+            // Veri yapısı kontrolü
+            if (allData.length > 0) {
+                const sampleItem = allData[0];
+                console.log('🔍 Veri yapısı kontrolü:');
+                console.log('   📋 move_type örnekleri:', [...new Set(allData.slice(0, 10).map(item => item.move_type))]);
+                console.log('   🧾 move_name örnekleri:', [...new Set(allData.slice(0, 10).map(item => item.move_name))]);
+                console.log('   📊 Örnek kayıt:', sampleItem);
+            }
+            
             console.log('📅 Benzersiz Gün Sayısı (Tüm Zamanlar):', uniqueDates);
             console.log('💰 Toplam Satış:', totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2}));
             console.log('📦 Toplam Kayıt Sayısı:', allData.length.toLocaleString('tr-TR'));
