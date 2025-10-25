@@ -74,7 +74,7 @@
             if (userInfo && userName && user) {
                 userName.textContent = `👤 ${user.name || user.username}`;
                 userInfo.style.display = 'block';
-                logger.log('✅ Kullanıcı bilgisi güncellendi:', user.name || user.username);
+                console.log('✅ Kullanıcı bilgisi güncellendi:', user.name || user.username);
             }
         };
         
@@ -96,12 +96,12 @@
             if (typeof window.loadData === 'function') {
                 window.loadData();
             } else {
-                logger.log('⚠️ loadData fonksiyonu henüz yüklenmedi, 2 saniye bekleniyor...');
+                console.log('⚠️ loadData fonksiyonu henüz yüklenmedi, 2 saniye bekleniyor...');
                 setTimeout(() => {
                     if (typeof window.loadData === 'function') {
                         window.loadData();
                     } else {
-                        logger.error('❌ loadData fonksiyonu bulunamadı!');
+                        console.error('❌ loadData fonksiyonu bulunamadı!');
                     }
                 }, 2000);
             }
@@ -112,7 +112,7 @@
             
             if (currentUserName && user) {
                 currentUserName.textContent = user.name || user.username || user.email || 'Kullanıcı';
-                logger.log('✅ Kullanıcı bilgisi güncellendi:', user.name || user.username || user.email);
+                console.log('✅ Kullanıcı bilgisi güncellendi:', user.name || user.username || user.email);
             }
         };
         
@@ -169,7 +169,7 @@
                 window.showAuthForm();
             }, 500);
             
-            logger.log('✅ Çıkış yapıldı, session temizlendi');
+            console.log('✅ Çıkış yapıldı, session temizlendi');
         };
         
         // ===== GLOBAL DATA LOADING FUNCTION =====
