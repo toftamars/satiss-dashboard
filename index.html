@@ -71,20 +71,11 @@
         };
         
         window.updateUserInfo = function(user) {
-            const userNameElement = document.getElementById('currentUserName');
-            const userInfoElement = document.getElementById('userInfo');
-            const userTypeElement = document.getElementById('userType');
+            const currentUserName = document.getElementById('currentUserName');
             
-            if (userNameElement) {
-                userNameElement.textContent = user.name || user.email?.split('@')[0] || 'Kullanıcı';
-            }
-            
-            if (userInfoElement) {
-                userInfoElement.textContent = user.name || user.email?.split('@')[0] || 'Kullanıcı';
-            }
-            
-            if (userTypeElement) {
-                userTypeElement.textContent = '👤 Kullanıcı';
+            if (currentUserName && user) {
+                currentUserName.textContent = user.name || user.username || user.email || 'Kullanıcı';
+                console.log('✅ Kullanıcı bilgisi güncellendi:', user.name || user.username || user.email);
             }
         };
         

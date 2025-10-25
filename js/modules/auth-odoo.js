@@ -58,13 +58,11 @@ class OdooAuth {
      * Kullanıcı bilgisini güncelle
      */
     updateUserInfo(user) {
-        const userInfo = document.getElementById('userInfo');
-        const userName = document.getElementById('userName');
+        const currentUserName = document.getElementById('currentUserName');
         
-        if (userInfo && userName && user) {
-            userName.textContent = `👤 ${user.name || user.username}`;
-            userInfo.style.display = 'block';
-            console.log('✅ Kullanıcı bilgisi güncellendi:', user.name || user.username);
+        if (currentUserName && user) {
+            currentUserName.textContent = user.name || user.username || user.email || 'Kullanıcı';
+            console.log('✅ Kullanıcı bilgisi güncellendi:', user.name || user.username || user.email);
         }
     }
     
