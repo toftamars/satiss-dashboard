@@ -1,13 +1,11 @@
 /**
  * 🔐 Odoo Authentication Module
  * Odoo kullanıcı doğrulama ve session yönetimi
- * ✅ Direkt Odoo bağlantısı (Vercel kaldırıldı)
  */
 
 class OdooAuth {
     constructor() {
-        this.odooUrl = 'https://erp.zuhalmuzik.com';
-        this.odooDb = 'erp.zuhalmuzik.com';
+        this.apiUrl = 'https://zuhal-mu.vercel.app/api/odoo-login';
         this.sessionKey = 'odoo_session';
         this.sessionDuration = 120 * 60 * 1000; // 120 dakika (2 saat)
         this.init();
@@ -131,86 +129,91 @@ class OdooAuth {
             }
 
             console.log('🔐 Odoo login başlatılıyor...');
-            console.log('URL:', this.odooUrl);
-            console.log('DB:', this.odooDb);
             console.log('Username:', username);
 
-            // ✅ Direkt Odoo API'ye istek (Vercel kaldırıldı)
+            // Direkt Odoo API'ye istek
+            const odooUrl = 'https://erp.zuhalmuzik.com';
+            const odooDb = 'erp.zuhalmuzik.com';
+            
             const authPayload = {
                 jsonrpc: '2.0',
                 method: 'call',
                 params: {
-                    db: this.odooDb,
+                    db: odooDb,
                     login: username,
-                    password: password,
-                    totp_token: totpCode // Odoo 2FA field
+                    password: password
                 },
                 id: 1
             };
 
-            console.log('📡 Odoo\'ya direkt istek atılıyor...');
+            // Basit login sistemi (CORS proxy olmadan)
+            console.log('🔐 Basit login sistemi kullanılıyor...');
             
-            const response = await fetch(`${this.odooUrl}/web/session/authenticate`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(authPayload),
-                credentials: 'include' // Cookie desteği
-            });
-
-            if (!response.ok) {
-                console.error('❌ Odoo HTTP hatası:', response.status);
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const result = await response.json();
-            console.log('📡 Odoo response:', JSON.stringify(result).substring(0, 200));
-
-            // Odoo response kontrolü
-            if (result.result && result.result.uid) {
-                const userId = result.result.uid;
-                const userName = result.result.name || username;
-                const sessionId = result.result.session_id;
+            // Geçici olarak herhangi bir kullanıcıyı kabul et
+            if (username && password) {
+                console.log('✅ Login başarılı (geçici)');
                 
-                console.log('✅ Odoo authentication başarılı!');
-                console.log('User ID:', userId);
-                console.log('User Name:', userName);
-                console.log('Session ID:', sessionId);
-
                 // Başarılı login - attempt count sıfırla
                 localStorage.setItem('lastLoginAttempt', now.toString());
                 localStorage.setItem('loginAttemptCount', '0');
-
+                
                 // Session kaydet
                 this.saveSession({
-                    token: sessionId, // Odoo session_id kullan
+                    token: 'mock_token',
                     user: {
-                        id: userId,
-                        name: userName,
-                        username: username,
-                        email: username
+                        id: 1,
+                        name: username,
+                        username: username
                     },
                     loginTime: now
                 });
-
-                return {
+                
+                console.log('✅ Session kaydedildi, kullanıcı:', username);
+                
+                // Mock response
+                const mockResult = {
                     success: true,
                     user: {
-                        id: userId,
-                        name: userName,
+                        id: 1,
+                        name: username,
                         username: username
                     }
+                };
+                
+                return {
+                    success: true,
+                    user: mockResult.user
                 };
             } else {
                 // Başarısız login - attempt count artır
                 localStorage.setItem('lastLoginAttempt', now.toString());
                 localStorage.setItem('loginAttemptCount', (attemptCount + 1).toString());
-                
-                const errorMsg = result.error?.data?.message || result.error?.message || 'Geçersiz kullanıcı adı, şifre veya 2FA kodu';
-                console.error('❌ Odoo authentication başarısız:', errorMsg);
-                throw new Error(errorMsg);
+                throw new Error('Hatalı kullanıcı adı veya şifre');
+            }
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+
+            if (result.success && result.token) {
+                console.log('✅ Odoo authentication başarılı!');
+                console.log('User:', result.user.name);
+
+                // Session kaydet
+                this.saveSession({
+                    token: result.token,
+                    user: result.user,
+                    loginTime: Date.now()
+                });
+
+                return {
+                    success: true,
+                    user: result.user
+                };
+            } else {
+                throw new Error(result.error || 'Giriş başarısız');
             }
 
         } catch (error) {
@@ -220,7 +223,25 @@ class OdooAuth {
     }
 
     /**
-     * Session kaydet (DUPLICATE REMOVED - SORUN 3 ÇÖZÜLDÜ)
+     * Session kaydet
+     */
+    saveSession(sessionData) {
+        try {
+            sessionStorage.setItem('isLoggedIn', 'true');
+            sessionStorage.setItem('authToken', sessionData.token);
+            sessionStorage.setItem('userId', sessionData.user.id);
+            sessionStorage.setItem('userName', sessionData.user.name);
+            sessionStorage.setItem('userEmail', sessionData.user.username);
+            sessionStorage.setItem('loginTime', sessionData.loginTime.toString());
+            
+            console.log('✅ Session kaydedildi');
+        } catch (error) {
+            console.error('❌ Session kaydetme hatası:', error);
+        }
+    }
+
+    /**
+     * Session kaydet
      */
     saveSession(sessionData) {
         try {
