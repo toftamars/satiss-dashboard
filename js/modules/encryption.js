@@ -27,16 +27,18 @@ class EncryptionManager {
      * Secret key al (production'da .env'den gelecek)
      */
     getSecretKey() {
-        // Production'da environment variable'dan al
+        // Öncelik: Production ortamında Config üzerinden sağlanan anahtar
         const envKey = window.Config?.encryption?.secretKey;
-        
-        if (envKey) {
-            return envKey;
-        }
-        
-        // Development için varsayılan (GÜVENSİZ - sadece development)
-        console.warn('⚠️ Development encryption key kullanılıyor!');
-        return 'ZUHAL_MUZIK_SECRET_KEY_2024_CHANGE_THIS_IN_PRODUCTION';
+        if (envKey) return envKey;
+
+        // Oturum bazlı gizli anahtar (XSS hasarında kalıcı sızıntıyı önlemek için localStorage yerine sessionStorage)
+        const existing = sessionStorage.getItem('enc_session_key');
+        if (existing) return existing;
+
+        const newKey = this.generateSecureToken(32);
+        sessionStorage.setItem('enc_session_key', newKey);
+        console.warn('🔐 Oturum için geçici şifreleme anahtarı oluşturuldu');
+        return newKey;
     }
 
     /**
@@ -216,9 +218,31 @@ class EncryptionManager {
      * Güvenli random string oluştur
      */
     generateSecureToken(length = 32) {
-        const array = new Uint8Array(length);
-        crypto.getRandomValues(array);
-        return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+        // Tercih: Web Crypto API
+        try {
+            const webCrypto = (typeof globalThis !== 'undefined' && globalThis.crypto) ? globalThis.crypto : null;
+            if (webCrypto && typeof webCrypto.getRandomValues === 'function') {
+                const array = new Uint8Array(length);
+                webCrypto.getRandomValues(array);
+                return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+            }
+        } catch {}
+
+        // Node ortamı için geri dönüş: crypto.randomBytes
+        try {
+            // eslint-disable-next-line no-undef
+            const nodeCrypto = typeof require === 'function' ? require('crypto') : null;
+            if (nodeCrypto && typeof nodeCrypto.randomBytes === 'function') {
+                return nodeCrypto.randomBytes(length).toString('hex');
+            }
+        } catch {}
+
+        // En son çare: Math.random (yalnızca test/dev için uygun)
+        let token = '';
+        for (let i = 0; i < length; i++) {
+            token += Math.floor(Math.random() * 256).toString(16).padStart(2, '0');
+        }
+        return token;
     }
 
     /**
