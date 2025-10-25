@@ -11,13 +11,16 @@
     "lint": "eslint js/**/*.js",
     "lint:fix": "eslint js/**/*.js --fix",
     "format": "prettier --write 'js/**/*.js'",
-    "format:check": "prettier --check 'js/**/*.js'"
+    "format:check": "prettier --check 'js/**/*.js'",
+    "prepare": "husky"
   },
   "devDependencies": {
     "eslint": "^9.38.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
     "html-minifier": "^4.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.6",
     "prettier": "^3.6.2"
   },
   "main": "index.js",
