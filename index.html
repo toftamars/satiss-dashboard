@@ -6,13 +6,6 @@
     <title>Zuhal Müzik Raporlama</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
     
-    <!-- Kullanıcı Bilgisi Gösterimi -->
-    <div id="userInfo" style="display: none; position: fixed; top: 10px; right: 10px; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; border: 1px solid #ddd;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <span id="userName" style="font-weight: bold; color: #333;"></span>
-            <button id="logoutBtn" onclick="window.OdooAuth.logout()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Çıkış</button>
-        </div>
-    </div>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -6769,17 +6762,18 @@
             const uniqueDates = new Set(allData.map(item => item.date).filter(Boolean)).size;
             const dailyAverage = uniqueDates > 0 ? totalSales / uniqueDates : 0;
             
-            // Sepet Ortalaması = Toplam USD / Satış Fatura Sayısı (İadeler Hariç)
-            const uniqueInvoices = new Set(allData.filter(item => item.move_type === 'out_invoice').map(item => item.move_name).filter(Boolean)).size;
+            // Sepet Ortalaması = Toplam USD / Toplam Fatura Sayısı (Tüm Faturalar)
+            const uniqueInvoices = new Set(allData.map(item => item.move_name).filter(Boolean)).size;
             const basketAverage = uniqueInvoices > 0 ? totalSales / uniqueInvoices : 0;
             
             // Debug: Fatura sayısı kontrolü
             console.log('🔍 Fatura sayısı debug:');
             console.log('   📊 Toplam kayıt:', allData.length);
-            console.log('   📋 out_invoice kayıtları:', allData.filter(item => item.move_type === 'out_invoice').length);
+            console.log('   📋 Tüm fatura kayıtları:', allData.filter(item => item.move_name).length);
             console.log('   🧾 Benzersiz fatura sayısı:', uniqueInvoices);
             console.log('   💰 Toplam satış:', totalSales);
             console.log('   🛒 Sepet ortalaması:', basketAverage);
+            console.log('   🧮 Hesaplama: Toplam Satış / Toplam Fatura =', totalSales, '/', uniqueInvoices, '=', basketAverage);
             
             // Veri yapısı kontrolü
             if (allData.length > 0) {
