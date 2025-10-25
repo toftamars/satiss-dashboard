@@ -78,14 +78,18 @@
     <!-- Initialization -->
     <script defer src="js/modules/init.js"></script>
     
-    <!-- Service Worker - Devre dışı (404 hatası veriyor) -->
-    <!-- 
+    <!-- Service Worker Temizleme -->
     <script>
+        // Eski service worker'ı temizle
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/service-worker.js');
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                    console.log('🗑️ Service Worker temizlendi');
+                }
+            });
         }
     </script>
-    -->
 </head>
 <body>
     <!-- ==================== LOADING SCREEN ==================== -->
