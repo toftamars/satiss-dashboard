@@ -164,22 +164,44 @@ class ErrorHandler {
             max-width: 400px;
             font-weight: 500;
         `;
-        
-        toast.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 1.2em;">${type === 'error' ? '❌' : '✅'}</span>
-                <span>${message}</span>
-                <button onclick="this.parentElement.parentElement.remove()" style="
-                    background: none;
-                    border: none;
-                    color: white;
-                    cursor: pointer;
-                    font-size: 1.2em;
-                    padding: 0;
-                    margin-left: auto;
-                ">×</button>
-            </div>
-        `;
+
+        // Güvenli DOM inşası (XSS'den kaçın)
+        const content = document.createElement('div');
+        content.style.display = 'flex';
+        content.style.alignItems = 'center';
+        content.style.gap = '10px';
+
+        const icon = document.createElement('span');
+        icon.style.fontSize = '1.2em';
+        icon.textContent = type === 'error' ? '❌' : '✅';
+
+        const text = document.createElement('span');
+        // Mesaj sadece metin olarak eklenir
+        try {
+            const safe = typeof window !== 'undefined' && window.sanitizeString
+                ? window.sanitizeString(String(message))
+                : String(message);
+            text.textContent = safe;
+        } catch (_) {
+            text.textContent = 'Bir hata oluştu';
+        }
+
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.style.background = 'none';
+        closeBtn.style.border = 'none';
+        closeBtn.style.color = 'white';
+        closeBtn.style.cursor = 'pointer';
+        closeBtn.style.fontSize = '1.2em';
+        closeBtn.style.padding = '0';
+        closeBtn.style.marginLeft = 'auto';
+        closeBtn.textContent = '×';
+        closeBtn.addEventListener('click', () => toast.remove());
+
+        content.appendChild(icon);
+        content.appendChild(text);
+        content.appendChild(closeBtn);
+        toast.appendChild(content);
 
         document.body.appendChild(toast);
 

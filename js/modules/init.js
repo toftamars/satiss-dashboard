@@ -267,9 +267,14 @@ class AppInitializer {
             z-index: 10001;
             text-align: center;
         `;
+        // Mesajı güvenli hale getir
+        const safeMessage = (typeof window !== 'undefined' && window.sanitizeString)
+            ? window.sanitizeString(String(message))
+            : String(message).replace(/[&<>"'/]/g, (ch) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#x27;','/':'&#x2F;'}[ch]));
+
         errorDiv.innerHTML = `
             <h3>❌ Hata</h3>
-            <p>${message}</p>
+            <p>${safeMessage}</p>
             <button onclick="location.reload()" style="
                 background: white;
                 color: #ff6b6b;
