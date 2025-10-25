@@ -200,5 +200,48 @@ export function sumBy(array, key) {
     return array.reduce((sum, item) => sum + (parseFloat(item[key]) || 0), 0);
 }
 
+/**
+ * HTML içeriğini XSS saldırılarına karşı temizler
+ * @param {string} html - Temizlenecek HTML
+ * @param {Object} config - DOMPurify konfigürasyonu
+ * @returns {string} Temizlenmiş HTML
+ */
+export function sanitizeHTML(html, config = {}) {
+    if (!html || typeof html !== 'string') {
+        return '';
+    }
+    
+    // DOMPurify kontrolü
+    if (typeof DOMPurify === 'undefined') {
+        console.warn('⚠️ DOMPurify yüklü değil, HTML temizlenmeden döndürülüyor');
+        return html;
+    }
+    
+    // Varsayılan konfigürasyon
+    const defaultConfig = {
+        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'span', 'div', 'p', 'br'],
+        ALLOWED_ATTR: ['class', 'style'],
+        KEEP_CONTENT: true,
+        ...config
+    };
+    
+    return DOMPurify.sanitize(html, defaultConfig);
+}
+
+/**
+ * Metin içeriğini güvenli şekilde HTML'e dönüştürür
+ * @param {string} text - Metin
+ * @returns {string} Güvenli HTML
+ */
+export function escapeHTML(text) {
+    if (!text || typeof text !== 'string') {
+        return '';
+    }
+    
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 console.log('✅ Utils modülü yüklendi');
 
