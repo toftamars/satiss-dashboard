@@ -57,24 +57,41 @@ class OdooAuth {
             }
 
             const result = await response.json();
+            console.log('📡 Odoo response:', result);
 
-            if (result.success && result.token) {
+            // Odoo JSON-RPC response formatı: { jsonrpc, id, result: { uid, session_id, ... } }
+            if (result.result && result.result.uid) {
+                const sessionId = result.result.session_id;
+                const userId = result.result.uid;
+                const userName = result.result.name || result.result.username || username;
+
                 console.log('✅ Odoo authentication başarılı!');
-                console.log('User:', result.user.name);
+                console.log('User ID:', userId);
+                console.log('User Name:', userName);
 
                 // Session kaydet
                 this.saveSession({
-                    token: result.token,
-                    user: result.user,
+                    token: sessionId,
+                    user: {
+                        id: userId,
+                        name: userName,
+                        username: username
+                    },
                     loginTime: Date.now()
                 });
 
                 return {
                     success: true,
-                    user: result.user
+                    user: {
+                        id: userId,
+                        name: userName,
+                        username: username
+                    }
                 };
+            } else if (result.error) {
+                throw new Error(result.error.data?.message || result.error.message || 'Giriş başarısız');
             } else {
-                throw new Error(result.error || 'Giriş başarısız');
+                throw new Error('Giriş başarısız - Geçersiz yanıt');
             }
 
         } catch (error) {
