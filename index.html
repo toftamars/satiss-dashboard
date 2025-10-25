@@ -46,28 +46,27 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" crossorigin="anonymous"></script>
     
     <!-- ==================== MONITORING & ANALYTICS ==================== -->
-    <!-- Sentry Error Tracking - Devre dışı (şimdilik) -->
-    <!-- 
-    <script src="https://js.sentry-cdn.com/YOUR_SENTRY_KEY.min.js" crossorigin="anonymous"></script>
-    -->
+    <!-- Sentry Error Tracking -->
+    <script src="https://js.sentry-cdn.com/7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e.min.js" crossorigin="anonymous"></script>
     <script>
-        // Sentry initialization (production only)
-        // Şimdilik devre dışı - gerekirse aktif edilecek
-        /*
+        // Sentry initialization
         if (window.location.hostname !== 'localhost' && typeof Sentry !== 'undefined') {
             Sentry.init({
-                dsn: "YOUR_SENTRY_DSN",
+                dsn: "https://7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e@o4501234567890.ingest.sentry.io/1234567890",
                 environment: window.location.hostname.includes('github.io') ? 'production' : 'staging',
-                tracesSampleRate: 1.0,
+                tracesSampleRate: 0.1, // %10 sampling
                 beforeSend(event) {
-                    if (window.location.hostname === 'localhost') {
-                        return null;
+                    // Hassas verileri filtrele
+                    if (event.exception) {
+                        const error = event.exception.values[0];
+                        if (error.value && error.value.includes('password')) {
+                            return null; // Şifre içeren hataları gönderme
+                        }
                     }
                     return event;
                 }
             });
         }
-        */
     </script>
     
     <!-- ==================== MODULAR JAVASCRIPT MODULES ==================== -->

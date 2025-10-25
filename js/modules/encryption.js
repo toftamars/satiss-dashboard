@@ -28,15 +28,22 @@ class EncryptionManager {
      */
     getSecretKey() {
         // Production'da environment variable'dan al
-        const envKey = window.Config?.encryption?.secretKey;
+        const envKey = window.Config?.encryption?.secretKey || 
+                      process?.env?.ENCRYPTION_SECRET_KEY ||
+                      window.ENCRYPTION_SECRET_KEY;
         
-        if (envKey) {
+        if (envKey && envKey !== 'ZUHAL_MUZIK_SECRET_KEY_2024_CHANGE_THIS_IN_PRODUCTION') {
             return envKey;
         }
         
         // Development için varsayılan (GÜVENSİZ - sadece development)
-        console.warn('⚠️ Development encryption key kullanılıyor!');
-        return 'ZUHAL_MUZIK_SECRET_KEY_2024_CHANGE_THIS_IN_PRODUCTION';
+        if (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) {
+            console.warn('⚠️ Development encryption key kullanılıyor!');
+            return 'ZUHAL_MUZIK_SECRET_KEY_2024_CHANGE_THIS_IN_PRODUCTION';
+        }
+        
+        // Production'da hata fırlat
+        throw new Error('ENCRYPTION_SECRET_KEY environment variable tanımlanmamış!');
     }
 
     /**

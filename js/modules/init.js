@@ -36,6 +36,11 @@ class AppInitializer {
         try {
             console.log('🚀 Uygulama başlatılıyor...');
             
+            // Performance monitoring başlat
+            if (window.PerformanceOptimizer?.PerformanceMonitor) {
+                window.PerformanceOptimizer.PerformanceMonitor.measureWebVitals();
+            }
+            
             // 1. Sayfa başlatma
             this.initializePage();
             

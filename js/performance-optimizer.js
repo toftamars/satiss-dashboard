@@ -238,6 +238,7 @@ const DataCache = {
 // ============================================
 const PerformanceMonitor = {
     metrics: {},
+    performanceData: [],
     
     start(label) {
         this.metrics[label] = performance.now();
@@ -247,6 +248,24 @@ const PerformanceMonitor = {
         if (this.metrics[label]) {
             const duration = performance.now() - this.metrics[label];
             console.log(`⏱️ ${label}: ${duration.toFixed(2)}ms`);
+            
+            // Performance verisini kaydet
+            this.performanceData.push({
+                label,
+                duration,
+                timestamp: Date.now(),
+                url: window.location.href
+            });
+            
+            // Sentry'ye gönder
+            if (typeof Sentry !== 'undefined' && duration > 1000) { // 1 saniyeden uzun işlemler
+                Sentry.addBreadcrumb({
+                    message: `Slow operation: ${label}`,
+                    level: 'warning',
+                    data: { duration }
+                });
+            }
+            
             delete this.metrics[label];
             return duration;
         }
@@ -265,6 +284,75 @@ const PerformanceMonitor = {
         const result = await fn();
         this.end(label);
         return result;
+    },
+    
+    // Web Vitals ölçümü
+    measureWebVitals() {
+        // LCP (Largest Contentful Paint)
+        new PerformanceObserver((entryList) => {
+            const entries = entryList.getEntries();
+            const lastEntry = entries[entries.length - 1];
+            this.performanceData.push({
+                label: 'LCP',
+                duration: lastEntry.startTime,
+                timestamp: Date.now()
+            });
+        }).observe({ entryTypes: ['largest-contentful-paint'] });
+        
+        // FID (First Input Delay)
+        new PerformanceObserver((entryList) => {
+            const entries = entryList.getEntries();
+            entries.forEach(entry => {
+                this.performanceData.push({
+                    label: 'FID',
+                    duration: entry.processingStart - entry.startTime,
+                    timestamp: Date.now()
+                });
+            });
+        }).observe({ entryTypes: ['first-input'] });
+        
+        // CLS (Cumulative Layout Shift)
+        new PerformanceObserver((entryList) => {
+            let clsValue = 0;
+            const entries = entryList.getEntries();
+            entries.forEach(entry => {
+                if (!entry.hadRecentInput) {
+                    clsValue += entry.value;
+                }
+            });
+            this.performanceData.push({
+                label: 'CLS',
+                duration: clsValue,
+                timestamp: Date.now()
+            });
+        }).observe({ entryTypes: ['layout-shift'] });
+    },
+    
+    // Performance raporu al
+    getPerformanceReport() {
+        const report = {
+            totalOperations: this.performanceData.length,
+            averageDuration: 0,
+            slowOperations: [],
+            webVitals: {}
+        };
+        
+        if (this.performanceData.length > 0) {
+            report.averageDuration = this.performanceData.reduce((sum, item) => sum + item.duration, 0) / this.performanceData.length;
+            report.slowOperations = this.performanceData.filter(item => item.duration > 1000);
+            
+            // Web Vitals'ı grupla
+            this.performanceData.forEach(item => {
+                if (['LCP', 'FID', 'CLS'].includes(item.label)) {
+                    if (!report.webVitals[item.label]) {
+                        report.webVitals[item.label] = [];
+                    }
+                    report.webVitals[item.label].push(item.duration);
+                }
+            });
+        }
+        
+        return report;
     }
 };
 
