@@ -79,6 +79,7 @@
     <script src="js/modules/satis-temsilcisi.js"></script>
     <script src="js/modules/sehir-analizi.js"></script>
     <script src="js/modules/stok-dagilim.js"></script>
+    <script src="js/modules/zaman-analizi.js"></script>
     <script src="js/modules/ui.js"></script>
     
     <!-- Initialization -->
@@ -445,10 +446,23 @@
             </div>
         </div>
 
+        <!-- Zaman Analizi Tab -->
         <div id="timeTab" class="tab-content">
             <div class="content">
-                <h2>⏰ Zaman Analizi</h2>
-                <p>Zaman analizi modülü geliştiriliyor...</p>
+                <h2 style="margin-bottom: 30px;">⏰ Zaman Bazlı Trend Analizi</h2>
+                
+                <!-- Trend Grafiği -->
+                <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 30px;">
+                    <h3 style="margin: 0 0 20px 0;">📈 Aylık Satış Trendi (Son 12 Ay)</h3>
+                    <canvas id="timeTrendChart" style="max-height: 400px;"></canvas>
+                </div>
+                
+                <!-- Zaman Detayları -->
+                <div id="timeAnalysisContainer" style="min-height: 200px;">
+                    <div style="text-align: center; padding: 40px; color: #6b7280;">
+                        <p>Yükleniyor...</p>
+                    </div>
+                </div>
             </div>
         </div>
 

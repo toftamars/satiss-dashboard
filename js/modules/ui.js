@@ -100,7 +100,9 @@ class UIManager {
                 }
                 break;
             case 'time':
-                this.loadTimeData();
+                if (window.ZamanAnalizi) {
+                    window.ZamanAnalizi.loadZamanAnalizi();
+                }
                 break;
             case 'product':
                 this.loadProductData();
