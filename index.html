@@ -1693,11 +1693,6 @@
                         <p id="dashBasketAverage" style="color: white; font-size: 1.6em; font-weight: bold; margin: 10px 0;">$0</p>
                         <small style="opacity: 0.9; font-size: 0.85em;">Ortalama işlem tutarı</small>
                     </div>
-                    <div class="summary-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px;">
-                        <h3 style="font-size: 0.95em; margin-bottom: 10px;">🔄 Cache Versiyonu</h3>
-                        <p id="cacheVersion" style="color: white; font-size: 1.6em; font-weight: bold; margin: 10px 0;">20241024</p>
-                        <small style="opacity: 0.9; font-size: 0.85em;">Günlük veri versiyonu</small>
-                    </div>
                 </div>
 
                 <!-- Yıllık Karşılaştırma -->
@@ -6782,6 +6777,18 @@
                 console.log('   📋 move_type örnekleri:', [...new Set(allData.slice(0, 10).map(item => item.move_type))]);
                 console.log('   🧾 move_name örnekleri:', [...new Set(allData.slice(0, 10).map(item => item.move_name))]);
                 console.log('   📊 Örnek kayıt:', sampleItem);
+                
+                // out_invoice kontrolü
+                const outInvoiceItems = allData.filter(item => item.move_type === 'out_invoice');
+                console.log('🔍 out_invoice kontrolü:');
+                console.log('   📋 out_invoice kayıt sayısı:', outInvoiceItems.length);
+                console.log('   🧾 out_invoice move_name örnekleri:', [...new Set(outInvoiceItems.slice(0, 5).map(item => item.move_name))]);
+                
+                if (outInvoiceItems.length > 0) {
+                    console.log('   📊 out_invoice örnek kayıt:', outInvoiceItems[0]);
+                } else {
+                    console.log('   ❌ out_invoice kayıt bulunamadı!');
+                }
             }
             
             console.log('📅 Benzersiz Gün Sayısı (Tüm Zamanlar):', uniqueDates);
@@ -6852,8 +6859,6 @@
             console.log('📊 Günlük Ortalama:', dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2}), '(Toplam Satış /', uniqueDates, 'gün)');
             console.log('🛒 Sepet Ortalaması:', basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2}), '(Toplam Satış /', uniqueInvoices, 'fatura)');
             
-            // Cache versiyonunu güncelle
-            document.getElementById('cacheVersion').textContent = getDailyVersion();
             
             // Yıllık karşılaştırma
             renderDashYearlyChart();
