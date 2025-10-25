@@ -1,224 +1,480 @@
-// ==================== DASHBOARD MODULE ====================
-// Dashboard UI, özet kartları, loading yönetimi
+/**
+ * 🏠 Dashboard Module
+ * Dashboard UI, özet kartları, loading yönetimi ve genel dashboard işlevleri
+ */
 
-// ===== DASHBOARD SUMMARY CARDS UPDATE FUNCTION =====
-window.updateDashboardSummaryCards = function() {
-    console.log('📊 Özet kartları güncelleniyor...');
-    console.log('📦 loadedDataCache keys:', Object.keys(window.loadedDataCache || {}));
-    
-    // Cache boş mu kontrol et
-    if (!window.loadedDataCache || Object.keys(window.loadedDataCache).length === 0) {
-        console.warn('⚠️ loadedDataCache boş! Özet kartları güncellenemedi.');
-        return;
+class Dashboard {
+    constructor() {
+        this.isInitialized = false;
+        this.summaryData = {};
+        this.charts = {};
+        this.init();
     }
-    
-    try {
-        let totalSales = 0;
-        let totalQty = 0;
-        let totalCustomers = new Set();
-        let totalProducts = new Set();
-        let totalStores = new Set();
-        let totalSalespeople = new Set();
-        let totalTransactions = 0;
+
+    /**
+     * Dashboard'ı başlat
+     */
+    init() {
+        console.log('🏠 Dashboard initialized');
+        this.setupEventListeners();
+    }
+
+    /**
+     * Dashboard'ı güncelle
+     */
+    updateDashboard() {
+        console.log('🔄 Dashboard güncelleniyor...');
         
-        // Tüm yılların verilerini topla
-        for (const year in window.loadedDataCache) {
-            const yearData = window.loadedDataCache[year];
-            if (yearData && yearData.details) {
-                yearData.details.forEach(record => {
-                    // Satış tutarı (KDV hariç)
-                    const salesAmount = parseFloat(record['Satış Tutarı (KDV Hariç)']) || 0;
-                    totalSales += salesAmount;
-                    
-                    // Miktar
-                    const qty = parseFloat(record['Miktar']) || 0;
-                    totalQty += qty;
-                    
-                    // Müşteri
-                    if (record['Müşteri']) {
-                        totalCustomers.add(record['Müşteri']);
-                    }
-                    
-                    // Ürün
-                    if (record['Ürün']) {
-                        totalProducts.add(record['Ürün']);
-                    }
-                    
-                    // Mağaza
-                    if (record['Mağaza']) {
-                        totalStores.add(record['Mağaza']);
-                    }
-                    
-                    // Temsilci
-                    if (record['Temsilci']) {
-                        totalSalespeople.add(record['Temsilci']);
-                    }
-                    
-                    // İşlem sayısı (her kayıt bir işlem)
-                    totalTransactions++;
-                });
+        // Veri yükleme kontrolü
+        if (!window.DataLoader) {
+            console.warn('⚠️ DataLoader bulunamadı');
+            return;
+        }
+        
+        if (!window.DataLoader.allData || window.DataLoader.allData.length === 0) {
+            console.warn('⚠️ Veri henüz yüklenmedi, 2 saniye sonra tekrar denenecek...');
+            setTimeout(() => this.updateDashboard(), 2000);
+            return;
+        }
+
+        console.log(`📊 Veri yüklendi: ${window.DataLoader.allData.length} kayıt`);
+        
+        // Özet verilerini hesapla
+        this.calculateSummaryData();
+        
+        // Özet kartlarını güncelle
+        this.updateSummaryCards();
+        
+        // Grafikleri oluştur
+        this.createDashboardCharts();
+        
+        // AI analizini başlat
+        this.performAIAnalysis();
+        
+        console.log('✅ Dashboard güncellendi');
+    }
+
+    /**
+     * Özet verilerini hesapla
+     */
+    calculateSummaryData() {
+        const data = window.DataLoader.allData;
+        
+        if (!data || data.length === 0) {
+            console.warn('⚠️ Veri bulunamadı');
+            return;
+        }
+
+        // Toplam satış
+        const totalSales = data.reduce((sum, item) => sum + (parseFloat(item.usd_amount) || 0), 0);
+        
+        // Toplam miktar
+        const totalQty = data.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
+        
+        // Benzersiz müşteri sayısı
+        const uniqueCustomers = new Set(data.map(item => item.customer_id)).size;
+        
+        // Benzersiz ürün sayısı
+        const uniqueProducts = new Set(data.map(item => item.product)).size;
+        
+        // Benzersiz mağaza sayısı
+        const uniqueStores = new Set(data.map(item => item.partner)).size;
+        
+        // Benzersiz temsilci sayısı
+        const uniqueSalespeople = new Set(data.map(item => item.salesperson)).size;
+        
+        // Günlük ortalama
+        const dailyAverage = totalSales / 365; // Yaklaşık
+        
+        // Sepet ortalaması
+        const basketAverage = totalSales / data.length;
+        
+        this.summaryData = {
+            totalSales,
+            totalQty,
+            uniqueCustomers,
+            uniqueProducts,
+            uniqueStores,
+            uniqueSalespeople,
+            dailyAverage,
+            basketAverage,
+            totalRecords: data.length
+        };
+    }
+
+    /**
+     * Özet kartlarını güncelle
+     */
+    updateSummaryCards() {
+        const data = this.summaryData;
+        
+        console.log('📊 Özet verileri güncelleniyor:', data);
+        
+        // Toplam satış
+        this.updateElement('dashTotalSales', `$${data.totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
+        
+        // Toplam miktar
+        this.updateElement('dashTotalQty', data.totalQty.toLocaleString('tr-TR'));
+        
+        // Müşteri sayısı
+        this.updateElement('dashTotalCustomers', data.uniqueCustomers.toLocaleString('tr-TR'));
+        
+        // Ürün sayısı
+        this.updateElement('dashTotalProducts', data.uniqueProducts.toLocaleString('tr-TR'));
+        
+        // Mağaza sayısı
+        this.updateElement('dashTotalStores', data.uniqueStores.toLocaleString('tr-TR'));
+        
+        // Temsilci sayısı
+        this.updateElement('dashTotalSalespeople', data.uniqueSalespeople.toLocaleString('tr-TR'));
+        
+        // Günlük ortalama
+        this.updateElement('dashDailyAverage', `$${data.dailyAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
+        
+        // Sepet ortalaması
+        this.updateElement('dashBasketAverage', `$${data.basketAverage.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`);
+        
+        // Cache versiyonu
+        this.updateElement('cacheVersion', window.CacheManager?.getDailyVersion() || 'N/A');
+        
+        console.log('✅ Özet kartları güncellendi');
+    }
+
+    /**
+     * Dashboard grafiklerini oluştur
+     */
+    createDashboardCharts() {
+        const data = window.DataLoader.allData;
+        
+        if (!data || data.length === 0) {
+            console.warn('⚠️ Veri bulunamadı, grafikler oluşturulamıyor');
+            return;
+        }
+
+        // Yıllık karşılaştırma grafiği
+        this.createYearlyComparisonChart(data);
+        
+        // Top 10 mağaza grafiği
+        this.createTopStoresChart(data);
+        
+        // Top 10 temsilci grafiği
+        this.createTopSalespeopleChart(data);
+        
+        // Top 10 marka grafiği
+        this.createTopBrandsChart(data);
+        
+        // Top 10 kategori grafiği
+        this.createTopCategoriesChart(data);
+        
+        // Top 10 şehir grafiği
+        this.createTopCitiesChart(data);
+        
+        // Top 10 ürün grafiği
+        this.createTopProductsChart(data);
+    }
+
+    /**
+     * Yıllık karşılaştırma grafiği
+     */
+    createYearlyComparisonChart(data) {
+        const yearlyData = this.groupDataByYear(data);
+        const years = Object.keys(yearlyData).sort();
+        
+        const salesData = years.map(year => {
+            return yearlyData[year].reduce((sum, item) => sum + (parseFloat(item.usd_amount) || 0), 0);
+        });
+        
+        const qtyData = years.map(year => {
+            return yearlyData[year].reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
+        });
+
+        const chartData = {
+            labels: years,
+            datasets: [{
+                label: 'Satış (USD)',
+                data: salesData,
+                borderColor: 'rgba(102, 126, 234, 1)',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'Miktar (Adet)',
+                data: qtyData,
+                borderColor: 'rgba(255, 159, 64, 1)',
+                backgroundColor: 'rgba(255, 159, 64, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        };
+
+        if (window.ChartManager) {
+            window.ChartManager.createLineChart('dashYearlyChart', chartData);
+        }
+    }
+
+    /**
+     * Top 10 mağaza grafiği
+     */
+    createTopStoresChart(data) {
+        const storeData = this.groupDataByField(data, 'partner');
+        const topStores = this.getTop10(storeData, 'usd_amount');
+        
+        if (window.ChartManager) {
+            window.ChartManager.createBarChart('dashTopStoresChart', {
+                labels: topStores.map(s => s[0]),
+                values: topStores.map(s => s[1]),
+                label: 'Satış (USD)',
+                backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                borderColor: 'rgba(102, 126, 234, 1)'
+            });
+        }
+    }
+
+    /**
+     * Top 10 temsilci grafiği
+     */
+    createTopSalespeopleChart(data) {
+        const salespersonData = this.groupDataByField(data, 'salesperson');
+        const topSalespeople = this.getTop10(salespersonData, 'usd_amount');
+        
+        if (window.ChartManager) {
+            window.ChartManager.createBarChart('dashTopSalespeopleChart', {
+                labels: topSalespeople.map(s => s[0]),
+                values: topSalespeople.map(s => s[1]),
+                label: 'Satış (USD)',
+                backgroundColor: 'rgba(255, 159, 64, 0.8)',
+                borderColor: 'rgba(255, 159, 64, 1)'
+            });
+        }
+    }
+
+    /**
+     * Top 10 marka grafiği
+     */
+    createTopBrandsChart(data) {
+        const brandData = this.groupDataByField(data, 'brand');
+        const topBrands = this.getTop10(brandData, 'usd_amount');
+        
+        if (window.ChartManager) {
+            window.ChartManager.createDoughnutChart('dashTopBrandsChart', {
+                labels: topBrands.map(b => b[0]),
+                values: topBrands.map(b => b[1]),
+                backgroundColor: window.ChartManager.getDefaultColors(10)
+            });
+        }
+    }
+
+    /**
+     * Top 10 kategori grafiği
+     */
+    createTopCategoriesChart(data) {
+        const categoryData = this.groupDataByField(data, 'category_1');
+        const topCategories = this.getTop10(categoryData, 'usd_amount');
+        
+        if (window.ChartManager) {
+            window.ChartManager.createDoughnutChart('dashTopCategoriesChart', {
+                labels: topCategories.map(c => c[0]),
+                values: topCategories.map(c => c[1]),
+                backgroundColor: window.ChartManager.getDefaultColors(10)
+            });
+        }
+    }
+
+    /**
+     * Top 10 şehir grafiği
+     */
+    createTopCitiesChart(data) {
+        const cityData = this.groupDataByField(data, 'city');
+        const topCities = this.getTop10(cityData, 'usd_amount');
+        
+        if (window.ChartManager) {
+            window.ChartManager.createBarChart('dashTopCitiesChart', {
+                labels: topCities.map(c => c[0]),
+                values: topCities.map(c => c[1]),
+                label: 'Satış (USD)',
+                backgroundColor: 'rgba(75, 192, 192, 0.8)',
+                borderColor: 'rgba(75, 192, 192, 1)'
+            });
+        }
+    }
+
+    /**
+     * Top 10 ürün grafiği
+     */
+    createTopProductsChart(data) {
+        const productData = this.groupDataByField(data, 'product');
+        const topProducts = this.getTop10(productData, 'usd_amount');
+        
+        if (window.ChartManager) {
+            window.ChartManager.createHorizontalBarChart('dashTopProductsChart', {
+                labels: topProducts.map(p => p[0].substring(0, 30) + (p[0].length > 30 ? '...' : '')),
+                values: topProducts.map(p => p[1]),
+                label: 'Satış (USD)',
+                backgroundColor: 'rgba(153, 102, 255, 0.8)',
+                borderColor: 'rgba(153, 102, 255, 1)'
+            });
+        }
+    }
+
+    /**
+     * AI analizi yap
+     */
+    performAIAnalysis() {
+        const data = window.DataLoader.allData;
+        
+        if (!data || data.length === 0) {
+            console.warn('⚠️ Veri bulunamadı, AI analizi yapılamıyor');
+            return;
+        }
+
+        // Basit analiz (GPT entegrasyonu olmadan)
+        const analysis = this.performBasicAnalysis(data);
+        this.displayAIAnalysis(analysis);
+    }
+
+    /**
+     * Basit analiz yap
+     */
+    performBasicAnalysis(data) {
+        const totalSales = data.reduce((sum, item) => sum + (parseFloat(item.usd_amount) || 0), 0);
+        const avgBasket = totalSales / data.length;
+        
+        // En yüksek satış yapan mağaza
+        const storeData = this.groupDataByField(data, 'partner');
+        const topStore = this.getTop10(storeData, 'usd_amount')[0];
+        
+        // En popüler kategori
+        const categoryData = this.groupDataByField(data, 'category_1');
+        const topCategory = this.getTop10(categoryData, 'usd_amount')[0];
+        
+        return {
+            totalSales,
+            avgBasket,
+            topStore: topStore ? topStore[0] : 'N/A',
+            topCategory: topCategory ? topCategory[0] : 'N/A',
+            totalRecords: data.length
+        };
+    }
+
+    /**
+     * AI analiz sonuçlarını göster
+     */
+    displayAIAnalysis(analysis) {
+        const container = document.getElementById('dashAIAnalysis');
+        if (!container) return;
+
+        const html = `
+            <div style="background: white; padding: 20px; border-radius: 10px; line-height: 1.8;">
+                <h4 style="color: #667eea; margin-bottom: 15px;">📊 Dashboard Analizi</h4>
+                <p><strong>Toplam Satış:</strong> $${analysis.totalSales.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</p>
+                <p><strong>Ortalama Sepet:</strong> $${analysis.avgBasket.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</p>
+                <p><strong>En Başarılı Mağaza:</strong> ${analysis.topStore}</p>
+                <p><strong>En Popüler Kategori:</strong> ${analysis.topCategory}</p>
+                <p><strong>Toplam İşlem:</strong> ${analysis.totalRecords.toLocaleString('tr-TR')}</p>
+            </div>
+        `;
+        
+        container.innerHTML = html;
+    }
+
+    /**
+     * Veriyi yıla göre grupla
+     */
+    groupDataByYear(data) {
+        const grouped = {};
+        data.forEach(item => {
+            const year = new Date(item.date).getFullYear().toString();
+            if (!grouped[year]) grouped[year] = [];
+            grouped[year].push(item);
+        });
+        return grouped;
+    }
+
+    /**
+     * Veriyi belirli bir alana göre grupla
+     */
+    groupDataByField(data, field) {
+        const grouped = {};
+        data.forEach(item => {
+            const value = item[field] || 'Bilinmeyen';
+            if (!grouped[value]) grouped[value] = [];
+            grouped[value].push(item);
+        });
+        return grouped;
+    }
+
+    /**
+     * Top 10 veri al
+     */
+    getTop10(groupedData, valueField) {
+        return Object.entries(groupedData)
+            .map(([key, items]) => [
+                key,
+                items.reduce((sum, item) => sum + (parseFloat(item[valueField]) || 0), 0)
+            ])
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10);
+    }
+
+    /**
+     * Element güncelle
+     */
+    updateElement(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+        }
+    }
+
+    /**
+     * Event listener'ları kur
+     */
+    setupEventListeners() {
+        // Dashboard metric değiştirme
+        const salesBtn = document.getElementById('dashYearlyMetricSales');
+        const qtyBtn = document.getElementById('dashYearlyMetricQty');
+        
+        if (salesBtn) {
+            salesBtn.addEventListener('click', () => this.changeYearlyMetric('sales'));
+        }
+        
+        if (qtyBtn) {
+            qtyBtn.addEventListener('click', () => this.changeYearlyMetric('qty'));
+        }
+    }
+
+    /**
+     * Yıllık metrik değiştir
+     */
+    changeYearlyMetric(metric) {
+        // Buton stillerini güncelle
+        const salesBtn = document.getElementById('dashYearlyMetricSales');
+        const qtyBtn = document.getElementById('dashYearlyMetricQty');
+        
+        if (salesBtn && qtyBtn) {
+            if (metric === 'sales') {
+                salesBtn.style.background = '#667eea';
+                salesBtn.style.color = 'white';
+                qtyBtn.style.background = 'white';
+                qtyBtn.style.color = '#667eea';
+            } else {
+                qtyBtn.style.background = '#667eea';
+                qtyBtn.style.color = 'white';
+                salesBtn.style.background = 'white';
+                salesBtn.style.color = '#667eea';
             }
         }
         
-        // Günlük ortalama hesapla (toplam gün sayısı)
-        const totalDays = Object.keys(window.loadedDataCache).length * 365; // Yaklaşık
-        const dailyAverage = totalDays > 0 ? totalSales / totalDays : 0;
-        
-        // Sepet ortalaması hesapla
-        const basketAverage = totalTransactions > 0 ? totalSales / totalTransactions : 0;
-        
-        // DOM elementlerini güncelle
-        const elements = {
-            dashTotalSales: document.getElementById('dashTotalSales'),
-            dashTotalQty: document.getElementById('dashTotalQty'),
-            dashTotalCustomers: document.getElementById('dashTotalCustomers'),
-            dashTotalProducts: document.getElementById('dashTotalProducts'),
-            dashTotalStores: document.getElementById('dashTotalStores'),
-            dashTotalSalespeople: document.getElementById('dashTotalSalespeople'),
-            dashDailyAverage: document.getElementById('dashDailyAverage'),
-            dashBasketAverage: document.getElementById('dashBasketAverage')
-        };
-        
-        // Değerleri güncelle
-        if (elements.dashTotalSales) {
-            elements.dashTotalSales.textContent = '$' + totalSales.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-        }
-        
-        if (elements.dashTotalQty) {
-            elements.dashTotalQty.textContent = totalQty.toLocaleString('tr-TR');
-        }
-        
-        if (elements.dashTotalCustomers) {
-            elements.dashTotalCustomers.textContent = totalCustomers.size.toLocaleString('tr-TR');
-        }
-        
-        if (elements.dashTotalProducts) {
-            elements.dashTotalProducts.textContent = totalProducts.size.toLocaleString('tr-TR');
-        }
-        
-        if (elements.dashTotalStores) {
-            elements.dashTotalStores.textContent = totalStores.size.toLocaleString('tr-TR');
-        }
-        
-        if (elements.dashTotalSalespeople) {
-            elements.dashTotalSalespeople.textContent = totalSalespeople.size.toLocaleString('tr-TR');
-        }
-        
-        if (elements.dashDailyAverage) {
-            elements.dashDailyAverage.textContent = '$' + dailyAverage.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-        }
-        
-        if (elements.dashBasketAverage) {
-            elements.dashBasketAverage.textContent = '$' + basketAverage.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-        }
-        
-        console.log('✅ Özet kartları güncellendi:', {
-            totalSales: totalSales,
-            totalQty: totalQty,
-            totalCustomers: totalCustomers.size,
-            totalProducts: totalProducts.size,
-            totalStores: totalStores.size,
-            totalSalespeople: totalSalespeople.size,
-            dailyAverage: dailyAverage,
-            basketAverage: basketAverage
-        });
-        
-    } catch (error) {
-        console.error('❌ Özet kartları güncelleme hatası:', error);
+        // Grafiği yeniden oluştur
+        this.createYearlyComparisonChart(window.DataLoader.allData);
     }
-};
+}
 
-// Loading ekranı yönetimi
-window.checkLoadingComplete = function() {
-    let progress = 0;
-    if (dataLoadProgress.pageInit) progress += 25;
-    if (dataLoadProgress.dataFiles) progress += 50;
-    if (dataLoadProgress.targets) progress += 20;
-    if (dataLoadProgress.ready) progress += 5;
-    
-    // Progress'i güncelle
-    document.getElementById('progressBar').style.width = progress + '%';
-    document.getElementById('progressText').textContent = Math.round(progress) + '%';
-    
-    // Step'leri güncelle
-    if (dataLoadProgress.pageInit) {
-        document.getElementById('step1').style.display = 'block';
-        document.getElementById('step1').style.opacity = '1';
-        document.getElementById('step1').style.color = '#4ade80';
-    }
-    
-    if (dataLoadProgress.dataFiles) {
-        document.getElementById('step2').style.display = 'block';
-        document.getElementById('step2').style.opacity = '1';
-        document.getElementById('step2').style.color = '#4ade80';
-    }
-    
-    if (dataLoadProgress.targets) {
-        document.getElementById('step3').style.display = 'block';
-        document.getElementById('step3').style.opacity = '1';
-        document.getElementById('step3').style.color = '#4ade80';
-    }
-    
-    if (dataLoadProgress.ready) {
-        document.getElementById('step4').style.display = 'block';
-        document.getElementById('step4').style.opacity = '1';
-        document.getElementById('step4').style.color = '#4ade80';
-        
-        // %100'e ulaştıysak loading'i gizle - TÜM VERİLER YÜKLENENE KADAR BEKLE
-        if (progress >= 100) {
-            console.log('✅ Tüm veriler yüklendi, loading ekranı kapatılıyor...');
-            
-            // Final progress update
-            updateLoadingProgress(100, '🎉 Hazır!');
-            
-            // Loading ekranını kapat
-            setTimeout(() => {
-                const loadingScreen = document.getElementById('loadingScreen');
-                const mainContainer = document.getElementById('mainContainer');
-                
-                if (loadingScreen) {
-                    loadingScreen.style.opacity = '0';
-                    loadingScreen.style.transition = 'opacity 0.5s ease';
-                    setTimeout(() => {
-                        loadingScreen.style.display = 'none';
-                        if (mainContainer) mainContainer.style.display = 'block';
-                    }, 500);
-                }
-            }, 1000); // 1 saniye ekstra bekle
-        }
-    }
-};
+// Global Dashboard instance oluştur
+window.Dashboard = new Dashboard();
 
-// Dashboard başlatma fonksiyonu
-window.startRealLoading = function() {
-    console.log('🚀 startRealLoading başlatıldı');
-    
-    // Step 1: Session kontrolü
-    const sessionData = sessionStorage.getItem('otpVerified');
-    const sessionExpiry = sessionStorage.getItem('sessionExpiry');
-    
-    if (sessionData === 'true' && sessionExpiry && new Date().getTime() < parseInt(sessionExpiry)) {
-        // Session geçerli, dashboard'ı göster
-        console.log('✅ Geçerli session bulundu, dashboard yükleniyor...');
-        window.showDashboardAfterAuth();
-    } else {
-        // Session yok veya süresi dolmuş, direkt dashboard aç
-        console.log('🔐 Session yok veya süresi dolmuş, direkt dashboard açılıyor...');
-        // Direkt dashboard açılacak - authentication bypass
-    }
-    
-    // Step 2: Sayfa başlatılıyor
-    dataLoadProgress.pageInit = true;
-    checkLoadingComplete();
-    
-    // Gerçek veri yükleme işlemini başlat - HER DURUMDA
-    console.log('📊 loadData fonksiyonu çağrılıyor...');
-    if (typeof window.loadData === 'function') {
-        window.loadData();
-    } else {
-        console.error('❌ loadData fonksiyonu bulunamadı!');
-    }
-};
+// Global fonksiyonlar (geriye uyumluluk için)
+window.updateDashboard = () => window.Dashboard.updateDashboard();
+window.changeDashYearlyMetric = (metric) => window.Dashboard.changeYearlyMetric(metric);
 
-console.log('✅ Dashboard module loaded');
-
+console.log('🏠 Dashboard module loaded successfully');
