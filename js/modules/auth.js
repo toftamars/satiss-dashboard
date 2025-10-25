@@ -191,9 +191,12 @@ class AuthManager {
      * Çıkış yap
      */
     logout() {
-        // Session ve local storage'ı temizle
+        // Session'ı temizle
         sessionStorage.clear();
-        localStorage.clear();
+        
+        // Sadece ilgili localStorage item'larını temizle (tüm localStorage'ı değil!)
+        const keysToRemove = ['authToken', 'userEmail', 'userPreferences', 'zuhal_cache'];
+        keysToRemove.forEach(key => localStorage.removeItem(key));
         
         console.log('🚪 Çıkış yapıldı');
         
