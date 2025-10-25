@@ -147,49 +147,18 @@ class OdooAuth {
             };
 
             // Basit login sistemi (CORS proxy olmadan)
-            console.log('🔐 Basit login sistemi kullanılıyor...');
-            
-            // Geçici olarak herhangi bir kullanıcıyı kabul et
-            if (username && password) {
-                console.log('✅ Login başarılı (geçici)');
-                
-                // Başarılı login - attempt count sıfırla
-                localStorage.setItem('lastLoginAttempt', now.toString());
-                localStorage.setItem('loginAttemptCount', '0');
-                
-                // Session kaydet
-                this.saveSession({
-                    token: 'mock_token',
-                    user: {
-                        id: 1,
-                        name: username,
-                        username: username
-                    },
-                    loginTime: now
-                });
-                
-                console.log('✅ Session kaydedildi, kullanıcı:', username);
-                
-                // Mock response
-                const mockResult = {
-                    success: true,
-                    user: {
-                        id: 1,
-                        name: username,
-                        username: username
-                    }
-                };
-                
-                return {
-                    success: true,
-                    user: mockResult.user
-                };
-            } else {
-                // Başarısız login - attempt count artır
-                localStorage.setItem('lastLoginAttempt', now.toString());
-                localStorage.setItem('loginAttemptCount', (attemptCount + 1).toString());
-                throw new Error('Hatalı kullanıcı adı veya şifre');
-            }
+            // ✅ GERÇEK ODOO API KULLAN
+            const response = await fetch(this.apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username,
+                    password,
+                    totp: totpCode
+                })
+            });
 
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -201,11 +170,15 @@ class OdooAuth {
                 console.log('✅ Odoo authentication başarılı!');
                 console.log('User:', result.user.name);
 
+                // Başarılı login - attempt count sıfırla
+                localStorage.setItem('lastLoginAttempt', now.toString());
+                localStorage.setItem('loginAttemptCount', '0');
+
                 // Session kaydet
                 this.saveSession({
                     token: result.token,
                     user: result.user,
-                    loginTime: Date.now()
+                    loginTime: now
                 });
 
                 return {
@@ -213,6 +186,10 @@ class OdooAuth {
                     user: result.user
                 };
             } else {
+                // Başarısız login - attempt count artır
+                localStorage.setItem('lastLoginAttempt', now.toString());
+                localStorage.setItem('loginAttemptCount', (attemptCount + 1).toString());
+                
                 throw new Error(result.error || 'Giriş başarısız');
             }
 
@@ -223,25 +200,7 @@ class OdooAuth {
     }
 
     /**
-     * Session kaydet
-     */
-    saveSession(sessionData) {
-        try {
-            sessionStorage.setItem('isLoggedIn', 'true');
-            sessionStorage.setItem('authToken', sessionData.token);
-            sessionStorage.setItem('userId', sessionData.user.id);
-            sessionStorage.setItem('userName', sessionData.user.name);
-            sessionStorage.setItem('userEmail', sessionData.user.username);
-            sessionStorage.setItem('loginTime', sessionData.loginTime.toString());
-            
-            console.log('✅ Session kaydedildi');
-        } catch (error) {
-            console.error('❌ Session kaydetme hatası:', error);
-        }
-    }
-
-    /**
-     * Session kaydet
+     * Session kaydet (DUPLICATE REMOVED - SORUN 3 ÇÖZÜLDÜ)
      */
     saveSession(sessionData) {
         try {
