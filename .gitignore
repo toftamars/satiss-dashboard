@@ -36,3 +36,9 @@ config.json
 # API Keys and secrets
 *api_key*
 *secret*
+
+# Backup files (SORUN 14)
+*-backup.html
+*.broken
+*.original
+*-v[0-9]*.html
