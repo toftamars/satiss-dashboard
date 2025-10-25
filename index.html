@@ -4643,32 +4643,8 @@
             debugPanel.style.display = 'block';
         }
 
-        function updateSummary() {
-            console.log('updateSummary - Filtrelenmis veri sayisi:', filteredData.length);
-            
-            const totalUSD = filteredData.reduce((sum, item) => sum + (parseFloat(item.usd_amount) || 0), 0);
-            const totalQty = filteredData.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
-            const uniquePartners = new Set(filteredData.map(item => item.partner)).size;
-            const uniqueProducts = new Set(filteredData.map(item => item.product)).size;
-            
-            console.log('Ozet:', {totalUSD, totalQty, uniquePartners, uniqueProducts});
-            
-            // Eski Sales sekmesi elementleri - null check
-            const summaryUSD = document.getElementById('summaryUSD');
-            const summaryQuantity = document.getElementById('summaryQuantity');
-            const summaryPartners = document.getElementById('summaryPartners');
-            const summaryProducts = document.getElementById('summaryProducts');
-            
-            if (summaryUSD) summaryUSD.textContent = '$' + totalUSD.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            if (summaryQuantity) summaryQuantity.textContent = totalQty.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            if (summaryPartners) summaryPartners.textContent = uniquePartners.toLocaleString('tr-TR');
-            if (summaryProducts) summaryProducts.textContent = uniqueProducts.toLocaleString('tr-TR');
-            
-            // AI Analiz yap
-            if (filteredData.length > 0) {
-                performAIAnalysis();
-            }
-        }
+        // updateSummary - sales-analysis modülünden import edildi
+        let updateSummary;
 
         // Chart.js instances
         let topCategoryChart = null;
