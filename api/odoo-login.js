@@ -24,6 +24,9 @@ export default async function handler(req, res) {
     return res.status(200).json({ message: 'CORS preflight OK' });
   }
 
+  // Public API - Authentication bypass
+  console.log('🌐 Public API access - Authentication bypassed');
+
   // Sadece POST kabul et
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
