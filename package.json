@@ -4,8 +4,10 @@
   "description": "Müzik Enstrüman Sektörü için Kapsamlı Veri Analiz ve Raporlama Platformu",
   "main": "index.html",
   "scripts": {
-    "start": "python -m http.server 8000",
-    "dev": "python -m http.server 8000",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "export": "next export",
     "lint": "eslint js/**/*.js --fix",
     "lint:check": "eslint js/**/*.js",
     "test": "jest --coverage",
@@ -39,5 +41,24 @@
   "bugs": {
     "url": "https://github.com/zuhalmuzik/zuhal-muzik-dashboard/issues"
   },
-  "homepage": "https://zuhalmuzik.github.io/zuhal-muzik-dashboard"
+  "homepage": "https://zuhalmuzik.github.io/zuhal-muzik-dashboard",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "dependencies": {
+    "camel-case": "^3.0.0",
+    "clean-css": "^4.2.4",
+    "commander": "^2.20.3",
+    "he": "^1.2.0",
+    "html-minifier": "^4.0.0",
+    "lower-case": "^1.1.4",
+    "next-auth": "^4.24.11",
+    "no-case": "^2.3.2",
+    "param-case": "^2.1.1",
+    "relateurl": "^0.2.7",
+    "source-map": "^0.6.1",
+    "uglify-js": "^3.19.3",
+    "upper-case": "^1.1.3"
+  }
 }
