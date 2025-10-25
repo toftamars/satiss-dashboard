@@ -115,7 +115,7 @@ class DataLoader {
                 console.warn('⚠️ targets.json yüklenemedi, varsayılan hedefler kullanılacak');
                 return false;
             }
-        } catch (error) {
+    } catch (error) {
             console.error('❌ Hedef yükleme hatası:', error);
             return false;
         }
@@ -127,9 +127,9 @@ class DataLoader {
     async loadYearData(year) {
         // Çift yükleme önleme kontrolü
         if (this.loadedYears.has(year) && this.loadedDataCache[year]) {
-            console.log(`⏭️ ${year} zaten yüklü, cache'den döndürülüyor...`);
+        console.log(`⏭️ ${year} zaten yüklü, cache'den döndürülüyor...`);
             return this.loadedDataCache[year];
-        }
+    }
         
         // Hemen ekle - race condition önleme
         this.loadedYears.add(year);

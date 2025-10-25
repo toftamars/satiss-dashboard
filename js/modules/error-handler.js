@@ -38,12 +38,12 @@ class ErrorHandler {
             });
         });
 
-        // Console error override
-        const originalError = console.error;
-        console.error = (...args) => {
-            this.logError('console_error', args);
-            originalError.apply(console, args);
-        };
+        // Console error override - disabled to prevent infinite loop
+        // const originalError = console.error;
+        // console.error = (...args) => {
+        //     this.logError('console_error', args);
+        //     originalError.apply(console, args);
+        // };
     }
 
     /**
