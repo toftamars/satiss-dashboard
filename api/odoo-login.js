@@ -82,6 +82,18 @@ export default async function handler(req, res) {
     // Odoo bilgileri (environment variables)
     const ODOO_URL = process.env.ODOO_URL || 'https://erp.zuhalmuzik.com';
     const ODOO_DB = 'erp.zuhalmuzik.com';
+    
+    // İzin verilen kullanıcılar (environment variable'dan al)
+    const ALLOWED_USERS_STR = process.env.ALLOWED_USERS || 'admin,tofta,rapor,analiz,dashboard';
+    const ALLOWED_USERS = ALLOWED_USERS_STR.split(',').map(user => user.trim().toLowerCase());
+    
+    // Kullanıcı kontrolü
+    if (!ALLOWED_USERS.includes(username.toLowerCase())) {
+        return res.status(403).json({ 
+            error: 'Bu kullanıcı adı ile giriş yapılamaz',
+            allowedUsers: ALLOWED_USERS
+        });
+    }
 
     console.log('🔐 Odoo authentication başlatılıyor...');
     console.log('URL:', ODOO_URL);
