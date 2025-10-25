@@ -28,15 +28,12 @@ class OdooAuth {
             console.log('🔐 Odoo login başlatılıyor...');
             console.log('Username:', username);
 
-            // Direkt Odoo API'ye istek
-            const odooUrl = 'https://erp.zuhalmuzik.com';
-            const odooDb = 'erp.zuhalmuzik.com';
-            
+            // Direkt Odoo API'ye istek (Vercel'siz)
             const authPayload = {
                 jsonrpc: '2.0',
                 method: 'call',
                 params: {
-                    db: odooDb,
+                    db: this.odooDb,
                     login: username,
                     password: password,
                     totp_token: totpCode
@@ -44,7 +41,7 @@ class OdooAuth {
                 id: 1
             };
 
-            const response = await fetch(`${odooUrl}/web/session/authenticate`, {
+            const response = await fetch(`${this.odooUrl}/web/session/authenticate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
