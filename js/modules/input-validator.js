@@ -162,20 +162,33 @@ class InputValidator {
             return '';
         }
         
-        // Tehlikeli SQL karakterlerini temizle
-        return str
+        // Tehlikeli SQL karakterlerini ve komutlarını temizle
+        let sanitized = str
+            // Tehlikeli karakterleri temizle
             .replace(/['";\\]/g, '')
             .replace(/--/g, '')
             .replace(/\/\*/g, '')
-            .replace(/\*\//g, '')
-            .replace(/xp_/gi, '')
-            .replace(/exec/gi, '')
-            .replace(/execute/gi, '')
-            .replace(/drop/gi, '')
-            .replace(/delete/gi, '')
-            .replace(/insert/gi, '')
-            .replace(/update/gi, '')
-            .replace(/union/gi, '');
+            .replace(/\*\//g, '');
+        
+        // Tehlikeli SQL komutlarını case-insensitive olarak temizle
+        const dangerousCommands = [
+            'xp_', 'exec', 'execute', 'drop', 'delete', 'insert', 'update', 
+            'union', 'select', 'alter', 'create', 'truncate', 'grant', 
+            'revoke', 'sp_', 'bulk', 'openquery', 'openrowset', 'opendatasource'
+        ];
+        
+        dangerousCommands.forEach(command => {
+            const regex = new RegExp(`\\b${command}\\b`, 'gi');
+            sanitized = sanitized.replace(regex, '');
+        });
+        
+        // Hex encoded attempts
+        sanitized = sanitized.replace(/0x[0-9a-f]+/gi, '');
+        
+        // Multiple spaces to single space
+        sanitized = sanitized.replace(/\s+/g, ' ').trim();
+        
+        return sanitized;
     }
 
     /**

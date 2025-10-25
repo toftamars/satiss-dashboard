@@ -127,28 +127,56 @@ class DataLoader {
     async loadYearData(year) {
         // Çift yükleme önleme kontrolü
         if (this.loadedYears.has(year) && this.loadedDataCache[year]) {
-        console.log(`⏭️ ${year} zaten yüklü, cache'den döndürülüyor...`);
+            console.log(`⏭️ ${year} zaten yüklü, cache'den döndürülüyor...`);
             return this.loadedDataCache[year];
+        }
+        
+        // Loading promise tracking to prevent race conditions
+        if (!this.loadingPromises) {
+            this.loadingPromises = new Map();
+        }
+        
+        // If already loading, return the existing promise
+        if (this.loadingPromises.has(year)) {
+            console.log(`⏳ ${year} zaten yükleniyor, mevcut promise bekleniyor...`);
+            return await this.loadingPromises.get(year);
+        }
+        
+        // Create loading promise
+        const loadingPromise = this._loadYearDataInternal(year);
+        this.loadingPromises.set(year, loadingPromise);
+        
+        try {
+            const result = await loadingPromise;
+            return result;
+        } finally {
+            // Clean up the loading promise
+            this.loadingPromises.delete(year);
+        }
     }
-        
-        // Hemen ekle - race condition önleme
+
+    /**
+     * Internal year data loading method
+     */
+    async _loadYearDataInternal(year) {
+        // Mark as loading
         this.loadedYears.add(year);
-    
-    try {
-        console.log(`📦 ${year} yükleniyor...`);
         
-        // GZIP dosyasını indir - Akıllı Cache ile
+        try {
+            console.log(`📦 ${year} yükleniyor...`);
+            
+            // GZIP dosyasını indir - Akıllı Cache ile
             const version = this.getDailyVersion();
-        const response = await fetch(`data-${year}.json.gz?v=${version}`, {
-            headers: {
-                'Cache-Control': 'public, max-age=86400' // 24 saat cache
-            }
-        });
-        if (!response.ok) throw new Error(`${year} verisi bulunamadı`);
-        
-        // ArrayBuffer olarak al
-        const arrayBuffer = await response.arrayBuffer();
-        
+            const response = await fetch(`data-${year}.json.gz?v=${version}`, {
+                headers: {
+                    'Cache-Control': 'public, max-age=86400' // 24 saat cache
+                }
+            });
+            if (!response.ok) throw new Error(`${year} verisi bulunamadı`);
+            
+            // ArrayBuffer olarak al
+            const arrayBuffer = await response.arrayBuffer();
+            
             // GZIP açma - Evrensel yöntem
             let decompressed;
             
@@ -178,22 +206,24 @@ class DataLoader {
             }
             
             // JSON'a çevir
-        const yearData = JSON.parse(decompressed);
+            const yearData = JSON.parse(decompressed);
             
             console.log(`✅ ${year} yüklendi: ${yearData?.details?.length || 0} kayıt`);
             if (!yearData?.details) {
                 console.warn(`⚠️ ${year} verisi boş veya geçersiz`);
             }
-        
-        // Cache'e kaydet
+            
+            // Cache'e kaydet
             this.loadedDataCache[year] = yearData;
-        
-        return yearData;
-        
-    } catch (error) {
-        console.error(`❌ ${year} yükleme hatası:`, error);
-        throw error;
-    }
+            
+            return yearData;
+            
+        } catch (error) {
+            console.error(`❌ ${year} yükleme hatası:`, error);
+            // Remove from loaded years on error
+            this.loadedYears.delete(year);
+            throw error;
+        }
     }
 
     /**
