@@ -95,26 +95,24 @@ class ProgressiveLoader {
         try {
             this.updateProgress(80, '📦 Detaylı veriler yükleniyor...');
             
-            let data;
-            
-            // Lazy Loading varsa kullan
-            if (window.LazyLoader) {
-                const currentYear = new Date().getFullYear();
-                const currentMonth = new Date().getMonth() + 1;
-                data = await window.LazyLoader.loadMonth(currentYear, currentMonth);
-            } else if (window.DataLoader) {
-                // Fallback: Normal data loader
-                data = await window.DataLoader.loadAllData();
+            // Normal DataLoader kullan (Lazy Loading yerine)
+            if (window.DataLoader) {
+                await window.DataLoader.loadAllData();
+                console.log('✅ Tüm veriler DataLoader\'a yüklendi');
             }
             
             this.updateProgress(100, '✅ Hazır!');
+            
+            // Dashboard'ı güncelle
+            if (window.Dashboard) {
+                window.Dashboard.updateDashboard();
+            }
             
             // Loading screen'i gizle
             setTimeout(() => {
                 this.hideLoadingScreen();
             }, 500);
             
-            return data;
         } catch (error) {
             console.error('❌ Tam veri yükleme hatası:', error);
             
