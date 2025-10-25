@@ -73,6 +73,7 @@
     <!-- UI Modules -->
     <script src="js/modules/charts.js"></script>
     <script src="js/modules/dashboard.js"></script>
+    <script src="js/modules/hedef-takip.js"></script>
     <script src="js/modules/ui.js"></script>
     
     <!-- Initialization -->
@@ -288,11 +289,50 @@
             </div>
         </div>
 
-        <!-- Diğer Tab'lar (placeholder) -->
+        <!-- Hedef Takip Tab -->
         <div id="targetsTab" class="tab-content">
             <div class="content">
-                <h2>🎯 Hedef Takip</h2>
-                <p>Hedef takip modülü geliştiriliyor...</p>
+                <h2 style="margin-bottom: 30px;">🎯 Hedef Takip Sistemi</h2>
+                
+                <!-- Filtreler -->
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; margin-bottom: 30px;">
+                    <h3 style="color: white; margin: 0 0 20px 0;">📊 Filtreler</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div>
+                            <label style="color: white; display: block; margin-bottom: 8px; font-weight: 500;">📅 Yıl:</label>
+                            <select id="targetFilterYear" onchange="window.HedefTakip.loadAllStoresTargets()" style="width: 100%; padding: 10px; border-radius: 8px; border: none; font-size: 14px;">
+                                <option value="2025">2025</option>
+                                <option value="2024">2024</option>
+                                <option value="2023">2023</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="color: white; display: block; margin-bottom: 8px; font-weight: 500;">📆 Ay (Opsiyonel):</label>
+                            <select id="targetFilterMonth" onchange="window.HedefTakip.loadAllStoresTargets()" style="width: 100%; padding: 10px; border-radius: 8px; border: none; font-size: 14px;">
+                                <option value="">Tüm Yıl</option>
+                                <option value="01">Ocak</option>
+                                <option value="02">Şubat</option>
+                                <option value="03">Mart</option>
+                                <option value="04">Nisan</option>
+                                <option value="05">Mayıs</option>
+                                <option value="06">Haziran</option>
+                                <option value="07">Temmuz</option>
+                                <option value="08">Ağustos</option>
+                                <option value="09">Eylül</option>
+                                <option value="10">Ekim</option>
+                                <option value="11">Kasım</option>
+                                <option value="12">Aralık</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mağaza Hedefleri -->
+                <div id="allStoresTargetsContainer" style="min-height: 200px;">
+                    <div style="text-align: center; padding: 40px; color: #6b7280;">
+                        <p>Yükleniyor...</p>
+                    </div>
+                </div>
             </div>
         </div>
 

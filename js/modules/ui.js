@@ -70,7 +70,9 @@ class UIManager {
                 this.loadDashboardData();
                 break;
             case 'targets':
-                this.loadTargetsData();
+                if (window.HedefTakip) {
+                    window.HedefTakip.loadHedefTakip();
+                }
                 break;
             case 'customers':
                 this.loadCustomersData();
