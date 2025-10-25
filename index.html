@@ -2922,18 +2922,8 @@
         });
 
         // Çıkış fonksiyonu
-        function logout() {
-            if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
-                // Session ve local storage'ı temizle
-                sessionStorage.clear();
-                localStorage.clear();
-                
-                // Authentication formunu göster
-                showAuthForm();
-                
-                console.log('✅ Çıkış yapıldı');
-            }
-        }
+        // logout fonksiyonu session-manager modülünden import edildi
+        let logout;
 
         // Global değişkenler artık modüllerde (app-state.js)
         // AppData.inventoryData, AppData.stockLocations, etc.
