@@ -23,25 +23,31 @@ class OdooAuth {
             if (!username || !password) {
                 throw new Error('Kullanıcı adı ve şifre gerekli');
             }
-            
-            if (!totpCode) {
-                throw new Error('2FA kodu gerekli');
-            }
 
             console.log('🔐 Odoo login başlatılıyor...');
             console.log('Username:', username);
 
-            const response = await fetch(this.apiUrl, {
+            // Direkt Odoo API'ye istek
+            const odooUrl = 'https://erp.zuhalmuzik.com';
+            const odooDb = 'erp.zuhalmuzik.com';
+            
+            const authPayload = {
+                jsonrpc: '2.0',
+                method: 'call',
+                params: {
+                    db: odooDb,
+                    login: username,
+                    password: password
+                },
+                id: 1
+            };
+
+            const response = await fetch(`${odooUrl}/web/session/authenticate`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
-                credentials: 'include',
-                body: JSON.stringify({ 
-                    username: username, 
-                    password: password,
-                    totp: totpCode
-                })
+                body: JSON.stringify(authPayload)
             });
 
             if (!response.ok) {
