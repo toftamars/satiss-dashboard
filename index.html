@@ -209,6 +209,10 @@
             normalizeStoreName = module.normalizeStoreName;
             fuzzyMatch = module.fuzzyMatch;
             levenshteinDistance = module.levenshteinDistance;
+            populateMultiSelect = module.populateMultiSelect;
+            updateSelectionCount = module.updateSelectionCount;
+            getSelectedValues = module.getSelectedValues;
+            filterCheckboxes = module.filterCheckboxes;
         });
 
         // ===== GLOBAL METADATA LOADING FUNCTION =====
@@ -1438,6 +1442,7 @@
     <script type="module" src="js/modules/ui.js"></script>
     <script type="module" src="js/modules/excel-export.js"></script>
     <script type="module" src="js/modules/helpers.js"></script>
+    <script type="module" src="js/modules/voice-search.js"></script>
     
     <!-- Authentication Modules -->
     <script type="module" src="js/modules/auth-odoo.js"></script>
@@ -3950,40 +3955,8 @@
             populateMultiSelect('filterDay', Array.from(days).sort(), 'countDay');
         }
 
-        function populateMultiSelect(id, values, countId) {
-            const container = document.getElementById(id);
-            if (!container) return;
-            
-            // Mevcut seçimleri koru
-            const currentChecked = Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
-            
-            container.innerHTML = '';
-            
-            values.forEach(value => {
-                const item = document.createElement('div');
-                item.className = 'checkbox-item';
-                
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.value = value;
-                checkbox.id = `${id}_${value.replace(/\s+/g, '_')}`;
-                checkbox.checked = currentChecked.includes(value);
-                
-                const label = document.createElement('label');
-                label.htmlFor = checkbox.id;
-                label.textContent = value;
-                
-                // Checkbox değiştiğinde sayıyı güncelle
-                checkbox.addEventListener('change', () => updateSelectionCount(id, countId));
-                
-                item.appendChild(checkbox);
-                item.appendChild(label);
-                container.appendChild(item);
-            });
-            
-            // İlk yüklemede sayıyı güncelle
-            updateSelectionCount(id, countId);
-        }
+        // populateMultiSelect - helpers modülünden import edildi
+        let populateMultiSelect;
         
         function updateSelectionCount(containerId, countId) {
             const container = document.getElementById(containerId);
@@ -5227,63 +5200,13 @@
         
         
         // ==================== VOICE SEARCH ====================
-        let recognition = null;
-        let isListening = false;
-        
-        function startVoiceSearch() {
-            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                alert('⚠️ Tarayıcınız ses tanıma özelliğini desteklemiyor!\nChrome veya Edge kullanın.');
-                return;
-            }
-            
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            
-            if (isListening) {
-                // Dinlemeyi durdur
-                if (recognition) {
-                    recognition.stop();
-                }
-                return;
-            }
-            
-            recognition = new SpeechRecognition();
-            recognition.lang = 'tr-TR';
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            
-            const voiceBtn = document.getElementById('voiceBtn');
-            
-            recognition.onstart = () => {
-                isListening = true;
-                voiceBtn.classList.add('listening');
-                voiceBtn.textContent = '🎙️';
-                console.log('🎤 Dinleniyor...');
-            };
-            
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                console.log('🗣️ Algılanan:', transcript);
+        // Voice search - Modül kullanımı
+        async function startVoiceSearch() {
+            const { startVoiceSearch: startVoice } = await import('./js/modules/voice-search.js');
+            startVoice((transcript) => {
                 document.getElementById('smartSearch').value = transcript;
                 applySmartSearch();
-            };
-            
-            recognition.onerror = (event) => {
-                console.error('❌ Ses tanıma hatası:', event.error);
-                if (event.error === 'no-speech') {
-                    alert('⚠️ Ses algılanamadı. Lütfen tekrar deneyin.');
-                } else if (event.error === 'not-allowed') {
-                    alert('⚠️ Mikrofon izni verilmedi. Lütfen tarayıcı ayarlarından mikrofon izni verin.');
-                }
-            };
-            
-            recognition.onend = () => {
-                isListening = false;
-                voiceBtn.classList.remove('listening');
-                voiceBtn.textContent = '🎤';
-                console.log('🎤 Dinleme bitti');
-            };
-            
-            recognition.start();
+            });
         }
         
         // ==================== TARGET TRACKING ====================
