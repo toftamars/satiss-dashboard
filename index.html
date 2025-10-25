@@ -3958,49 +3958,8 @@
         // populateMultiSelect - helpers modülünden import edildi
         let populateMultiSelect;
         
-        function updateSelectionCount(containerId, countId) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            
-            const count = container.querySelectorAll('input[type="checkbox"]:checked').length;
-            const countSpan = document.getElementById(countId);
-            if (countSpan) {
-                if (count > 0) {
-                    countSpan.textContent = `(${count} seçili)`;
-                } else {
-                    countSpan.textContent = '';
-                }
-            }
-        }
-        
-        function getSelectedValues(containerId) {
-            const container = document.getElementById(containerId);
-            if (!container) return [];
-            
-            return Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
-        }
-        
-        // Checkbox'ları filtrele (arama kutusu için)
-        function filterCheckboxes(containerId, searchText) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            
-            const searchLower = searchText.toLowerCase().trim();
-            const items = container.querySelectorAll('.checkbox-item');
-            
-            items.forEach(item => {
-                const label = item.querySelector('label');
-                if (!label) return;
-                
-                const text = label.textContent.toLowerCase();
-                
-                if (searchLower === '' || text.includes(searchLower)) {
-                    item.classList.remove('hidden');
-                } else {
-                    item.classList.add('hidden');
-                }
-            });
-        }
+        // updateSelectionCount, getSelectedValues, filterCheckboxes - helpers modülünden import edildi
+        let updateSelectionCount, getSelectedValues, filterCheckboxes;
 
         function applyFilters() {
             const brands = getSelectedValues('filterBrand');
