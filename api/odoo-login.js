@@ -11,15 +11,17 @@ const MAX_ATTEMPTS = 5;
 const ATTEMPT_WINDOW = 5 * 60 * 1000; // 5 dakika
 
 export default async function handler(req, res) {
-  // CORS headers
+  // CORS headers - GitHub Pages için
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', 'https://toftamars.github.io');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Max-Age', '86400'); // 24 saat
 
-  // OPTIONS request (preflight)
+  // OPTIONS request (preflight) - CORS için
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    console.log('🔄 CORS preflight request');
+    return res.status(200).json({ message: 'CORS preflight OK' });
   }
 
   // Sadece POST kabul et
