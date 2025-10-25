@@ -95,7 +95,9 @@ class UIManager {
                 }
                 break;
             case 'stock':
-                this.loadStockData();
+                if (window.StokDagilim) {
+                    window.StokDagilim.loadStokDagilim();
+                }
                 break;
             case 'time':
                 this.loadTimeData();

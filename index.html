@@ -78,6 +78,7 @@
     <script src="js/modules/musteri-analizi.js"></script>
     <script src="js/modules/satis-temsilcisi.js"></script>
     <script src="js/modules/sehir-analizi.js"></script>
+    <script src="js/modules/stok-dagilim.js"></script>
     <script src="js/modules/ui.js"></script>
     
     <!-- Initialization -->
@@ -422,10 +423,25 @@
             </div>
         </div>
 
+        <!-- Stok Dağılım Tab -->
         <div id="stockTab" class="tab-content">
             <div class="content">
-                <h2>📦 Stok Dağılım</h2>
-                <p>Stok dağılım modülü geliştiriliyor...</p>
+                <h2 style="margin-bottom: 30px;">📦 Stok Lokasyon Dağılımı</h2>
+                
+                <!-- Dağılım Grafiği -->
+                <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 30px;">
+                    <h3 style="margin: 0 0 20px 0;">📊 Top 10 Lokasyon Dağılımı</h3>
+                    <div style="max-width: 600px; margin: 0 auto;">
+                        <canvas id="stockDistributionChart" style="max-height: 400px;"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Lokasyon Detayları -->
+                <div id="stockAnalysisContainer" style="min-height: 200px;">
+                    <div style="text-align: center; padding: 40px; color: #6b7280;">
+                        <p>Yükleniyor...</p>
+                    </div>
+                </div>
             </div>
         </div>
 
