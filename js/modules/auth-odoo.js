@@ -27,22 +27,16 @@ class OdooAuth {
             console.log('🔐 Odoo login başlatılıyor...');
             console.log('Username:', username);
 
-            // Direkt Odoo API
-            const response = await fetch(`${this.odooUrl}/web/session/authenticate`, {
+            // Cloudflare Worker üzerinden Odoo'ya istek
+            const response = await fetch(this.apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    jsonrpc: '2.0',
-                    method: 'call',
-                    params: {
-                        db: this.odooDb,
-                        login: username,
-                        password: password,
-                        totp_token: totpCode
-                    },
-                    id: 1
+                    username,
+                    password,
+                    totp: totpCode
                 })
             });
 
