@@ -1,269 +1,171 @@
 /**
- * @fileoverview Data Loading Module
+ * @fileoverview Data Loader Module
  * @description Veri yükleme ve cache yönetimi
- * @module DataLoader
+ * @module data-loader
  */
 
-import { AppData, DataLoadProgress } from './app-state.js';
-import { applyDiscountLogic } from './utils.js';
-
-/**
- * Yüklenen yılları takip et
- */
-const loadedYears = new Set();
-const loadedDataCache = {};
+/* global Response, TextDecoder */
+import { logger } from './logger.js';
+import { errorHandler } from './error-handler.js';
 
 /**
- * Günlük versiyon oluştur (cache için)
- * @returns {string}
+ * Data Loader - Veri yükleme ve cache
  */
-function getDailyVersion() {
-    const now = new Date();
-    return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-}
-
-/**
- * Metadata yükle
- * @returns {Promise<Object>}
- */
-export async function loadMetadata() {
-    try {
-        console.log('📊 Metadata yükleniyor...');
-        const response = await fetch('data/data-metadata.json?' + Date.now());
-        if (!response.ok) throw new Error('Metadata yüklenemedi');
-        const metadata = await response.json();
-        AppData.metadata = metadata;
-        console.log('✅ Metadata yüklendi:', metadata);
-        return metadata;
-    } catch (error) {
-        console.error('❌ Metadata yükleme hatası:', error);
-        return null;
+export class DataLoader {
+    constructor() {
+        this.loadedYears = new Set();
+        this.loadedDataCache = {};
+        this.metadata = null;
     }
-}
 
-/**
- * Yıl verisini yükle
- * @param {number} year - Yıl
- * @returns {Promise<Object>}
- */
-export async function loadYearData(year) {
-    // Çift yükleme önleme
-    if (loadedYears.has(year) && loadedDataCache[year]) {
-        console.log(`⏭️ ${year} zaten yüklü, cache'den döndürülüyor...`);
-        return loadedDataCache[year];
-    }
-    
-    loadedYears.add(year);
-    
-    try {
-        const version = getDailyVersion();
-        const response = await fetch(`data/data-${year}.json.gz?v=${version}`, {
-            headers: {
-                'Cache-Control': 'public, max-age=86400'
-            }
-        });
-        
-        if (!response.ok) throw new Error(`${year} verisi bulunamadı`);
-        
-        const arrayBuffer = await response.arrayBuffer();
-        let decompressed;
-        
-        // Modern tarayıcılar için DecompressionStream
-        if (typeof DecompressionStream !== 'undefined') {
-            try {
-                const blob = new Blob([arrayBuffer]);
-                const ds = new DecompressionStream('gzip');
-                const stream = blob.stream().pipeThrough(ds);
-                decompressed = await new Response(stream).text();
-            } catch (e) {
-                console.warn('DecompressionStream başarısız, pako kullanılıyor:', e);
-                const uint8Array = new Uint8Array(arrayBuffer);
-                const decompressedArray = pako.inflate(uint8Array);
-                decompressed = new TextDecoder().decode(decompressedArray);
-            }
-        } else {
-            // Fallback: Pako.js
-            if (typeof pako === 'undefined') {
-                throw new Error('GZIP açma kütüphanesi yüklenmedi');
-            }
-            const uint8Array = new Uint8Array(arrayBuffer);
-            const decompressedArray = pako.inflate(uint8Array);
-            decompressed = new TextDecoder().decode(decompressedArray);
-        }
-        
-        const yearData = JSON.parse(decompressed);
-        console.log(`✅ ${year} yüklendi: ${yearData?.details?.length || 0} kayıt`);
-        
-        loadedDataCache[year] = yearData;
-        return yearData;
-        
-    } catch (error) {
-        console.error(`❌ ${year} yükleme hatası:`, error);
-        throw error;
-    }
-}
-
-/**
- * Tüm yılların verisini yükle
- * @param {Object} metadata - Metadata
- * @returns {Promise<void>}
- */
-export async function loadAllYearsData(metadata) {
-    console.log('📊 Tüm yıllar yükleniyor...');
-    
-    for (const year of metadata.years) {
+    /**
+     * Metadata yükle
+     * @returns {Promise<Object>} Metadata
+     */
+    async loadMetadata() {
         try {
-            const yearData = await loadYearData(year);
-            
-            if (yearData && yearData.details && Array.isArray(yearData.details)) {
-                // İndirim mantığını uygula ve allData'ya ekle
-                const processedData = yearData.details.map(applyDiscountLogic);
-                AppData.allData = AppData.allData.concat(processedData);
-                
-                console.log(`✅ ${year} yılı yüklendi: ${yearData.details.length} kayıt`);
-            }
+            logger.log('📊 Metadata yükleniyor...');
+            const response = await fetch('data/metadata.json');
+            if (!response.ok) throw new Error('Metadata yüklenemedi');
+
+            this.metadata = await response.json();
+            logger.log('✅ Metadata yüklendi:', this.metadata);
+            return this.metadata;
         } catch (error) {
-            console.error(`⚠️ ${year} yüklenemedi:`, error);
+            errorHandler.handleError(error, 'Metadata yükleme hatası');
+            return null;
         }
     }
-    
-    console.log('✅ Tüm yıllar yüklendi!');
-    console.log('📊 Toplam kayıt:', AppData.allData.length);
-    
-    DataLoadProgress.dataFiles = true;
-    DataLoadProgress.ready = true;
-}
 
-/**
- * Stok konumlarını yükle
- * @returns {Promise<Object>}
- */
-export async function loadStockLocations() {
-    try {
-        const response = await fetch('data/stock-locations.json');
-        if (!response.ok) throw new Error('Stock locations yüklenemedi');
-        const data = await response.json();
-        AppData.stockLocations = data.stock_locations || {};
-        console.log('✅ Stok konumları yüklendi:', Object.keys(AppData.stockLocations).length, 'lokasyon');
-        return AppData.stockLocations;
-    } catch (error) {
-        console.error('❌ Stock locations hatası:', error);
-        return {};
+    /**
+     * Yıl verisi yükle
+     * @param {number} year - Yıl
+     * @returns {Promise<Object>} Yıl verisi
+     */
+    async loadYearData(year) {
+        // Cache kontrolü
+        if (this.loadedYears.has(year) && this.loadedDataCache[year]) {
+            logger.log(`⏭️ ${year} zaten yüklü, cache'den döndürülüyor...`);
+            return this.loadedDataCache[year];
+        }
+
+        try {
+            logger.log(`📦 ${year} yükleniyor...`);
+
+            const response = await fetch(`data/data-${year}.json.gz`);
+            if (!response.ok) throw new Error(`${year} verisi yüklenemedi`);
+
+            // GZIP decompress
+            const arrayBuffer = await response.arrayBuffer();
+            const decompressed = await this.decompressGzip(arrayBuffer);
+
+            // JSON parse
+            const yearData = JSON.parse(decompressed);
+
+            // Cache'e kaydet
+            this.loadedDataCache[year] = yearData;
+            this.loadedYears.add(year);
+
+            logger.log(`✅ ${year} yılı yüklendi: ${yearData.details?.length || 0} kayıt`);
+            return yearData;
+        } catch (error) {
+            errorHandler.handleError(error, `${year} yükleme hatası`);
+            return null;
+        }
     }
-}
 
-/**
- * Envanter verisini yükle
- * @returns {Promise<void>}
- */
-export async function loadInventoryData() {
-    try {
-        console.log('📦 Envanter verileri yükleniyor...');
-        
-        const version = getDailyVersion();
-        const response = await fetch(`data/inventory.json.gz?v=${version}`, {
-            headers: {
-                'Cache-Control': 'public, max-age=86400'
+    /**
+     * GZIP decompress
+     * @param {ArrayBuffer} buffer - Compressed data
+     * @returns {Promise<string>} Decompressed string
+     */
+    async decompressGzip(buffer) {
+        try {
+            // Modern browsers - DecompressionStream
+            if (typeof DecompressionStream !== 'undefined') {
+                const stream = new Response(buffer).body.pipeThrough(
+                    new DecompressionStream('gzip')
+                );
+                const decompressed = await new Response(stream).arrayBuffer();
+                return new TextDecoder().decode(decompressed);
             }
-        });
-        
-        if (!response.ok) throw new Error('Envanter verisi bulunamadı');
-        
-        const arrayBuffer = await response.arrayBuffer();
-        let decompressed;
-        
-        if (typeof DecompressionStream !== 'undefined') {
-            try {
-                const blob = new Blob([arrayBuffer]);
-                const ds = new DecompressionStream('gzip');
-                const stream = blob.stream().pipeThrough(ds);
-                decompressed = await new Response(stream).text();
-            } catch (e) {
-                const uint8Array = new Uint8Array(arrayBuffer);
-                const decompressedArray = pako.inflate(uint8Array);
-                decompressed = new TextDecoder().decode(decompressedArray);
+
+            // Fallback - pako
+            if (typeof pako !== 'undefined') {
+                const uint8Array = new Uint8Array(buffer);
+                const decompressed = pako.inflate(uint8Array);
+                return new TextDecoder().decode(decompressed);
             }
-        } else {
-            const uint8Array = new Uint8Array(arrayBuffer);
-            const decompressedArray = pako.inflate(uint8Array);
-            decompressed = new TextDecoder().decode(decompressedArray);
-        }
-        
-        const inventoryJson = JSON.parse(decompressed);
-        AppData.inventoryData = inventoryJson.inventory || [];
-        
-        console.log('✅ Envanter yüklendi:', AppData.inventoryData.length, 'kayıt');
-        
-    } catch (error) {
-        console.error('❌ Envanter yükleme hatası:', error);
-        AppData.inventoryData = [];
-    }
-}
 
-/**
- * Hedefleri yükle
- * @returns {Promise<Object>}
- */
-export async function loadTargets() {
-    try {
-        console.log('🎯 Hedefler yükleniyor...');
-        const response = await fetch('data/targets.json?' + Date.now());
-        if (response.ok) {
-            const targets = await response.json();
-            console.log('✅ Hedefler yüklendi:', targets);
-            DataLoadProgress.targets = true;
-            return targets;
-        } else {
-            console.warn('⚠️ targets.json yüklenemedi');
-            return { yearly: {}, monthly: {} };
+            throw new Error('Decompression not supported');
+        } catch (error) {
+            errorHandler.handleError(error, 'Decompression hatası');
+            throw error;
         }
-    } catch (error) {
-        console.error('❌ Hedef yükleme hatası:', error);
-        return { yearly: {}, monthly: {} };
     }
-}
 
-/**
- * Tüm verileri yükle (ana fonksiyon)
- * @returns {Promise<void>}
- */
-export async function loadAllData() {
-    try {
-        console.log('🚀 Veri yükleme başlatılıyor...');
-        
-        // Paralel yükleme
-        const [metadata, stockLocations, targets] = await Promise.all([
-            loadMetadata(),
-            loadStockLocations(),
-            loadTargets()
-        ]);
-        
-        if (!metadata || !metadata.years || metadata.years.length === 0) {
-            throw new Error('Geçerli yıl verisi bulunamadı');
+    /**
+     * Tüm yılları yükle
+     * @param {Array} years - Yıl listesi
+     * @returns {Promise<Array>} Tüm veriler
+     */
+    async loadAllYears(years) {
+        try {
+            logger.log(`📅 Tüm yıllar yükleniyor: ${years.join(', ')}`);
+
+            // Paralel yükleme
+            const yearPromises = years.map(year => this.loadYearData(year));
+            const yearResults = await Promise.all(yearPromises);
+
+            // Tüm verileri birleştir
+            const allData = [];
+            yearResults.forEach(yearData => {
+                if (yearData && yearData.details) {
+                    allData.push(...yearData.details);
+                }
+            });
+
+            logger.log(`✅ Toplam ${allData.length} kayıt yüklendi`);
+            return allData;
+        } catch (error) {
+            errorHandler.handleError(error, 'Tüm yıllar yükleme hatası');
+            return [];
         }
-        
-        // Yıl verilerini yükle
-        await loadAllYearsData(metadata);
-        
-        // Envanter verilerini yükle (paralel değil, çünkü büyük)
-        await loadInventoryData();
-        
-        console.log('✅ Tüm veriler yüklendi!');
-        console.log('📊 Toplam satış kaydı:', AppData.allData.length);
-        console.log('📦 Envanter kaydı:', AppData.inventoryData?.length || 0);
-        
+    }
+
+    /**
+     * Cache temizle
+     * @param {number} year - Temizlenecek yıl (opsiyonel)
+     */
+    clearCache(year = null) {
+        if (year) {
+            delete this.loadedDataCache[year];
+            this.loadedYears.delete(year);
+            logger.log(`🗑️ ${year} cache'i temizlendi`);
+        } else {
+            this.loadedDataCache = {};
+            this.loadedYears.clear();
+            logger.log('🗑️ Tüm cache temizlendi');
+        }
+    }
+
+    /**
+     * Cache durumu
+     * @returns {Object} Cache bilgisi
+     */
+    getCacheInfo() {
         return {
-            salesData: AppData.allData,
-            inventoryData: AppData.inventoryData,
-            metadata,
-            targets
+            loadedYears: Array.from(this.loadedYears),
+            cacheSize: Object.keys(this.loadedDataCache).length,
+            totalRecords: Object.values(this.loadedDataCache).reduce(
+                (sum, data) => sum + (data.details?.length || 0),
+                0
+            )
         };
-        
-    } catch (error) {
-        console.error('❌ Veri yükleme hatası:', error);
-        throw error;
     }
 }
+
+// Global instance
+export const dataLoader = new DataLoader();
 
 console.log('✅ DataLoader modülü yüklendi');
-
