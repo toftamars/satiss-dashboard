@@ -275,25 +275,34 @@ class CacheManager {
         const now = Date.now();
         const itemsToDelete = [];
 
-        // Expired items
+        // 1) Süresi dolanları temizle
         for (const [key, item] of this.cache) {
             if (item.expiry && now > item.expiry) {
                 itemsToDelete.push(key);
             }
         }
 
-        // LRU cleanup if still needed
-        if (itemsToDelete.length === 0) {
+        // 2) Gereksizse LRU temizlik yapma
+        // Toplam boyutu ve öğe sayısını hesapla
+        let totalSize = 0;
+        for (const [, item] of this.cache) {
+            totalSize += item.size || 0;
+        }
+
+        const overItemLimit = this.cache.size > this.cacheConfig.maxItems;
+        const overSizeLimit = totalSize > this.cacheConfig.maxCacheSize;
+
+        if (itemsToDelete.length === 0 && (overItemLimit || overSizeLimit)) {
+            // Limitler aşıldıysa en az erişilen %20'yi kaldır
             const sortedItems = Array.from(this.cache.entries())
-                .sort((a, b) => a[1].lastAccess - b[1].lastAccess);
-            
-            const itemsToRemove = Math.floor(this.cache.size * 0.2); // %20 temizle
-            for (let i = 0; i < itemsToRemove; i++) {
+                .sort((a, b) => (a[1].lastAccess || 0) - (b[1].lastAccess || 0));
+            const itemsToRemove = Math.max(1, Math.floor(this.cache.size * 0.2));
+            for (let i = 0; i < itemsToRemove && i < sortedItems.length; i++) {
                 itemsToDelete.push(sortedItems[i][0]);
             }
         }
 
-        // Delete items
+        // 3) Silme işlemlerini uygula
         itemsToDelete.forEach(key => {
             this.cache.delete(key);
         });

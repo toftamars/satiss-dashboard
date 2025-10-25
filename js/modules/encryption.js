@@ -15,11 +15,9 @@ class EncryptionManager {
      */
     init() {
         console.log('🔐 EncryptionManager initialized');
-        
-        // CryptoJS kontrolü
-        if (typeof CryptoJS === 'undefined') {
-            console.error('❌ CryptoJS bulunamadı!');
-            return;
+        // Web Crypto API kontrolü
+        if (!window.crypto || !window.crypto.subtle) {
+            console.error('❌ Web Crypto API desteklenmiyor!');
         }
     }
 
@@ -51,19 +49,41 @@ class EncryptionManager {
     /**
      * Veriyi şifrele
      */
-    encrypt(data) {
+    async encrypt(data) {
         try {
-            if (!data) return null;
-            
-            // Veriyi string'e çevir
+            if (data === undefined) return null;
             const jsonString = JSON.stringify(data);
-            
-            // AES ile şifrele
-            const encrypted = CryptoJS.AES.encrypt(jsonString, this.secretKey).toString();
-            
+
+            // Web Crypto AES-GCM
+            const iv = new Uint8Array(12);
+            window.crypto.getRandomValues(iv);
+            const salt = new Uint8Array(16);
+            window.crypto.getRandomValues(salt);
+
+            const key = await this.deriveAesGcmKey(salt);
+            const encoded = new TextEncoder().encode(jsonString);
+            const cipherBuffer = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
+
+            const payload = {
+                v: 1,
+                alg: 'AES-GCM',
+                s: this.arrayBufferToBase64(salt),
+                i: this.arrayBufferToBase64(iv),
+                c: this.arrayBufferToBase64(cipherBuffer)
+            };
+
             console.log('✅ Veri şifrelendi');
-            return encrypted;
+            return JSON.stringify(payload);
         } catch (error) {
+            // Geriye dönük uyumluluk için CryptoJS'e düş
+            try {
+                if (typeof CryptoJS !== 'undefined') {
+                    const jsonString = JSON.stringify(data);
+                    const encrypted = CryptoJS.AES.encrypt(jsonString, this.secretKey).toString();
+                    console.warn('⚠️ Web Crypto başarısız, CryptoJS ile şifrelendi');
+                    return encrypted;
+                }
+            } catch (_) {}
             console.error('❌ Şifreleme hatası:', error);
             if (window.ErrorHandler) {
                 window.ErrorHandler.handleError(error);
@@ -75,25 +95,41 @@ class EncryptionManager {
     /**
      * Şifreyi çöz
      */
-    decrypt(encryptedData) {
+    async decrypt(encryptedData) {
         try {
             if (!encryptedData) return null;
-            
-            // AES şifresini çöz
-            const decrypted = CryptoJS.AES.decrypt(encryptedData, this.secretKey);
-            
-            // UTF8 string'e çevir
-            const jsonString = decrypted.toString(CryptoJS.enc.Utf8);
-            
-            if (!jsonString) {
-                throw new Error('Şifre çözme başarısız - yanlış anahtar?');
+
+            // AES-GCM formatını dene
+            try {
+                const payload = JSON.parse(encryptedData);
+                if (payload && payload.v === 1 && payload.alg === 'AES-GCM') {
+                    const salt = this.base64ToArrayBuffer(payload.s);
+                    const iv = this.base64ToArrayBuffer(payload.i);
+                    const cipher = this.base64ToArrayBuffer(payload.c);
+                    const key = await this.deriveAesGcmKey(new Uint8Array(salt));
+                    const plainBuffer = await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(iv) }, key, cipher);
+                    const jsonString = new TextDecoder().decode(plainBuffer);
+                    const data = JSON.parse(jsonString);
+                    console.log('✅ Veri şifresi çözüldü (AES-GCM)');
+                    return data;
+                }
+            } catch (_) {
+                // JSON değilse CryptoJS format olabilir
             }
-            
-            // JSON'a parse et
-            const data = JSON.parse(jsonString);
-            
-            console.log('✅ Veri şifresi çözüldü');
-            return data;
+
+            // Geriye dönük: CryptoJS ile çözmeyi dene
+            if (typeof CryptoJS !== 'undefined') {
+                const decrypted = CryptoJS.AES.decrypt(encryptedData, this.secretKey);
+                const jsonString = decrypted.toString(CryptoJS.enc.Utf8);
+                if (!jsonString) {
+                    throw new Error('Şifre çözme başarısız - yanlış anahtar?');
+                }
+                const data = JSON.parse(jsonString);
+                console.log('✅ Veri şifresi çözüldü (CryptoJS)');
+                return data;
+            }
+
+            throw new Error('Geçersiz şifreli veri formatı');
         } catch (error) {
             console.error('❌ Şifre çözme hatası:', error);
             if (window.ErrorHandler) {
@@ -106,28 +142,20 @@ class EncryptionManager {
     /**
      * Dosyayı şifrele ve indir
      */
-    encryptAndDownload(data, filename = 'encrypted-data.enc') {
+    async encryptAndDownload(data, filename = 'encrypted-data.enc') {
         try {
-            const encrypted = this.encrypt(data);
-            
+            const encrypted = await this.encrypt(data);
             if (!encrypted) {
                 throw new Error('Şifreleme başarısız');
             }
-            
-            // Blob oluştur
-            const blob = new Blob([encrypted], { type: 'text/plain' });
-            
-            // İndir
+            const blob = new Blob([encrypted], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = filename;
             a.click();
-            
             URL.revokeObjectURL(url);
-            
             console.log('✅ Şifreli dosya indirildi:', filename);
-            
             if (window.showToast) {
                 window.showToast('Şifreli dosya indirildi', 'success');
             }
@@ -145,22 +173,18 @@ class EncryptionManager {
     async readEncryptedFile(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 try {
                     const encryptedData = e.target.result;
-                    const decryptedData = this.decrypt(encryptedData);
-                    
+                    const decryptedData = await this.decrypt(encryptedData);
                     if (!decryptedData) {
                         throw new Error('Şifre çözme başarısız');
                     }
-                    
                     resolve(decryptedData);
                 } catch (error) {
                     reject(error);
                 }
             };
-            
             reader.onerror = () => reject(new Error('Dosya okuma hatası'));
             reader.readAsText(file);
         });
@@ -169,14 +193,12 @@ class EncryptionManager {
     /**
      * LocalStorage'a şifreli kaydet
      */
-    setEncrypted(key, data) {
+    async setEncrypted(key, data) {
         try {
-            const encrypted = this.encrypt(data);
-            
+            const encrypted = await this.encrypt(data);
             if (!encrypted) {
                 throw new Error('Şifreleme başarısız');
             }
-            
             localStorage.setItem(key, encrypted);
             console.log('✅ Şifreli veri kaydedildi:', key);
         } catch (error) {
@@ -190,15 +212,13 @@ class EncryptionManager {
     /**
      * LocalStorage'dan şifreli oku
      */
-    getEncrypted(key) {
+    async getEncrypted(key) {
         try {
             const encrypted = localStorage.getItem(key);
-            
             if (!encrypted) {
                 return null;
             }
-            
-            return this.decrypt(encrypted);
+            return await this.decrypt(encrypted);
         } catch (error) {
             console.error('❌ Şifreli okuma hatası:', error);
             if (window.ErrorHandler) {
@@ -236,6 +256,50 @@ class EncryptionManager {
     verifyIntegrity(data, expectedHash) {
         const actualHash = this.hash(data);
         return actualHash === expectedHash;
+    }
+
+    // === Yardımcılar ===
+    async deriveAesGcmKey(salt) {
+        const enc = new TextEncoder();
+        const keyMaterial = await window.crypto.subtle.importKey(
+            'raw',
+            enc.encode(this.secretKey),
+            'PBKDF2',
+            false,
+            ['deriveKey']
+        );
+        return await window.crypto.subtle.deriveKey(
+            {
+                name: 'PBKDF2',
+                salt,
+                iterations: 100000,
+                hash: 'SHA-256'
+            },
+            keyMaterial,
+            { name: 'AES-GCM', length: 256 },
+            false,
+            ['encrypt', 'decrypt']
+        );
+    }
+
+    arrayBufferToBase64(buffer) {
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
+    }
+
+    base64ToArrayBuffer(base64) {
+        const binaryString = atob(base64);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes.buffer;
     }
 }
 
