@@ -202,22 +202,14 @@
         };
         
         // ===== CACHE VERSION FUNCTIONS =====
-        function getDailyVersion() {
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const day = String(today.getDate()).padStart(2, '0');
-            return `${year}${month}${day}`;
-        }
-        
-        function getHourlyVersion() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hour = String(now.getHours()).padStart(2, '0');
-            return `${year}${month}${day}${hour}`;
-        }
+        // Helpers modülünü import et
+        import('./js/modules/helpers.js').then(module => {
+            getDailyVersion = module.getDailyVersion;
+            getHourlyVersion = module.getHourlyVersion;
+            normalizeStoreName = module.normalizeStoreName;
+            fuzzyMatch = module.fuzzyMatch;
+            levenshteinDistance = module.levenshteinDistance;
+        });
 
         // ===== GLOBAL METADATA LOADING FUNCTION =====
         window.loadMetadata = async function() {
@@ -1445,6 +1437,7 @@
     <script type="module" src="js/modules/dashboard.js"></script>
     <script type="module" src="js/modules/ui.js"></script>
     <script type="module" src="js/modules/excel-export.js"></script>
+    <script type="module" src="js/modules/helpers.js"></script>
     
     <!-- Authentication Modules -->
     <script type="module" src="js/modules/auth-odoo.js"></script>
@@ -2989,40 +2982,8 @@
         }
 
         // Mağaza ismini normalize eden fonksiyon (stock-locations mapping için)
-        function normalizeStoreName(storeName) {
-            if (!storeName) return '';
-            
-            // Küçük harfe çevir ve boşlukları temizle
-            const normalized = storeName.toLowerCase().trim();
-            
-            // Mapping tablosu (satış verisindeki mağaza isimleri -> stock-locations'daki değerler)
-            const storeMapping = {
-                'kentpark': 'KENTPARK',
-                'akasya': 'AKASYA',
-                'tünel': 'TÜNEL',
-                'izmir': 'İzmir',
-                'kızılay': 'KIZILAY',
-                'hilltown': 'Hilltown',
-                'kanyon': 'KANYON',
-                'antalya': 'ANTALYA',
-                'adana': 'ADANA',
-                'bursa': 'BURSA',
-                'uniq': 'UNIQ',
-                'mavibahçe': 'MAVİBAHÇE',
-                'temaworld': 'TEMAWORLD',
-                'bodrum': 'BODRUM',
-                'outlet': 'OUTLET'
-            };
-            
-            // Eşleşme ara
-            for (const [key, value] of Object.entries(storeMapping)) {
-                if (normalized.includes(key)) {
-                    return value;
-                }
-            }
-            
-            return storeName; // Eşleşme yoksa orijinal ismi döndür
-        }
+        // normalizeStoreName - helpers modülünden import edilecek
+        let normalizeStoreName;
 
         // Belirli bir mağaza ve ürün için mevcut stok miktarını hesaplayan fonksiyon
         function getCurrentStock(storeName, productCode) {
@@ -4552,39 +4513,8 @@
         }
         
         // 🎯 Fuzzy Matching (Benzerlik skoru)
-        function fuzzyMatch(query, target) {
-            const queryWords = query.split(/\s+/);
-            const targetLower = target.toLowerCase();
-            return queryWords.some(word => {
-                if (word.length < 3) return false;
-                return targetLower.includes(word) || levenshteinDistance(word, targetLower) < 3;
-            });
-        }
-        
-        // 📏 Levenshtein Distance (Düzenleme mesafesi)
-        function levenshteinDistance(a, b) {
-            const matrix = [];
-            for (let i = 0; i <= b.length; i++) {
-                matrix[i] = [i];
-            }
-            for (let j = 0; j <= a.length; j++) {
-                matrix[0][j] = j;
-            }
-            for (let i = 1; i <= b.length; i++) {
-                for (let j = 1; j <= a.length; j++) {
-                    if (b.charAt(i - 1) === a.charAt(j - 1)) {
-                        matrix[i][j] = matrix[i - 1][j - 1];
-                    } else {
-                        matrix[i][j] = Math.min(
-                            matrix[i - 1][j - 1] + 1,
-                            matrix[i][j - 1] + 1,
-                            matrix[i - 1][j] + 1
-                        );
-                    }
-                }
-            }
-            return matrix[b.length][a.length];
-        }
+        // fuzzyMatch ve levenshteinDistance - helpers modülünden import edilecek
+        let fuzzyMatch, levenshteinDistance;
         
         // 🔧 AI Filtrelerini Uygula
         function applyAIFilters(analysis) {
