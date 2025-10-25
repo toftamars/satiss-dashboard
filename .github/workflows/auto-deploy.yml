@@ -10,9 +10,10 @@ jobs:
   deploy-github-pages:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pages: write
       id-token: write
+      actions: write
     
     steps:
     - name: 📥 Checkout
@@ -35,11 +36,6 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./
-        exclude_assets: |
-          node_modules
-          .git
-          .github
-          api
         enable_jekyll: false
         force_orphan: true
         
