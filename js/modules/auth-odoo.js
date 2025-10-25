@@ -23,7 +23,12 @@ class OdooAuth {
      */
     checkSessionOnLoad() {
         try {
+            console.log('🔍 Session kontrolü başlatılıyor...');
+            console.log('🔍 Session key:', this.sessionKey);
+            console.log('🔍 Session duration:', this.sessionDuration / 60000, 'dakika');
+            
             const session = this.checkSession();
+            console.log('🔍 Session sonucu:', session);
             
             if (session.valid) {
                 console.log('✅ Geçerli session bulundu, dashboard açılıyor...');
@@ -38,6 +43,7 @@ class OdooAuth {
                 return true;
             } else {
                 console.log('❌ Geçerli session yok, login gerekli');
+                console.log('❌ Session neden geçersiz:', session);
                 this.showLoginForm();
                 return false;
             }
@@ -261,14 +267,22 @@ class OdooAuth {
      */
     checkSession() {
         try {
+            console.log('🔍 Session kontrolü yapılıyor...');
             const sessionData = sessionStorage.getItem(this.sessionKey);
+            console.log('🔍 Session data:', sessionData);
             
             if (!sessionData) {
+                console.log('❌ Session data yok');
                 return { valid: false };
             }
 
             const session = JSON.parse(sessionData);
+            console.log('🔍 Parsed session:', session);
+            
             const timeDiff = Date.now() - session.timestamp;
+            console.log('🔍 Time diff:', timeDiff, 'ms');
+            console.log('🔍 Session duration:', this.sessionDuration, 'ms');
+            console.log('🔍 Time diff < session duration:', timeDiff < this.sessionDuration);
 
             if (timeDiff < this.sessionDuration) {
                 // Session geçerli
@@ -284,6 +298,7 @@ class OdooAuth {
             } else {
                 // Session süresi dolmuş
                 console.log('⏰ Session süresi dolmuş (120 dakika)');
+                console.log('⏰ Time diff:', timeDiff, 'ms > Session duration:', this.sessionDuration, 'ms');
                 this.logout();
                 return { valid: false };
             }
