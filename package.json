@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Sales Dashboard with Odoo Integration",
   "scripts": {
-    "build": "echo 'Build completed'",
+    "build": "echo 'Vercel build process will handle API and static files'",
     "start": "echo 'Starting server'",
     "test": "echo 'Tests completed'"
   },
