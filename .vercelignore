@@ -1,0 +1,9 @@
+node_modules
+.git
+.github
+data
+data-*.json.gz
+inventory.json.gz
+*.md
+tests
+
