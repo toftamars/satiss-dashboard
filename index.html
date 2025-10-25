@@ -75,12 +75,17 @@
     <script src="js/modules/error-handler.js"></script>
     <script src="js/modules/input-validator.js"></script>
     <script src="js/modules/rate-limiter.js"></script>
+    <script src="js/modules/encryption.js"></script>
     
     <!-- Core Modules -->
     <script src="js/modules/config.js"></script>
     <script src="js/modules/cache.js"></script>
     <script src="js/modules/api.js"></script>
     <script src="js/modules/auth.js"></script>
+    
+    <!-- Performance Modules -->
+    <script src="js/modules/lazy-loader.js"></script>
+    <script src="js/modules/progressive-loader.js"></script>
     <script src="js/modules/data-loader.js"></script>
     
     <!-- UI Modules -->
@@ -90,6 +95,22 @@
     
     <!-- Initialization -->
     <script defer src="js/modules/init.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        // Service Worker'ı kaydet (Offline çalışma)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then((registration) => {
+                        console.log('✅ Service Worker kaydedildi:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('❌ Service Worker kayıt hatası:', error);
+                    });
+            });
+        }
+    </script>
 </head>
 <body>
     <!-- ==================== LOADING SCREEN ==================== -->
