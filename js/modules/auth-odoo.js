@@ -5,8 +5,7 @@
 
 class OdooAuth {
     constructor() {
-        this.odooUrl = 'https://erp.zuhalmuzik.com';
-        this.odooDb = 'erp.zuhalmuzik.com';
+        this.apiUrl = 'https://zuhal-mu.vercel.app/api/odoo-login';
         this.sessionKey = 'odoo_session';
         this.sessionDuration = 120 * 60 * 1000; // 120 dakika (2 saat)
         this.init();
@@ -28,25 +27,17 @@ class OdooAuth {
             console.log('🔐 Odoo login başlatılıyor...');
             console.log('Username:', username);
 
-            // Direkt Odoo API'ye istek (Vercel'siz)
-            const authPayload = {
-                jsonrpc: '2.0',
-                method: 'call',
-                params: {
-                    db: this.odooDb,
-                    login: username,
-                    password: password,
-                    totp_token: totpCode
-                },
-                id: 1
-            };
-
-            const response = await fetch(`${this.odooUrl}/web/session/authenticate`, {
+            // Vercel API üzerinden Odoo'ya istek (CORS çözümü)
+            const response = await fetch(this.apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(authPayload)
+                body: JSON.stringify({
+                    username,
+                    password,
+                    totp: totpCode
+                })
             });
 
             if (!response.ok) {
@@ -54,13 +45,13 @@ class OdooAuth {
             }
 
             const result = await response.json();
-            console.log('📡 Odoo response:', result);
+            console.log('📡 Vercel API response:', result);
 
-            // Odoo JSON-RPC response formatı: { jsonrpc, id, result: { uid, session_id, ... } }
-            if (result.result && result.result.uid) {
-                const sessionId = result.result.session_id;
-                const userId = result.result.uid;
-                const userName = result.result.name || result.result.username || username;
+            // Vercel API response formatı: { success, token, user }
+            if (result.success && result.token) {
+                const sessionId = result.token;
+                const userId = result.user.id;
+                const userName = result.user.name || username;
 
                 console.log('✅ Odoo authentication başarılı!');
                 console.log('User ID:', userId);
