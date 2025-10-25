@@ -25,7 +25,22 @@ class APIClient {
      * Authorization header ekle
      */
     getAuthHeaders() {
-        const token = localStorage.getItem('authToken');
+        // Öncelik: sessionStorage (kalıcı depoda token tutmaktan kaçın)
+        let token = null;
+        try {
+            token = sessionStorage.getItem('authToken');
+        } catch {}
+
+        // Geri dönüş: Şifreli kaynaktan oku (EncryptionManager varsa)
+        if (!token && window.EncryptionManager) {
+            const encryptedAuth = window.EncryptionManager.getEncrypted('auth_token');
+            if (encryptedAuth && typeof encryptedAuth === 'string') {
+                token = encryptedAuth;
+            } else if (encryptedAuth && encryptedAuth.token) {
+                token = encryptedAuth.token;
+            }
+        }
+
         if (token) {
             return {
                 ...this.defaultHeaders,

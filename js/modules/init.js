@@ -267,19 +267,30 @@ class AppInitializer {
             z-index: 10001;
             text-align: center;
         `;
-        errorDiv.innerHTML = `
-            <h3>❌ Hata</h3>
-            <p>${message}</p>
-            <button onclick="location.reload()" style="
-                background: white;
-                color: #ff6b6b;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 5px;
-                cursor: pointer;
-                margin-top: 10px;
-            ">Sayfayı Yenile</button>
-        `;
+        // İçeriği güvenli şekilde oluştur
+        const titleEl = document.createElement('h3');
+        titleEl.textContent = '❌ Hata';
+
+        const msgEl = document.createElement('p');
+        const safeMsg = typeof window !== 'undefined' && window.sanitizeString
+            ? window.sanitizeString(String(message))
+            : String(message || '');
+        msgEl.textContent = safeMsg;
+
+        const btn = document.createElement('button');
+        btn.textContent = 'Sayfayı Yenile';
+        btn.style.background = 'white';
+        btn.style.color = '#ff6b6b';
+        btn.style.border = 'none';
+        btn.style.padding = '10px 20px';
+        btn.style.borderRadius = '5px';
+        btn.style.cursor = 'pointer';
+        btn.style.marginTop = '10px';
+        btn.addEventListener('click', () => location.reload());
+
+        errorDiv.appendChild(titleEl);
+        errorDiv.appendChild(msgEl);
+        errorDiv.appendChild(btn);
         
         document.body.appendChild(errorDiv);
     }

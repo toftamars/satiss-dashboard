@@ -164,22 +164,41 @@ class ErrorHandler {
             max-width: 400px;
             font-weight: 500;
         `;
-        
-        toast.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 1.2em;">${type === 'error' ? '❌' : '✅'}</span>
-                <span>${message}</span>
-                <button onclick="this.parentElement.parentElement.remove()" style="
-                    background: none;
-                    border: none;
-                    color: white;
-                    cursor: pointer;
-                    font-size: 1.2em;
-                    padding: 0;
-                    margin-left: auto;
-                ">×</button>
-            </div>
-        `;
+
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.gap = '10px';
+
+        const icon = document.createElement('span');
+        icon.style.fontSize = '1.2em';
+        icon.textContent = type === 'error' ? '❌' : '✅';
+
+        const msgSpan = document.createElement('span');
+        // Mesajı güvenli şekilde yerleştir
+        const safeMessage = typeof window !== 'undefined' && window.sanitizeString
+            ? window.sanitizeString(String(message))
+            : String(message || '');
+        msgSpan.textContent = safeMessage;
+
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.textContent = '×';
+        closeBtn.style.background = 'none';
+        closeBtn.style.border = 'none';
+        closeBtn.style.color = 'white';
+        closeBtn.style.cursor = 'pointer';
+        closeBtn.style.fontSize = '1.2em';
+        closeBtn.style.padding = '0';
+        closeBtn.style.marginLeft = 'auto';
+        closeBtn.addEventListener('click', () => {
+            toast.remove();
+        });
+
+        row.appendChild(icon);
+        row.appendChild(msgSpan);
+        row.appendChild(closeBtn);
+        toast.appendChild(row);
 
         document.body.appendChild(toast);
 
