@@ -5,7 +5,8 @@
 
 class OdooAuth {
     constructor() {
-        this.apiUrl = 'https://zuhal-mu.vercel.app/api/odoo-login';
+        this.odooUrl = 'https://erp.zuhalmuzik.com';
+        this.odooDb = 'erp.zuhalmuzik.com';
         this.sessionKey = 'odoo_session';
         this.sessionDuration = 120 * 60 * 1000; // 120 dakika (2 saat)
         this.init();
@@ -27,16 +28,22 @@ class OdooAuth {
             console.log('🔐 Odoo login başlatılıyor...');
             console.log('Username:', username);
 
-            // Vercel API üzerinden Odoo'ya istek (CORS çözümü)
-            const response = await fetch(this.apiUrl, {
+            // Direkt Odoo API
+            const response = await fetch(`${this.odooUrl}/web/session/authenticate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    username,
-                    password,
-                    totp: totpCode
+                    jsonrpc: '2.0',
+                    method: 'call',
+                    params: {
+                        db: this.odooDb,
+                        login: username,
+                        password: password,
+                        totp_token: totpCode
+                    },
+                    id: 1
                 })
             });
 
@@ -45,13 +52,13 @@ class OdooAuth {
             }
 
             const result = await response.json();
-            console.log('📡 Vercel API response:', result);
+            console.log('📡 Odoo response:', result);
 
-            // Vercel API response formatı: { success, token, user }
-            if (result.success && result.token) {
-                const sessionId = result.token;
-                const userId = result.user.id;
-                const userName = result.user.name || username;
+            // Odoo JSON-RPC response: { jsonrpc, id, result: { uid, session_id } }
+            if (result.result && result.result.uid) {
+                const sessionId = result.result.session_id;
+                const userId = result.result.uid;
+                const userName = result.result.name || result.result.username || username;
 
                 console.log('✅ Odoo authentication başarılı!');
                 console.log('User ID:', userId);
