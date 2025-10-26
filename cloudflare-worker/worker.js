@@ -7,20 +7,26 @@ export default {
   async fetch(request, env) {
     // CORS headers
     const corsHeaders = {
-      'Access-Control-Allow-Origin': 'https://toftamars.github.io',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': '*',
       'Access-Control-Max-Age': '86400',
     };
 
     // Handle preflight
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
+      return new Response(null, { 
+        status: 204,
+        headers: corsHeaders 
+      });
     }
 
     // Only allow POST
     if (request.method !== 'POST') {
-      return new Response('Method not allowed', { status: 405 });
+      return new Response('Method not allowed', { 
+        status: 405,
+        headers: corsHeaders
+      });
     }
 
     try {
@@ -72,9 +78,12 @@ export default {
           }
         });
       } else if (result.error) {
+        const errorMsg = result.error.data?.message || result.error.message || 'Login failed';
+        console.log('❌ Odoo error:', errorMsg);
         return new Response(JSON.stringify({
           success: false,
-          error: result.error.data?.message || result.error.message || 'Login failed'
+          error: errorMsg,
+          details: result.error
         }), {
           status: 401,
           headers: {

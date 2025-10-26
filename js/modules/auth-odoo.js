@@ -40,12 +40,17 @@ class OdooAuth {
                 })
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
             const result = await response.json();
             console.log('📡 Cloudflare Worker response:', result);
+
+            if (!response.ok) {
+                const errorMsg = result.error || `HTTP ${response.status}: ${response.statusText}`;
+                console.error('❌ Worker error:', errorMsg);
+                if (result.details) {
+                    console.error('Details:', result.details);
+                }
+                throw new Error(errorMsg);
+            }
 
             // Cloudflare Worker response: { success, token, user }
             if (result.success && result.token) {
